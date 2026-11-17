@@ -95,6 +95,22 @@ function swapSquad(S,outId,inId){
   return true;
 }
 /** 登録選手の中で、先発と控えを入れ替える(育成は消えない) */
+/** 先発11人の既定の位置を埋める。置いていない人は陣形の枠、控えの位置は消す(→docs/07 §7.10) */
+function fillLayout(S){
+  const f=FORMS[S.form]||FORMS[TEAMS.azr.form], on=S.sq.slice(0,11);
+  on.forEach((id,i)=>{ if(!S.layout[id])S.layout[id]=[f[i][0],f[i][1]]; });
+  for(const id of Object.keys(S.layout))if(!on.includes(id))delete S.layout[id];
+  // KP は先発にいる人だけ。いなければクラブの既定、それも控えなら最前線の人
+  if(!on.includes(S.kp))S.kp=on.includes(TEAMS.azr.kp)?TEAMS.azr.kp:on.slice().sort((a,b)=>S.layout[b][0]-S.layout[a][0])[0];
+  return S.layout;
+}
+/** 陣形を選び直す。先発の並び順(枠の順)どおりに一括で置き直す */
+function setForm(S,form){
+  if(!FORMS[form])return false;
+  S.form=form; S.layout={};
+  fillLayout(S);
+  return true;
+}
 function moveSquad(S,a,b){
   const i=S.sq.indexOf(a), j=S.sq.indexOf(b);
   if(i<0||j<0||i===j)return false;

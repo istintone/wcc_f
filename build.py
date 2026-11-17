@@ -25,12 +25,29 @@ OUT = ROOT / "index.html"
 
 # 結合順。data.js は先頭("use strict" を持つ)、main.js は起動の副作用を持つので最後。
 # DOM に触らない8つ(data / trainings / realcards / engine / club / pool / grow / term)は src/tests/_setup.js の ENGINE_FILES と同じ並びにする。
-JS_FILES = ["data.js", "trainings.js", "realcards.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "render.js", "board.js", "clubui.js", "settings.js", "main.js"]
-CSS_FILES = ["base.css"]
+JS_FILES = ["data.js", "trainings.js", "realcards.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
+CSS_FILES = ["base.css", "theme.css"]
+# 埋め込む書体(英数字だけの latin サブセット。日本語はシステムの書体)。Oswald は SIL Open Font License
+FONTS = [("oswald-latin.woff2", "Oswald", "200 700")]
 
 
 def _join(sub, names):
     return "\n\n".join((SRC / sub / n).read_text(encoding="utf-8").strip() for n in names)
+
+
+def _font_css():
+    """src/assets/fonts の woff2 を base64 で埋め込む(外へ取りに行かない。オフラインで動く)"""
+    import base64
+    out = []
+    for fname, family, weight in FONTS:
+        f = SRC / "assets" / "fonts" / fname
+        if not f.is_file():
+            print("書体が無いので飛ばす:", fname)
+            continue
+        b64 = base64.b64encode(f.read_bytes()).decode("ascii")
+        out.append("@font-face{font-family:'%s';font-style:normal;font-weight:%s;font-display:swap;"
+                   "src:url(data:font/woff2;base64,%s) format('woff2')}" % (family, weight, b64))
+    return "\n".join(out)
 
 
 def _pack_js():
@@ -48,7 +65,7 @@ def assemble(real=False):
     for mark in ("/*__CSS__*/", "/*__JS__*/"):
         if html.count(mark) != 1:
             sys.exit("ERROR: src/index.html に %s が1つだけ必要です" % mark)
-    html = html.replace("/*__CSS__*/", _join("css", CSS_FILES))
+    html = html.replace("/*__CSS__*/", _font_css() + "\n\n" + _join("css", CSS_FILES))
     js = _join("js", JS_FILES[:-1]) + "\n\n" + (_pack_js() + "\n\n" if real else "") + _join("js", JS_FILES[-1:])
     return html.replace("/*__JS__*/", js)
 

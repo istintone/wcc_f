@@ -22,7 +22,8 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
   $("hudH").textContent=M.home.short; $("hudA").textContent=M.away.short;
-  $("hudHc").style.background=M.home.color; $("hudAc").style.background=M.away.color;
+  $("hudHc").innerHTML=emblemSvg(M.home,22); $("hudAc").innerHTML=emblemSvg(M.away,22);
+  $("hudComp").textContent=G.meta.career?G.meta.title:"FRIENDLY";
   setHud(0,0,"0'");
   say(teamNameOf(M.home)+" vs "+teamNameOf(M.away));
   hideInfo();
@@ -65,7 +66,7 @@ function updateStyleBar(){
   $("styH").innerHTML=styleText(G.M.home,BD.kp);
   $("styA").innerHTML=styleText(G.M.away,null);
 }
-function setPlaying(v){ G.playing=v; updateCtl(); }
+function setPlaying(v){ G.playing=v; updateCtl(); if(v)sndCrowd(true); }
 function overlay(title,body,btn,top,fn){
   $("ovTitle").textContent=title; $("ovBody").innerHTML=body; $("ovBtn").textContent=btn;
   const ov=$("ov");
@@ -213,6 +214,7 @@ function startEvent(ev){
     return;
   }
   if(ev.type==="foul"){
+    sndWhistle(1);
     sayFoul(ev);
     if(ev.card==="r"||ev.card==="yr"){ if(ev.side==="H")buildBoard(G.M); G.hold=P.cardHold; }
     else G.hold=ev.card||ev.set!=="re"?P.foulHold:P.foulHold*0.5;
@@ -220,27 +222,32 @@ function startEvent(ev){
     return;
   }
   if(ev.type==="pso"){
+    if(ev.ok)sndGoal(ev.side==="H"); else sndAww();
     say(tag(ev)+"PK戦 "+nm(ev.by)+(ev.ok?" 決めた":" 失敗")+"("+ev.h+" - "+ev.a+")",ev.ok);
     G.hold=P.psoHold;
     return;
   }
   if(ev.type==="halftime"){
+    sndWhistle(2,true);
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     overlay("HALF TIME",statsHtml(),"後半へ",true,()=>setPlaying(true));
     return;
   }
   if(ev.type==="fulltime"){
+    sndWhistle(3,true);
     setPlaying(false);
     setHud(ev.hg,ev.ag,"FT");
     const H=G.M.home, A=G.M.away, pso=G.M.pso;
     const d=pso?pso[0]-pso[1]:H.score-A.score;
     overlay(d>0?"WIN":d<0?"LOSE":"DRAW",(pso?"<p>PK戦 "+pso[0]+" - "+pso[1]+"</p>":"")+statsHtml(),
-      G.meta.career?"クラブハウスへ":"もう一度",false,
+      G.meta.career?"結果へ":"もう一度",false,
       ()=>{ if(G.meta.career)finishFixture(G.M); else newMatch(null,null,G.seed+1); });
     return;
   }
   if(!ev.from)return;                        // 知らない種類のイベントは読み飛ばす
+  if(ev.type==="kickoff")sndWhistle(1);
+  if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
   G.cur=ev; G.curT=0;
   $("hudClock").textContent=ev.min+(ev.at?"+":"'");
@@ -253,14 +260,16 @@ function endEvent(ev){
   sayShotEnd(ev);
   if(ev.res==="goal"){
     setHud(ev.hg,ev.ag,ev.min+(ev.at?"+":"'"));
-    const f=$("flash"); f.textContent="GOAL!"; f.classList.add("on"); G.flash=true;
+    const f=$("flash"); f.innerHTML='<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+'</small>';
+    f.className="on"+(ev.side==="H"?" mine":""); G.flash=true;
+    sndGoal(ev.side==="H");
     G.hold=P.goalHold;
-  }else G.hold=P.shotHold;
+  }else{ G.hold=P.shotHold; if(ev.res==="save"||ev.res==="miss")sndAww(); }
 }
 function advance(dt){
   if(G.hold>0){
     G.hold-=dt;
-    if(G.hold<=0&&G.flash){ $("flash").classList.remove("on"); G.flash=false; }
+    if(G.hold<=0&&G.flash){ $("flash").className=""; G.flash=false; }
     return;
   }
   if(G.cur){
@@ -283,6 +292,8 @@ function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
   if(G.playing&&!$("ov").classList.contains("on"))advance(dt*G.speed);
   drawFrame(G,dt);
+  // 攻め込むほど歓声が大きい(どちらのゴールに近いか)
+  if(G.playing&&G.M&&G.M.ball)sndCrowdLevel(Math.max(0,(G.M.ball.h-0.62)/0.38));
   requestAnimationFrame(frame);
 }
 
@@ -322,6 +333,10 @@ function boot(){
   document.addEventListener("touchmove",e=>{ if(e.touches.length>1)e.preventDefault(); },{ passive:false });
 
   document.getElementById("club").addEventListener("click",onClubClick);
+  applyTheme(storedTheme());                   // テーマ(→settings.js)
+  sceneInit();
+  // 押したら必ず音が返る(→docs/07 §7.3)
+  document.addEventListener("pointerdown",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
   document.getElementById("club").addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
   loadStoredPack();                           // 端末に保存した実名パック(→settings.js)
   // ホーム画面に追加した版(http/https で配ったとき)はオフラインでも動くようにする。file:// では何もしない
@@ -334,6 +349,7 @@ function boot(){
     newMatch(null,null,seed0);                // 盤面と映像を先に作っておく(クラブハウスの下に隠れる)
     closeOverlay(); setPlaying(false);
     initCareer(seed0);
+    if(!q.get("notitle"))sceneTitle(()=>sceneHide());
     updateCtl();
     requestAnimationFrame(frame);
     return;

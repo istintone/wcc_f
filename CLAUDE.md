@@ -49,6 +49,12 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 特殊練習を直す | `tools/train_source.txt` → `python tools/gen_trainings.py`(`trainings.js` は生成物。手で編集しない) |
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |
 | 実在クラブ・選手を直す・足す | `tools/squads.local.txt`(実名・Git管理外)→ `python tools/gen_cards.py` → `src/js/realcards.js`(偽名・生成物)と `packs/real.local.json`。**realcards.js は手で編集しない** |
+| 場面(タイトル・対戦カード・結果・カード排出)を変える | `src/js/scenes.js`(描画)と `base.css` の末尾。設計の正本は docs/07 |
+| 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・操作)、`pool.js` の `fillLayout` / `setForm` / `moveSquad`(中身)。正本は docs/07 §7.10 |
+| 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
+| テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。設計の正本は docs/07 §7.8 |
+| カードの見た目を変える | `clubui.js` の `cardHtml`(構成)と `theme.css` の「カード」(意匠) |
+| 音を変える | `src/js/sound.js`(Web Audio で合成。音声ファイルは持たない) |
 | 公開用を作る | `python build.py --dist` → `dist/`(index.html・manifest・sw.js・アイコン)。実名は入らない |
 | 公開する(外に出る操作。決めたときだけ) | `python tools/publish.py` → https://istintone.github.io/wcc_f/ |
 | 設定・データの画面を変える | `src/js/settings.js`(実名パックの読み込み・セーブの書き出しと読み込み) |

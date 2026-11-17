@@ -165,8 +165,7 @@ function settleLinks(S,out){
 }
 /** いま盤面に並べている11人(前の試合の最後の配置。無ければクラブの既定) */
 function squadXi(S){
-  const ids=Object.keys(S.layout).filter(id=>S.g.pl[id]);
-  return ids.length>=8?ids:(S.sq||startSquad()).slice(0,11);
+  return (S.sq||startSquad()).slice(0,11);
 }
 /**
  * チーム練習を1つ行う。intensity: 0=軽め / 1=普通 / 2=ハード。
@@ -303,8 +302,11 @@ function doMeeting(S,id,choice){
 }
 /** 残りのコミュニケーションを使わずに試合へ */
 function skipComm(S){ if(S.g.step==="comm")S.g.step="ready"; }
-/** 選手の上に「！」が出るか(★突破の3択が待っている / やる気が落ちている / 疲れている) */
-function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||g.mot<=1||g.fat>=TUNING.grow.int.tiredSign; }
+/**
+ * 選手の上に「！」が出るか(★突破の3択が待っている / やる気が絶不調)。
+ * **疲労では出さない**(練習のたびに全員に付いて、印の意味が無くなるため。疲労は選手一覧と秘書が伝える)
+ */
+function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||g.mot<=1; }
 
 /* ---------- ③ 試合のあと ---------- */
 

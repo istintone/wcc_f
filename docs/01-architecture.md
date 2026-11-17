@@ -10,7 +10,9 @@ wcc_f/
   build.py            src/ を結合して index.html を書き出す
   src/
     index.html        ひな形。/*__CSS__*/ と /*__JS__*/ に埋め込まれる
-    css/base.css
+    css/base.css      配置と最初の見た目
+    css/theme.css     テーマ(色のトークン)とカード・場面の意匠
+    assets/fonts/     埋め込む書体(Oswald。SIL Open Font License)
     js/data.js        数値(TUNING)・手札・陣形・カード・クラブ・差し替え層
     js/engine.js      試合エンジン。DOM非依存
     js/realcards.js   実在16クラブの選手(偽名。生成物。tools/gen_cards.py が書き出す)
@@ -22,6 +24,8 @@ wcc_f/
     js/render.js      試合映像(上半分・Canvas)
     js/board.js       カード盤面(下半分・DOM)
     js/clubui.js      クラブハウスの画面
+    js/sound.js       音(Web Audio で合成)
+    js/scenes.js      場面(タイトル・対戦カード・結果・カード排出)とエンブレム
     js/settings.js    設定・データ(実名パックの読み込み・セーブの書き出しと読み込み)
     js/main.js        進行と再生。起動の副作用を持つので必ず最後
     tests/            Node で回す検証

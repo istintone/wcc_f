@@ -1,0 +1,471 @@
+/* =========================================================================
+   wcc_f — テーマ(→docs/07 §7.8)
+   色はすべてトークン(--t-*)を通す。テーマを足すときは、下のトークンの組を1つ増やすだけ。
+     th-wr   ホワイトが主 / レッドが副 / 差し色にゴールドとブラック(既定)
+     th-navy ネイビーが主 / ゴールドが副(最初の見た目)
+   見た目の手本は、スポーツのトレーディングカードの「印刷物らしさ」:
+     斜めに切った色の帯 / 網点(ハーフトーン)/ 細い罫線 / 幅の狭い太い数字 / 箔の光沢
+   ========================================================================= */
+
+.th-wr{
+  --t-paper:#f2efe9; --t-paper2:#e6e1d7; --t-card:#ffffff; --t-rule:#d8d0c2;
+  --t-ink:#121212; --t-ink2:#3a3a3a; --t-mute:#7d766b;
+  --t-main:#ffffff; --t-sub:#c8102e; --t-sub2:#8f0a1f; --t-sub3:#e2324a;
+  --t-gold:#b8892c; --t-gold2:#e9c76b; --t-gold3:#7d5a14; --t-black:#141414;
+  --t-on-sub:#ffffff;
+  /* base.css の色もこのテーマに寄せる */
+  --bg:#d9d4ca; --surface:var(--t-paper); --panel:#ffffff; --line:var(--t-rule);
+  --text:var(--t-ink); --dim:var(--t-mute); --accent:var(--t-sub);
+  --good:#1f8a4c; --mid:#b8892c; --bad:#c8102e;
+}
+.th-navy{
+  --t-paper:#0e1320; --t-paper2:#161d2e; --t-card:#1b2236; --t-rule:#2a3550;
+  --t-ink:#eef1f6; --t-ink2:#c9d0de; --t-mute:#8b97b0;
+  --t-main:#0e1320; --t-sub:#d9a52e; --t-sub2:#9b7414; --t-sub3:#ffe28a;
+  --t-gold:#d9a52e; --t-gold2:#ffe28a; --t-gold3:#7d5a14; --t-black:#05070d;
+  --t-on-sub:#201400;
+}
+
+/* ---- 書体 ---- */
+.th-wr #hudScore,.th-wr #hudClock,.th-wr .tn,
+.k-no,.k-pos,.k-rar,.k-st b,
+#scene .logo b,#scene .vs-mark,#scene .res-word,#scene .rn,#scene .pk-head b,#scene .touch,
+.th-wr #club .chd .num b,.th-wr .btn-ins,.th-wr .btn-shoot,.th-wr #flash b,.th-wr .cd .no{
+  font-family:"Oswald","Arial Narrow","Helvetica Neue",system-ui,sans-serif}
+
+/* =========================================================================
+   カード(トレーディングカードの構成。どのテーマでも使う)
+   ========================================================================= */
+.kc{position:relative;aspect-ratio:5/7;padding:0;border:0;border-radius:5px;overflow:hidden;cursor:pointer;
+  background:#fff;color:#121212;box-shadow:0 1px 0 rgba(0,0,0,.08),0 3px 8px rgba(0,0,0,.28);line-height:1.15;isolation:isolate}
+/* 内側の細い罫線(印刷物の枠) */
+.kc::after{content:"";position:absolute;inset:3px;border:1px solid rgba(0,0,0,.18);border-radius:3px;pointer-events:none;z-index:6}
+/* 斜めの色帯(クラブの色) */
+.kc .k-band{position:absolute;left:-30%;top:-10%;width:72%;height:120%;background:var(--tc);transform:skewX(-16deg);z-index:0;
+  box-shadow:6px 0 0 rgba(255,255,255,.75),9px 0 0 var(--tc)}
+/* 網点の地と人物の影 */
+.kc .k-art{position:absolute;left:8%;right:8%;top:12%;bottom:27%;z-index:1;
+  background:radial-gradient(circle,rgba(0,0,0,.16) 1.1px,transparent 1.4px) 0 0/5px 5px;
+  -webkit-mask:radial-gradient(ellipse at 50% 60%,#000 55%,transparent 75%);mask:radial-gradient(ellipse at 50% 60%,#000 55%,transparent 75%)}
+.kc .k-sil{position:absolute;left:10%;right:10%;bottom:0;height:92%;width:80%;fill:#1a1a1a;opacity:.82}
+.kc .k-top{position:absolute;left:7%;top:5%;z-index:3;display:flex;flex-direction:column;align-items:flex-start;line-height:.9}
+.kc .k-no{font-size:26px;font-weight:700;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.kc .k-pos{margin-top:2px;font-style:normal;font-size:9px;font-weight:700;letter-spacing:.08em;padding:1px 4px;
+  color:#fff;background:#121212}
+.kc .k-rar{position:absolute;right:6%;top:5%;z-index:3;font-size:8px;font-weight:700;letter-spacing:.2em;
+  writing-mode:vertical-rl;color:#7d766b}
+/* リボン状の名前帯 */
+.kc .k-name{position:absolute;left:0;right:0;bottom:12%;z-index:4;padding:4px 8% 3px 9%;
+  background:#c8102e;color:#fff;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+.kc .k-name b{display:block;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+.kc .k-name small{display:block;font-size:7.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kc .k-sk{position:absolute;left:9%;right:6%;bottom:3.5%;z-index:4;font-size:8px;font-weight:700;color:#3a3a3a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kc .k-sk em{font-style:normal;font-weight:400;margin-left:5px;color:#7d766b}
+.kc .k-st{position:absolute;right:6%;top:30%;z-index:3;display:flex;flex-direction:column;gap:3px;text-align:right}
+.kc .k-st span{display:flex;flex-direction:column;line-height:1}
+.kc .k-st i{font-style:normal;font-size:7.5px;color:#7d766b;letter-spacing:.06em}
+.kc .k-st b{font-size:18px;font-weight:700}
+.kc .k-foil{position:absolute;inset:0;z-index:5;pointer-events:none}
+.kc .kcnt{position:absolute;right:5px;top:5px;z-index:7;font-style:normal;font-size:9px;font-weight:900;color:#fff;
+  background:#121212;padding:0 4px;border-radius:2px}
+.kc.on{outline:3px solid var(--t-gold2);outline-offset:1px}
+
+/* 黒(PREMIUM): 黒い台紙に銀の罫 */
+.kc.r-B{background:#161616;color:#f2f2f2}
+.kc.r-B::after{border-color:rgba(220,220,220,.45)}
+.kc.r-B .k-art{background:radial-gradient(circle,rgba(255,255,255,.14) 1.1px,transparent 1.4px) 0 0/5px 5px}
+.kc.r-B .k-sil{fill:#e6e6e6;opacity:.55}
+.kc.r-B .k-sk{color:#d8d8d8} .kc.r-B .k-st i,.kc.r-B .k-rar{color:#a8a8a8} .kc.r-B .k-sk em{color:#9a9a9a}
+.kc.r-B .k-band{box-shadow:6px 0 0 rgba(200,200,200,.55),9px 0 0 var(--tc)}
+/* キラ(FOIL): 虹色の箔が流れる */
+.kc.r-K{background:#f6f3ff}
+.kc.r-K .k-foil{background:linear-gradient(115deg,transparent 20%,rgba(255,120,200,.28) 32%,rgba(120,220,255,.32) 42%,
+  rgba(255,240,120,.30) 52%,rgba(140,255,170,.26) 62%,transparent 75%);background-size:250% 100%;mix-blend-mode:color-dodge;
+  animation:foil 3.2s linear infinite}
+.kc.r-K::after{border:1.5px solid transparent;border-image:linear-gradient(135deg,#ff7ac8,#79d8ff,#ffe36e,#8cffaa,#ff7ac8) 1}
+.kc.r-K .k-rar{color:#8a5cd6}
+@keyframes foil{from{background-position:120% 0}to{background-position:-130% 0}}
+/* レジェンド: 金の箔の台紙・黒いリボン */
+.kc.r-L{background:repeating-linear-gradient(135deg,#f3dc95 0 2px,#e2bf62 2px 4px),#e2bf62;color:#2a1d02}
+.kc.r-L::after{border:2px solid #7d5a14}
+.kc.r-L .k-name{background:#121212;color:#f3dc95}
+.kc.r-L .k-rar{color:#7d5a14} .kc.r-L .k-sk,.kc.r-L .k-st i,.kc.r-L .k-sk em{color:#5a420e}
+.kc.r-L .k-foil{background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);background-size:250% 100%;
+  animation:foil 2.6s linear infinite}
+.kc.r-L .k-art{background:radial-gradient(circle,rgba(90,60,10,.22) 1.1px,transparent 1.4px) 0 0/5px 5px}
+
+/* 小さいカード(一覧) */
+.kc-s .k-no{font-size:17px} .kc-s .k-pos{font-size:7px;padding:0 3px}
+.kc-s .k-rar{font-size:6px} .kc-s .k-name{bottom:13%;padding:2px 6% 2px 7%}
+.kc-s .k-name b{font-size:9.5px} .kc-s .k-name small{display:none}
+.kc-s .k-sk{font-size:6.5px;bottom:4%}
+/* 中のカード(払い出し・詳細) */
+.kc-m{width:100%}
+.kc-m .k-name b{font-size:15px} .kc-m .k-name small{font-size:9px}
+.kc-m .k-sk{font-size:9.5px} .kc-m .k-no{font-size:34px} .kc-m .k-pos{font-size:11px}
+
+/* =========================================================================
+   場面(タイトル・対戦カード・結果・カード排出)
+   ========================================================================= */
+#scene .dots,#scene .slab{position:absolute;pointer-events:none;z-index:0}
+#scene>*:not(.wipe):not(.dots):not(.slab){position:relative;z-index:1}
+#scene .touch,#scene .snd{position:absolute!important}
+#scene .wipe{background:linear-gradient(90deg,transparent,var(--t-sub) 20%,var(--t-sub3) 50%,var(--t-sub) 80%,transparent)}
+.th-wr #scene{color:var(--t-ink)}
+.th-wr #scene .dots{inset:0;background:radial-gradient(circle,rgba(0,0,0,.09) 1.2px,transparent 1.5px) 0 0/7px 7px;
+  -webkit-mask:linear-gradient(160deg,#000 0%,transparent 45%,transparent 60%,#000 100%);mask:linear-gradient(160deg,#000 0%,transparent 45%,transparent 60%,#000 100%)}
+.th-wr #scene .touch{color:var(--t-sub);letter-spacing:.35em}
+
+/* タイトル: 紙の地に、赤と黒の斜めの帯 */
+.th-wr .sc-title{background:var(--t-paper)}
+.th-wr .sc-title .beams{display:none}
+.th-wr .sc-title .slab.s1{left:-20%;right:-20%;top:36%;height:150px;background:var(--t-sub);transform:skewY(-9deg);
+  box-shadow:0 8px 0 var(--t-black),0 11px 0 var(--t-gold2)}
+.th-wr .sc-title .slab.s2{left:-20%;right:-20%;top:63%;height:26px;background:var(--t-black);transform:skewY(-9deg)}
+.th-wr .sc-title .logo{margin-top:-30px}
+.th-wr .sc-title .logo b{font-size:96px;font-weight:700;letter-spacing:-.01em;color:#fff;-webkit-text-fill-color:#fff;
+  background:none;filter:drop-shadow(4px 4px 0 var(--t-black));transform:skewX(-8deg)}
+.th-wr .sc-title .logo b span{color:var(--t-gold2);-webkit-text-fill-color:var(--t-gold2)}
+.th-wr .sc-title .logo small{color:#fff;letter-spacing:.6em;font-family:"Oswald",sans-serif;font-weight:400}
+.th-wr .sc-title .club{margin-top:70px;background:var(--t-card);border:0;border-left:5px solid var(--t-sub);
+  box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.th-wr .sc-title .club small{color:var(--t-mute)}
+.th-wr .sc-title .snd{background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule)}
+
+/* 対戦カード: 上に自クラブ(赤の帯)、下に相手(黒の帯) */
+.th-wr .sc-vs{background:var(--t-paper)}
+.th-wr .vs-band{background:var(--t-black);border:0;color:#fff;clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.th-wr .vs-band b{color:var(--t-gold2)} .th-wr .vs-band i{color:#bbb}
+.th-wr .vs-side{background:linear-gradient(90deg,var(--t-sub) 0 70%,var(--t-sub2));color:#fff;
+  box-shadow:inset 8px 0 0 var(--tc)}
+.th-wr .vs-side.away{background:linear-gradient(270deg,var(--t-black) 0 70%,#333);box-shadow:inset -8px 0 0 var(--tc)}
+.th-wr .vs-info>small{color:var(--t-gold2)}
+.th-wr .vs-kp em{color:rgba(255,255,255,.75)}
+.th-wr .ax i{color:rgba(255,255,255,.8)} .th-wr .ax em{background:rgba(0,0,0,.3)}
+.th-wr .ax u{background:linear-gradient(90deg,#fff,var(--t-gold2))}
+.th-wr .vs-mark{font-size:110px;font-weight:700;color:var(--t-ink);-webkit-text-fill-color:var(--t-ink);background:none;
+  filter:drop-shadow(5px 5px 0 var(--t-gold2));transform:skewX(-10deg)}
+.th-wr .vs-note{color:var(--t-sub)}
+
+/* 結果: 勝ち = 赤 / 負け = 黒 / 引き分け = 紙 */
+.th-wr .sc-res.r-win{background:var(--t-sub);color:#fff}
+.th-wr .sc-res.r-lose{background:var(--t-black);color:#fff}
+.th-wr .sc-res.r-draw{background:var(--t-paper);color:var(--t-ink)}
+.th-wr .sc-res .dots{background:radial-gradient(circle,rgba(255,255,255,.14) 1.2px,transparent 1.5px) 0 0/7px 7px}
+.th-wr .sc-res.r-draw .dots{background:radial-gradient(circle,rgba(0,0,0,.08) 1.2px,transparent 1.5px) 0 0/7px 7px}
+.th-wr .sc-res .slab.s1{left:-20%;right:-20%;top:9%;height:118px;background:rgba(0,0,0,.18);transform:skewY(-8deg)}
+.th-wr .sc-res.r-draw .slab.s1{background:var(--t-sub)}
+.th-wr .res-word{font-size:118px;font-weight:700;color:#fff;-webkit-text-fill-color:#fff;background:none;
+  filter:drop-shadow(5px 5px 0 var(--t-black));transform:skewX(-8deg)}
+.th-wr .r-win .res-word{filter:drop-shadow(5px 5px 0 var(--t-black)) drop-shadow(0 0 0 #000)}
+.th-wr .r-lose .res-word{filter:drop-shadow(5px 5px 0 var(--t-sub))}
+.th-wr .res-score .rn{font-size:62px;font-weight:700}
+.th-wr .res-score .rn i{color:currentColor;opacity:.5}
+.th-wr .res-pso{color:var(--t-gold2)}
+.th-wr .res-goals li i{color:var(--t-gold2)} .th-wr .r-draw .res-goals li i{color:var(--t-sub)}
+.th-wr .res-mvp{background:var(--t-card);color:var(--t-ink);border:0;border-left:5px solid var(--t-gold)}
+.th-wr .res-mvp i{background:var(--t-black);color:var(--t-gold2)} .th-wr .res-mvp small{color:var(--t-mute)}
+.th-wr .res-lines{background:rgba(255,255,255,.95);color:var(--t-ink);border-left:5px solid var(--t-gold)}
+.th-wr .res-lines li.hi{color:var(--t-sub)}
+
+/* カード排出: 紙の地にスポットライト。カードの裏は赤に白の細い斜線と金の印 */
+.th-wr .sc-card{background:radial-gradient(ellipse at 50% 45%,#ffffff 0%,var(--t-paper) 45%,var(--t-paper2) 100%)}
+.th-wr .pk-head b{color:var(--t-ink);font-size:38px;letter-spacing:.3em;font-weight:700}
+.th-wr .pk-head small{color:var(--t-mute)}
+.th-wr .pk-back{border:0;background:repeating-linear-gradient(135deg,var(--t-sub) 0 7px,#d8243f 7px 9px);
+  box-shadow:0 0 0 3px #fff,0 0 0 4px var(--t-rule),0 14px 30px rgba(0,0,0,.35)}
+.th-wr .pk-back b{font-family:"Oswald",sans-serif;font-size:48px;font-weight:700;color:#fff;text-shadow:3px 3px 0 var(--t-black);
+  transform:skewX(-8deg)}
+.th-wr .pk-back b span{color:var(--t-gold2)}
+.pk-front .kc{position:absolute;inset:0;aspect-ratio:auto;border-radius:10px}
+.pk-front .kc .k-no{font-size:44px} .pk-front .kc .k-pos{font-size:12px}
+.pk-front .kc .k-name b{font-size:19px} .pk-front .kc .k-name small{font-size:10px}
+.pk-front .kc .k-st b{font-size:24px} .pk-front .kc .k-st i{font-size:9px} .pk-front .kc .k-sk{font-size:11px}
+.pk-front .kc .k-rar{font-size:11px}
+.th-wr .rays{background:repeating-conic-gradient(from 0deg,rgba(185,137,44,.38) 0 7deg,transparent 7deg 20deg)}
+.th-wr .pk-msg{color:var(--t-ink)} .th-wr .pk-msg .rar.r-L{color:var(--t-gold)} .th-wr .pk-msg .rar.r-K{color:#8a5cd6}
+.th-wr .pk-msg .rar.r-B{color:var(--t-black)} .th-wr .pk-msg .rar.r-W{color:var(--t-mute)}
+.th-wr .pk-msg .new{background:var(--t-sub);color:#fff} .th-wr .pk-msg small{color:var(--t-sub)}
+.glow-K .pk-front .kc{background:#f6f3ff;animation:none;box-shadow:0 0 32px rgba(160,120,255,.55)}
+
+/* =========================================================================
+   試合の画面(ホワイト × レッド)
+   ========================================================================= */
+.th-wr #app{background:var(--t-paper)}
+.th-wr #hud{background:var(--t-card);border-bottom:3px solid var(--t-sub);box-shadow:0 2px 0 var(--t-gold2)}
+.th-wr #hud .sb{background:var(--t-black);border:0}
+.th-wr #hud .tn{color:#fff;font-weight:700;font-style:normal;letter-spacing:.08em}
+.th-wr #hudScore{background:var(--t-sub);color:#fff;font-weight:700;font-size:22px;border-radius:0}
+.th-wr #hudComp{color:var(--t-mute)}
+.th-wr #hudClock{color:var(--t-sub);font-style:normal;font-weight:700;font-size:18px}
+.th-wr #ticker{background:var(--t-black);color:#fff;border-left:5px solid var(--t-sub)}
+.th-wr #ticker.goal{color:var(--t-gold2)}
+.th-wr #stylebar{background:var(--t-card);color:var(--t-mute);border-bottom:1px solid var(--t-rule)}
+.th-wr #stylebar #styH{color:var(--t-ink)}
+.th-wr #flash{background:linear-gradient(170deg,transparent 30%,rgba(0,0,0,.35) 30% 70%,transparent 70%)}
+.th-wr #flash b{font-size:72px;font-weight:700;font-style:normal;color:#fff;-webkit-text-fill-color:#fff;background:none;
+  filter:drop-shadow(4px 4px 0 var(--t-sub));transform:skewX(-10deg)}
+.th-wr #flash:not(.mine) b{filter:drop-shadow(4px 4px 0 var(--t-black))}
+.th-wr #flash i{background:#fff;color:var(--t-ink);border-left:6px solid var(--t-sub)}
+.th-wr #flash small{color:#fff}
+/* 盤面のカード: 白い台紙の小さなカード */
+.th-wr .cd{background:#fff;color:var(--t-ink);border:1px solid rgba(0,0,0,.25);border-radius:3px;
+  box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.th-wr .cd .rl{background:var(--pc,#555);color:#fff}
+.th-wr .cd.gk{--pc:#c48a12} .th-wr .cd.df{--pc:#1d5fbf} .th-wr .cd.mf{--pc:#1f8a4c} .th-wr .cd.fw{--pc:#c8102e}
+.th-wr .cd .rl.a0{color:#fff} .th-wr .cd .rl.a1{color:#ffe28a} .th-wr .cd .rl.a2{color:#ffb0b0}
+.th-wr .cd .no{font-weight:700}
+.th-wr .cd.hasball{border-color:var(--t-gold);box-shadow:0 0 0 2px var(--t-gold2),0 2px 4px rgba(0,0,0,.4)}
+.th-wr .cd.iskp{border-color:var(--t-sub)}
+.th-wr .cd .kpm{background:var(--t-sub);color:#fff}
+.th-wr #bench{background:var(--t-paper2);border-top:1px solid var(--t-rule)}
+.th-wr #bench .lbl{color:var(--t-mute)}
+.th-wr #tac,.th-wr #ctl{background:var(--t-card);border-top:1px solid var(--t-rule)}
+.th-wr .btn{background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule)}
+.th-wr .btn-ins{background:linear-gradient(180deg,#fff,#efebe4);color:var(--t-ink);border:1px solid #cfc6b7;
+  box-shadow:0 3px 0 #b7ac9a;font-weight:700;letter-spacing:.04em}
+.th-wr .btn-ins small{color:var(--t-mute)}
+.th-wr .btn-ins:active{box-shadow:0 1px 0 #b7ac9a}
+.th-wr .btn-ins.on{background:var(--t-sub);color:#fff;border-color:var(--t-sub2);box-shadow:0 3px 0 var(--t-sub2),0 0 10px rgba(200,16,46,.35)}
+.th-wr .btn-ins.on small{color:rgba(255,255,255,.85)}
+.th-wr .btn-kp{color:var(--t-gold3);border-color:var(--t-gold)}
+.th-wr .btn-shoot{background:var(--t-sub);border:0;border-radius:3px;color:#fff;font-style:normal;font-weight:700;letter-spacing:.2em;
+  clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);box-shadow:none}
+.th-wr .btn-shoot:active{background:var(--t-sub2)}
+.th-wr #subInfo{color:var(--t-mute)}
+.th-wr #ovBox{background:var(--t-card);color:var(--t-ink);border:0;border-top:6px solid var(--t-sub);
+  box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.th-wr #ovTitle{color:var(--t-ink);-webkit-text-fill-color:var(--t-ink);background:none;font-family:"Oswald",sans-serif;font-style:normal;
+  font-weight:700;letter-spacing:.12em;font-size:30px}
+.th-wr #ovBody{color:var(--t-mute)} .th-wr #ovBody b,.th-wr #ovBody table{color:var(--t-ink)}
+.th-wr .btn-main{background:var(--t-sub);color:#fff;border-radius:2px;letter-spacing:.06em}
+.th-wr #info{background:rgba(255,255,255,.97);color:var(--t-ink)}
+.th-wr #info .st em{background:var(--t-paper2)} .th-wr #info .st u{background:var(--t-sub)}
+.th-wr #info .skl b{color:var(--t-sub)}
+
+/* =========================================================================
+   監督室(ホワイト × レッド)
+   ========================================================================= */
+.th-wr #club{background:var(--t-paper);color:var(--t-ink)}
+.th-wr #club .chd{background:var(--t-card);margin:-10px -12px 0;padding:12px 14px 10px;border-bottom:3px solid var(--t-sub);
+  box-shadow:0 2px 0 var(--t-gold2)}
+.th-wr #club .chd b{font-weight:900}
+.th-wr #club .chd .num b{font-weight:700;color:var(--t-sub)}
+.th-wr #club .card{background:var(--t-card);border:0;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.08);
+  position:relative;padding-top:14px}
+.th-wr #club .card::before{content:"";position:absolute;left:0;top:0;width:44%;height:4px;background:var(--t-sub);
+  clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+.th-wr #club h3{color:var(--t-ink);font-weight:900;letter-spacing:.04em}
+.th-wr #club h3 small{color:var(--t-mute)}
+.th-wr #club .next{border-left:0;background:linear-gradient(180deg,#fff,#fbf8f2)}
+.th-wr #club .next h3{color:var(--t-sub)}
+.th-wr #club .tend .ttl{background:var(--t-sub);border:0;color:#fff}
+.th-wr #club .tend .ttl b{color:#fff} .th-wr #club .tend .ttl small,.th-wr #club .tend .ttl i{color:rgba(255,255,255,.85)}
+.th-wr #club .tend .sal div{background:var(--t-paper2)}
+.th-wr #club .msg{border-left:5px solid var(--t-gold)}
+.th-wr #club .tr,.th-wr #club .tab,.th-wr #club .ints .tab{background:#fff;color:var(--t-ink);border:1px solid var(--t-rule);border-radius:2px}
+.th-wr #club .tr small,.th-wr #club .tab small{color:var(--t-mute)}
+.th-wr #club .tr.sp{background:linear-gradient(135deg,#fffaf0,#f6ead0);border-color:var(--t-gold)}
+.th-wr #club .tr.sp b{color:var(--t-gold3)}
+.th-wr #club .tab.on,.th-wr #club .ints .tab.on{background:var(--t-sub);color:#fff;border-color:var(--t-sub)}
+.th-wr #club .tab.on small{color:rgba(255,255,255,.85)}
+.th-wr #club .btn-main{background:var(--t-sub);color:#fff;font-weight:900;clip-path:polygon(2% 0,100% 0,98% 100%,0 100%)}
+.th-wr #club .btn-main:disabled{background:#cfc6b7}
+.th-wr #club .btn-sub{background:#fff;color:var(--t-mute);border:1px solid var(--t-rule)}
+.th-wr #club .tbl td{border-top:1px solid var(--t-rule)}
+.th-wr #club .tbl tr.me td{color:var(--t-sub)}
+.th-wr #club .cups tr.st-in td{color:#1f8a4c} .th-wr #club .cups tr.st-won td{color:var(--t-gold3)}
+.th-wr #club .sq .st5{color:var(--t-gold)} .th-wr #club .sq .st5.sp{color:#2a7bd6}
+.th-wr #club .sq .st5 em{background:var(--t-paper2)} .th-wr #club .sq .st5 u{background:var(--t-sub)}
+.th-wr #club .sq tr.sel td{background:#fde8eb}
+.th-wr #club .sign,.th-wr #club .kpt{background:var(--t-sub);color:#fff}
+.th-wr #club .graph em{background:var(--t-paper2)} .th-wr #club .graph u{background:#1f8a4c} .th-wr #club .graph u.neg{background:var(--t-sub)}
+.th-wr #club .hint{color:var(--t-sub)}
+.th-wr #club .ask .hint{color:var(--t-sub)}
+.th-wr #club .chipb{border-radius:2px}
+.th-wr #club .chipb.on{border-color:#fff;box-shadow:0 0 0 2px var(--t-sub)}
+.th-wr #club .pay small{color:var(--t-mute)} .th-wr #club .pay .new{background:var(--t-sub);color:#fff}
+.th-wr #club .pay .kc{max-width:150px}
+.th-wr #club .kinfo .st em{background:var(--t-paper2)} .th-wr #club .kinfo .st u{background:var(--t-sub)}
+.th-wr #club .cp{background:var(--t-paper2);color:var(--t-ink)}
+.th-wr .gr{color:#fff;background:#7d766b} .th-wr .grC{background:#2a7bd6} .th-wr .grB{background:#1f8a4c}
+.th-wr .grA{background:var(--t-gold)} .th-wr .grS{background:var(--t-sub)}
+.th-wr .rk{color:#fff;background:#7d766b} .th-wr .rkB{background:#2a7bd6} .th-wr .rkA{background:var(--t-gold)} .th-wr .rkS{background:var(--t-sub)}
+
+/* =========================================================================
+   監督室の構成(→docs/07 §7.9)。HOME をハブに、下のタブで行き来する。準備は全画面の手順
+   ========================================================================= */
+#club{padding:0!important;gap:0!important;overflow:hidden!important}
+#club .cl-main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:10px;padding:0 12px 14px}
+#club .cl-main>.chd{margin:0 -12px 2px}
+#club .cl-main>section:first-child{margin-top:12px}
+/* 下のタブ */
+#club .tabbar{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);
+  padding:0 0 env(safe-area-inset-bottom);background:var(--t-black);border-top:3px solid var(--t-sub)}
+#club .tabbar button{position:relative;height:54px;border:0;background:none;color:#8d8d8d;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#club .tabbar i{font-style:normal;font-size:17px;line-height:1}
+#club .tabbar span{font-family:"Oswald",sans-serif;font-size:10px;font-weight:700;letter-spacing:.14em}
+#club .tabbar button.on{color:#fff}
+#club .tabbar button.on::before{content:"";position:absolute;left:18%;right:18%;top:0;height:3px;background:var(--t-gold2)}
+#club .tabbar .dot{position:absolute;top:9px;right:28%;width:7px;height:7px;border-radius:50%;background:var(--t-sub3)}
+
+/* HOME の見出し */
+#club .chd{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px}
+#club .chd .emb{flex:0 0 auto}
+#club .chd>div:nth-child(2){flex:1;min-width:0}
+#club .chd .num small{font-family:"Oswald",sans-serif;letter-spacing:.14em}
+
+/* 次の試合のタイル(全体が押す面) */
+#club .tile{position:relative;background:var(--t-card);border-radius:2px;padding:12px 14px;
+  box-shadow:0 1px 0 rgba(0,0,0,.06),0 3px 10px rgba(0,0,0,.10)}
+#club .tile.next{padding:0 0 12px;overflow:hidden;cursor:pointer;margin-top:12px;
+  background:linear-gradient(170deg,#fff 0 55%,#f7f2ea 55%)}
+#club .tile.next:active{transform:scale(.99)}
+#club .nx-band{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--t-black);color:#fff;
+  clip-path:polygon(0 0,100% 0,100% 100%,3% 100%)}
+#club .nx-band b{font-size:13px;font-weight:900;font-style:italic;color:var(--t-gold2)}
+#club .nx-band em{font-style:normal;font-size:12px}
+#club .nx-band i{margin-left:auto;font-style:normal;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.1em;color:#bbb}
+#club .nx-hype{margin:10px 14px 0;font-size:13px;font-weight:900;color:var(--t-sub)}
+/* VS は中央に固定(クラブ名の長さで中心がずれないように 1fr auto 1fr) */
+#club .nx-vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:8px 14px 0}
+#club .nx-vs .me{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+#club .nx-vs .op{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-direction:row-reverse}
+#club .nx-vs b{font-family:"Oswald",sans-serif;font-size:24px;font-weight:700;letter-spacing:.04em}
+#club .nx-vs .vs{font-family:"Oswald",sans-serif;font-size:30px;font-weight:700;font-style:italic;color:var(--t-ink);
+  text-shadow:2px 2px 0 var(--t-gold2)}
+#club .nx-opp{margin:6px 14px 0;text-align:center;font-size:14px;font-weight:900}
+#club .nx-opp span{color:var(--t-gold);font-size:11px;letter-spacing:-1px}
+#club .nx-meta{margin:2px 14px 0;text-align:center;font-size:11px;color:var(--t-mute)}
+#club .nx-go{margin:10px 14px 0;text-align:right;font-size:13px;font-weight:900;color:var(--t-sub)}
+
+/* 秘書の一言 */
+#club .sec{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--t-card);
+  border-left:4px solid var(--t-gold);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+#club .sec-ic{flex:0 0 auto;font-style:normal;font-family:"Oswald",sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;
+  padding:2px 6px;background:var(--t-black);color:var(--t-gold2)}
+#club .sec p{margin:0;font-size:12.5px;line-height:1.55}
+
+/* 前の試合(要約) */
+#club .tile.last h3{margin-bottom:6px}
+#club .ls{display:flex;align-items:center;gap:12px}
+#club .ls-sc{flex:1;font-size:13px;font-weight:700;text-align:center}
+#club .ls-sc b{display:block;font-family:"Oswald",sans-serif;font-size:34px;font-weight:700;line-height:1.1}
+#club .ls-sc small{display:block;font-size:11px;color:var(--t-mute)}
+#club .ls-card{flex:0 0 74px}
+#club .tile.last ul{margin:8px 0 0;padding:0 0 0 16px;font-size:11.5px;line-height:1.6;color:var(--t-ink2)}
+
+/* 準備の手順(全画面) */
+#club .prep-top{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;
+  background:var(--t-black);color:#fff}
+#club .prep-top .x{flex:0 0 34px;height:34px;border:1px solid #444;background:none;color:#fff;font-size:18px;border-radius:2px}
+#club .steps{flex:1;display:flex;gap:4px}
+#club .steps span{flex:1;display:flex;align-items:center;gap:4px;padding:5px 6px;font-size:10.5px;font-weight:700;color:#888;
+  background:#222;clip-path:polygon(0 0,92% 0,100% 50%,92% 100%,0 100%,8% 50%)}
+#club .steps span:first-child{clip-path:polygon(0 0,92% 0,100% 50%,92% 100%,0 100%)}
+#club .steps i{font-style:normal;font-family:"Oswald",sans-serif;font-size:12px}
+#club .steps .now{background:var(--t-sub);color:#fff}
+#club .steps .done{background:#3a3a3a;color:#cfcfcf}
+#club .prep-vs{padding:7px 12px;font-size:12px;background:var(--t-card);border-bottom:1px solid var(--t-rule);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .prep-vs b{font-weight:900;margin-right:4px}
+#club .prep-vs span{color:var(--t-mute)}
+#club .cl-main.prep{padding-top:12px}
+#club .step-h{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+#club .step-h b{font-size:20px;font-weight:900}
+#club .step-h small{font-size:11px;color:var(--t-mute)}
+#club .step-h em{font-style:normal;font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;color:var(--t-sub)}
+#club .msgs{display:flex;flex-direction:column;gap:2px;padding:8px 10px;background:var(--t-card);border-left:4px solid var(--t-gold);font-size:11.5px}
+#club .prep-bot{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:6px;
+  padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);background:var(--t-card);border-top:1px solid var(--t-rule)}
+#club .prep-bot .dim{text-align:center;font-size:12px;padding:8px 0}
+#club .prep-bot .btn-main{margin:0;height:50px;font-size:18px}
+#club .prep-bot .lnk{align-self:center;color:var(--t-mute);font-size:11px}
+#club .tab:disabled{opacity:.4}
+/* CLUB の記録 */
+#club .rec{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center;margin:4px 0 6px}
+#club .rec b{display:block;font-family:"Oswald",sans-serif;font-size:24px;font-weight:700}
+#club .rec small{font-size:10px;color:var(--t-mute)}
+/* ネイビーのテーマでも読めるように、地の色だけ合わせる */
+.th-navy #club .tile,.th-navy #club .sec,.th-navy #club .prep-vs,.th-navy #club .prep-bot,.th-navy #club .msgs{background:var(--t-card);color:var(--t-ink)}
+.th-navy #club .tile.next{background:var(--t-card)}
+
+/* ---- SQUAD: 既定の陣形(→docs/07 §7.10) ---- */
+#club .sq-head{display:flex;flex-direction:column;gap:6px}
+#club .sq-head h3{margin:0;font-family:"Oswald",sans-serif;font-size:20px;font-weight:700;letter-spacing:.08em}
+#club .sq-head h3 small{margin-left:6px;font-family:system-ui,sans-serif;font-size:11px;font-weight:700;letter-spacing:0;color:var(--t-mute)}
+#club .sq-forms{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+#club .sq-forms button{height:34px;border:1px solid var(--t-rule);border-radius:2px;background:var(--t-card);color:var(--t-ink);
+  font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em}
+#club .sq-forms button.on{background:var(--t-black);border-color:var(--t-black);color:var(--t-gold2);box-shadow:inset 0 -3px 0 var(--t-sub)}
+/* ピッチ: 縦。自陣が下 */
+#club .sq-pitch{position:relative;aspect-ratio:100/122;border-radius:3px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:repeating-linear-gradient(180deg,#1f6b3d 0 10%,#237545 10% 20%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),0 3px 12px rgba(0,0,0,.18)}
+#club .sq-pitch::before{content:"";position:absolute;inset:4% 5%;border:1.5px solid rgba(255,255,255,.55);pointer-events:none}
+#club .sq-pitch .pm{position:absolute;pointer-events:none;border:1.5px solid rgba(255,255,255,.5)}
+#club .sq-pitch .pm.half{left:5%;right:5%;top:50%;height:0;border-width:1.5px 0 0}
+#club .sq-pitch .pm.circ{left:50%;top:50%;width:24%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+#club .sq-pitch .pm.pa{left:24%;right:24%;height:13%} #club .sq-pitch .pm.pa.top{top:4%;border-top:0} #club .sq-pitch .pm.pa.bot{bottom:4%;border-bottom:0}
+#club .sq-pitch .pm.ga{left:38%;right:38%;height:5%} #club .sq-pitch .pm.ga.top{top:4%;border-top:0} #club .sq-pitch .pm.ga.bot{bottom:4%;border-bottom:0}
+/* 連携の線 */
+#club .sq-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#club .sq-links .lk{stroke-linecap:round}
+#club .sq-links .l1{stroke:rgba(255,255,255,.55);stroke-width:1.5}
+#club .sq-links .l2{stroke:rgba(255,255,255,.9);stroke-width:3.5}
+#club .sq-links .l3{stroke:#f3cf6a;stroke-width:5;filter:drop-shadow(0 0 3px rgba(255,214,90,.9))}
+#club .sq-links .omen{stroke:#f3cf6a;stroke-width:2;stroke-dasharray:4 4}
+/* 選手(小さなカード) */
+#club .sqc{position:absolute;width:58px;height:46px;transform:translate(-50%,-50%);display:grid;grid-template-columns:auto 1fr;
+  grid-template-rows:20px 1fr;background:var(--t-card,#fff);color:var(--t-ink);border-radius:2px;overflow:visible;cursor:grab;
+  box-shadow:0 2px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.25);border-top:4px solid var(--cc);transition:transform .12s}
+#club .sqc.drag{z-index:5;transform:translate(-50%,-58%) scale(1.08);box-shadow:0 10px 18px rgba(0,0,0,.4);transition:none}
+#club .sqc.sel{outline:3px solid var(--t-sub);outline-offset:1px;z-index:4}
+#club .sqc .no{grid-row:1;grid-column:1;padding:0 3px 0 4px;font-style:normal;font-family:"Oswald",sans-serif;font-size:16px;font-weight:700;line-height:20px}
+#club .sqc .rl{grid-row:1;grid-column:2;justify-self:end;margin:2px 3px 0 0;padding:0 3px;height:15px;line-height:15px;border-radius:1px;
+  font-family:"Oswald",sans-serif;font-size:10px;font-weight:700;letter-spacing:.04em;background:var(--t-black);color:#fff}
+#club .sqc .rl.a0{background:#1f8a4c} #club .sqc .rl.a1{background:#b8892c} #club .sqc .rl.a2{background:var(--t-sub)}
+#club .sqc .nm{grid-row:2;grid-column:1/3;align-self:center;padding:0 3px;font-size:9.5px;font-weight:800;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+#club .sqc .mt{position:absolute;left:3px;bottom:3px;width:5px;height:5px;border-radius:50%;background:#999}
+#club .sqc .mt.m1{background:var(--t-sub)} #club .sqc .mt.m2{background:#e0a21b} #club .sqc .mt.m3{background:#4b9be0} #club .sqc .mt.m4{background:#1f8a4c}
+#club .sqc .kpb{position:absolute;left:50%;top:-11px;transform:translateX(-50%);padding:0 5px;font-style:normal;font-family:"Oswald",sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:.08em;line-height:14px;background:var(--t-gold);color:#fff;border-radius:1px;box-shadow:0 1px 0 var(--t-gold3)}
+#club .sqc.kp{box-shadow:0 0 0 2px var(--t-gold),0 3px 10px rgba(0,0,0,.3)}
+#club .sqc .sg{position:absolute;right:-5px;top:-8px;width:16px;height:16px;border-radius:50%;font-style:normal;font-size:9px;font-weight:900;
+  line-height:16px;text-align:center;background:var(--t-sub);color:#fff}
+#club .sqc.tired::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(200,16,46,.12) 5px 7px);pointer-events:none}
+#club .sqc.r-K{background:linear-gradient(135deg,#fff 0%,#f4ecd8 45%,#fff 60%,#efe3c6 100%)}
+#club .sqc.r-L{background:linear-gradient(135deg,#1a1a1a,#3a3226);color:#f3cf6a}
+/* 控え */
+#club .sq-bench{display:flex;align-items:center;gap:6px;padding:12px 8px 8px;background:var(--t-paper2);border-radius:2px;overflow-x:auto}
+#club .sq-bench .lbl{flex:0 0 auto;writing-mode:vertical-rl;font-size:10px;font-weight:900;letter-spacing:.2em;color:var(--t-mute)}
+#club .sq-bench .sqc{position:relative;flex:0 0 56px;transform:none;left:auto;top:auto;cursor:pointer}
+#club .sq-bench .sqc.sel{transform:translateY(-3px)}
+/* 選んだ選手 */
+#club .sq-hint{margin:0;font-size:11px;color:var(--t-mute);text-align:center}
+#club .sq-det{display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--t-card);border-left:4px solid var(--t-sub);
+  box-shadow:0 1px 6px rgba(0,0,0,.08)}
+#club .sd-top{display:flex;align-items:baseline;gap:6px}
+#club .sd-top .no{font-style:normal;font-family:"Oswald",sans-serif;font-size:22px;font-weight:700}
+#club .sd-top b{font-size:15px;font-weight:900}
+#club .sd-top small{font-size:11px;color:var(--t-mute)}
+#club .sd-top .rlx{margin-left:auto;padding:1px 6px;font-family:"Oswald",sans-serif;font-size:13px;font-weight:700;background:var(--t-black);color:#fff}
+#club .sd-top .rlx.a0{background:#1f8a4c} #club .sd-top .rlx.a1{background:#b8892c} #club .sd-top .rlx.a2{background:var(--t-sub)}
+#club .sd-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:11.5px}
+#club .sd-row .st5{color:var(--t-gold);letter-spacing:-1px}
+#club .sd-row em{display:inline-block;vertical-align:middle;width:40px;height:4px;margin-left:4px;background:var(--t-paper2);position:relative}
+#club .sd-row em u{position:absolute;left:0;top:0;bottom:0;background:var(--t-gold)}
+#club .sd-row .fat.warn{color:var(--t-sub);font-weight:900}
+#club .sd-act{display:flex;gap:8px}
+#club .sd-act button{flex:1;height:38px;border:0;border-radius:2px;background:var(--t-gold);color:#fff;font-family:inherit;font-size:14px;font-weight:900}
+#club .sd-act button.ghost{background:none;border:1px solid var(--t-rule);color:var(--t-ink2);font-size:12px;font-weight:700}
+#club .sd-act .kpnow{flex:1;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;font-weight:700;letter-spacing:.1em;
+  color:var(--t-gold);border:1px solid var(--t-gold)}
+/* 連携の凡例 */
+#club .lklg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin:0;font-size:11.5px}
+#club .lklg i{display:inline-block;vertical-align:middle;width:22px;margin-right:4px;border-top:2px solid #6b8f78}
+#club .lklg i.l2{border-top-width:4px;border-color:#2c5a3d} #club .lklg i.l3{border-top-width:5px;border-color:#e2b23d}
+#club .lklg i.omen{border-top:2px dashed #e2b23d}

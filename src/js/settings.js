@@ -6,6 +6,16 @@
    ========================================================================= */
 
 const PACK_KEY="wcc_f.pack.v1";
+/** テーマ(→docs/07 §7.8)。色は theme.css のトークンで決まる。ここは名前と体のクラスだけ */
+const THEMES={ wr:"ホワイト × レッド", navy:"ネイビー × ゴールド" };
+const THEME_KEY="wcc_f.theme";
+function applyTheme(id){
+  if(!THEMES[id])id="wr";
+  Object.keys(THEMES).forEach(k=>document.body.classList.toggle("th-"+k,k===id));
+  try{ localStorage.setItem(THEME_KEY,id); }catch(e){}
+  return id;
+}
+function storedTheme(){ try{ return localStorage.getItem(THEME_KEY)||"wr"; }catch(e){ return "wr"; } }
 
 /** 実名パックの形を確かめる。{ names:{カードid:名前}, teams:{クラブid:{name}} } */
 function checkPack(d){
@@ -57,6 +67,8 @@ function settingsHtml(){
   if(!CL.set)return '<footer class="cft"><button class="btn btn-sub" data-act="set">設定・データ</button></footer>';
   const S=CL.S, kb=(JSON.stringify(S).length/1024).toFixed(1);
   return '<section class="card set"><h3>設定・データ <small><button class="lnk" data-act="set">閉じる</button></small></h3>'+
+    '<h4>テーマ</h4><div class="tabs">'+Object.keys(THEMES).map(k=>'<button class="tab'+(document.body.classList.contains("th-"+k)?' on':'')+
+      '" data-act="theme" data-v="'+k+'">'+THEMES[k]+'</button>').join("")+'</div>'+
     '<h4>実名パック</h4>'+
     '<p class="dim">'+(packActive()?'読み込み済み('+Object.keys(PACK.names).length+'人)。この端末の中だけで実名を表示している'
       :'未読み込み(偽名で表示中)。パックのファイル(.json)を選ぶと、この端末の中だけ実名で表示する')+'</p>'+
@@ -75,8 +87,9 @@ function settingsHtml(){
     '</section>';
 }
 function settingsMsg(t){ CL.setMsg=t; showClub(true); }
-function onSettingsClick(act){
+function onSettingsClick(act,b){
   const S=CL.S;
+  if(act==="theme"){ applyTheme(b.dataset.v); showClub(true); return true; }
   if(act==="set"){ CL.set=!CL.set; CL.setMsg=""; CL.copyText=""; showClub(true); return true; }
   if(act==="unpack"){
     try{ localStorage.removeItem(PACK_KEY); }catch(e){}

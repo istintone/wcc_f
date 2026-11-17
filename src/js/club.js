@@ -146,7 +146,7 @@ function newCups(){
 function newCareer(seed){
   const S={ ver:1, seed:seed>>>0, term:1, played:0, slot:0, cyc:1, grade:1, money:0, money0:0,
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
-    layout:{}, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
+    layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection() };
   const W=genWorld(S.seed);
@@ -264,7 +264,7 @@ function declineCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].st="qu
 /** 自分のクラブの定義。前の試合の最後の配置と KP を引き継ぐ(カードは盤面に置いたまま) */
 function playerDef(S){
   // 登録選手(S.sq)から作る。先頭11枚が先発で、並びは陣形の枠の順(→pool.js)
-  const def=makeTeamDef("azr",false), f=FORMS[TEAMS.azr.form], sq=S.sq||startSquad();
+  const def=makeTeamDef("azr",false), f=FORMS[S.form]||FORMS[TEAMS.azr.form], sq=S.sq||startSquad();
   def.xi=sq.slice(0,11).map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] }));
   def.bench=sq.slice(11).map(id=>CARDS[id]);
   def.xi.forEach(s=>{ const l=S.layout[s.card.id]; if(l){ s.h=l[0]; s.x=l[1]; } });
@@ -435,6 +435,7 @@ function migrate(S){
   if(S.tend===undefined)S.tend=null;
   if(S.termOver&&!S.tend)endTerm(S);
   if(!S.layout)S.layout={};
+  if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
   return S;
 }
