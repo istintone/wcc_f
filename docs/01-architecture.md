@@ -86,7 +86,8 @@ python build.py --dist   →  dist/
     icon-192.png / icon-512.png / apple-touch-icon.png   仮のアイコン(build.py が描く)
 ```
 
-- `dist/` をそのまま静的ホスティング(GitHub Pages など)に置けば動く。**置き先はまだ決めていない**(→docs/03 D9)
+- **公開先は GitHub Pages**(https://istintone.github.io/wcc_f/)。`python tools/publish.py` が検証 → `dist/` の書き出し →
+  `gh-pages` ブランチへの push までを行う(gh-pages は公開用の中身だけ。履歴は持たない)
 - Service Worker は `http(s)` で開いたときだけ登録する。`file://` で開いた index.html はいままでどおり動く
 - **セーブは端末の中**(localStorage)。設定・データから**ファイルに書き出す / テキストでコピーする / 読み込む**ができる。
   ブラウザのデータを消すとセーブも消えるので、機種変更の前は書き出す

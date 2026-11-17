@@ -50,6 +50,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |
 | 実在クラブ・選手を直す・足す | `tools/squads.local.txt`(実名・Git管理外)→ `python tools/gen_cards.py` → `src/js/realcards.js`(偽名・生成物)と `packs/real.local.json`。**realcards.js は手で編集しない** |
 | 公開用を作る | `python build.py --dist` → `dist/`(index.html・manifest・sw.js・アイコン)。実名は入らない |
+| 公開する(外に出る操作。決めたときだけ) | `python tools/publish.py` → https://istintone.github.io/wcc_f/ |
 | 設定・データの画面を変える | `src/js/settings.js`(実名パックの読み込み・セーブの書き出しと読み込み) |
 | 実名で遊ぶ(手元だけ) | `python build.py --real` → `index.local.html`(Git管理外。**公開しない**) |
 | カードの一覧・レアリティ・払い出しの率を変える | `pool.js`(`RARITY` / `POOL`)と `data.js` の `TUNING.pack` → `clubtest.js` の ⑦。**一覧の作り方を変えるとカードの id が指す選手が変わる**(セーブのコレクションがずれる) |
