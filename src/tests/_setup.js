@@ -1,0 +1,21 @@
+// エンジンを Node に読み込む。DOM に触るファイル(render/board/main)は入れない。
+// 並びは build.py の JS_FILES のうち DOM に触らない8つと同じにする。
+const fs=require("fs"), path=require("path");
+const ENGINE_FILES=["data.js","trainings.js","realcards.js","engine.js","club.js","pool.js","grow.js","term.js"];
+const EXPORTS=["TUNING","CARDS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","SKILLS","AXIS_LABEL",
+  "createMatch","stepMatch","orderMatch","finishMatch","simulateMatch",
+  "makeTeamDef","roleAt","aptOf","matchMin","teamOf",
+  "COMPS","CUP_IDS","SCHED","genWorld","newCareer","worldOf","nextFixture","fixtureMatch","declineCup",
+  "applyResult","newTerm","playerDef","TRAIN_SP","STATS","MOT_LABEL","LOUNGE_BEST",
+  "trainOptions","trainLabel","trainDesc","doTraining","doLounge","doMeeting","doIndTrain","doTalk","skipComm","loungeInfo","meetInfo",
+  "commLeft","teamFatigue","INT_LABEL",
+  "POOL","RARITY","RAR_ORDER","REAL_IDS","PACK","drawCard","payout","swapSquad","moveSquad","startSquad",
+  "TITLES","titleOf","termFacts","followers","facLevel","endTerm","startNextTerm",
+  "compatOf","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY"];
+
+function load(){
+  const src=ENGINE_FILES
+    .map(f=>fs.readFileSync(path.join(__dirname,"..","js",f),"utf8")).join("\n\n");
+  return new Function(src+"\n;return {"+EXPORTS.join(",")+"};")();
+}
+module.exports={ load };

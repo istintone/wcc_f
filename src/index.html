@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0e1320">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="wcc_f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<title>wcc_f</title>
+<style>
+/*__CSS__*/
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="tm tm-h"><i id="hudHc" class="chip"></i><b id="hudH">HOME</b></div>
+    <div class="sc"><span id="hudScore">0 - 0</span><small id="hudClock">0'</small></div>
+    <div class="tm tm-a"><b id="hudA">AWAY</b><i id="hudAc" class="chip"></i></div>
+  </header>
+  <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div>
+    <div id="info"><div id="infoBody"></div>
+      <div class="row"><button id="infoKp" class="btn"></button><button id="infoClose" class="btn">閉じる</button></div>
+    </div>
+  </div>
+  <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
+  <div id="ticker">&nbsp;</div>
+  <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
+  <div id="bench"></div>
+  <div id="tac">
+    <button id="btnKp" class="btn btn-ins btn-kp">KP<small>選手をタップ</small></button>
+    <button id="btnUp" class="btn btn-ins">上げろ<small>ライン ▶</small></button>
+    <button id="btnDown" class="btn btn-ins">下げろ<small>◀ ライン</small></button>
+    <button id="btnLeft" class="btn btn-ins">左サイド<small>▲ 上側</small></button>
+    <button id="btnRight" class="btn btn-ins">右サイド<small>▼ 下側</small></button>
+    <button id="btnPress" class="btn btn-ins">プレス<small>奪いに行け</small></button>
+  </div>
+  <div id="ctl">
+    <button id="btnPlay" class="btn">▶</button>
+    <button id="btnSpeed" class="btn">×1</button>
+    <span id="subInfo">交代 0/3</span>
+    <button id="btnShoot" class="btn btn-shoot">SHOOT</button>
+  </div>
+  <div id="club"></div>
+  <div id="ov"><div id="ovBox"><h1 id="ovTitle"></h1><div id="ovBody"></div><button id="ovBtn" class="btn btn-main"></button></div></div>
+</div>
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>

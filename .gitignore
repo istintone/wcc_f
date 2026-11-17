@@ -1,0 +1,20 @@
+# 実名を含むもの。**公開リポジトリに出さない**(→docs/01 §1.4)
+packs/*.local.json
+*.local.md
+*.local.txt
+index.local.html
+tools/out/
+
+# OS / エディタ
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+
+# 公開用の書き出し(python build.py --dist)。公開の仕方が決まるまで管理外
+dist/
+
+# 依存 / 作業用
+node_modules/
+tmp/
+*.log
