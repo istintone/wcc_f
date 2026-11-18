@@ -10,7 +10,8 @@
 
 /** 任期中の記録(称号の条件に使う) */
 function newTermStats(){
-  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0 };
+  // awake・gold … この任期に起きた覚醒・黄金線の数(ついてきた選手の★・線は数えない)/ pow0 … 任期の始めのチーム力
+  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null };
 }
 
 /**
@@ -25,8 +26,8 @@ const TITLES=[
     ok:x=>x.sWins>=1&&x.lgWins>=2 },
   { id:"master",  name:"名将",         grade:3, bonus:70,  need:"タイトル8つ以上、勝率 60% 以上",
     ok:x=>x.titles>=8&&x.wr>=0.60 },
-  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"5人以上を覚醒させた",
-    ok:x=>x.awake>=5 },                        // 集中育成では3人ほどが普通(→docs/08 §8.5)
+  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"8人以上を覚醒させ、勝ち越した",
+    ok:x=>x.awake>=8&&x.w>x.l },               // 集中育成では3人ほどが普通(→docs/08 §8.5)。負け越しでは付かない(ブラッシュアップ会議 →docs/09)
   { id:"magic",   name:"魔術師",       grade:2, bonus:50,  need:"KP を30回以上替え、勝率 55% 以上",
     ok:x=>x.kpCh>=30&&x.wr>=0.55 },
   { id:"heir",    name:"伝承者",       grade:2, bonus:40,  need:"黄金線を10本以上つないだ",
@@ -54,8 +55,9 @@ function termFacts(S){
     sWins:t.filter(x=>COMPS[x.comp].grade==="S").length,
     lgWins:t.filter(x=>x.comp==="LG").length,
     koWins:t.filter(x=>x.comp!=="LG"&&x.comp!=="W4").length,
-    awake:pl.filter(g=>g.is>=5).length,
-    gold:Object.values(S.g.links).filter(l=>l.lv>=3).length,
+    // この任期に起きた数で数える(前の任期からついてきた覚醒済みの選手や黄金線は入れない。→docs/09 第2弾)
+    awake:S.ts.awake!=null?S.ts.awake:pl.filter(g=>g.is>=5).length,
+    gold:S.ts.gold!=null?S.ts.gold:Object.values(S.g.links).filter(l=>l.lv>=3).length,
     money:S.biz?S.biz.earn:S.money-S.money0,   // 稼いだ額(施設やスタジアムに使っても減らない)
     kpCh:S.ts.kpCh, subs:S.ts.subs, used:S.ts.used.length, topW:S.ts.topW, psoW:S.ts.psoW, psoL:S.ts.psoL };
 }

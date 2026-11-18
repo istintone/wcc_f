@@ -222,6 +222,7 @@ function sceneCard(id,isNew,go){
       '<div class="pk-back"><b>wcc<span>_</span>f</b><i></i></div>'+
       '<div class="pk-front r-'+r+'">'+cardHtml(id,"m")+'</div>'+
     '</div></div>'+(r==="L"?'<div class="rays"></div>':'')+'</div>'+
+    '<div class="pk-mouth"><i></i></div>'+
     '<div class="pk-msg">カードをタッチしてめくる</div>',
     { lock:600 });
   SC.promote=()=>{

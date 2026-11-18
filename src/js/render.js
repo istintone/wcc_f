@@ -6,7 +6,7 @@
    奥にはスタンドと観客(高さはスタジアムの段 →club.js の S.biz.stad)。
    ========================================================================= */
 
-const RV={ cv:null, ctx:null, w:0, h:0, vis:new Map(), ball:[0.5,0.5], lift:0, crowd:null };
+const RV={ cv:null, ctx:null, w:0, h:0, vis:new Map(), ball:[0.5,0.5], lift:0, crowd:null, bg:null, bgKey:"" };
 
 const scrOf=(side,h,x)=>side==="H"?[h,x/100]:[1-h,1-x/100];
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -62,8 +62,20 @@ function drawStands(c,W,H){
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
   for(let i=0;i<4;i++)c.fillText(sp,W*(0.125+i*0.25),yFar-2.5);
 }
+/** 芝・ライン・スタンドは変わらないので、裏のキャンバスに描いておき毎フレーム貼るだけにする(大きさ・スタジアム・スポンサーが変わったら描き直す) */
 function drawPitch(){
-  const c=RV.ctx, W=RV.w, H=RV.h;
+  const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
+  const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp;
+  if(RV.bgKey!==key){
+    const off=RV.bg||(RV.bg=document.createElement("canvas"));
+    off.width=RV.cv.width; off.height=RV.cv.height;
+    const oc=off.getContext("2d"); oc.setTransform(dpr,0,0,dpr,0,0);
+    drawPitchTo(oc,W,H); RV.bgKey=key;
+  }
+  RV.ctx.save(); RV.ctx.setTransform(1,0,0,1,0,0); RV.ctx.drawImage(RV.bg,0,0); RV.ctx.restore();
+}
+function drawPitchTo(c,W,H){
   // 毎回、画面全体を塗り直す(遠近で芝が届かない左右の外側に、前の場面のボールや選手が残らないように)
   c.fillStyle="#17603a"; c.fillRect(0,0,W,H);
   drawStands(c,W,H);

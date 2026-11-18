@@ -96,6 +96,7 @@ function growCard(S,card){
     c[k]=clamp(base+(g.up[k]||0),1,STAT_MAX);
   }
   c.cond=G0.mot.mul[g.mot];
+  c.gs=g.is; c.gm=g.mot;                     // 盤面に出す★とやる気(見た目だけ)
   c.buffK=1+G0.sp.buff*g.ss;
   c.ss=g.ss; c.is=g.is;
   c.fat0=g.fat;                              // 練習の疲れを残したまま試合を始める
@@ -167,15 +168,17 @@ function linkExp(S,a,b,v,cap){
 }
 /** 試合のあと、たまった経験で連携の段を上げる(黄金線=3 はここでは上がらない) */
 function settleLinks(S,out){
-  const L=TUNING.grow.link;
+  const L=TUNING.grow.link; let thin=0;
   for(const k in S.g.links){
     const l=S.g.links[k], p=k.split("|"), cap=Math.min(l.cap||0,2);
     while(l.lv<cap&&l.exp>=L.need[l.lv]){
       l.exp-=L.need[l.lv]; l.lv++;
+      if(l.lv===1){ thin++; continue; }       // 薄線はまとめて1行にする(知らせが埋もれないように)
       out.push(nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が"+LINK_LABEL[l.lv]+"に");
       newsOf("link",[p[0],p[1]],out);
     }
   }
+  if(thin)out.push("新しい連携(薄線)が "+thin+" 組できた");
 }
 /** いま盤面に並べている11人(前の試合の最後の配置。無ければクラブの既定) */
 function squadXi(S){
@@ -204,7 +207,8 @@ function doTraining(S,i,intensity){
       const g=S.g.pl[id];
       g.ie+=(I.spTrain+(e.ind||0))*k*growK(id)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
-      if(e.sp)g.se+=e.sp*G0.sp.train*k*facK(S,"tact");
+      // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
+      if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
     }
     if(e.link){
       const xi=squadXi(S);
@@ -471,6 +475,7 @@ function awaken(S,id,rng,out){
   }
   g.is=5; g.q=false; g.ie=0;
   out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
 /**
@@ -505,6 +510,7 @@ function afterMatchGrowth(S,fx,res){
       const k=cand[Math.floor(rng()*cand.length)], l=S.g.links[k], p=k.split("|");
       l.lv=3; l.gold=false;
       out.push("✨ "+nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が黄金の輝きに");
+      if(S.ts&&S.ts.gold!=null)S.ts.gold++;
       newsOf("gold",[p[0],p[1]],out);
     }
   }
@@ -674,4 +680,11 @@ function secFollow(S,drops,ups,out,salt,plus){
   if(!names.length)return false;
   out.push("💬 秘書のフォロー: "+secOf(S).name+"「"+secSay(S,"follow",{ n:names.join("・") })+"」(やる気が戻った)");
   return true;
+}
+
+/** チーム力 = 先発11人の、育成を反映した能力の合計の平均(→docs/09 第2弾)。任期の始めからの伸びを見せる */
+function teamPower(S){
+  const xi=S.sq.slice(0,11); let t=0;
+  for(const id of xi){ const c=growCard(S,CARDS[id]); t+=STATS.reduce((a,k)=>a+c[k],0); }
+  return t/xi.length;
 }

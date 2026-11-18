@@ -332,7 +332,9 @@ function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
   if(G.capT>0){ G.capT-=dt; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
   if(G.playing&&!capOn())advance(dt*G.speed);
-  drawFrame(G,dt);
+  // 監督室や場面に隠れている間は描かない(電池)。試合の画面が見えている間だけ
+  const hidden=document.getElementById("club").classList.contains("on")||document.getElementById("scene").classList.contains("on");
+  if(!hidden)drawFrame(G,dt);
   // 攻め込むほど歓声が大きい(どちらのゴールに近いか)
   if(G.playing&&G.M&&G.M.ball)sndCrowdLevel(Math.max(0,(G.M.ball.h-0.62)/0.38));
   requestAnimationFrame(frame);
@@ -358,6 +360,8 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("replay").addEventListener("click",skipReplay);
+  // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
+  document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);
   $("infoClose").addEventListener("click",hideInfo);
   $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
   $("subYes").addEventListener("click",()=>answerSub(true));
@@ -368,7 +372,9 @@ function boot(){
     pickKp(id); showInfo(id);
   });
   document.addEventListener("visibilitychange",()=>{
-    if(document.hidden&&G.playing)setPlaying(false);
+    // 裏に回ったら止め、戻ったら中継の字幕「TOUCH で再開」を出す(一時停止ボタンは無いので、ここで必ず戻れるようにする)
+    if(document.hidden&&G.playing){ setPlaying(false); G.resume=true; }
+    if(!document.hidden&&G.resume&&!G.M.over&&!capOn())overlay("中継再開",'<small>TOUCH で再開</small>',0,()=>{ G.resume=false; setPlaying(true); });
     sndSuspend(document.hidden);               // 裏に回ったら音を止め、戻ったら鳴らせる状態に戻す
   });
   // iOS のピンチ・ダブルタップ拡大を止める

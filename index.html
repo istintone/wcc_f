@@ -1266,6 +1266,94 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 
 /* 対戦カード: 画面の高さの中央にそろえる */
 .sc-vs{justify-content:center!important;gap:16px}
+
+/* ---- ブラッシュアップ会議 第1弾(→docs/09) ---- */
+/* カードの文字が重ならないように: レア名は右端の細い帯、能力の列は少し下へ、スキル名はカードNo. の手前まで */
+.kc .k-rar{right:2.5%;letter-spacing:.04em;font-size:7px}
+.kc-m .k-rar{font-size:9px}
+.kc-m .k-st{top:36%;right:12%}
+.kc .k-sk{right:24%}
+/* 十字: 消えているボタンは暗い黄色(ランプが消えた色)、点いたら明るく光らせる。中央(プレス)も同じ決まり */
+.th-wr #pad .tac{background:linear-gradient(180deg,#a8923f,#7d6a24 60%,#5e4f17);color:#1d1600;box-shadow:0 4px 0 #3b3008,inset 0 1px 0 rgba(255,255,255,.25)}
+.th-wr #pad .tac.md{background:radial-gradient(circle at 50% 35%,#a84a43,#7a1622 65%,#560d17);color:#f3d6d6}
+.th-wr #pad .tac.on{color:#2a1d00;background:linear-gradient(180deg,#fff6c2,#ffd84a 55%,#f2b822);
+  box-shadow:0 4px 0 #8a5c06,0 0 16px rgba(255,216,74,.95),inset 0 1px 0 #fff}
+.th-wr #pad .tac.md.on{color:#fff;background:radial-gradient(circle at 50% 35%,#ffb3a8,#ff3b30 55%,#c8102e);box-shadow:0 4px 0 #5e0614,0 0 16px rgba(255,80,60,.95)}
+.th-wr #pad .tac.on::after{content:"";position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 6px #fff}
+.th-wr #pad .tac{position:relative}
+/* 準備: コミュニケーションが残っている間の「試合へ」は控えめ */
+#club .prep-bot .go-soft{background:transparent;color:var(--t-sub);border:2px solid var(--t-sub);font-size:13px}
+/* CARDS: 登録中の印は角の小さい札に */
+.kc.insq .k-top::after{content:none}
+.kc.insq::before{content:"登録";position:absolute;left:6%;bottom:27%;z-index:7;padding:0 4px;font-size:7px;font-weight:900;line-height:10px;color:#fff;background:rgba(18,18,18,.85)}
+/* HOME: スポンサーの1行と、契約更新の帯 */
+#club .sp-mini,#club .sp-bar{display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;padding:9px 12px;border:1px solid var(--t-rule);background:var(--t-card);color:var(--t-ink)}
+#club .sp-mini small{flex:1;min-width:0;font-size:11px;color:var(--t-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sp-mini .logo{flex:none;padding:1px 7px;font-size:11.5px;font-weight:900;border:2px solid var(--t-ink);transform:skewX(-8deg)}
+#club .sp-mini .logo.r4,#club .sp-mini .logo.r5{background:var(--t-gold2)}
+#club .sp-bar{border-left:4px solid var(--t-gold);font-size:12.5px;font-weight:700}
+#club .sp-mini b,#club .sp-bar b{margin-left:auto;color:var(--t-sub);font-size:16px}
+
+/* ---- 育った分を盤面で見せる(→docs/09 第2弾) ---- */
+#club .sqc .gs{position:absolute;left:-4px;top:-8px;font-style:normal;font-size:8.5px;font-weight:900;line-height:12px;padding:0 3px;
+  color:#2a1d00;background:#ffe28a;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+#club .sqc .gs.aw{background:linear-gradient(90deg,#ff7ac8,#79d8ff,#ffe36e);color:#1c1430}
+.cd .gsm{position:absolute;left:-6px;top:-7px;z-index:3;font-size:7.5px;font-weight:900;line-height:10px;padding:0 2px;color:#2a1d00;background:#ffe28a;border-radius:2px}
+.cd .gsm.aw{background:linear-gradient(90deg,#ff7ac8,#79d8ff,#ffe36e)}
+.cd .mtm{position:absolute;right:2px;top:16px;width:6px;height:6px;border-radius:50%;background:#999;box-shadow:0 0 0 1px rgba(255,255,255,.8)}
+.cd .mtm.m0{background:#555} .cd .mtm.m1{background:#c8102e} .cd .mtm.m2{background:#e0a21b} .cd .mtm.m3{background:#4b9be0} .cd .mtm.m4{background:#1f8a4c}
+#club .chd .num.pw b i{color:#1f8a4c;font-size:10px}
+/* ★の札をカードの外側に出す(枠の外を描く)。役割の帯は上の角を丸める */
+#board .cd,#bench .cd{overflow:visible}
+.cd .rl{border-radius:5px 5px 0 0}
+
+/* =========================================================================
+   ブラッシュアップ会議 第3弾(→docs/09)
+   ========================================================================= */
+/* 準備: コミュニケーションの相手を選ぶ盤面 */
+#club .cm-board{margin:6px 0 4px}
+#club .cm-pitch{aspect-ratio:100/118}
+#club .cmt{position:absolute;width:62px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;padding:0 0 3px;
+  border:0;border-radius:4px;background:#fff;color:#121212;box-shadow:0 2px 5px rgba(0,0,0,.35);cursor:pointer;line-height:1.1;overflow:visible}
+#club .cm-bench{display:flex;gap:5px;justify-content:center;margin-top:6px}
+#club .cm-bench .cmt{position:relative;transform:none;flex:0 0 62px}
+#club .cmt .rl{width:100%;font-size:9px;font-weight:800;color:#fff;background:#1f8a4c;border-radius:4px 4px 0 0;padding:1px 0}
+#club .cmt.gk .rl{background:#c48a12} #club .cmt.df .rl{background:#1d5fbf} #club .cmt.fw .rl{background:#c8102e}
+#club .cmt .no{font-style:normal;font-family:"Oswald",sans-serif;font-size:15px;font-weight:700}
+#club .cmt .nm{font-size:8.5px;max-width:58px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .cmt small{font-size:8px;color:#1d5fbf;font-weight:700;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis}
+#club .cmt.on{outline:3px solid var(--t-gold2);outline-offset:1px;box-shadow:0 0 12px rgba(242,193,78,.9)}
+#club .cmt.inj{opacity:.75} #club .cmt.inj .no::after{content:"+";color:#c8102e;margin-left:2px}
+#club .cmt .sg{position:absolute;right:-6px;top:-7px;font-style:normal;font-size:10px;font-weight:900;width:15px;height:15px;line-height:15px;border-radius:50%;background:var(--t-sub);color:#fff}
+#club .cmt .gs{position:absolute;left:-6px;top:-7px;font-style:normal;font-size:8px;font-weight:900;padding:0 3px;line-height:12px;background:#ffe28a;color:#2a1d00;border-radius:2px}
+#club .cmt .gs.aw{background:linear-gradient(90deg,#ff7ac8,#79d8ff,#ffe36e)}
+
+/* カード: ポーズの絵・クラブの色の帯・エンブレム */
+.kc .k-pose{position:absolute;left:8%;right:8%;bottom:0;width:84%;height:96%}
+.kc.r-B .k-pose .hd,.kc.r-B .k-pose .lg{stroke:#d8d8d8;fill:#d8d8d8}
+.kc.r-B .k-pose .lg{fill:none}
+.kc .k-name{background:color-mix(in srgb,var(--tc) 72%,#000)}
+.kc .k-emb{position:absolute;right:13%;top:4%;z-index:3;line-height:0;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.kc-m .k-emb{right:12%;top:4%}
+.kc.r-L .k-name{background:#121212}
+
+/* 排出: 暗い店内の地に、下の払い出し口からカードがせり上がる */
+.th-wr .sc-card,.sc-card{background:radial-gradient(ellipse at 50% 38%,#2a3350 0%,#10152a 55%,#05070d 100%)}
+.th-wr .pk-head b{color:#ffe28a} .th-wr .pk-head small{color:#bcd2f2}
+.th-wr .pk-msg{color:#eef1f6} .th-wr .pk-msg small{color:#ffe28a}
+.th-wr .pk-msg .rar.r-B{color:#e8ebf2} .th-wr .pk-msg .rar.r-W{color:#bcd2f2}
+.pk-mouth{position:relative;z-index:3;width:250px;height:26px;margin-top:-6px;border-radius:6px;
+  background:linear-gradient(180deg,#3a3f4c,#14161c);box-shadow:0 6px 14px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18)}
+.pk-mouth i{position:absolute;left:12%;right:12%;top:9px;height:6px;border-radius:3px;background:#000;box-shadow:inset 0 2px 3px rgba(0,0,0,.9)}
+.pk-card{animation:cardRise .9s cubic-bezier(.2,1.1,.4,1) both}
+@keyframes cardRise{from{transform:translateY(70%);clip-path:inset(0 0 70% 0)}to{transform:none;clip-path:inset(0 0 0 0)}}
+.om-L .pk-card:not(.open){animation:cardRise .9s cubic-bezier(.2,1.1,.4,1) both,shake .18s 1s linear infinite}
+/* 中サイズのカードは、絵を左に寄せて右の能力の列と重ならないように */
+.kc-m .k-pose{left:2%;right:auto;width:70%}
+.kc.r-K .k-name{background:linear-gradient(90deg,color-mix(in srgb,var(--tc) 72%,#000) 55%,#8a5cd6)}
+/* 準備の盤面は少し低く(GK と控えまで画面に収める) */
+#club .cm-pitch{aspect-ratio:100/96}
+#club .cm-pitch .cmt{padding-bottom:2px}
 </style>
 </head>
 <body>
@@ -3665,20 +3753,35 @@ const SAVE_BAD_KEY="wcc_f.save.bad";        // 読めなかったセーブの退
 function rawSave(store){ try{ return store.getItem(SAVE_KEY); }catch(e){ return null; } }
 /** 読めなかったセーブを退避する。退避できたら true */
 function backupSave(store,raw){
-  try{ store.setItem(SAVE_BAD_KEY,raw); return store.getItem(SAVE_BAD_KEY)===raw; }catch(e){ return false; }
+  // 前に退避したものを押し出して、新しいものを先頭に置く(最大3件。SAVE_BAD_KEY が最新)
+  try{
+    const b1=store.getItem(SAVE_BAD_KEY+".1");
+    if(b1!=null)store.setItem(SAVE_BAD_KEY+".2",b1);
+    const b0=store.getItem(SAVE_BAD_KEY);
+    if(b0!=null&&b0!==raw)store.setItem(SAVE_BAD_KEY+".1",b0);
+    store.setItem(SAVE_BAD_KEY,raw); return store.getItem(SAVE_BAD_KEY)===raw;
+  }catch(e){ return false; }
 }
 /** 端末に書かない保存先(保存できない環境・退避できなかったとき) */
 function memStore(){ return { m:{}, setItem(k,v){ this.m[k]=v; }, getItem(k){ return k in this.m?this.m[k]:null; }, removeItem(k){ delete this.m[k]; } }; }
+/** 保存する。直前のセーブは1つ前の世代(SAVE_KEY.prev)に回してから書く */
 function saveCareer(store,S){
-  try{ store.setItem(SAVE_KEY,JSON.stringify(S)); return true; }catch(e){ return false; }
-}
-function loadCareer(store){
   try{
-    const t=store.getItem(SAVE_KEY);
-    if(!t)return null;
-    const S=JSON.parse(t);
-    return S&&S.ver===1?migrate(S):null;
-  }catch(e){ return null; }
+    const old=store.getItem(SAVE_KEY);
+    if(old)store.setItem(SAVE_KEY+".prev",old);
+    store.setItem(SAVE_KEY,JSON.stringify(S)); return true;
+  }catch(e){ return false; }
+}
+function parseSave(t){ try{ const S=t?JSON.parse(t):null; return S&&S.ver===1?migrate(S):null; }catch(e){ return null; } }
+/** 読む。読めなければ1つ前の世代から(S.fromPrev が付く) */
+function loadCareer(store){
+  let t=null, p=null;
+  try{ t=store.getItem(SAVE_KEY); p=store.getItem(SAVE_KEY+".prev"); }catch(e){ return null; }
+  const S=parseSave(t);
+  if(S||!t)return S;
+  const P=parseSave(p);
+  if(P)P.fromPrev=true;
+  return P;
 }
 /**
  * 古いセーブに、あとから増えた項目を補う。**項目を足したら、ここにも足す**。
@@ -3696,6 +3799,7 @@ function migrate(S){
   if(S.last&&S.last.card&&!CARDS[S.last.card])S.last.card=null;
   S.g=S.g?migrateGrowth(S.g,S.sq):newGrowth(S.sq);
   if(!S.ts)S.ts=newTermStats();
+  if(S.ts.awake===undefined){ S.ts.awake=null; S.ts.gold=null; S.ts.pow0=null; }   // 途中の任期は前の数え方のまま
   if(S.money0==null)S.money0=0;
   if(!S.career)S.career=[];
   if(S.salary==null)S.salary=0;
@@ -4142,6 +4246,7 @@ function growCard(S,card){
     c[k]=clamp(base+(g.up[k]||0),1,STAT_MAX);
   }
   c.cond=G0.mot.mul[g.mot];
+  c.gs=g.is; c.gm=g.mot;                     // 盤面に出す★とやる気(見た目だけ)
   c.buffK=1+G0.sp.buff*g.ss;
   c.ss=g.ss; c.is=g.is;
   c.fat0=g.fat;                              // 練習の疲れを残したまま試合を始める
@@ -4213,15 +4318,17 @@ function linkExp(S,a,b,v,cap){
 }
 /** 試合のあと、たまった経験で連携の段を上げる(黄金線=3 はここでは上がらない) */
 function settleLinks(S,out){
-  const L=TUNING.grow.link;
+  const L=TUNING.grow.link; let thin=0;
   for(const k in S.g.links){
     const l=S.g.links[k], p=k.split("|"), cap=Math.min(l.cap||0,2);
     while(l.lv<cap&&l.exp>=L.need[l.lv]){
       l.exp-=L.need[l.lv]; l.lv++;
+      if(l.lv===1){ thin++; continue; }       // 薄線はまとめて1行にする(知らせが埋もれないように)
       out.push(nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が"+LINK_LABEL[l.lv]+"に");
       newsOf("link",[p[0],p[1]],out);
     }
   }
+  if(thin)out.push("新しい連携(薄線)が "+thin+" 組できた");
 }
 /** いま盤面に並べている11人(前の試合の最後の配置。無ければクラブの既定) */
 function squadXi(S){
@@ -4250,7 +4357,8 @@ function doTraining(S,i,intensity){
       const g=S.g.pl[id];
       g.ie+=(I.spTrain+(e.ind||0))*k*growK(id)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
-      if(e.sp)g.se+=e.sp*G0.sp.train*k*facK(S,"tact");
+      // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
+      if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
     }
     if(e.link){
       const xi=squadXi(S);
@@ -4517,6 +4625,7 @@ function awaken(S,id,rng,out){
   }
   g.is=5; g.q=false; g.ie=0;
   out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
 /**
@@ -4551,6 +4660,7 @@ function afterMatchGrowth(S,fx,res){
       const k=cand[Math.floor(rng()*cand.length)], l=S.g.links[k], p=k.split("|");
       l.lv=3; l.gold=false;
       out.push("✨ "+nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が黄金の輝きに");
+      if(S.ts&&S.ts.gold!=null)S.ts.gold++;
       newsOf("gold",[p[0],p[1]],out);
     }
   }
@@ -4722,6 +4832,13 @@ function secFollow(S,drops,ups,out,salt,plus){
   return true;
 }
 
+/** チーム力 = 先発11人の、育成を反映した能力の合計の平均(→docs/09 第2弾)。任期の始めからの伸びを見せる */
+function teamPower(S){
+  const xi=S.sq.slice(0,11); let t=0;
+  for(const id of xi){ const c=growCard(S,CARDS[id]); t+=STATS.reduce((a,k)=>a+c[k],0); }
+  return t/xi.length;
+}
+
 /* =========================================================================
    wcc_f — 任期の終わり(DOM非依存)→docs/05 §5.8
    100試合で任期が終わると:
@@ -4734,7 +4851,8 @@ function secFollow(S,drops,ups,out,salt,plus){
 
 /** 任期中の記録(称号の条件に使う) */
 function newTermStats(){
-  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0 };
+  // awake・gold … この任期に起きた覚醒・黄金線の数(ついてきた選手の★・線は数えない)/ pow0 … 任期の始めのチーム力
+  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null };
 }
 
 /**
@@ -4749,8 +4867,8 @@ const TITLES=[
     ok:x=>x.sWins>=1&&x.lgWins>=2 },
   { id:"master",  name:"名将",         grade:3, bonus:70,  need:"タイトル8つ以上、勝率 60% 以上",
     ok:x=>x.titles>=8&&x.wr>=0.60 },
-  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"5人以上を覚醒させた",
-    ok:x=>x.awake>=5 },                        // 集中育成では3人ほどが普通(→docs/08 §8.5)
+  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"8人以上を覚醒させ、勝ち越した",
+    ok:x=>x.awake>=8&&x.w>x.l },               // 集中育成では3人ほどが普通(→docs/08 §8.5)。負け越しでは付かない(ブラッシュアップ会議 →docs/09)
   { id:"magic",   name:"魔術師",       grade:2, bonus:50,  need:"KP を30回以上替え、勝率 55% 以上",
     ok:x=>x.kpCh>=30&&x.wr>=0.55 },
   { id:"heir",    name:"伝承者",       grade:2, bonus:40,  need:"黄金線を10本以上つないだ",
@@ -4778,8 +4896,9 @@ function termFacts(S){
     sWins:t.filter(x=>COMPS[x.comp].grade==="S").length,
     lgWins:t.filter(x=>x.comp==="LG").length,
     koWins:t.filter(x=>x.comp!=="LG"&&x.comp!=="W4").length,
-    awake:pl.filter(g=>g.is>=5).length,
-    gold:Object.values(S.g.links).filter(l=>l.lv>=3).length,
+    // この任期に起きた数で数える(前の任期からついてきた覚醒済みの選手や黄金線は入れない。→docs/09 第2弾)
+    awake:S.ts.awake!=null?S.ts.awake:pl.filter(g=>g.is>=5).length,
+    gold:S.ts.gold!=null?S.ts.gold:Object.values(S.g.links).filter(l=>l.lv>=3).length,
     money:S.biz?S.biz.earn:S.money-S.money0,   // 稼いだ額(施設やスタジアムに使っても減らない)
     kpCh:S.ts.kpCh, subs:S.ts.subs, used:S.ts.used.length, topW:S.ts.topW, psoW:S.ts.psoW, psoL:S.ts.psoL };
 }
@@ -4841,7 +4960,7 @@ const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
    奥にはスタンドと観客(高さはスタジアムの段 →club.js の S.biz.stad)。
    ========================================================================= */
 
-const RV={ cv:null, ctx:null, w:0, h:0, vis:new Map(), ball:[0.5,0.5], lift:0, crowd:null };
+const RV={ cv:null, ctx:null, w:0, h:0, vis:new Map(), ball:[0.5,0.5], lift:0, crowd:null, bg:null, bgKey:"" };
 
 const scrOf=(side,h,x)=>side==="H"?[h,x/100]:[1-h,1-x/100];
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -4897,8 +5016,20 @@ function drawStands(c,W,H){
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
   for(let i=0;i<4;i++)c.fillText(sp,W*(0.125+i*0.25),yFar-2.5);
 }
+/** 芝・ライン・スタンドは変わらないので、裏のキャンバスに描いておき毎フレーム貼るだけにする(大きさ・スタジアム・スポンサーが変わったら描き直す) */
 function drawPitch(){
-  const c=RV.ctx, W=RV.w, H=RV.h;
+  const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
+  const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp;
+  if(RV.bgKey!==key){
+    const off=RV.bg||(RV.bg=document.createElement("canvas"));
+    off.width=RV.cv.width; off.height=RV.cv.height;
+    const oc=off.getContext("2d"); oc.setTransform(dpr,0,0,dpr,0,0);
+    drawPitchTo(oc,W,H); RV.bgKey=key;
+  }
+  RV.ctx.save(); RV.ctx.setTransform(1,0,0,1,0,0); RV.ctx.drawImage(RV.bg,0,0); RV.ctx.restore();
+}
+function drawPitchTo(c,W,H){
   // 毎回、画面全体を塗り直す(遠近で芝が届かない左右の外側に、前の場面のボールや選手が残らないように)
   c.fillStyle="#17603a"; c.fillRect(0,0,W,H);
   drawStands(c,W,H);
@@ -5044,7 +5175,8 @@ function mkCard(card){
   el.dataset.id=card.id;
   el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
-    '<b class="kpm">KP</b><b class="ycm"></b>';
+    '<b class="kpm">KP</b><b class="ycm"></b>'+
+    (card.gs?'<b class="gsm'+(card.gs>=5?' aw':'')+'">★'+card.gs+'</b>':'')+(card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
   return el;
 }
 
@@ -5282,6 +5414,11 @@ function careerStore(){
 function initCareer(seed){
   CL.store=careerStore();
   let S=loadCareer(CL.store);
+  if(S&&S.fromPrev){
+    // 最新のセーブが読めず、1つ前の世代から戻した。読めなかった方は退避しておく
+    delete S.fromPrev; const raw=rawSave(CL.store); if(raw)backupSave(CL.store,raw);
+    CL.alert="最新のセーブを読めなかったので、1試合前のセーブから戻しました(読めなかった方は退避してあります)";
+  }
   if(!S){
     // 読めないセーブ(壊れた・新しい版で作られた)は上書きしない。退避してから新しく始める
     const raw=rawSave(CL.store);
@@ -5336,6 +5473,21 @@ function chipsHtml(ids,on,info,act){
       '<i>'+c.no+'</i>'+nameOf(c)+(hasSign(S,id)?'<b class="sign">！</b>':'')+
       '<small>'+info(S.g.pl[id],id)+'</small></button>'; }).join("")+'</div>';
 }
+/**
+ * コミュニケーションの相手を選ぶ盤面(本家と同じくフォーメーションのまま。→docs/08 §8.12)。
+ * 先発は SQUAD の既定の位置、控えは下の列。駒には次の★までの進みなど(info)を添える
+ */
+function commBoardHtml(ids,on,info){
+  const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
+  const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
+    return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
+      '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
+      (hasSign(S,id)?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
+      '<small>'+info(g,id)+'</small></button>'; };
+  return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+    xi.filter(id=>ids.includes(id)).map(id=>{ const l=L[id], p=sqPos(l[0],l[1]); return tok(id,' style="left:'+p.l.toFixed(1)+'%;top:'+p.t.toFixed(1)+'%"'); }).join("")+
+    '</div><div class="cm-bench">'+S.sq.slice(11).filter(id=>ids.includes(id)).map(id=>tok(id)).join("")+'</div></div>';
+}
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
   // 札には次の★までの進み(%)と兆しを出す(→docs/05 §5.3 見える化)
@@ -5359,7 +5511,7 @@ function trainStepHtml(){
   return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが、疲れて試合に入る</small></div>'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
-      '<small>伸び ×'+N.k[i]+(N.fat[i]?' ・ 疲労 +'+Math.round(N.fat[i]*100)+'%':' ・ 疲れない')+'</small></button>').join("")+'</div>'+
+      '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
@@ -5374,7 +5526,7 @@ function commStepHtml(){
       (left?'':' disabled')+'>'+COMM_LABEL[k]+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>';
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
-  h+='<p class="dim">'+U.hint+'</p>'+chipsHtml(all,CL.pick,U.info);
+  h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
   if(CL.pick.length===U.n){
     const id=CL.pick[0];
     h+='<div class="ask">'+CL.pick.map(x=>'<p class="voice"><b>'+cname(x)+'</b>「'+voiceOf(S,x)+'」<small>信頼度: '+
@@ -5423,7 +5575,7 @@ function prepHtml(){
     '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?'<span class="dim">練習を1つ選ぶと次へ進む</span>'
-        :'<button class="btn btn-main" data-act="play">試合へ</button>')+
+        :(commLeft(CL.S)?'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>':'<button class="btn btn-main" data-act="play">試合へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>';
   return h;
@@ -5454,6 +5606,7 @@ function sqTokenHtml(id,i,on){
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
+    (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
     (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -5574,6 +5727,31 @@ function sqBind(pitch){
 /** カードの人物の影(独自に描いた汎用の上半身。絵は後で差し替える) */
 const CARD_SIL='<svg class="k-sil" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
   '<path d="M50 8c11 0 19 9 19 21 0 9-4 16-10 20l3 5c16 3 28 11 32 26l4 30H2l4-30c4-15 16-23 32-26l3-5c-6-4-10-11-10-20 0-12 8-21 19-21z"/></svg>';
+/**
+ * カードの人物の絵(→docs/09 第3弾)。ポジションごとのポーズを関節の位置で描く(独自の意匠)。
+ * 上着はクラブの色、胸に背番号。座標は 100×110(地面 y=108)。[頭, 首, 腰, 左腕(肩→肘→手), 右腕, 左脚(腰→膝→足), 右脚, ボール]
+ */
+const POSES={
+  GK:{ hd:[50,17], nk:[50,27], hp:[50,58], la:[[44,31],[31,19],[22,7]], ra:[[56,31],[69,19],[78,7]], ll:[[46,58],[37,81],[30,106]], rl:[[54,58],[63,81],[70,106]], ball:null },
+  DF:{ hd:[40,27], nk:[43,36], hp:[53,63], la:[[42,39],[30,51],[24,62]], ra:[[47,39],[59,47],[67,41]], ll:[[51,63],[40,84],[30,105]], rl:[[56,63],[72,79],[90,96]], ball:[92,100] },
+  MF:{ hd:[50,15], nk:[50,25], hp:[50,59], la:[[47,29],[36,43],[30,55]], ra:[[53,29],[64,41],[73,47]], ll:[[48,59],[46,83],[44,106]], rl:[[52,59],[64,75],[75,83]], ball:[80,86] },
+  FW:{ hd:[43,16], nk:[46,26], hp:[51,58], la:[[44,30],[31,30],[20,23]], ra:[[49,30],[60,41],[66,53]], ll:[[49,58],[44,82],[40,106]], rl:[[53,58],[71,62],[89,55]], ball:[94,52] }
+};
+function poseSvg(c){
+  const P=POSES[c.pos]||POSES.MF, col=cardColor(c);
+  const ln=(pts,w,cl,cls)=>'<polyline'+(cls?' class="'+cls+'"':'')+' points="'+pts.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="'+cl+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>';
+  const mid=[(P.nk[0]+P.hp[0])/2,(P.nk[1]+P.hp[1])/2];
+  return '<svg class="k-pose" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
+    '<ellipse cx="50" cy="107" rx="30" ry="3" fill="rgba(0,0,0,.18)"/>'+
+    ln(P.ll,7.5,"#1d1d1d","lg")+ln(P.rl,7.5,"#1d1d1d","lg")+
+    ln([P.hp,[P.ll[1][0]*0.35+P.hp[0]*0.65,P.ll[1][1]*0.35+P.hp[1]*0.65]],10,"#f4f4f4")+ln([P.hp,[P.rl[1][0]*0.35+P.hp[0]*0.65,P.rl[1][1]*0.35+P.hp[1]*0.65]],10,"#f4f4f4")+
+    ln([P.nk,P.hp],17,col)+ln(P.la,6.5,col)+ln(P.ra,6.5,col)+
+    '<circle class="hd" cx="'+P.hd[0]+'" cy="'+P.hd[1]+'" r="8.5" fill="#1d1d1d"/>'+
+    '<text x="'+mid[0]+'" y="'+(mid[1]+3.5)+'" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="Oswald,system-ui,sans-serif">'+c.no+'</text>'+
+    (P.ball?'<circle cx="'+P.ball[0]+'" cy="'+P.ball[1]+'" r="5" fill="#fff" stroke="#1d1d1d" stroke-width="1.2"/>':'')+'</svg>';
+}
+/** カードのクラブ(エンブレムを描くため) */
+const cardTeam=c=>c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
 // レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
 const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
@@ -5588,7 +5766,8 @@ function cardHtml(id,size,extra){
   const top=STATS.slice().sort((a,b)=>c[b]-c[a]).slice(0,3);
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
-    '<i class="k-band"></i><div class="k-art">'+CARD_SIL+'</div>'+
+    '<i class="k-band"></i><div class="k-art">'+poseSvg(c)+'</div>'+
+    (cardTeam(c)?'<i class="k-emb">'+emblemSvg(cardTeam(c),size==="m"?22:13)+'</i>':'')+
     '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
@@ -5701,13 +5880,16 @@ function hypeOf(S,fx){
   return fx.kind==="cup"?"負ければ終わりの一戦。":"勝ち点3を積み上げる。";
 }
 /** HOME の見出し(クラブと任期) */
+const powDelta=S=>{ const d=teamPower(S)-(S.ts.pow0||teamPower(S)); return d>=0.05?" +"+d.toFixed(1):d<=-0.05?" "+d.toFixed(1):""; };
 function homeHeadHtml(){
+  if(CL.S.ts&&CL.S.ts.pow0==null)CL.S.ts.pow0=teamPower(CL.S);   // 任期の始め(または初めて見たとき)のチーム力
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   return '<header class="chd">'+emblemSvg(TEAMS.azr,30)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>第'+S.term+'任期 ・ 格 '+S.grade+
     ' ・ ランク '+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
-    '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>MATCH</small></div>'+
-    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>FUNDS</small></div>'+
-    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>FANS</small></div>':'')+'</header>';
+    '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>チーム力</small></div>'+
+    '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
+    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>資金</small></div>'+
+    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>ファン</small></div>':'')+'</header>';
 }
 /** 次の試合のタイル。**タイル全体が押す面**で、中にボタンを置かない(pftb の決まり) */
 function nextTileHtml(){
@@ -5794,7 +5976,16 @@ function spBoostHtml(){
   const Z=CL.S.biz, on=SP_IND.filter(x=>Z.boost[x.eff]>0);
   return on.length?'<p class="boost">'+on.map(x=>{ const r=Z.boostRank[x.eff]||1; return spItem(x,r)+': '+spEffTxt(x.eff,r)+' 残り'+Z.boost[x.eff]+'試合'; }).join('<br>')+'</p>':'';
 }
-/** HOME のスポンサーの欄(胸ロゴとミッションの進み) */
+/** HOME: 区切りのスポンサーの候補は1行の帯にたたむ(押すと開く) */
+function spRenewBarHtml(){ return '<button class="tile sp-bar" data-act="spopen">📣 スポンサーの契約を更新できます(候補 3社)<b>›</b></button>'; }
+/** HOME: スポンサーは1行(社名・ミッションの達成数・効いている効果)。詳しくは CLUB タブ */
+function spMiniHtml(){
+  const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
+  const done=sp.ms.filter(m=>m.done).length, on=SP_IND.filter(x=>S.biz.boost[x.eff]>0).map(x=>spItem(x,S.biz.boostRank[x.eff]||1)+" 残り"+S.biz.boost[x.eff]);
+  return '<button class="tile sp-mini" data-act="tab" data-v="club"><span class="logo r'+sp.rank+'">'+sp.name+'</span>'+
+    '<small>ミッション '+done+'/'+sp.ms.length+(on.length?' ・ '+on.join(" ・ "):'')+'</small><b>›</b></button>';
+}
+/** CLUB のスポンサーの欄(胸ロゴとミッションの進み) */
 function spTileHtml(){
   const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
   return '<section class="tile sptile"><h3><span class="logo r'+sp.rank+'">'+sp.name+'</span></h3><div class="spo r'+sp.rank+'">'+spCardHtml(sp)+'</div>'+spBoostHtml()+'</section>';
@@ -5835,12 +6026,20 @@ function lastHtml(){
 }
 function homeHtml(){
   const S=CL.S;
-  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+secPickHtml("秘書を選ぶ");
+  // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
+  const alertBox=CL.alert?'<section class="sec"><i class="sec-ic">SEC</i><div><p>'+CL.alert+'</p></div></section>':"";
+  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+alertBox+secPickHtml("秘書を選ぶ");
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
-  if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+spPickHtml(true);
-  return homeHeadHtml()+(S.termOver?termEndHtml():(S.biz&&S.biz.offers?spPickHtml(false):'')+nextTileHtml()+stadOfferHtml()+secHtml()+spTileHtml()+lastHtml());
+  if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+
+    stadOfferHtml()+secHtml()+spMiniHtml()+lastHtml());
 }
 /** SEASON: リーグの順位と大会 */
+/** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */
+const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングスクラブカップで優勝", W4:"前の周のリーグ4位以内",
+  CONTI:"前の周のリーグ2位以内、または前の周にエンタープライズ・キングスクラブ・ナショナルスーパー・W4のどれかで優勝",
+  CSC:"この周にコンチネンタルカップで優勝", CT:"前の周のリーグ優勝、または前の周にコンチネンタルカップかW4で優勝",
+  JT:"この周にチャンピオンズトロフィーで優勝", ICC:"この周にチャンピオンズトロフィーかコンチネンタルカップで優勝、または前の周にチャンピオンズトロフィーで優勝" };
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
   let h='<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節</small></h3><table class="tbl">'+
@@ -5852,7 +6051,7 @@ function seasonHtml(){
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
   h+='<section class="card"><h3>大会 <small>'+S.cyc+'周目</small></h3><table class="tbl cups">'+
     CUP_IDS.map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot;
-      const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件を満たしていない"):stTxt[c.st];
+      const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件: "+(ENTRY_NEED[id]||"—")):stTxt[c.st];
       return '<tr class="st-'+c.st+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+COMPS[id].name+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
@@ -5918,6 +6117,8 @@ function onClubClick(e){
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
+  if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
+  if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
@@ -6076,7 +6277,7 @@ function onSettingsClick(act,b){
     settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
     return true;
   }
-  if(act==="rmbad"){ try{ CL.store.removeItem(SAVE_BAD_KEY); }catch(e){} settingsMsg("退避したセーブを消した"); return true; }
+  if(act==="rmbad"){ try{ [SAVE_BAD_KEY,SAVE_BAD_KEY+".1",SAVE_BAD_KEY+".2"].forEach(k=>CL.store.removeItem(k)); }catch(e){} settingsMsg("退避したセーブを消した"); return true; }
   if(act==="set"){ CL.alert=""; CL.set=!CL.set; CL.setMsg=""; CL.copyText=""; showClub(true); return true; }
   if(act==="unpack"){
     try{ localStorage.removeItem(PACK_KEY); }catch(e){}
@@ -6501,6 +6702,7 @@ function sceneCard(id,isNew,go){
       '<div class="pk-back"><b>wcc<span>_</span>f</b><i></i></div>'+
       '<div class="pk-front r-'+r+'">'+cardHtml(id,"m")+'</div>'+
     '</div></div>'+(r==="L"?'<div class="rays"></div>':'')+'</div>'+
+    '<div class="pk-mouth"><i></i></div>'+
     '<div class="pk-msg">カードをタッチしてめくる</div>',
     { lock:600 });
   SC.promote=()=>{
@@ -6870,7 +7072,9 @@ function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
   if(G.capT>0){ G.capT-=dt; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
   if(G.playing&&!capOn())advance(dt*G.speed);
-  drawFrame(G,dt);
+  // 監督室や場面に隠れている間は描かない(電池)。試合の画面が見えている間だけ
+  const hidden=document.getElementById("club").classList.contains("on")||document.getElementById("scene").classList.contains("on");
+  if(!hidden)drawFrame(G,dt);
   // 攻め込むほど歓声が大きい(どちらのゴールに近いか)
   if(G.playing&&G.M&&G.M.ball)sndCrowdLevel(Math.max(0,(G.M.ball.h-0.62)/0.38));
   requestAnimationFrame(frame);
@@ -6896,6 +7100,8 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("replay").addEventListener("click",skipReplay);
+  // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
+  document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);
   $("infoClose").addEventListener("click",hideInfo);
   $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
   $("subYes").addEventListener("click",()=>answerSub(true));
@@ -6906,7 +7112,9 @@ function boot(){
     pickKp(id); showInfo(id);
   });
   document.addEventListener("visibilitychange",()=>{
-    if(document.hidden&&G.playing)setPlaying(false);
+    // 裏に回ったら止め、戻ったら中継の字幕「TOUCH で再開」を出す(一時停止ボタンは無いので、ここで必ず戻れるようにする)
+    if(document.hidden&&G.playing){ setPlaying(false); G.resume=true; }
+    if(!document.hidden&&G.resume&&!G.M.over&&!capOn())overlay("中継再開",'<small>TOUCH で再開</small>',0,()=>{ G.resume=false; setPlaying(true); });
     sndSuspend(document.hidden);               // 裏に回ったら音を止め、戻ったら鳴らせる状態に戻す
   });
   // iOS のピンチ・ダブルタップ拡大を止める

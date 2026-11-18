@@ -51,6 +51,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 秘書(口調・親密度・会話・フォロー)を変える | `grow.js` の末尾(`SECS` / `SEC_LINES` / `SEC_EVENTS` / `secFollow`)と `TUNING.sec`、画面は `clubui.js` の `secHtml` / `secPickHtml` / `secClubHtml`。正本は docs/05 §5.12 |
 | 経営(資金・ファン・入場料・スタジアム改修・施設)を変える | 数値は `data.js` の `TUNING.biz`、仕組みは `club.js` の末尾(`bizAfterMatch` / `answerStadium` / `buildFac`)、施設の効き目は `grow.js` の `facK` を掛けている所。画面は `clubui.js` の `stadOfferHtml` / `bizClubHtml` / `stadiumSvg`。正本は docs/05 §5.13 |
 | スポンサー(業種×☆のマスタ・候補・収入・ミッションと報酬の効果)を変える | マスタは `club.js` の `SP_IND`、数値は `TUNING.biz.sp`、仕組みは `club.js` の末尾(`spOffers` / `signSponsor` / `spRenew` / `spAfterMatch` / `spBoost`)、画面は `clubui.js` の `spPickHtml` / `spTileHtml`。正本は docs/05 §5.14 |
+| ブラッシュアップ会議の結論と進み具合を見る | docs/09(4つの観点の総評・4段の進め方・やったこと・判断が要ること) |
 | 育成の数値を変える | `data.js` の `TUNING.grow` → `clubtest.js` の ⑥。仕組みは `grow.js`、設計の正本は docs/05 §5.3〜5.6 |
 | 特殊練習を直す | `tools/train_source.txt` → `python tools/gen_trainings.py`(`trainings.js` は生成物。手で編集しない) |
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |

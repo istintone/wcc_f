@@ -429,20 +429,35 @@ const SAVE_BAD_KEY="wcc_f.save.bad";        // 読めなかったセーブの退
 function rawSave(store){ try{ return store.getItem(SAVE_KEY); }catch(e){ return null; } }
 /** 読めなかったセーブを退避する。退避できたら true */
 function backupSave(store,raw){
-  try{ store.setItem(SAVE_BAD_KEY,raw); return store.getItem(SAVE_BAD_KEY)===raw; }catch(e){ return false; }
+  // 前に退避したものを押し出して、新しいものを先頭に置く(最大3件。SAVE_BAD_KEY が最新)
+  try{
+    const b1=store.getItem(SAVE_BAD_KEY+".1");
+    if(b1!=null)store.setItem(SAVE_BAD_KEY+".2",b1);
+    const b0=store.getItem(SAVE_BAD_KEY);
+    if(b0!=null&&b0!==raw)store.setItem(SAVE_BAD_KEY+".1",b0);
+    store.setItem(SAVE_BAD_KEY,raw); return store.getItem(SAVE_BAD_KEY)===raw;
+  }catch(e){ return false; }
 }
 /** 端末に書かない保存先(保存できない環境・退避できなかったとき) */
 function memStore(){ return { m:{}, setItem(k,v){ this.m[k]=v; }, getItem(k){ return k in this.m?this.m[k]:null; }, removeItem(k){ delete this.m[k]; } }; }
+/** 保存する。直前のセーブは1つ前の世代(SAVE_KEY.prev)に回してから書く */
 function saveCareer(store,S){
-  try{ store.setItem(SAVE_KEY,JSON.stringify(S)); return true; }catch(e){ return false; }
-}
-function loadCareer(store){
   try{
-    const t=store.getItem(SAVE_KEY);
-    if(!t)return null;
-    const S=JSON.parse(t);
-    return S&&S.ver===1?migrate(S):null;
-  }catch(e){ return null; }
+    const old=store.getItem(SAVE_KEY);
+    if(old)store.setItem(SAVE_KEY+".prev",old);
+    store.setItem(SAVE_KEY,JSON.stringify(S)); return true;
+  }catch(e){ return false; }
+}
+function parseSave(t){ try{ const S=t?JSON.parse(t):null; return S&&S.ver===1?migrate(S):null; }catch(e){ return null; } }
+/** 読む。読めなければ1つ前の世代から(S.fromPrev が付く) */
+function loadCareer(store){
+  let t=null, p=null;
+  try{ t=store.getItem(SAVE_KEY); p=store.getItem(SAVE_KEY+".prev"); }catch(e){ return null; }
+  const S=parseSave(t);
+  if(S||!t)return S;
+  const P=parseSave(p);
+  if(P)P.fromPrev=true;
+  return P;
 }
 /**
  * 古いセーブに、あとから増えた項目を補う。**項目を足したら、ここにも足す**。
@@ -460,6 +475,7 @@ function migrate(S){
   if(S.last&&S.last.card&&!CARDS[S.last.card])S.last.card=null;
   S.g=S.g?migrateGrowth(S.g,S.sq):newGrowth(S.sq);
   if(!S.ts)S.ts=newTermStats();
+  if(S.ts.awake===undefined){ S.ts.awake=null; S.ts.gold=null; S.ts.pow0=null; }   // 途中の任期は前の数え方のまま
   if(S.money0==null)S.money0=0;
   if(!S.career)S.career=[];
   if(S.salary==null)S.salary=0;

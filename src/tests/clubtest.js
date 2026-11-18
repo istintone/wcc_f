@@ -222,6 +222,15 @@ console.log("⑤ 棄権と保存");
   check("読めないセーブを退避できる",E.loadCareer(ms)===null&&E.backupSave(ms,E.rawSave(ms))&&ms.getItem(E.SAVE_BAD_KEY)==="{壊れたデータ");
   const nv=JSON.parse(JSON.stringify(S)); nv.ver=2; ms.setItem(E.SAVE_KEY,JSON.stringify(nv));
   check("新しい版のセーブも読めないものとして扱う(上書きしない前提)",E.loadCareer(ms)===null&&E.rawSave(ms).length>100);
+  { // 1つ前の世代と、退避3件(→docs/09 第1弾)
+    const st=E.memStore(), A=JSON.parse(JSON.stringify(S));
+    E.saveCareer(st,A); A.played++; E.saveCareer(st,A);
+    st.setItem(E.SAVE_KEY,"{壊れた");
+    const P=E.loadCareer(st);
+    check("最新が読めなければ、1つ前の世代から戻す",!!P&&P.fromPrev===true&&P.played===A.played-1);
+    const bs=E.memStore(); ["a","b","c","d"].forEach(x=>E.backupSave(bs,x));
+    check("退避は新しい順に3件まで持つ",bs.getItem(E.SAVE_BAD_KEY)==="d"&&bs.getItem(E.SAVE_BAD_KEY+".1")==="c"&&bs.getItem(E.SAVE_BAD_KEY+".2")==="b");
+  }
   E.clearCareer(box); check("消せる",box.v===null);
 }
 
@@ -470,7 +479,7 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   { const T=E.newCareer(1), f=E.termFacts(T);
     const pick=x=>E.TITLES.find(t=>t.ok(Object.assign({},f,x))).name;
     check("称号は条件どおり(負け越し → 迷将 / 覚醒8人 → 覚醒工場 / S3つ+勝率7割 → レジェンド)",
-      pick({ w:30, l:40 })==="迷将"&&pick({ awake:8, w:50, l:30 })==="覚醒工場"&&pick({ sWins:3, wr:0.72 })==="レジェンド");
+      pick({ w:30, l:40 })==="迷将"&&pick({ awake:8, w:50, l:30 })==="覚醒工場"&&pick({ awake:8, w:30, l:50 })!=="覚醒工場"&&pick({ sWins:3, wr:0.72 })==="レジェンド");
     check("どれにも当てはまらなければ新米監督",pick({ w:40, l:40 })==="新米監督"); }
   check("施設は累計の年俸で上がる(0億 → 1 / 640億 → 5)",E.facLevel(0)===1&&E.facLevel(200)===3&&E.facLevel(640)===5);
 }

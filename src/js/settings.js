@@ -98,7 +98,7 @@ function onSettingsClick(act,b){
     settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
     return true;
   }
-  if(act==="rmbad"){ try{ CL.store.removeItem(SAVE_BAD_KEY); }catch(e){} settingsMsg("退避したセーブを消した"); return true; }
+  if(act==="rmbad"){ try{ [SAVE_BAD_KEY,SAVE_BAD_KEY+".1",SAVE_BAD_KEY+".2"].forEach(k=>CL.store.removeItem(k)); }catch(e){} settingsMsg("退避したセーブを消した"); return true; }
   if(act==="set"){ CL.alert=""; CL.set=!CL.set; CL.setMsg=""; CL.copyText=""; showClub(true); return true; }
   if(act==="unpack"){
     try{ localStorage.removeItem(PACK_KEY); }catch(e){}

@@ -25,7 +25,8 @@ function mkCard(card){
   el.dataset.id=card.id;
   el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
-    '<b class="kpm">KP</b><b class="ycm"></b>';
+    '<b class="kpm">KP</b><b class="ycm"></b>'+
+    (card.gs?'<b class="gsm'+(card.gs>=5?' aw':'')+'">★'+card.gs+'</b>':'')+(card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
   return el;
 }
 

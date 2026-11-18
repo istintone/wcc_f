@@ -29,6 +29,11 @@ function careerStore(){
 function initCareer(seed){
   CL.store=careerStore();
   let S=loadCareer(CL.store);
+  if(S&&S.fromPrev){
+    // 最新のセーブが読めず、1つ前の世代から戻した。読めなかった方は退避しておく
+    delete S.fromPrev; const raw=rawSave(CL.store); if(raw)backupSave(CL.store,raw);
+    CL.alert="最新のセーブを読めなかったので、1試合前のセーブから戻しました(読めなかった方は退避してあります)";
+  }
   if(!S){
     // 読めないセーブ(壊れた・新しい版で作られた)は上書きしない。退避してから新しく始める
     const raw=rawSave(CL.store);
@@ -83,6 +88,21 @@ function chipsHtml(ids,on,info,act){
       '<i>'+c.no+'</i>'+nameOf(c)+(hasSign(S,id)?'<b class="sign">！</b>':'')+
       '<small>'+info(S.g.pl[id],id)+'</small></button>'; }).join("")+'</div>';
 }
+/**
+ * コミュニケーションの相手を選ぶ盤面(本家と同じくフォーメーションのまま。→docs/08 §8.12)。
+ * 先発は SQUAD の既定の位置、控えは下の列。駒には次の★までの進みなど(info)を添える
+ */
+function commBoardHtml(ids,on,info){
+  const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
+  const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
+    return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
+      '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
+      (hasSign(S,id)?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
+      '<small>'+info(g,id)+'</small></button>'; };
+  return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+    xi.filter(id=>ids.includes(id)).map(id=>{ const l=L[id], p=sqPos(l[0],l[1]); return tok(id,' style="left:'+p.l.toFixed(1)+'%;top:'+p.t.toFixed(1)+'%"'); }).join("")+
+    '</div><div class="cm-bench">'+S.sq.slice(11).filter(id=>ids.includes(id)).map(id=>tok(id)).join("")+'</div></div>';
+}
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
   // 札には次の★までの進み(%)と兆しを出す(→docs/05 §5.3 見える化)
@@ -106,7 +126,7 @@ function trainStepHtml(){
   return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが、疲れて試合に入る</small></div>'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
-      '<small>伸び ×'+N.k[i]+(N.fat[i]?' ・ 疲労 +'+Math.round(N.fat[i]*100)+'%':' ・ 疲れない')+'</small></button>').join("")+'</div>'+
+      '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
@@ -121,7 +141,7 @@ function commStepHtml(){
       (left?'':' disabled')+'>'+COMM_LABEL[k]+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>';
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
-  h+='<p class="dim">'+U.hint+'</p>'+chipsHtml(all,CL.pick,U.info);
+  h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
   if(CL.pick.length===U.n){
     const id=CL.pick[0];
     h+='<div class="ask">'+CL.pick.map(x=>'<p class="voice"><b>'+cname(x)+'</b>「'+voiceOf(S,x)+'」<small>信頼度: '+
@@ -170,7 +190,7 @@ function prepHtml(){
     '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?'<span class="dim">練習を1つ選ぶと次へ進む</span>'
-        :'<button class="btn btn-main" data-act="play">試合へ</button>')+
+        :(commLeft(CL.S)?'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>':'<button class="btn btn-main" data-act="play">試合へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>';
   return h;
@@ -201,6 +221,7 @@ function sqTokenHtml(id,i,on){
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
+    (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
     (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -321,6 +342,31 @@ function sqBind(pitch){
 /** カードの人物の影(独自に描いた汎用の上半身。絵は後で差し替える) */
 const CARD_SIL='<svg class="k-sil" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
   '<path d="M50 8c11 0 19 9 19 21 0 9-4 16-10 20l3 5c16 3 28 11 32 26l4 30H2l4-30c4-15 16-23 32-26l3-5c-6-4-10-11-10-20 0-12 8-21 19-21z"/></svg>';
+/**
+ * カードの人物の絵(→docs/09 第3弾)。ポジションごとのポーズを関節の位置で描く(独自の意匠)。
+ * 上着はクラブの色、胸に背番号。座標は 100×110(地面 y=108)。[頭, 首, 腰, 左腕(肩→肘→手), 右腕, 左脚(腰→膝→足), 右脚, ボール]
+ */
+const POSES={
+  GK:{ hd:[50,17], nk:[50,27], hp:[50,58], la:[[44,31],[31,19],[22,7]], ra:[[56,31],[69,19],[78,7]], ll:[[46,58],[37,81],[30,106]], rl:[[54,58],[63,81],[70,106]], ball:null },
+  DF:{ hd:[40,27], nk:[43,36], hp:[53,63], la:[[42,39],[30,51],[24,62]], ra:[[47,39],[59,47],[67,41]], ll:[[51,63],[40,84],[30,105]], rl:[[56,63],[72,79],[90,96]], ball:[92,100] },
+  MF:{ hd:[50,15], nk:[50,25], hp:[50,59], la:[[47,29],[36,43],[30,55]], ra:[[53,29],[64,41],[73,47]], ll:[[48,59],[46,83],[44,106]], rl:[[52,59],[64,75],[75,83]], ball:[80,86] },
+  FW:{ hd:[43,16], nk:[46,26], hp:[51,58], la:[[44,30],[31,30],[20,23]], ra:[[49,30],[60,41],[66,53]], ll:[[49,58],[44,82],[40,106]], rl:[[53,58],[71,62],[89,55]], ball:[94,52] }
+};
+function poseSvg(c){
+  const P=POSES[c.pos]||POSES.MF, col=cardColor(c);
+  const ln=(pts,w,cl,cls)=>'<polyline'+(cls?' class="'+cls+'"':'')+' points="'+pts.map(p=>p.join(",")).join(" ")+'" fill="none" stroke="'+cl+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/>';
+  const mid=[(P.nk[0]+P.hp[0])/2,(P.nk[1]+P.hp[1])/2];
+  return '<svg class="k-pose" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
+    '<ellipse cx="50" cy="107" rx="30" ry="3" fill="rgba(0,0,0,.18)"/>'+
+    ln(P.ll,7.5,"#1d1d1d","lg")+ln(P.rl,7.5,"#1d1d1d","lg")+
+    ln([P.hp,[P.ll[1][0]*0.35+P.hp[0]*0.65,P.ll[1][1]*0.35+P.hp[1]*0.65]],10,"#f4f4f4")+ln([P.hp,[P.rl[1][0]*0.35+P.hp[0]*0.65,P.rl[1][1]*0.35+P.hp[1]*0.65]],10,"#f4f4f4")+
+    ln([P.nk,P.hp],17,col)+ln(P.la,6.5,col)+ln(P.ra,6.5,col)+
+    '<circle class="hd" cx="'+P.hd[0]+'" cy="'+P.hd[1]+'" r="8.5" fill="#1d1d1d"/>'+
+    '<text x="'+mid[0]+'" y="'+(mid[1]+3.5)+'" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="Oswald,system-ui,sans-serif">'+c.no+'</text>'+
+    (P.ball?'<circle cx="'+P.ball[0]+'" cy="'+P.ball[1]+'" r="5" fill="#fff" stroke="#1d1d1d" stroke-width="1.2"/>':'')+'</svg>';
+}
+/** カードのクラブ(エンブレムを描くため) */
+const cardTeam=c=>c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
 // レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
 const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
@@ -335,7 +381,8 @@ function cardHtml(id,size,extra){
   const top=STATS.slice().sort((a,b)=>c[b]-c[a]).slice(0,3);
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
-    '<i class="k-band"></i><div class="k-art">'+CARD_SIL+'</div>'+
+    '<i class="k-band"></i><div class="k-art">'+poseSvg(c)+'</div>'+
+    (cardTeam(c)?'<i class="k-emb">'+emblemSvg(cardTeam(c),size==="m"?22:13)+'</i>':'')+
     '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
@@ -448,13 +495,16 @@ function hypeOf(S,fx){
   return fx.kind==="cup"?"負ければ終わりの一戦。":"勝ち点3を積み上げる。";
 }
 /** HOME の見出し(クラブと任期) */
+const powDelta=S=>{ const d=teamPower(S)-(S.ts.pow0||teamPower(S)); return d>=0.05?" +"+d.toFixed(1):d<=-0.05?" "+d.toFixed(1):""; };
 function homeHeadHtml(){
+  if(CL.S.ts&&CL.S.ts.pow0==null)CL.S.ts.pow0=teamPower(CL.S);   // 任期の始め(または初めて見たとき)のチーム力
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   return '<header class="chd">'+emblemSvg(TEAMS.azr,30)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>第'+S.term+'任期 ・ 格 '+S.grade+
     ' ・ ランク '+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
-    '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>MATCH</small></div>'+
-    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>FUNDS</small></div>'+
-    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>FANS</small></div>':'')+'</header>';
+    '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>チーム力</small></div>'+
+    '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
+    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>資金</small></div>'+
+    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>ファン</small></div>':'')+'</header>';
 }
 /** 次の試合のタイル。**タイル全体が押す面**で、中にボタンを置かない(pftb の決まり) */
 function nextTileHtml(){
@@ -541,7 +591,16 @@ function spBoostHtml(){
   const Z=CL.S.biz, on=SP_IND.filter(x=>Z.boost[x.eff]>0);
   return on.length?'<p class="boost">'+on.map(x=>{ const r=Z.boostRank[x.eff]||1; return spItem(x,r)+': '+spEffTxt(x.eff,r)+' 残り'+Z.boost[x.eff]+'試合'; }).join('<br>')+'</p>':'';
 }
-/** HOME のスポンサーの欄(胸ロゴとミッションの進み) */
+/** HOME: 区切りのスポンサーの候補は1行の帯にたたむ(押すと開く) */
+function spRenewBarHtml(){ return '<button class="tile sp-bar" data-act="spopen">📣 スポンサーの契約を更新できます(候補 3社)<b>›</b></button>'; }
+/** HOME: スポンサーは1行(社名・ミッションの達成数・効いている効果)。詳しくは CLUB タブ */
+function spMiniHtml(){
+  const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
+  const done=sp.ms.filter(m=>m.done).length, on=SP_IND.filter(x=>S.biz.boost[x.eff]>0).map(x=>spItem(x,S.biz.boostRank[x.eff]||1)+" 残り"+S.biz.boost[x.eff]);
+  return '<button class="tile sp-mini" data-act="tab" data-v="club"><span class="logo r'+sp.rank+'">'+sp.name+'</span>'+
+    '<small>ミッション '+done+'/'+sp.ms.length+(on.length?' ・ '+on.join(" ・ "):'')+'</small><b>›</b></button>';
+}
+/** CLUB のスポンサーの欄(胸ロゴとミッションの進み) */
 function spTileHtml(){
   const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
   return '<section class="tile sptile"><h3><span class="logo r'+sp.rank+'">'+sp.name+'</span></h3><div class="spo r'+sp.rank+'">'+spCardHtml(sp)+'</div>'+spBoostHtml()+'</section>';
@@ -582,12 +641,20 @@ function lastHtml(){
 }
 function homeHtml(){
   const S=CL.S;
-  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+secPickHtml("秘書を選ぶ");
+  // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
+  const alertBox=CL.alert?'<section class="sec"><i class="sec-ic">SEC</i><div><p>'+CL.alert+'</p></div></section>':"";
+  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+alertBox+secPickHtml("秘書を選ぶ");
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
-  if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+spPickHtml(true);
-  return homeHeadHtml()+(S.termOver?termEndHtml():(S.biz&&S.biz.offers?spPickHtml(false):'')+nextTileHtml()+stadOfferHtml()+secHtml()+spTileHtml()+lastHtml());
+  if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+
+    stadOfferHtml()+secHtml()+spMiniHtml()+lastHtml());
 }
 /** SEASON: リーグの順位と大会 */
+/** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */
+const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングスクラブカップで優勝", W4:"前の周のリーグ4位以内",
+  CONTI:"前の周のリーグ2位以内、または前の周にエンタープライズ・キングスクラブ・ナショナルスーパー・W4のどれかで優勝",
+  CSC:"この周にコンチネンタルカップで優勝", CT:"前の周のリーグ優勝、または前の周にコンチネンタルカップかW4で優勝",
+  JT:"この周にチャンピオンズトロフィーで優勝", ICC:"この周にチャンピオンズトロフィーかコンチネンタルカップで優勝、または前の周にチャンピオンズトロフィーで優勝" };
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
   let h='<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節</small></h3><table class="tbl">'+
@@ -599,7 +666,7 @@ function seasonHtml(){
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
   h+='<section class="card"><h3>大会 <small>'+S.cyc+'周目</small></h3><table class="tbl cups">'+
     CUP_IDS.map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot;
-      const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件を満たしていない"):stTxt[c.st];
+      const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件: "+(ENTRY_NEED[id]||"—")):stTxt[c.st];
       return '<tr class="st-'+c.st+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+COMPS[id].name+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
@@ -665,6 +732,8 @@ function onClubClick(e){
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
+  if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
+  if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
