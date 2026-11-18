@@ -234,6 +234,14 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   E.doTraining(S,0,1);
   const ie0=S.g.pl.h10.ie; E.doTraining(S,0,1);
   check("練習は1試合に1回だけ",S.g.pl.h10.ie===ie0&&S.g.step==="comm");
+  { // 休憩: 練習の代わりに1手使う。経験は入らず、疲労が抜け、調子が戻る
+    const T=E.newCareer(77); for(const id in T.g.pl){ T.g.pl[id].fat=0.1; T.g.pl[id].mot=1; }
+    const ie=T.g.pl.h10.ie; E.doRest(T);
+    const pl=Object.values(T.g.pl);
+    check("休憩は経験が入らず、疲労が抜け、調子が戻る",T.g.pl.h10.ie===ie&&pl.every(g=>g.fat<0.05)&&pl.some(g=>g.mot>1)&&T.g.step==="comm",
+      pl.filter(g=>g.mot>1).length+"人が戻る");
+    check("選手の言葉が状態に応じて出る",E.voiceOf(T,"h10").length>0);
+  }
   check("練習の直後は★が上がらない(試合のあとに上がる)",Object.values(S.g.pl).every(g=>g.is===0));
   E.doMeeting(S,"h10",0); E.doTalk(S,"h05"); E.doIndTrain(S,"h03");
   check("コミュニケーションは3回まで",E.doLounge(S,"h07","h08",0).res===-1&&S.g.step==="ready"&&S.g.cn===3,S.g.done.join(","));

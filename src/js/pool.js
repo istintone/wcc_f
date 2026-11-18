@@ -119,3 +119,15 @@ function moveSquad(S,a,b){
   if(la||lb){ if(lb)S.layout[a]=lb; else delete S.layout[a]; if(la)S.layout[b]=la; else delete S.layout[b]; }
   return true;
 }
+
+/* ---- カードNo.(通し番号)とパラメーター合計値(→docs/06) ----
+ * カードNo. はカードの id そのもの(mcb01 なら MCB01)。クラブの略号 + クラブ内の番号なので、
+ * 選手を足しても既存の番号は変わらず、No.順に並べるとクラブごとにまとまる */
+const cardNoOf=c=>c.id.toUpperCase();
+const cnoCmp=(a,b)=>a<b?-1:a>b?1:0;
+const statTotal=c=>STATS.reduce((s,k)=>s+(c[k]||0),0);
+/** カードのクラブ名(実名パックがあれば実名) */
+function clubOfCard(c){
+  const t=c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
+  return t?teamNameOf(t):(c.club||"");
+}

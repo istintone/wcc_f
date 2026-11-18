@@ -7,7 +7,8 @@
 
 const STAT_MAX=20;
 const STATS=["off","def","tec","pow","spd","sta"];
-const STAT_LABEL={ off:"攻撃", def:"守備", tec:"技術", pow:"パワー", spd:"スピード", sta:"スタミナ" };
+// 能力の表記は本家に合わせた略号(→docs/06)
+const STAT_LABEL={ off:"OFE", def:"DEF", tec:"TEC", pow:"POW", spd:"SPE", sta:"STA" };
 
 const TUNING={
   // 判定の揺らぎ。攻守それぞれに独立して乗る(0.6〜1.4)
@@ -174,6 +175,10 @@ const TUNING={
            // どの選手も、何も起きなかった試合では普通(start)へ revert の率で戻る
            benchGrace:3, benchDown:0.25, teamWinUp:0.12, revert:0.15 },
          int:{ k:[0.5,1.0,1.6], fat:[0,0.02,0.05], matchLoad:0.02, recover:0.4, fatMax:0.20, tiredSign:0.04 },
+         // 休憩(チーム練習の代わりに1手使う): 疲労が keep の割合まで抜け、普通より下の選手は motUp の率で1段戻る。経験は入らない
+         rest:{ keep:0.3, motUp:0.6 },
+         // 見える化: 連携の経験がこの割合を超えた組を「育ちそう」として点線で出す / 信頼度(絆)の段の区切り
+         soon:0.6, trust:[3,8,15],
          comm:{ max:3, ind:20, talk:1, talkLow:2 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },

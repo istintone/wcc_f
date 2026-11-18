@@ -68,7 +68,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 
 /* ---- カード盤面 ---- */
 /* 筐体と同じ縦向き(下=自陣・上=敵陣)。右に控えの列(→docs/07 §7.11) */
-#deck{flex:1 1 auto;min-height:220px;display:flex;align-items:stretch}
+#deck{position:relative;flex:1 1 auto;min-height:220px;display:flex;align-items:stretch}
 #board{position:relative;flex:1 1 auto;min-width:0;touch-action:none;overflow:hidden;
   background:repeating-linear-gradient(180deg,var(--pitch1) 0 12.5%,var(--pitch2) 12.5% 25%)}
 #boardLines{position:absolute;inset:6px;border:2px solid var(--chalk);pointer-events:none}
@@ -115,7 +115,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 
 /* ---- カードの詳細 ---- */
 /* 重ね(#ov)より上に出す。キックオフ前のダイアログが出ていても詳細とKPを触れる */
-#info{position:absolute;inset:0;display:none;flex-direction:column;justify-content:space-between;
+#info{position:absolute;inset:8px 14px;z-index:20;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.55);display:none;flex-direction:column;justify-content:space-between;
   padding:10px 12px;background:rgba(10,14,24,.96);z-index:30;font-size:12px}
 #info .roles b.hi{color:var(--good)} #info .roles b.md{color:var(--mid)} #info .roles b.lo{color:var(--bad)}
 #info.on{display:flex}
@@ -504,6 +504,29 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 .pk-msg .rar.r-B{color:#e8ebf2} .pk-msg .rar.r-W{color:#bcd2f2}
 .pk-msg .new{font-size:11px;color:#201400;background:#f2c14e;padding:0 6px;vertical-align:4px}
 .pk-msg small{color:#ffe28a;letter-spacing:.2em;animation:blink 1.1s infinite;display:inline-block}
+
+/* ---- 試合画面の触り心地(→docs/07 §7.11) ---- */
+/* 控えをつまむと、指の上に浮いたカード(ゴースト)が付いてくる */
+.cd.ghost{position:fixed;z-index:200;margin:-26px 0 0 -20px;transform:scale(1.25);pointer-events:none;
+  box-shadow:0 12px 24px rgba(0,0,0,.55),0 0 0 2px #fff}
+#bench .cd.lifted{opacity:.35}
+#board.subbing .cd{transition:box-shadow .1s}
+#board.subbing .cd.drop{transform:scale(1.18);z-index:6;box-shadow:0 0 0 3px #ffe28a,0 0 16px rgba(255,226,138,.9)}
+/* 交代の確認 */
+#subAsk{position:absolute;left:12px;right:12px;top:50%;transform:translateY(-50%);z-index:30;display:none;flex-direction:column;gap:10px;
+  padding:14px;border-radius:10px;background:rgba(10,14,24,.95);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+#subAsk.on{display:flex}
+#subAsk p{margin:0;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font-size:15px}
+#subAsk small{width:100%;text-align:center;font-size:11px;letter-spacing:.2em;opacity:.7}
+#subAsk .out{color:#ff9a8f} #subAsk .in{color:#8fe3a3} #subAsk i{font-style:normal;opacity:.7}
+#subAsk .row{display:flex;gap:8px} #subAsk .row .btn{flex:1;min-width:0}
+/* 倍速は上部(誤って押さないように) */
+#hud .spd{flex:0 0 auto;height:28px;min-width:40px;padding:0 6px;font-size:12px;border-radius:6px}
+/* 操作の台: 大きく、筐体のボタンらしく */
+#pad .cross{grid-template-columns:repeat(3,60px);grid-template-rows:repeat(3,38px);gap:4px}
+#pad .tac{font-size:11.5px;font-weight:800}
+#pad .mid .btn{height:38px;min-width:56px;font-size:15px}
+.btn-shoot,.btn-keeper{width:84px;height:58px;border-radius:29px;font-size:13px}
 
 /* =========================================================================
    wcc_f — テーマ(→docs/07 §7.8)
@@ -977,13 +1000,66 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #club .lklg i.l2{border-top-width:4px;border-color:#2c5a3d} #club .lklg i.l3{border-top-width:5px;border-color:#e2b23d}
 #club .lklg i.omen{border-top:2px dashed #e2b23d}
 
-/* ---- 操作の台(白×赤) ---- */
-.th-wr #pad .tac{font-size:10.5px}
-.th-wr .btn-shoot,.th-wr .btn-keeper{border-radius:22px;font-family:"Oswald",sans-serif;font-weight:700;letter-spacing:.12em;
-  box-shadow:0 3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35)}
-.th-wr .btn-keeper{background:#1d5fbf;border:0;color:#fff}
-.th-wr .btn-keeper.on{background:var(--t-gold);color:#fff;box-shadow:0 3px 0 var(--t-gold3),0 0 10px rgba(184,137,44,.5)}
-.th-wr .btn-kp.on{background:var(--t-gold);color:#fff;border-color:var(--t-gold3)}
+/* ---- 操作の台(白×赤)。筐体の台: 黒い天板に、黄色い十字・赤い中央、赤い SHOOT と青い KEEPER の丸ボタン ---- */
+.th-wr #pad{background:linear-gradient(180deg,#1d1d1d,#0c0c0c);border-top:3px solid var(--t-gold)}
+.th-wr #pad .tac{font-size:11.5px;font-weight:800;letter-spacing:.02em;color:#2a1d00;border:0;border-radius:6px;
+  background:linear-gradient(180deg,#ffe58a,#f2b822 60%,#d9960f);box-shadow:0 4px 0 #8a5c06,inset 0 1px 0 rgba(255,255,255,.6)}
+.th-wr #pad .tac:active{transform:translateY(3px);box-shadow:0 1px 0 #8a5c06}
+.th-wr #pad .tac.md{color:#fff;background:radial-gradient(circle at 50% 35%,#ff6a5c,#c8102e 65%,#8f0a1f);box-shadow:0 4px 0 #5e0614,inset 0 1px 0 rgba(255,255,255,.4)}
+.th-wr #pad .tac.on{color:#fff;background:linear-gradient(180deg,#ff5a6e,var(--t-sub) 60%,var(--t-sub2));
+  box-shadow:0 4px 0 #5e0614,0 0 14px rgba(255,90,110,.75),inset 0 1px 0 rgba(255,255,255,.4)}
+.th-wr #pad .tac.md.on{background:radial-gradient(circle at 50% 35%,#fff3b0,#f2c14e 60%,#b8892c);color:#2a1d00;box-shadow:0 4px 0 #6e4f0e,0 0 14px rgba(242,193,78,.8)}
+.th-wr #pad .mid .btn{background:#2a2a2a;color:#fff;border:1px solid #444}
+.th-wr #pad .btn-kp{background:#2a2a2a;color:var(--t-gold2);border:1px solid var(--t-gold)}
+.th-wr #pad .btn-kp.on{background:var(--t-gold);color:#fff;border-color:var(--t-gold3)}
+.th-wr #subInfo{color:#aaa}
+.th-wr .btn-shoot,.th-wr .btn-keeper{clip-path:none;border:0;border-radius:29px;font-family:"Oswald",sans-serif;font-weight:700;letter-spacing:.14em;color:#fff;
+  box-shadow:0 5px 0 rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.35)}
+.th-wr .btn-shoot{background:radial-gradient(circle at 50% 30%,#ff7b6e,#c8102e 60%,#7d0a1b)}
+.th-wr .btn-shoot:active,.th-wr .btn-keeper:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.55)}
+.th-wr .btn-shoot.armed{background:radial-gradient(circle at 50% 30%,#fff3b0,#f2c14e 60%,#b8892c);color:#2a1d00}
+.th-wr .btn-keeper{background:radial-gradient(circle at 50% 30%,#7fb2ff,#1d5fbf 60%,#0f3473)}
+.th-wr .btn-keeper.on{background:radial-gradient(circle at 50% 30%,#fff3b0,#f2c14e 60%,#b8892c);color:#2a1d00;box-shadow:0 5px 0 #6e4f0e,0 0 14px rgba(242,193,78,.8)}
+.th-wr #hud .spd{background:var(--t-black);color:#fff;border:0;font-family:"Oswald",sans-serif;font-weight:700;letter-spacing:.06em}
+
+/* ---- 育成の見える化と選手の言葉 ---- */
+#club .sq-links .soon{stroke:rgba(255,255,255,.75);stroke-width:1;stroke-dasharray:2 3}
+#club .lklg i.soon{border-top:1px dashed #6b8f78}
+#club .sd-row .sgn{padding:0 5px;background:var(--t-gold);color:#fff;font-weight:900;font-size:10.5px}
+#club .voice{margin:0 0 6px;padding:8px 10px;background:var(--t-paper2);border-left:3px solid var(--t-gold);font-size:12.5px;line-height:1.5}
+#club .voice b{margin-right:4px}
+#club .voice small{display:block;font-size:10.5px;color:var(--t-mute)}
+#club .tr.rest{border-style:dashed}
+
+/* SQUAD の各部は縮めない(中身が増えてもピッチがつぶれないように) */
+#club .cl-main.tab-squad>*{flex-shrink:0}
+
+/* SQUAD のカードを試合の盤面のカードと同じ作りに: 上の帯 = ポジションの色、役割の文字の色 = 適性(白 得意 / 黄 同じ系統 / 赤み 不向き) */
+#club .sqc{height:50px;border-top:0;grid-template-columns:1fr;grid-template-rows:15px 19px 1fr}
+#club .sqc.gk{--pc:#c48a12} #club .sqc.df{--pc:#1d5fbf} #club .sqc.mf{--pc:#1f8a4c} #club .sqc.fw{--pc:#c8102e}
+#club .sqc .rl{grid-row:1;grid-column:1;justify-self:stretch;margin:0;padding:0;height:15px;line-height:15px;border-radius:2px 2px 0 0;
+  text-align:center;background:var(--pc);color:#fff;letter-spacing:.06em}
+#club .sqc .rl.a0{background:var(--pc);color:#fff} #club .sqc .rl.a1{background:var(--pc);color:#ffe28a} #club .sqc .rl.a2{background:var(--pc);color:#ffb0b0}
+#club .sqc .no{grid-row:2;grid-column:1;padding:0;text-align:center;line-height:19px;font-size:16px}
+#club .sqc .nm{grid-row:3;grid-column:1}
+#club .sd-top .rlx.gk{background:#c48a12} #club .sd-top .rlx.df{background:#1d5fbf} #club .sd-top .rlx.mf{background:#1f8a4c} #club .sd-top .rlx.fw{background:#c8102e}
+#club .sd-top .rlx.a0{color:#fff} #club .sd-top .rlx.a1{color:#ffe28a} #club .sd-top .rlx.a2{color:#ffb0b0}
+/* 練習の強度: 休憩を加えて4つ */
+#club .ints.i4{grid-template-columns:repeat(4,1fr)}
+#club .ints .tab.rest.on{background:#1d5fbf;border-color:#1d5fbf;color:#fff}
+
+/* ---- カードの表記(→docs/06): 合計値・背番号・カードNo.・ポジションの色 ---- */
+.kc .k-pos.gk{background:#c48a12} .kc .k-pos.df{background:#1d5fbf} .kc .k-pos.mf{background:#1f8a4c} .kc .k-pos.fw{background:#c8102e}
+.kc .k-name small .k-num{margin-left:5px;padding:0 3px;font-style:normal;font-family:"Oswald",sans-serif;font-weight:700;
+  background:rgba(0,0,0,.55);color:#fff;border-radius:1px}
+.kc .k-cno{position:absolute;right:5%;bottom:2.5%;z-index:4;font-style:normal;font-family:"Oswald",sans-serif;font-size:7px;
+  letter-spacing:.06em;color:rgba(0,0,0,.45)}
+.kc.r-L .k-cno{color:rgba(243,207,106,.7)}
+.kc-s .k-cno{font-size:6px}
+.kc-m .k-cno{font-size:9px}
+#club .kmeta{margin:0 0 6px;font-size:11.5px;color:var(--t-ink2)}
+#club .kmeta b{font-family:"Oswald",sans-serif}
+#club .tabs.sorts{margin-top:4px}
 </style>
 </head>
 <body>
@@ -991,17 +1067,21 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
   <header id="hud">
     <div class="sb"><i id="hudHc" class="em"></i><b id="hudH" class="tn">HOME</b><span id="hudScore">0 - 0</span><b id="hudA" class="tn">AWAY</b><i id="hudAc" class="em"></i></div>
     <div class="clk"><small id="hudComp"></small><span id="hudClock">0'</span></div>
+    <button id="btnSpeed" class="btn spd">×1</button>
   </header>
   <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div>
-    <div id="info"><div id="infoBody"></div>
-      <div class="row"><button id="infoKp" class="btn"></button><button id="infoClose" class="btn">閉じる</button></div>
-    </div>
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
   <div id="deck">
     <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
     <div id="bench"></div>
+    <div id="info"><div id="infoBody"></div>
+      <div class="row"><button id="infoKp" class="btn"></button><button id="infoClose" class="btn">閉じる</button></div>
+    </div>
+    <div id="subAsk"><p id="subAskText"></p>
+      <div class="row"><button id="subYes" class="btn btn-main">交代する</button><button id="subNo" class="btn">やめる</button></div>
+    </div>
   </div>
   <div id="pad">
     <div class="cross">
@@ -1013,7 +1093,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
     </div>
     <div class="mid">
       <button id="btnKp" class="btn btn-kp">KP</button>
-      <div class="pr"><button id="btnPlay" class="btn">▶</button><button id="btnSpeed" class="btn">×1</button></div>
+      <button id="btnPlay" class="btn">▶</button>
       <span id="subInfo">交代 0/3</span>
     </div>
     <div class="act">
@@ -1039,7 +1119,8 @@ window.addEventListener("error",e=>{ document.documentElement.dataset.boot="err:
 
 const STAT_MAX=20;
 const STATS=["off","def","tec","pow","spd","sta"];
-const STAT_LABEL={ off:"攻撃", def:"守備", tec:"技術", pow:"パワー", spd:"スピード", sta:"スタミナ" };
+// 能力の表記は本家に合わせた略号(→docs/06)
+const STAT_LABEL={ off:"OFE", def:"DEF", tec:"TEC", pow:"POW", spd:"SPE", sta:"STA" };
 
 const TUNING={
   // 判定の揺らぎ。攻守それぞれに独立して乗る(0.6〜1.4)
@@ -1206,6 +1287,10 @@ const TUNING={
            // どの選手も、何も起きなかった試合では普通(start)へ revert の率で戻る
            benchGrace:3, benchDown:0.25, teamWinUp:0.12, revert:0.15 },
          int:{ k:[0.5,1.0,1.6], fat:[0,0.02,0.05], matchLoad:0.02, recover:0.4, fatMax:0.20, tiredSign:0.04 },
+         // 休憩(チーム練習の代わりに1手使う): 疲労が keep の割合まで抜け、普通より下の選手は motUp の率で1段戻る。経験は入らない
+         rest:{ keep:0.3, motUp:0.6 },
+         // 見える化: 連携の経験がこの割合を超えた組を「育ちそう」として点線で出す / 信頼度(絆)の段の区切り
+         soon:0.6, trust:[3,8,15],
          comm:{ max:3, ind:20, talk:1, talkLow:2 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
@@ -3387,6 +3472,18 @@ function moveSquad(S,a,b){
   return true;
 }
 
+/* ---- カードNo.(通し番号)とパラメーター合計値(→docs/06) ----
+ * カードNo. はカードの id そのもの(mcb01 なら MCB01)。クラブの略号 + クラブ内の番号なので、
+ * 選手を足しても既存の番号は変わらず、No.順に並べるとクラブごとにまとまる */
+const cardNoOf=c=>c.id.toUpperCase();
+const cnoCmp=(a,b)=>a<b?-1:a>b?1:0;
+const statTotal=c=>STATS.reduce((s,k)=>s+(c[k]||0),0);
+/** カードのクラブ名(実名パックがあれば実名) */
+function clubOfCard(c){
+  const t=c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
+  return t?teamNameOf(t):(c.club||"");
+}
+
 /* =========================================================================
    wcc_f — 育成(DOM非依存)→docs/05 §5.3〜5.6
    1試合ごとに:
@@ -3598,6 +3695,85 @@ function doTraining(S,i,intensity){
   if(N.fat[lv]>0)out.push("疲労 +"+Math.round(N.fat[lv]*100)+"%(試合はそのぶん消耗した状態で始まる)");
   S.g.step="comm"; S.g.cn=0; S.g.done=[];
   return out;
+}
+
+/**
+ * 休憩。チーム練習の代わりに1手使う。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る
+ */
+function doRest(S){
+  const G0=TUNING.grow, out=[];
+  if(S.g.step!=="train")return out;
+  const rng=mulberry32((S.seed^hashStr("rest:"+S.term+":"+S.played))>>>0);
+  let up=0;
+  for(const id in S.g.pl){
+    const g=S.g.pl[id];
+    g.fat*=G0.rest.keep;
+    if(g.mot<G0.mot.start&&g.mot>=1&&rng()<G0.rest.motUp){ g.mot++; up++; }
+  }
+  out.push("休憩: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
+  S.g.step="comm"; S.g.cn=0; S.g.done=[];
+  return out;
+}
+
+/* ---------- 進み具合(見える化) ---------- */
+
+/** 個人能力の次の★までの進み(0〜1)。★4なら覚醒の兆しまで */
+function indProgress(g){
+  const I=TUNING.grow.ind;
+  if(g.is>=5||g.q)return 1;
+  return Math.min(1,g.ie/(g.is<4?I.need[g.is]:I.awake));
+}
+function spProgress(g){
+  const P=TUNING.grow.sp;
+  if(g.ss>=5||g.sq)return 1;
+  return Math.min(1,g.se/(g.ss<4?P.need[g.ss]:P.awake));
+}
+/** 2人の連携の次の段までの進み(0〜1)。太線なら黄金線の兆しが出ているか */
+function linkProgress(S,a,b){
+  const L=TUNING.grow.link, l=linkOf(S,a,b);
+  if(l.lv>=2)return l.gold?1:0;
+  return Math.min(1,l.exp/L.need[l.lv]);
+}
+/** 信頼度(絆)の段 0〜3 */
+const trustLv=g=>{ const t=TUNING.grow.trust; let i=0; while(i<t.length&&(g.bond||0)>=t[i])i++; return i; };
+const TRUST_LABEL=["まだ遠い","打ち解けてきた","信頼している","心酔している"];
+
+/* ---------- 選手の言葉(→docs/05 §5.3) ----------
+ * 疲労・調子・成長・信頼度・出番から、いま一番言いたいことを1つ選ぶ。
+ * 同じ試合の同じ選手なら毎回同じ言葉(たねで選ぶ)。 */
+const VOICE={
+  ready:  ["監督、少しお話ししたいことがあります。","自分の型がつかめそうなんです。聞いてもらえますか。"],
+  awake:  ["体が軽い。次の試合で何かが起きそうです。","今なら何でもできる気がします。フレンドリーマッチで試させてください。"],
+  near:   ["もう少しで何かつかめそうです。","練習の手応えが変わってきました。"],
+  tired:  ["脚が重いです……少し休みたい。","正直、疲れがたまっています。"],
+  low:    ["最近うまくいかなくて……。","自信をなくしかけています。"],
+  bench:  ["そろそろ試合に出たいです。","ベンチから見ているだけなのはつらいです。"],
+  high:   ["今日は調子がいいです！","絶好調です。任せてください！"],
+  young:  ["もっと上手くなりたいです！","先輩たちに追いつきたいです。"],
+  vet:    ["若い連中の手本にならないとな。","経験なら負けませんよ。"],
+  trust:  ["監督の言うことなら信じてやります。","監督のためなら走れます。"],
+  new:    ["よろしくお願いします。","まだ監督のことがよく分からなくて……。"],
+  plain:  ["はい、なんでしょう。","次の試合も頑張ります。"]
+};
+function voiceOf(S,id){
+  const g=S.g.pl[id], c=CARDS[id], G0=TUNING.grow;
+  if(!g)return "";
+  const k=spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
+    :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
+    :trustLv(g)>=2?"trust":(g.bond||0)===0?"new":c.age<=21?"young":c.age>=31?"vet":"plain";
+  const list=VOICE[k], r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
+  return list[r];
+}
+/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・声かけは成功) */
+const REACT={
+  ind:   [["ありがとうございます！手応えがありました。"],["勉強になりました。"],["……はい。"]],
+  talk:  [["気持ちが楽になりました！"],["ありがとうございます。切り替えます。"],["……分かりました。"]],
+  meet:  [["監督、やってみます！","目が覚めました！"],["分かりました。考えてみます。"],["それは……少し違う気がします。"]],
+  lounge:[["あいつとは息が合いそうです！"],["悪くない時間でした。"],["……どうも噛み合わないな。"]]
+};
+function reactOf(S,id,kind,res){
+  const t=REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;
+  return nameOf(CARDS[id])+"「"+list[r]+"」";
 }
 
 /* ---------- ② コミュニケーション(最大3回) ---------- */
@@ -4022,11 +4198,14 @@ function drawFrame(G,dt){
    wcc_f — カード盤面(下半分)。筐体のフラットパネルにあたる。
    カードを動かすと orderMatch に積まれ、次のステップから試合に効く。
    盤面は筐体と同じ縦向き(下=自陣ゴール / 上=敵陣ゴール。左サイドが左)。映像(モニター)は横向きのまま。
-   カードを動かさずに離す(タップ)と、そのカードの詳細が開く。
+   **長押しでカードの裏(詳細)が盤面の上に開く**。タップは KP を選ぶときだけ使う。
+   動かしているカードは指の少し上に出す(指で隠れないように)。
    ========================================================================= */
 
 const BD={ cards:null, bench:null, board:null, map:new Map(), drag:null, pendingIn:new Set(), kp:null };
 const TAP_PX=7;                              // これ未満の動きはタップとみなす
+const LONG_MS=420;                           // これだけ動かさずに押していたら長押し
+const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量
 
 // 盤面の % 座標 [左, 上]。端のカードが切れないよう内側に寄せる(SQUAD の盤面と同じ考え方 →clubui.js sqPos)
 const bdPos=(h,x)=>[9+x*0.82, 93-h*86];
@@ -4126,15 +4305,16 @@ function bindFieldDrag(el,id,gk){
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
-    BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false };
+    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false, long:false };
+    d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; el.classList.remove("drag"); showInfo(id); } },LONG_MS);
     el.classList.add("drag");
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
-    if(!d||d.id!==id||d.pid!==e.pointerId||d.bench)return;
+    if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
-    d.moved=true;
-    const raw=bdInv(e.clientX,e.clientY), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
+    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
+    const raw=bdInv(e.clientX,e.clientY-LIFT_PX), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
     el.style.left=l+"%"; el.style.top=t+"%";
     const role=gk?"GK":roleAt(h,x);
@@ -4145,8 +4325,9 @@ function bindFieldDrag(el,id,gk){
   const end=e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
+    clearTimeout(d.timer);
     el.classList.remove("drag"); BD.drag=null;
-    if(!d.moved&&e.type==="pointerup")tapCard(id);
+    if(!d.moved&&!d.long&&e.type==="pointerup")tapCard(id);
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
@@ -4162,46 +4343,74 @@ function fieldCardAt(cx,cy,except){
   return null;
 }
 function bindBenchDrag(el,id){
+  const ghostAt=(g,cx,cy)=>{ g.style.left=cx+"px"; g.style.top=(cy-LIFT_PX)+"px"; };
   el.addEventListener("pointerdown",e=>{
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
     const can=!G.M.over&&!BD.pendingIn.has(id)&&G.M.home.subs+BD.pendingIn.size<TUNING.squad.subMax;
-    BD.drag={ id, el, pid:e.pointerId, bench:true, x0:e.clientX, y0:e.clientY, over:null, moved:false, can };
-    if(can)el.classList.add("drag");
+    const d=BD.drag={ id, el, pid:e.pointerId, bench:true, x0:e.clientX, y0:e.clientY, over:null, moved:false, can, long:false, ghost:null };
+    d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; showInfo(id); } },LONG_MS);
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
-    if(!d||d.id!==id||d.pid!==e.pointerId)return;
+    if(!d||d.id!==id||d.pid!==e.pointerId||d.long)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
-    d.moved=true;
-    if(!d.can)return;
-    el.style.transform="translate("+(e.clientX-d.x0)+"px,"+(e.clientY-d.y0)+"px) scale(1.14)";
-    const tgt=fieldCardAt(e.clientX,e.clientY,el);
+    if(!d.moved){
+      d.moved=true; clearTimeout(d.timer); hideInfo();
+      if(!d.can){ say(G.M.home.subs+BD.pendingIn.size>=TUNING.squad.subMax?"交代はもう使い切った":"この選手は交代できない"); return; }
+      // 盤面の上を自由に動けるよう、控えの列の外(画面の一番上)に浮かせる
+      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost);
+      el.classList.add("lifted");
+      document.getElementById("board").classList.add("subbing");
+    }
+    if(!d.can||!d.ghost)return;
+    ghostAt(d.ghost,e.clientX,e.clientY);
+    // 重ねる相手は浮いたカードの位置で探す(指ではなく、見えているカードの真下)
+    const tgt=fieldCardAt(e.clientX,e.clientY-LIFT_PX,d.ghost);
     if(tgt!==d.over){
       if(d.over)d.over.classList.remove("drop");
-      if(tgt)tgt.classList.add("drop");
+      if(tgt){ tgt.classList.add("drop"); say("離すと交代: OUT "+nm(tgt.dataset.id)+" → IN "+nm(id)); }
       d.over=tgt;
     }
   });
   const end=e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
-    el.classList.remove("drag"); el.style.transform="";
+    clearTimeout(d.timer);
+    if(d.ghost)d.ghost.remove();
+    el.classList.remove("lifted");
+    document.getElementById("board").classList.remove("subbing");
+    BD.drag=null;
     if(d.over){
       d.over.classList.remove("drop");
-      if(e.type==="pointerup"){
-        orderMatch(G.M,"H",{ type:"sub", out:d.over.dataset.id, in:id });
-        BD.pendingIn.add(id);
-        el.classList.add("used");
-        onSubQueued(id,d.over.dataset.id);
-      }
+      if(e.type==="pointerup")askSub(d.over.dataset.id,id);
     }
-    BD.drag=null;
-    if(!d.moved&&e.type==="pointerup")showInfo(id);
+    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代");
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
+}
+/** 交代の確認。確認している間は試合を止める(→docs/07 §7.11) */
+function askSub(outId,inId){
+  const wasPlaying=G.playing;
+  if(wasPlaying)setPlaying(false);
+  BD.ask={ outId, inId, wasPlaying };
+  document.getElementById("subAskText").innerHTML='<small>交代</small><b class="out">OUT '+nm(outId)+'</b><i>→</i><b class="in">IN '+nm(inId)+'</b>';
+  document.getElementById("subAsk").classList.add("on");
+}
+function answerSub(yes){
+  const a=BD.ask; BD.ask=null;
+  document.getElementById("subAsk").classList.remove("on");
+  if(!a)return;
+  if(yes&&!G.M.over){
+    orderMatch(G.M,"H",{ type:"sub", out:a.outId, in:a.inId });
+    BD.pendingIn.add(a.inId);
+    const b=[...document.querySelectorAll("#bench .cd")].find(x=>x.dataset.id===a.inId);
+    if(b)b.classList.add("used");
+    onSubQueued(a.inId,a.outId);
+  }else say("交代をやめた");
+  if(a.wasPlaying)setPlaying(true);
 }
 
 /* =========================================================================
@@ -4287,12 +4496,15 @@ function chipsHtml(ids,on,info,act){
 }
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
+  // 札には次の★までの進み(%)と兆しを出す(→docs/05 §5.3 見える化)
   ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(個人能力の経験 +"+TUNING.grow.comm.ind+" × 伸びやすさ。★は試合のあとに上がる)",
-           info:(g,id)=>"個★"+g.is+" "+CARDS[id].age+"歳" },
-  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)", info:g=>"特★"+g.ss },
+           info:(g,id)=>g.is>=5?"個★5 覚醒":g.q?"個★4 覚醒の兆し":"個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%" },
+  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)",
+           info:g=>g.ss>=5?"特★5":g.sq?"特★4 極みの兆し":"特★"+g.ss+" "+Math.floor(spProgress(g)*100)+"%" },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
-    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id); return LINK_LABEL[l.lv]+(l.gold?"・兆し":""); } },
+    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
+    return LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
   talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
@@ -4303,11 +4515,14 @@ function msgHtml(){
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
   return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが、疲れて試合に入る</small></div>'+
-    '<div class="ints">'+INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
+    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
+      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>伸び ×'+N.k[i]+(N.fat[i]?' ・ 疲労 +'+Math.round(N.fat[i]*100)+'%':' ・ 疲れない')+'</small></button>').join("")+'</div>'+
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
-    '<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
-      '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>';
+    (CL.int===-1
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
+      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
 }
 /** ② コミュニケーション */
 function commStepHtml(){
@@ -4320,7 +4535,8 @@ function commStepHtml(){
   h+='<p class="dim">'+U.hint+'</p>'+chipsHtml(all,CL.pick,U.info);
   if(CL.pick.length===U.n){
     const id=CL.pick[0];
-    h+='<div class="ask">';
+    h+='<div class="ask">'+CL.pick.map(x=>'<p class="voice"><b>'+cname(x)+'</b>「'+voiceOf(S,x)+'」<small>信頼度: '+
+      TRUST_LABEL[trustLv(S.g.pl[x])]+'</small></p>').join("");
     if(CL.comm==="lounge"){
       const f=loungeInfo(S,CL.pick[0],CL.pick[1]);
       h+='<p><b>'+cname(CL.pick[0])+'</b> と <b>'+cname(CL.pick[1])+'</b> ・ いま: '+LINK_LABEL[f.lv]+
@@ -4385,7 +4601,7 @@ function sqTokenHtml(id,i,on){
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
   const sign=g&&(g.q||g.sq||spReady(S,id));
-  return '<div class="sqc r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
+  return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+(on?'':' data-act="sqpick"')+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
@@ -4405,6 +4621,15 @@ function sqLinksSvg(){
       '" x2="'+B.l.toFixed(2)+'" y2="'+B.t.toFixed(2)+'" vector-effect="non-scaling-stroke"/>';
     h+=ln("lk l"+l.lv)+(l.gold&&l.lv===2?ln("lk omen"):"");
   }
+  // 選んだ選手について、次の段が近い相手(線なし・薄線で、経験が soon を超えたもの)を細い点線で(→docs/05 §5.3 見える化)
+  for(let i=0;i<on.length;i++)for(let j=i+1;j<on.length;j++){
+    const a=on[i], b=on[j], l=linkOf(S,a,b);
+    if(CL.sqSel!==a&&CL.sqSel!==b)continue;
+    if(l.lv>=2||linkProgress(S,a,b)<TUNING.grow.soon)continue;
+    const A=sqPos(S.layout[a][0],S.layout[a][1]), B=sqPos(S.layout[b][0],S.layout[b][1]);
+    h+='<line class="lk soon" data-a="'+a+'" data-b="'+b+'" x1="'+A.l.toFixed(2)+'" y1="'+A.t.toFixed(2)+'" x2="'+B.l.toFixed(2)+
+      '" y2="'+B.t.toFixed(2)+'" vector-effect="non-scaling-stroke"/>';
+  }
   return h+'</svg>';
 }
 /** 選んでいる選手の板(役割と適性・育成・KP にする) */
@@ -4416,13 +4641,16 @@ function sqDetailHtml(){
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
-      (on?'<span class="rlx '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx">控え</span>')+'</div>'+
+      (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">控え</span>')+'</div>'+
     '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
-      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
+      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
+      (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
+      '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
+    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
     '<p class="sq-hint">入れ替える相手をタップ</p></div>';
 }
 function squadHtml(){
@@ -4439,7 +4667,7 @@ function squadHtml(){
   // 連携の数・戦力グラフ
   const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
   h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
-    '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>兆し</span>'+
+    '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></section>';
   h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
     Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
@@ -4498,7 +4726,8 @@ function sqBind(pitch){
 /** カードの人物の影(独自に描いた汎用の上半身。絵は後で差し替える) */
 const CARD_SIL='<svg class="k-sil" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
   '<path d="M50 8c11 0 19 9 19 21 0 9-4 16-10 20l3 5c16 3 28 11 32 26l4 30H2l4-30c4-15 16-23 32-26l3-5c-6-4-10-11-10-20 0-12 8-21 19-21z"/></svg>';
-const RAR_TAG={ W:"BASE", B:"PREMIUM", K:"FOIL", L:"LEGEND" };
+// レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
+const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
 const cardColor=c=>(c.team&&TEAMS[c.team]?TEAMS[c.team].color:c.id&&c.id[0]==="h"?TEAMS.azr.color:"#888");
 /**
@@ -4512,9 +4741,10 @@ function cardHtml(id,size,extra){
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
     '<i class="k-band"></i><div class="k-art">'+CARD_SIL+'</div>'+
-    '<div class="k-top"><b class="k-no">'+c.no+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
+    '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
-    '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+(c.club||"")+'</small></div>'+
+    '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
+    '<i class="k-cno">'+cardNoOf(c)+'</i>'+
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
@@ -4525,6 +4755,7 @@ function cardHtml(id,size,extra){
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
   let h='<div class="kdet">'+cardHtml(id,"m")+'<div class="kinfo">'+
+    '<p class="kmeta"><b>'+cardNoOf(c)+'</b> '+RAR_TAG[c.rar||"B"]+' ・ '+clubOfCard(c)+' #'+c.no+' ・ 合計 <b>'+statTotal(c)+'</b></p>'+
     '<div class="sts">'+STATS.map(k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b><em><u style="width:'+(c[k]/STAT_MAX*100)+'%"></u></em></span>').join("")+'</div>'+
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
@@ -4541,11 +4772,14 @@ function cardDetailHtml(id){
 function collectionHtml(){
   const S=CL.S, ids=Object.keys(S.coll), n=ids.reduce((s,id)=>s+S.coll[id],0);
   const ord=r=>RAR_ORDER.indexOf(r), posOrd={ GK:0, DF:1, MF:2, FW:3 };
-  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf))
-    .sort((a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||(a<b?-1:1));
+  const by={ rar:(a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||cnoCmp(a,b),
+    no:cnoCmp, tot:(a,b)=>statTotal(CARDS[b])-statTotal(CARDS[a])||cnoCmp(a,b) };
+  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf)).sort(by[CL.cs]||by.rar);
   let h='<section class="card coll"><h3>カード <small>'+ids.length+'種 ・ '+n+'枚 ・ 登録 16人</small></h3>'+
     '<div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
-      (k==="ALL"?"全部":k)+'</button>').join("")+'</div>';
+      (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
+    '<div class="tabs t3 sorts">'+[["rar","レア順"],["no","No.順"],["tot","合計順"]].map(([k,t])=>'<button class="tab'+((CL.cs||"rar")===k?' on':'')+
+      '" data-act="cs" data-v="'+k+'">'+t+'</button>').join("")+'</div>';
   if(CL.sel)h+=cardDetailHtml(CL.sel);
   h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",CL.sel===id?" on":"")).join("")+'</div>'
     :'<p class="dim">登録していないカードはまだ無い。試合のあとに1枚ずつ出る</p>';
@@ -4739,7 +4973,9 @@ function onClubClick(e){
     CL.comm=null; CL.pick=[]; save(); showClub();
   }
   else if(act==="int"){ CL.int=+b.dataset.i; showClub(true); }
+  else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
+  else if(act==="cs"){ CL.cs=b.dataset.v; showClub(true); }
   else if(act==="card"){ CL.sel=CL.sel===b.dataset.id?null:b.dataset.id; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
@@ -4751,11 +4987,11 @@ function onClubClick(e){
   else if(act==="sqkp"){ S.kp=b.dataset.id; save(); showClub(true); }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const r=doIndTrain(S,CL.pick[0]); CL.msg=CL.msg.concat(["個人練習"],r.lines);
+    const id=CL.pick[0], r=doIndTrain(S,id); CL.msg=CL.msg.concat(["個人練習"],r.lines,[reactOf(S,id,"ind",r.res===1?1:0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const r=doTalk(S,CL.pick[0]); CL.msg=CL.msg.concat(["声かけ"],r.lines);
+    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["声かけ"],r.lines,[reactOf(S,id,"talk",0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="pick"){
@@ -4765,12 +5001,12 @@ function onClubClick(e){
   }
   else if(act==="lounge"&&CL.pick.length===2){
     const r=doLounge(S,CL.pick[0],CL.pick[1],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ラウンジ: "+cname(CL.pick[0])+" と "+cname(CL.pick[1])],r.lines);
+    CL.msg=CL.msg.concat(["ラウンジ: "+cname(CL.pick[0])+" と "+cname(CL.pick[1])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"lounge",r.res)]:[]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="meet"&&CL.pick.length===1){
     const r=doMeeting(S,CL.pick[0],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ミーティング: "+cname(CL.pick[0])],r.lines);
+    CL.msg=CL.msg.concat(["ミーティング: "+cname(CL.pick[0])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"meet",r.res)]:[]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="reset"){
@@ -5362,8 +5598,8 @@ function pickKp(id){
   say("KP "+nm(id)+(st?" ▶ "+st.name:""),true);
   syncBoard(G.M); updateCtl();
 }
-/** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に、そうでなければ詳細を開く */
-function tapCard(id){ if(G.kpMode)pickKp(id); else showInfo(id); }
+/** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に。詳細は長押し(→board.js) */
+function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP"); }
 /** 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられ、もう一度押すと消える */
 const INS_BTN=[["btnCenter","center"],["btnLeft","left"],["btnRight","right"],["btnCounter","counter"],["btnPress","press"],["btnKeeper","keeper"]];
 function toggleIns(key){
@@ -5589,6 +5825,9 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("infoClose").addEventListener("click",hideInfo);
+  $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
+  $("subYes").addEventListener("click",()=>answerSub(true));
+  $("subNo").addEventListener("click",()=>answerSub(false));
   $("infoKp").addEventListener("click",()=>{
     if(!G.info||G.M.over)return;
     const id=G.info;

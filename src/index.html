@@ -20,17 +20,21 @@
   <header id="hud">
     <div class="sb"><i id="hudHc" class="em"></i><b id="hudH" class="tn">HOME</b><span id="hudScore">0 - 0</span><b id="hudA" class="tn">AWAY</b><i id="hudAc" class="em"></i></div>
     <div class="clk"><small id="hudComp"></small><span id="hudClock">0'</span></div>
+    <button id="btnSpeed" class="btn spd">×1</button>
   </header>
   <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div>
-    <div id="info"><div id="infoBody"></div>
-      <div class="row"><button id="infoKp" class="btn"></button><button id="infoClose" class="btn">閉じる</button></div>
-    </div>
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
   <div id="deck">
     <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
     <div id="bench"></div>
+    <div id="info"><div id="infoBody"></div>
+      <div class="row"><button id="infoKp" class="btn"></button><button id="infoClose" class="btn">閉じる</button></div>
+    </div>
+    <div id="subAsk"><p id="subAskText"></p>
+      <div class="row"><button id="subYes" class="btn btn-main">交代する</button><button id="subNo" class="btn">やめる</button></div>
+    </div>
   </div>
   <div id="pad">
     <div class="cross">
@@ -42,7 +46,7 @@
     </div>
     <div class="mid">
       <button id="btnKp" class="btn btn-kp">KP</button>
-      <div class="pr"><button id="btnPlay" class="btn">▶</button><button id="btnSpeed" class="btn">×1</button></div>
+      <button id="btnPlay" class="btn">▶</button>
       <span id="subInfo">交代 0/3</span>
     </div>
     <div class="act">

@@ -11,7 +11,7 @@ const EXPORTS=["TUNING","CARDS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","
   "commLeft","teamFatigue","INT_LABEL",
   "POOL","RARITY","RAR_ORDER","REAL_IDS","PACK","drawCard","payout","swapSquad","moveSquad","startSquad",
   "TITLES","titleOf","termFacts","followers","facLevel","endTerm","startNextTerm",
-  "compatOf","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm"];
+  "compatOf","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm","doRest","indProgress","linkProgress","voiceOf","trustLv"];
 
 function load(){
   const src=ENGINE_FILES

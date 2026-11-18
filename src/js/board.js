@@ -2,11 +2,14 @@
    wcc_f — カード盤面(下半分)。筐体のフラットパネルにあたる。
    カードを動かすと orderMatch に積まれ、次のステップから試合に効く。
    盤面は筐体と同じ縦向き(下=自陣ゴール / 上=敵陣ゴール。左サイドが左)。映像(モニター)は横向きのまま。
-   カードを動かさずに離す(タップ)と、そのカードの詳細が開く。
+   **長押しでカードの裏(詳細)が盤面の上に開く**。タップは KP を選ぶときだけ使う。
+   動かしているカードは指の少し上に出す(指で隠れないように)。
    ========================================================================= */
 
 const BD={ cards:null, bench:null, board:null, map:new Map(), drag:null, pendingIn:new Set(), kp:null };
 const TAP_PX=7;                              // これ未満の動きはタップとみなす
+const LONG_MS=420;                           // これだけ動かさずに押していたら長押し
+const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量
 
 // 盤面の % 座標 [左, 上]。端のカードが切れないよう内側に寄せる(SQUAD の盤面と同じ考え方 →clubui.js sqPos)
 const bdPos=(h,x)=>[9+x*0.82, 93-h*86];
@@ -106,15 +109,16 @@ function bindFieldDrag(el,id,gk){
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
-    BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false };
+    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false, long:false };
+    d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; el.classList.remove("drag"); showInfo(id); } },LONG_MS);
     el.classList.add("drag");
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
-    if(!d||d.id!==id||d.pid!==e.pointerId||d.bench)return;
+    if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
-    d.moved=true;
-    const raw=bdInv(e.clientX,e.clientY), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
+    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
+    const raw=bdInv(e.clientX,e.clientY-LIFT_PX), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
     el.style.left=l+"%"; el.style.top=t+"%";
     const role=gk?"GK":roleAt(h,x);
@@ -125,8 +129,9 @@ function bindFieldDrag(el,id,gk){
   const end=e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
+    clearTimeout(d.timer);
     el.classList.remove("drag"); BD.drag=null;
-    if(!d.moved&&e.type==="pointerup")tapCard(id);
+    if(!d.moved&&!d.long&&e.type==="pointerup")tapCard(id);
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
@@ -142,44 +147,72 @@ function fieldCardAt(cx,cy,except){
   return null;
 }
 function bindBenchDrag(el,id){
+  const ghostAt=(g,cx,cy)=>{ g.style.left=cx+"px"; g.style.top=(cy-LIFT_PX)+"px"; };
   el.addEventListener("pointerdown",e=>{
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
     const can=!G.M.over&&!BD.pendingIn.has(id)&&G.M.home.subs+BD.pendingIn.size<TUNING.squad.subMax;
-    BD.drag={ id, el, pid:e.pointerId, bench:true, x0:e.clientX, y0:e.clientY, over:null, moved:false, can };
-    if(can)el.classList.add("drag");
+    const d=BD.drag={ id, el, pid:e.pointerId, bench:true, x0:e.clientX, y0:e.clientY, over:null, moved:false, can, long:false, ghost:null };
+    d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; showInfo(id); } },LONG_MS);
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
-    if(!d||d.id!==id||d.pid!==e.pointerId)return;
+    if(!d||d.id!==id||d.pid!==e.pointerId||d.long)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
-    d.moved=true;
-    if(!d.can)return;
-    el.style.transform="translate("+(e.clientX-d.x0)+"px,"+(e.clientY-d.y0)+"px) scale(1.14)";
-    const tgt=fieldCardAt(e.clientX,e.clientY,el);
+    if(!d.moved){
+      d.moved=true; clearTimeout(d.timer); hideInfo();
+      if(!d.can){ say(G.M.home.subs+BD.pendingIn.size>=TUNING.squad.subMax?"交代はもう使い切った":"この選手は交代できない"); return; }
+      // 盤面の上を自由に動けるよう、控えの列の外(画面の一番上)に浮かせる
+      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost);
+      el.classList.add("lifted");
+      document.getElementById("board").classList.add("subbing");
+    }
+    if(!d.can||!d.ghost)return;
+    ghostAt(d.ghost,e.clientX,e.clientY);
+    // 重ねる相手は浮いたカードの位置で探す(指ではなく、見えているカードの真下)
+    const tgt=fieldCardAt(e.clientX,e.clientY-LIFT_PX,d.ghost);
     if(tgt!==d.over){
       if(d.over)d.over.classList.remove("drop");
-      if(tgt)tgt.classList.add("drop");
+      if(tgt){ tgt.classList.add("drop"); say("離すと交代: OUT "+nm(tgt.dataset.id)+" → IN "+nm(id)); }
       d.over=tgt;
     }
   });
   const end=e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
-    el.classList.remove("drag"); el.style.transform="";
+    clearTimeout(d.timer);
+    if(d.ghost)d.ghost.remove();
+    el.classList.remove("lifted");
+    document.getElementById("board").classList.remove("subbing");
+    BD.drag=null;
     if(d.over){
       d.over.classList.remove("drop");
-      if(e.type==="pointerup"){
-        orderMatch(G.M,"H",{ type:"sub", out:d.over.dataset.id, in:id });
-        BD.pendingIn.add(id);
-        el.classList.add("used");
-        onSubQueued(id,d.over.dataset.id);
-      }
+      if(e.type==="pointerup")askSub(d.over.dataset.id,id);
     }
-    BD.drag=null;
-    if(!d.moved&&e.type==="pointerup")showInfo(id);
+    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代");
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
+}
+/** 交代の確認。確認している間は試合を止める(→docs/07 §7.11) */
+function askSub(outId,inId){
+  const wasPlaying=G.playing;
+  if(wasPlaying)setPlaying(false);
+  BD.ask={ outId, inId, wasPlaying };
+  document.getElementById("subAskText").innerHTML='<small>交代</small><b class="out">OUT '+nm(outId)+'</b><i>→</i><b class="in">IN '+nm(inId)+'</b>';
+  document.getElementById("subAsk").classList.add("on");
+}
+function answerSub(yes){
+  const a=BD.ask; BD.ask=null;
+  document.getElementById("subAsk").classList.remove("on");
+  if(!a)return;
+  if(yes&&!G.M.over){
+    orderMatch(G.M,"H",{ type:"sub", out:a.outId, in:a.inId });
+    BD.pendingIn.add(a.inId);
+    const b=[...document.querySelectorAll("#bench .cd")].find(x=>x.dataset.id===a.inId);
+    if(b)b.classList.add("used");
+    onSubQueued(a.inId,a.outId);
+  }else say("交代をやめた");
+  if(a.wasPlaying)setPlaying(true);
 }

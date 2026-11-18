@@ -211,6 +211,85 @@ function doTraining(S,i,intensity){
   return out;
 }
 
+/**
+ * 休憩。チーム練習の代わりに1手使う。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る
+ */
+function doRest(S){
+  const G0=TUNING.grow, out=[];
+  if(S.g.step!=="train")return out;
+  const rng=mulberry32((S.seed^hashStr("rest:"+S.term+":"+S.played))>>>0);
+  let up=0;
+  for(const id in S.g.pl){
+    const g=S.g.pl[id];
+    g.fat*=G0.rest.keep;
+    if(g.mot<G0.mot.start&&g.mot>=1&&rng()<G0.rest.motUp){ g.mot++; up++; }
+  }
+  out.push("休憩: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
+  S.g.step="comm"; S.g.cn=0; S.g.done=[];
+  return out;
+}
+
+/* ---------- 進み具合(見える化) ---------- */
+
+/** 個人能力の次の★までの進み(0〜1)。★4なら覚醒の兆しまで */
+function indProgress(g){
+  const I=TUNING.grow.ind;
+  if(g.is>=5||g.q)return 1;
+  return Math.min(1,g.ie/(g.is<4?I.need[g.is]:I.awake));
+}
+function spProgress(g){
+  const P=TUNING.grow.sp;
+  if(g.ss>=5||g.sq)return 1;
+  return Math.min(1,g.se/(g.ss<4?P.need[g.ss]:P.awake));
+}
+/** 2人の連携の次の段までの進み(0〜1)。太線なら黄金線の兆しが出ているか */
+function linkProgress(S,a,b){
+  const L=TUNING.grow.link, l=linkOf(S,a,b);
+  if(l.lv>=2)return l.gold?1:0;
+  return Math.min(1,l.exp/L.need[l.lv]);
+}
+/** 信頼度(絆)の段 0〜3 */
+const trustLv=g=>{ const t=TUNING.grow.trust; let i=0; while(i<t.length&&(g.bond||0)>=t[i])i++; return i; };
+const TRUST_LABEL=["まだ遠い","打ち解けてきた","信頼している","心酔している"];
+
+/* ---------- 選手の言葉(→docs/05 §5.3) ----------
+ * 疲労・調子・成長・信頼度・出番から、いま一番言いたいことを1つ選ぶ。
+ * 同じ試合の同じ選手なら毎回同じ言葉(たねで選ぶ)。 */
+const VOICE={
+  ready:  ["監督、少しお話ししたいことがあります。","自分の型がつかめそうなんです。聞いてもらえますか。"],
+  awake:  ["体が軽い。次の試合で何かが起きそうです。","今なら何でもできる気がします。フレンドリーマッチで試させてください。"],
+  near:   ["もう少しで何かつかめそうです。","練習の手応えが変わってきました。"],
+  tired:  ["脚が重いです……少し休みたい。","正直、疲れがたまっています。"],
+  low:    ["最近うまくいかなくて……。","自信をなくしかけています。"],
+  bench:  ["そろそろ試合に出たいです。","ベンチから見ているだけなのはつらいです。"],
+  high:   ["今日は調子がいいです！","絶好調です。任せてください！"],
+  young:  ["もっと上手くなりたいです！","先輩たちに追いつきたいです。"],
+  vet:    ["若い連中の手本にならないとな。","経験なら負けませんよ。"],
+  trust:  ["監督の言うことなら信じてやります。","監督のためなら走れます。"],
+  new:    ["よろしくお願いします。","まだ監督のことがよく分からなくて……。"],
+  plain:  ["はい、なんでしょう。","次の試合も頑張ります。"]
+};
+function voiceOf(S,id){
+  const g=S.g.pl[id], c=CARDS[id], G0=TUNING.grow;
+  if(!g)return "";
+  const k=spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
+    :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
+    :trustLv(g)>=2?"trust":(g.bond||0)===0?"new":c.age<=21?"young":c.age>=31?"vet":"plain";
+  const list=VOICE[k], r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
+  return list[r];
+}
+/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・声かけは成功) */
+const REACT={
+  ind:   [["ありがとうございます！手応えがありました。"],["勉強になりました。"],["……はい。"]],
+  talk:  [["気持ちが楽になりました！"],["ありがとうございます。切り替えます。"],["……分かりました。"]],
+  meet:  [["監督、やってみます！","目が覚めました！"],["分かりました。考えてみます。"],["それは……少し違う気がします。"]],
+  lounge:[["あいつとは息が合いそうです！"],["悪くない時間でした。"],["……どうも噛み合わないな。"]]
+};
+function reactOf(S,id,kind,res){
+  const t=REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;
+  return nameOf(CARDS[id])+"「"+list[r]+"」";
+}
+
 /* ---------- ② コミュニケーション(最大3回) ---------- */
 
 const commLeft=S=>S.g.step==="comm"?TUNING.grow.comm.max-S.g.cn:0;

@@ -81,12 +81,15 @@ function chipsHtml(ids,on,info,act){
 }
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
+  // 札には次の★までの進み(%)と兆しを出す(→docs/05 §5.3 見える化)
   ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(個人能力の経験 +"+TUNING.grow.comm.ind+" × 伸びやすさ。★は試合のあとに上がる)",
-           info:(g,id)=>"個★"+g.is+" "+CARDS[id].age+"歳" },
-  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)", info:g=>"特★"+g.ss },
+           info:(g,id)=>g.is>=5?"個★5 覚醒":g.q?"個★4 覚醒の兆し":"個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%" },
+  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)",
+           info:g=>g.ss>=5?"特★5":g.sq?"特★4 極みの兆し":"特★"+g.ss+" "+Math.floor(spProgress(g)*100)+"%" },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
-    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id); return LINK_LABEL[l.lv]+(l.gold?"・兆し":""); } },
+    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
+    return LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
   talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
@@ -97,11 +100,14 @@ function msgHtml(){
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
   return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが、疲れて試合に入る</small></div>'+
-    '<div class="ints">'+INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
+    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
+      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>伸び ×'+N.k[i]+(N.fat[i]?' ・ 疲労 +'+Math.round(N.fat[i]*100)+'%':' ・ 疲れない')+'</small></button>').join("")+'</div>'+
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
-    '<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
-      '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>';
+    (CL.int===-1
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
+      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
 }
 /** ② コミュニケーション */
 function commStepHtml(){
@@ -114,7 +120,8 @@ function commStepHtml(){
   h+='<p class="dim">'+U.hint+'</p>'+chipsHtml(all,CL.pick,U.info);
   if(CL.pick.length===U.n){
     const id=CL.pick[0];
-    h+='<div class="ask">';
+    h+='<div class="ask">'+CL.pick.map(x=>'<p class="voice"><b>'+cname(x)+'</b>「'+voiceOf(S,x)+'」<small>信頼度: '+
+      TRUST_LABEL[trustLv(S.g.pl[x])]+'</small></p>').join("");
     if(CL.comm==="lounge"){
       const f=loungeInfo(S,CL.pick[0],CL.pick[1]);
       h+='<p><b>'+cname(CL.pick[0])+'</b> と <b>'+cname(CL.pick[1])+'</b> ・ いま: '+LINK_LABEL[f.lv]+
@@ -179,7 +186,7 @@ function sqTokenHtml(id,i,on){
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
   const sign=g&&(g.q||g.sq||spReady(S,id));
-  return '<div class="sqc r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
+  return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+(on?'':' data-act="sqpick"')+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
@@ -199,6 +206,15 @@ function sqLinksSvg(){
       '" x2="'+B.l.toFixed(2)+'" y2="'+B.t.toFixed(2)+'" vector-effect="non-scaling-stroke"/>';
     h+=ln("lk l"+l.lv)+(l.gold&&l.lv===2?ln("lk omen"):"");
   }
+  // 選んだ選手について、次の段が近い相手(線なし・薄線で、経験が soon を超えたもの)を細い点線で(→docs/05 §5.3 見える化)
+  for(let i=0;i<on.length;i++)for(let j=i+1;j<on.length;j++){
+    const a=on[i], b=on[j], l=linkOf(S,a,b);
+    if(CL.sqSel!==a&&CL.sqSel!==b)continue;
+    if(l.lv>=2||linkProgress(S,a,b)<TUNING.grow.soon)continue;
+    const A=sqPos(S.layout[a][0],S.layout[a][1]), B=sqPos(S.layout[b][0],S.layout[b][1]);
+    h+='<line class="lk soon" data-a="'+a+'" data-b="'+b+'" x1="'+A.l.toFixed(2)+'" y1="'+A.t.toFixed(2)+'" x2="'+B.l.toFixed(2)+
+      '" y2="'+B.t.toFixed(2)+'" vector-effect="non-scaling-stroke"/>';
+  }
   return h+'</svg>';
 }
 /** 選んでいる選手の板(役割と適性・育成・KP にする) */
@@ -210,13 +226,16 @@ function sqDetailHtml(){
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
-      (on?'<span class="rlx '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx">控え</span>')+'</div>'+
+      (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">控え</span>')+'</div>'+
     '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
-      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
+      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
+      (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
+      '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
+    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
     '<p class="sq-hint">入れ替える相手をタップ</p></div>';
 }
 function squadHtml(){
@@ -233,7 +252,7 @@ function squadHtml(){
   // 連携の数・戦力グラフ
   const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
   h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
-    '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>兆し</span>'+
+    '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></section>';
   h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
     Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
@@ -292,7 +311,8 @@ function sqBind(pitch){
 /** カードの人物の影(独自に描いた汎用の上半身。絵は後で差し替える) */
 const CARD_SIL='<svg class="k-sil" viewBox="0 0 100 110" preserveAspectRatio="xMidYMax meet">'+
   '<path d="M50 8c11 0 19 9 19 21 0 9-4 16-10 20l3 5c16 3 28 11 32 26l4 30H2l4-30c4-15 16-23 32-26l3-5c-6-4-10-11-10-20 0-12 8-21 19-21z"/></svg>';
-const RAR_TAG={ W:"BASE", B:"PREMIUM", K:"FOIL", L:"LEGEND" };
+// レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
+const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
 const cardColor=c=>(c.team&&TEAMS[c.team]?TEAMS[c.team].color:c.id&&c.id[0]==="h"?TEAMS.azr.color:"#888");
 /**
@@ -306,9 +326,10 @@ function cardHtml(id,size,extra){
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
     '<i class="k-band"></i><div class="k-art">'+CARD_SIL+'</div>'+
-    '<div class="k-top"><b class="k-no">'+c.no+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
+    '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
-    '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+(c.club||"")+'</small></div>'+
+    '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
+    '<i class="k-cno">'+cardNoOf(c)+'</i>'+
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
@@ -319,6 +340,7 @@ function cardHtml(id,size,extra){
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
   let h='<div class="kdet">'+cardHtml(id,"m")+'<div class="kinfo">'+
+    '<p class="kmeta"><b>'+cardNoOf(c)+'</b> '+RAR_TAG[c.rar||"B"]+' ・ '+clubOfCard(c)+' #'+c.no+' ・ 合計 <b>'+statTotal(c)+'</b></p>'+
     '<div class="sts">'+STATS.map(k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b><em><u style="width:'+(c[k]/STAT_MAX*100)+'%"></u></em></span>').join("")+'</div>'+
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
@@ -335,11 +357,14 @@ function cardDetailHtml(id){
 function collectionHtml(){
   const S=CL.S, ids=Object.keys(S.coll), n=ids.reduce((s,id)=>s+S.coll[id],0);
   const ord=r=>RAR_ORDER.indexOf(r), posOrd={ GK:0, DF:1, MF:2, FW:3 };
-  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf))
-    .sort((a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||(a<b?-1:1));
+  const by={ rar:(a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||cnoCmp(a,b),
+    no:cnoCmp, tot:(a,b)=>statTotal(CARDS[b])-statTotal(CARDS[a])||cnoCmp(a,b) };
+  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf)).sort(by[CL.cs]||by.rar);
   let h='<section class="card coll"><h3>カード <small>'+ids.length+'種 ・ '+n+'枚 ・ 登録 16人</small></h3>'+
     '<div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
-      (k==="ALL"?"全部":k)+'</button>').join("")+'</div>';
+      (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
+    '<div class="tabs t3 sorts">'+[["rar","レア順"],["no","No.順"],["tot","合計順"]].map(([k,t])=>'<button class="tab'+((CL.cs||"rar")===k?' on':'')+
+      '" data-act="cs" data-v="'+k+'">'+t+'</button>').join("")+'</div>';
   if(CL.sel)h+=cardDetailHtml(CL.sel);
   h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",CL.sel===id?" on":"")).join("")+'</div>'
     :'<p class="dim">登録していないカードはまだ無い。試合のあとに1枚ずつ出る</p>';
@@ -533,7 +558,9 @@ function onClubClick(e){
     CL.comm=null; CL.pick=[]; save(); showClub();
   }
   else if(act==="int"){ CL.int=+b.dataset.i; showClub(true); }
+  else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
+  else if(act==="cs"){ CL.cs=b.dataset.v; showClub(true); }
   else if(act==="card"){ CL.sel=CL.sel===b.dataset.id?null:b.dataset.id; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
@@ -545,11 +572,11 @@ function onClubClick(e){
   else if(act==="sqkp"){ S.kp=b.dataset.id; save(); showClub(true); }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const r=doIndTrain(S,CL.pick[0]); CL.msg=CL.msg.concat(["個人練習"],r.lines);
+    const id=CL.pick[0], r=doIndTrain(S,id); CL.msg=CL.msg.concat(["個人練習"],r.lines,[reactOf(S,id,"ind",r.res===1?1:0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const r=doTalk(S,CL.pick[0]); CL.msg=CL.msg.concat(["声かけ"],r.lines);
+    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["声かけ"],r.lines,[reactOf(S,id,"talk",0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="pick"){
@@ -559,12 +586,12 @@ function onClubClick(e){
   }
   else if(act==="lounge"&&CL.pick.length===2){
     const r=doLounge(S,CL.pick[0],CL.pick[1],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ラウンジ: "+cname(CL.pick[0])+" と "+cname(CL.pick[1])],r.lines);
+    CL.msg=CL.msg.concat(["ラウンジ: "+cname(CL.pick[0])+" と "+cname(CL.pick[1])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"lounge",r.res)]:[]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="meet"&&CL.pick.length===1){
     const r=doMeeting(S,CL.pick[0],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ミーティング: "+cname(CL.pick[0])],r.lines);
+    CL.msg=CL.msg.concat(["ミーティング: "+cname(CL.pick[0])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"meet",r.res)]:[]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="reset"){

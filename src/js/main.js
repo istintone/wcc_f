@@ -99,8 +99,8 @@ function pickKp(id){
   say("KP "+nm(id)+(st?" ▶ "+st.name:""),true);
   syncBoard(G.M); updateCtl();
 }
-/** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に、そうでなければ詳細を開く */
-function tapCard(id){ if(G.kpMode)pickKp(id); else showInfo(id); }
+/** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に。詳細は長押し(→board.js) */
+function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP"); }
 /** 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられ、もう一度押すと消える */
 const INS_BTN=[["btnCenter","center"],["btnLeft","left"],["btnRight","right"],["btnCounter","counter"],["btnPress","press"],["btnKeeper","keeper"]];
 function toggleIns(key){
@@ -326,6 +326,9 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("infoClose").addEventListener("click",hideInfo);
+  $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
+  $("subYes").addEventListener("click",()=>answerSub(true));
+  $("subNo").addEventListener("click",()=>answerSub(false));
   $("infoKp").addEventListener("click",()=>{
     if(!G.info||G.M.over)return;
     const id=G.info;
