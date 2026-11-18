@@ -66,7 +66,19 @@ function updateStyleBar(){
   $("styH").innerHTML=styleText(G.M.home,BD.kp);
   $("styA").innerHTML=styleText(G.M.away,null);
 }
-function setPlaying(v){ G.playing=v; updateCtl(); if(v)sndCrowd(true); }
+function setPlaying(v){ G.playing=v; updateCtl(); if(v){ sndCrowd(true); wakeLock(true); } }
+/** 試合が始まってから終わるまで画面を消さない(止めて考えている間も)。対応していない端末では何もしない */
+const WL={ s:null, want:false };
+function wakeLock(on){
+  WL.want=on;
+  try{
+    if(on&&!WL.s&&navigator.wakeLock)navigator.wakeLock.request("screen").then(s=>{
+      if(!WL.want){ s.release().catch(()=>{}); return; }
+      WL.s=s; s.addEventListener("release",()=>{ if(WL.s===s)WL.s=null; });
+    }).catch(()=>{});
+    else if(!on&&WL.s){ const s=WL.s; WL.s=null; s.release().catch(()=>{}); }
+  }catch(e){}
+}
 function overlay(title,body,btn,top,fn){
   $("ovTitle").textContent=title; $("ovBody").innerHTML=body; $("ovBtn").textContent=btn;
   const ov=$("ov");
@@ -236,7 +248,7 @@ function startEvent(ev){
   }
   if(ev.type==="fulltime"){
     sndWhistle(3,true);
-    setPlaying(false);
+    setPlaying(false); wakeLock(false);
     setHud(ev.hg,ev.ag,"FT");
     const H=G.M.home, A=G.M.away, pso=G.M.pso;
     const d=pso?pso[0]-pso[1]:H.score-A.score;
@@ -327,7 +339,10 @@ function boot(){
     const id=G.info;
     pickKp(id); showInfo(id);
   });
-  document.addEventListener("visibilitychange",()=>{ if(document.hidden&&G.playing)setPlaying(false); });
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden&&G.playing)setPlaying(false);
+    sndSuspend(document.hidden);               // 裏に回ったら音を止め、戻ったら鳴らせる状態に戻す
+  });
   // iOS のピンチ・ダブルタップ拡大を止める
   document.addEventListener("gesturestart",e=>e.preventDefault());
   document.addEventListener("touchmove",e=>{ if(e.touches.length>1)e.preventDefault(); },{ passive:false });
@@ -336,7 +351,10 @@ function boot(){
   applyTheme(storedTheme());                   // テーマ(→settings.js)
   sceneInit();
   // 押したら必ず音が返る(→docs/07 §7.3)
-  document.addEventListener("pointerdown",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
+  // 音は離したとき(click)に鳴らす。pointerdown だと、一覧をなでてスクロールしただけで鳴る
+  document.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
+  // iPhone は電話・通知・裏に回ったあと音が止まる(interrupted)。触ったら戻す
+  document.addEventListener("pointerdown",()=>{ if(SND.ctx&&SND.ctx.state!=="running")sndUnlock(); },true);
   document.getElementById("club").addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
   loadStoredPack();                           // 端末に保存した実名パック(→settings.js)
   // ホーム画面に追加した版(http/https で配ったとき)はオフラインでも動くようにする。file:// では何もしない
@@ -352,6 +370,7 @@ function boot(){
     if(!q.get("notitle"))sceneTitle(()=>sceneHide());
     updateCtl();
     requestAnimationFrame(frame);
+    if(!document.documentElement.dataset.boot)document.documentElement.dataset.boot="ok";
     return;
   }
   newMatch(null,null,seed0);

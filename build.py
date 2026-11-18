@@ -12,6 +12,10 @@ import/export やバンドラは使わず、単純な文字列結合でグロー
     python build.py --dist    # 公開用(ホーム画面に追加できる版)を dist/ に書き出す。**実名は入らない**
 """
 import hashlib
+import os
+import shutil
+import subprocess
+import tempfile
 import struct
 import zlib
 import json
@@ -60,6 +64,25 @@ def _pack_js():
     return "\n".join(out)
 
 
+def _check_js(js):
+    """連結した JS の構文を node で確かめる(全ファイルが1つのスコープに入るので、名前の重なりもここで見つかる)"""
+    node = shutil.which("node")
+    if not node:
+        print("JS の構文確認: node が無いので省略")
+        return
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+        f.write(js)
+        tmp = f.name
+    try:
+        r = subprocess.run([node, "--check", tmp], capture_output=True, text=True, encoding="utf-8")
+    finally:
+        os.unlink(tmp)
+    if r.returncode != 0:
+        print(r.stderr)
+        sys.exit("ERROR: 連結した JS に構文エラーがある")
+    print("JS の構文確認: OK")
+
+
 def assemble(real=False):
     html = (SRC / "index.html").read_text(encoding="utf-8")
     for mark in ("/*__CSS__*/", "/*__JS__*/"):
@@ -67,6 +90,8 @@ def assemble(real=False):
             sys.exit("ERROR: src/index.html に %s が1つだけ必要です" % mark)
     html = html.replace("/*__CSS__*/", _font_css() + "\n\n" + _join("css", CSS_FILES))
     js = _join("js", JS_FILES[:-1]) + "\n\n" + (_pack_js() + "\n\n" if real else "") + _join("js", JS_FILES[-1:])
+    if "--check" not in sys.argv:
+        _check_js(js)
     return html.replace("/*__JS__*/", js)
 
 

@@ -9,7 +9,7 @@ try{ SND.on=localStorage.getItem(SND_KEY)!=="off"; }catch(e){}
 
 /** 最初のタップで呼ぶ。以降、音が鳴らせるようになる */
 function sndUnlock(){
-  if(SND.ctx){ if(SND.ctx.state==="suspended")SND.ctx.resume(); return; }
+  if(SND.ctx){ if(SND.ctx.state!=="running"&&!SND.hidden)SND.ctx.resume().catch(()=>{}); return; }
   const AC=window.AudioContext||window.webkitAudioContext;
   if(!AC)return;
   SND.ctx=new AC();
@@ -24,6 +24,12 @@ function sndUnlock(){
     d[i]=(b0+b1+b2+w*0.02)*0.9;
   }
   SND.noise=buf;
+}
+/** 裏に回ったら止める(電池と、iPhone の割り込みのあとに戻すため) */
+function sndSuspend(hidden){
+  SND.hidden=hidden;
+  if(!SND.ctx)return;
+  try{ if(hidden)SND.ctx.suspend().catch(()=>{}); else if(SND.ctx.state!=="running")SND.ctx.resume().catch(()=>{}); }catch(e){}
 }
 function sndSetOn(v){
   SND.on=v;

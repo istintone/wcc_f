@@ -401,6 +401,15 @@ function newTerm(S,W){
 /* ---------- 保存 ---------- */
 
 const SAVE_KEY="wcc_f.save.v1";
+const SAVE_BAD_KEY="wcc_f.save.bad";        // 読めなかったセーブの退避先(上書きで失わないため)
+/** 保存の中身をそのまま返す(読めるかどうかは見ない) */
+function rawSave(store){ try{ return store.getItem(SAVE_KEY); }catch(e){ return null; } }
+/** 読めなかったセーブを退避する。退避できたら true */
+function backupSave(store,raw){
+  try{ store.setItem(SAVE_BAD_KEY,raw); return store.getItem(SAVE_BAD_KEY)===raw; }catch(e){ return false; }
+}
+/** 端末に書かない保存先(保存できない環境・退避できなかったとき) */
+function memStore(){ return { m:{}, setItem(k,v){ this.m[k]=v; }, getItem(k){ return k in this.m?this.m[k]:null; }, removeItem(k){ delete this.m[k]; } }; }
 function saveCareer(store,S){
   try{ store.setItem(SAVE_KEY,JSON.stringify(S)); return true; }catch(e){ return false; }
 }

@@ -82,15 +82,24 @@ function settingsHtml(){
     '<label class="btn btn-sub file">セーブを読み込む(ファイル)<input type="file" accept=".json,application/json,text/plain" data-file="save"></label>'+
     (CL.setMsg?'<p class="hint">'+CL.setMsg+'</p>':'')+
     (CL.copyText?'<textarea class="cp" readonly>'+CL.copyText.replace(/</g,"&lt;")+'</textarea>':'')+
+    (rawBad()?'<h4>退避したセーブ</h4><p class="dim">読めなかった前のセーブを、消さずに取ってある。書き出して保管するか、要らなければ消す</p>'+
+      '<button class="btn btn-sub" data-act="exbad">退避したセーブを書き出す</button>'+
+      '<button class="btn btn-sub" data-act="rmbad">退避したセーブを消す</button>':'')+
     '<h4>最初から</h4>'+
     '<button class="btn btn-sub" data-act="reset">'+(CL.armReset?"本当に最初からやり直す(セーブが消える)":"最初からやり直す")+'</button>'+
     '</section>';
 }
+function rawBad(){ try{ return CL.store.getItem(SAVE_BAD_KEY); }catch(e){ return null; } }
 function settingsMsg(t){ CL.setMsg=t; showClub(true); }
 function onSettingsClick(act,b){
   const S=CL.S;
   if(act==="theme"){ applyTheme(b.dataset.v); showClub(true); return true; }
-  if(act==="set"){ CL.set=!CL.set; CL.setMsg=""; CL.copyText=""; showClub(true); return true; }
+  if(act==="exbad"){
+    settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
+    return true;
+  }
+  if(act==="rmbad"){ try{ CL.store.removeItem(SAVE_BAD_KEY); }catch(e){} settingsMsg("退避したセーブを消した"); return true; }
+  if(act==="set"){ CL.alert=""; CL.set=!CL.set; CL.setMsg=""; CL.copyText=""; showClub(true); return true; }
   if(act==="unpack"){
     try{ localStorage.removeItem(PACK_KEY); }catch(e){}
     applyPack(null); settingsMsg("パックを外した(偽名に戻した)"); return true;
@@ -128,7 +137,7 @@ async function onSettingsFile(input){
     const L=loadCareer(box);
     if(!L){ settingsMsg("セーブを読み込めなかった(形が違うか、壊れている)"); return; }
     CL.S=L; CL.W=worldOf(L); CL.msg=[]; CL.sel=null;
-    saveCareer(CL.store,L);
+    persist(L);
     settingsMsg("セーブを読み込んだ(第"+L.term+"任期 "+L.played+"試合目)");
   }
 }

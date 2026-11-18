@@ -8,10 +8,13 @@
   出力  src/js/realcards.js        **偽名だけ**。本体に入る(Git管理)
         packs/real.local.json      実名パック。Git管理外。python build.py --real で手元用の版に埋め込む
 
-偽名は実名から機械的に作る: 名前の最後の音の母音をずらす(ア段 → オ段、イ段 → エ段 など)。
+偽名は実名から機械的に作る: 姓の音を1〜2か所、別の音に替える(場所と音は名前ごとに決まる乱数。
+毎回同じ偽名になる)。実名を連想させすぎないため(2026-11-18 に母音をずらすだけの作り方から変えた)。
 一覧は手で書かない(→touchline P10)。squads.local.txt を直したら、これを実行する。
 """
+import hashlib
 import json
+import random
 import pathlib
 import sys
 
@@ -42,24 +45,29 @@ def shift_kana(ch):
     return None
 
 
+# 替えたあとの音の候補(小さい文字・空き・ヲ は使わない)。段ごとにも引けるようにする
+KANA = [ch for row in ROWS[:-1] for ch in row if ch not in "・ヲ"]
+COL = {v: [row[v] for row in ROWS[:-1] if row[v] not in "・ヲ"] for v in range(5)}
+SMALL_YO = set("ャュョ")      # 前の音はイ段でないと読めない(シャ・キョ など)
+SMALL_V = set("ァィゥェォ")   # 前の音はウ段にそろえる(ファ・ティ など)
+
+
 def pseudo(name):
-    """実名 → 偽名。最後の音(小さい文字・長音は1つ前)の母音をずらす。ン で終わるなら ル に替える"""
-    head, sep, last = name.rpartition(".")
-    word = last
-    for i in range(len(word) - 1, -1, -1):
-        ch = word[i]
-        if ch in SMALL:
-            continue
-        if ch == "ン":
-            new = word[:i] + "ル" + word[i + 1:]
-        else:
-            k = shift_kana(ch)
-            if not k:
-                continue
-            new = word[:i] + k + word[i + 1:]
-        if new != word:
-            return head + sep + new
-    return head + sep + word + "ス"
+    """実名 → 偽名。姓の音を1〜2か所、別の音に替える。ン も替える対象。小さい文字・長音は残す"""
+    head, sep, word = name.rpartition(".")
+    rng = random.Random(int(hashlib.md5(name.encode("utf-8")).hexdigest(), 16))
+    pos = [i for i, ch in enumerate(word) if ch not in SMALL and (ch == "ン" or any(ch in r for r in ROWS))]
+    if not pos:
+        return head + sep + word + "ス"
+    k = min(len(pos), rng.choice((1, 2)))
+    w = list(word)
+    for i in rng.sample(pos, k):
+        nxt = word[i + 1] if i + 1 < len(word) else ""
+        pool = COL[1] if nxt in SMALL_YO else COL[2] if nxt in SMALL_V else KANA
+        pool = [c for c in pool if c != word[i]]
+        w[i] = rng.choice(pool)
+    new = "".join(w)
+    return head + sep + (new if new != word else word + "ス")
 
 
 def main():

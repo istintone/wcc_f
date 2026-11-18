@@ -213,6 +213,11 @@ console.log("⑤ 棄権と保存");
     a.fx.opp===b.fx.opp&&a.M.home.score===b.M.home.score&&a.M.away.score===b.M.away.score&&JSON.stringify(S)===JSON.stringify(L));
   check("配置と KP が次の試合に引き継がれる",Object.keys(S.layout).length===11&&!!S.kp);
   box.v="{壊れたデータ"; check("壊れたセーブは無視する",E.loadCareer(box)===null);
+  // 読めないセーブは上書きせず退避する(→clubui.js initCareer)
+  const ms=E.memStore(); ms.setItem(E.SAVE_KEY,"{壊れたデータ");
+  check("読めないセーブを退避できる",E.loadCareer(ms)===null&&E.backupSave(ms,E.rawSave(ms))&&ms.getItem(E.SAVE_BAD_KEY)==="{壊れたデータ");
+  const nv=JSON.parse(JSON.stringify(S)); nv.ver=2; ms.setItem(E.SAVE_KEY,JSON.stringify(nv));
+  check("新しい版のセーブも読めないものとして扱う(上書きしない前提)",E.loadCareer(ms)===null&&E.rawSave(ms).length>100);
   E.clearCareer(box); check("消せる",box.v===null);
 }
 

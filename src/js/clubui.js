@@ -10,7 +10,7 @@
  *   msg=育成で起きたこと / comm=開いている場所 / pick=指名中の選手 / int=練習の強度(0 軽め / 1 普通 / 2 ハード)
  *   cf=コレクションの絞り込み / sel=選んだカード / sqSel=並べ替えで選んだ登録選手 / set=設定を開いている
  */
-const CL={ S:null, W:null, fx:null, store:null, armReset:false,
+const CL={ alert:"", S:null, W:null, fx:null, store:null, armReset:false,
   tab:"home", flow:null,
   msg:[], comm:null, pick:[], int:1,
   cf:"ALL", sel:null, sqSel:null,
@@ -22,15 +22,33 @@ function careerStore(){
     localStorage.setItem("wcc_f.probe","1"); localStorage.removeItem("wcc_f.probe");
     return localStorage;
   }catch(e){
-    return { m:{}, setItem(k,v){ this.m[k]=v; }, getItem(k){ return this.m[k]||null; }, removeItem(k){ delete this.m[k]; } };
+    CL.alert="この端末では保存できません(プライベートブラウズなど)。閉じると進み具合が消えます";
+    return memStore();
   }
 }
 function initCareer(seed){
   CL.store=careerStore();
-  CL.S=loadCareer(CL.store)||newCareer(seed);
-  CL.W=worldOf(CL.S);
-  saveCareer(CL.store,CL.S);
+  let S=loadCareer(CL.store);
+  if(!S){
+    // 読めないセーブ(壊れた・新しい版で作られた)は上書きしない。退避してから新しく始める
+    const raw=rawSave(CL.store);
+    if(raw){
+      if(backupSave(CL.store,raw))CL.alert="前のセーブを読めなかったので、消さずに退避しました。CLUB の「設定・データ」から書き出せます";
+      else{ CL.store=memStore(); CL.alert="前のセーブを読めず、退避もできませんでした。前のセーブを守るため、この任期は保存しません"; }
+    }
+    S=newCareer(seed);
+  }
+  CL.S=S; CL.W=worldOf(S);
+  persist(S);
+  // iPhone はしばらく開かないとサイトのデータを消すことがある。消さないよう頼む(断られても動く)
+  try{ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{}); }catch(e){}
   showClub();
+}
+/** 保存する。失敗したら秘書が知らせる */
+function persist(S){
+  const ok=saveCareer(CL.store,S||CL.S);
+  if(!ok)CL.alert="保存できませんでした(空き容量やブラウザの設定を確認してください)。CLUB の「設定・データ」から書き出しておくと安全です";
+  return ok;
 }
 function showClub(keepScroll){
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
@@ -231,7 +249,7 @@ function sqPick(id){
     moveSquad(S,a,id);
     // KP が控えに下がったら、代わりに入った人が KP を引き継ぐ
     if(S.kp===a&&S.sq.indexOf(a)>=11)S.kp=id; else if(S.kp===id&&S.sq.indexOf(id)>=11)S.kp=a;
-    fillLayout(S); CL.sqSel=null; saveCareer(CL.store,S);
+    fillLayout(S); CL.sqSel=null; persist(S);
   }
   showClub(true);
 }
@@ -260,7 +278,7 @@ function sqBind(pitch){
   const end=e=>{
     if(!d||e.pointerId!==d.pid)return;
     const dd=d; d=null;
-    if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; saveCareer(CL.store,CL.S); showClub(true); }
+    if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; persist(CL.S); showClub(true); }
     else if(!dd.moved&&e.type==="pointerup")sqPick(dd.id);
   };
   pitch.addEventListener("pointerup",end);
@@ -364,6 +382,7 @@ const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"
 /** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ */
 function secLine(S){
   const fx=CL.fx, g=S.g, pl=Object.values(g.pl);
+  if(CL.alert)return CL.alert;                 // 保存の異常は何より先に知らせる
   if(S.termOver)return "任期が終わりました。お疲れさまでした。";
   const sign=Object.keys(g.pl).filter(id=>hasSign(S,id)).length;
   const omen=pl.filter(p=>p.q||p.sq).length+Object.values(g.links).filter(l=>l.gold).length;
@@ -487,7 +506,7 @@ function finishFixture(M){
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
-  saveCareer(CL.store,CL.S);
+  persist(CL.S);
   const L=CL.S.last;
   sceneResult(M,L,()=>{
     const done=()=>{ sceneHide(); showClub(); };
@@ -497,7 +516,7 @@ function finishFixture(M){
 function onClubClick(e){
   const b=e.target.closest("[data-act]");
   if(!b||b.disabled)return;
-  const act=b.dataset.act, S=CL.S, save=()=>saveCareer(CL.store,S);
+  const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
   if(onSettingsClick(act,b))return;
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; showClub(); return; }
@@ -550,6 +569,6 @@ function onClubClick(e){
     if(!CL.armReset){ CL.armReset=true; showClub(true); return; }
     CL.armReset=false; clearCareer(CL.store); CL.msg=[];
     CL.S=newCareer(Date.now()&0x7fffffff); CL.W=worldOf(CL.S);
-    saveCareer(CL.store,CL.S); showClub();
+    persist(CL.S); showClub();
   }
 }

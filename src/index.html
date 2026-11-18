@@ -49,6 +49,10 @@
   <div id="ov"><div id="ovBox"><h1 id="ovTitle"></h1><div id="ovBody"></div><button id="ovBtn" class="btn btn-main"></button></div></div>
 </div>
 <script>
+// 起動の確認(tools/publish.py が見る): 起動中のエラーを html の data-boot に残す
+window.addEventListener("error",e=>{ document.documentElement.dataset.boot="err: "+(e.message||"?"); });
+</script>
+<script>
 /*__JS__*/
 </script>
 </body>

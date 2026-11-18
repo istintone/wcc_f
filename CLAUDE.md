@@ -60,6 +60,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 設定・データの画面を変える | `src/js/settings.js`(実名パックの読み込み・セーブの書き出しと読み込み) |
 | 実名で遊ぶ(手元だけ) | `python build.py --real` → `index.local.html`(Git管理外。**公開しない**) |
 | カードの一覧・レアリティ・払い出しの率を変える | `pool.js`(`RARITY` / `POOL`)と `data.js` の `TUNING.pack` → `clubtest.js` の ⑦。**一覧の作り方を変えるとカードの id が指す選手が変わる**(セーブのコレクションがずれる) |
+| 保存・起動の守り(退避・保存の失敗・画面の消灯・音の復帰・公開前の確認)を変える | `clubui.js` の `initCareer` / `persist`、`club.js` の `rawSave` / `backupSave`、`main.js` の `wakeLock`、`build.py` の `_check_js`、`tools/publish.py` の `boot_check`。正本は docs/01 §1.7 |
 | セーブ項目を増やす | `club.js` の `newCareer`。**古いセーブを読んだときに補う処理を `migrate` に足す**(いまは ver 1) |
 
 ## 姉妹プロジェクト
