@@ -53,7 +53,7 @@ console.log("② 指示");
 // ---------- 集計 ----------
 function run(n,seed0,prep,cpu,hcpu){
   const R={ n, hg:0, ag:0, hw:0, dr:0, aw:0, shots:0, onT:0, pass:0, passOk:0,
-    hSteps:0, steps:0, hSh:0, aSh:0, aBlk:0, aOnT:0, hPass:0, hPassOk:0, aPass:0, aPassOk:0, aOff:0, hOff:0, wide:0, wideN:0, sx:0, kpRecv:0, hStam:0,
+    hSteps:0, steps:0, hSh:0, aSh:0, aBlk:0, aOnT:0, hPass:0, hPassOk:0, aPass:0, aPassOk:0, aOff:0, hOff:0, wide:0, wideN:0, sx:0, kpRecv:0, hStam:0, long:0, gkStam:0,
     fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0, pkGoal:0, pkShot:0, spGoal:0, goals:0, short:0, res:{ goal:0, save:0, miss:0, block:0 }, subs:0 };
   for(let i=0;i<n;i++){
     const M=E.createMatch(E.makeTeamDef("azr",!!hcpu),E.makeTeamDef("ros",!!cpu),seed0+i*7919);
@@ -69,8 +69,10 @@ function run(n,seed0,prep,cpu,hcpu){
     if(H.players.length<11||A.players.length<11)R.short++;
     R.hPass+=H.st.pass; R.hPassOk+=H.st.passOk; R.aPass+=A.st.pass; R.aPassOk+=A.st.passOk; R.aOff+=A.st.off; R.hOff+=H.st.off; R.aOnT+=A.st.onT;
     R.hStam+=H.players.reduce((s,p)=>s+p.stam,0)/H.players.length;
+    R.gkStam+=(H.players.find(p=>p.gk)||{stam:1}).stam;
     for(const e of M.events)if(e.side==="H"&&(e.type==="pass"||e.type==="carry")&&e.ok){
       R.wide+=Math.abs(e.dest[1]-50); R.sx+=e.dest[1]; R.wideN++;
+      if(e.type==="pass"&&e.from&&e.dest[0]-e.from[0]>0.3)R.long++;   // 縦に長いパス(カウンター)
       if(e.type==="pass"&&e.to===H.kp)R.kpRecv++;
     }
     for(const e of M.events)if(e.type==="shot"){
@@ -204,7 +206,7 @@ console.log("⑤ 相手監督(カードを動かす・交代する)");
     }
     post+=M.events.filter(e=>e.type==="posture").length;
     kpEv+=M.events.filter(e=>e.type==="kp"&&e.side==="A").length;
-    if(M.away.posture==="attack"&&M.away.ins.line===1)upLine++;
+    if(M.away.posture==="attack"&&M.away.ins.center)upLine++;
     const A=M.away, of=A.players.filter(p=>!p.gk);
     const dh=of.reduce((s,p)=>s+(p.h-p.b.h),0)/of.length;
     const w=of.reduce((s,p)=>s+Math.abs(p.x-50),0)/of.reduce((s,p)=>s+Math.abs(p.b.x-50),0);
@@ -226,29 +228,34 @@ const show=(tag,R)=>console.log("    "+tag.padEnd(14)+" 得点 "+f2(R.hg/R.n)+" 
   "  シュート "+f2(R.hSh/R.n)+"/"+f2(R.aSh/R.n)+"  幅 "+f2(R.wide/R.wideN)+
   "  オフサイド 自"+f2(R.hOff/R.n)+" 相"+f2(R.aOff/R.n)+"  KPが受ける "+f2(R.kpRecv/R.n));
 {
+  // 十字の戦術ボタン + キーパー(→docs/04 §4.9b)
   const ins=o=>M=>E.orderMatch(M,"H",Object.assign({ type:"ins" },o));
-  const up=run(N,1000,ins({ line:1 })), down=run(N,1000,ins({ line:-1 }));
-  const left=run(N,1000,ins({ side:-1 })), right=run(N,1000,ins({ side:1 }));
-  const press=run(N,1000,ins({ press:true }));
-  show("指示なし",base); show("ラインを上げる",up); show("ラインを下げる",down);
-  show("左サイド重視",left); show("右サイド重視",right); show("プレス",press);
-  check("ラインを上げると相手のオフサイドが増え、下げると減る",up.aOff>base.aOff&&down.aOff<base.aOff,
-    f2(down.aOff/N)+" < "+f2(base.aOff/N)+" < "+f2(up.aOff/N));
-  check("ラインを上げると得点も失点も増える",up.hg>base.hg&&up.ag>base.ag);
-  const mx=R=>R.sx/R.wideN;
-  check("サイド重視でボールがそちらを通る(左は x が小さい)",mx(left)<mx(base)-3&&mx(right)>mx(base)+3,
+  const center=run(N,1000,ins({ center:true })), left=run(N,1000,ins({ left:true })), right=run(N,1000,ins({ right:true }));
+  const both=run(N,1000,ins({ left:true, right:true })), counter=run(N,1000,ins({ counter:true }));
+  const press=run(N,1000,ins({ press:true })), keeper=run(N,1000,ins({ keeper:true }));
+  const wd=R=>R.wide/R.wideN, mx=R=>R.sx/R.wideN, lg=R=>R.long/R.n;
+  show("指示なし",base); show("中央突破",center); show("左サイド攻撃",left); show("右サイド攻撃",right);
+  show("左右両方",both); show("カウンター",counter); show("プレス",press); show("キーパー",keeper);
+  console.log("    中央からの離れ "+["指示なし","中央突破","左右両方"].map((t,i)=>t+" "+f2(wd([base,center,both][i]))).join(" / ")+
+    "   縦に長いパス/試合 指示なし "+f2(lg(base))+" → カウンター "+f2(lg(counter))+"   GK の終了時スタミナ "+pc(base.gkStam/N)+" → "+pc(keeper.gkStam/N));
+  check("中央突破でボールが真ん中を通る",wd(center)<wd(base)-1.5,f2(wd(base))+" → "+f2(wd(center)));
+  check("サイド攻撃でボールがそちらを通る(左は x が小さい)",mx(left)<mx(base)-3&&mx(right)>mx(base)+3,
     f2(mx(left))+" < "+f2(mx(base))+" < "+f2(mx(right)));
+  check("左右両方で幅を使う",wd(both)>wd(base)+1.5,f2(wd(base))+" → "+f2(wd(both)));
+  check("カウンターで縦に長いパスが増え、相手のオフサイドが減る",lg(counter)>lg(base)*1.1&&counter.aOff<base.aOff,
+    f2(lg(base))+" → "+f2(lg(counter))+" / オフサイド "+f2(base.aOff/N)+" → "+f2(counter.aOff/N));
   check("プレスは相手のパスを通さず、スタミナを使う",
     press.aPassOk/press.aPass<base.aPassOk/base.aPass&&press.hStam<base.hStam,
     "相手のパス "+pc(base.aPassOk/base.aPass)+" → "+pc(press.aPassOk/press.aPass)+
     " / 終了時スタミナ "+pc(base.hStam/N)+" → "+pc(press.hStam/N));
-  const best=Math.max(...[up,down,left,right,press].map(R=>gdOf(R)-gdOf(base)));
+  check("キーパーは GK のスタミナを使う",keeper.gkStam<base.gkStam,pc(base.gkStam/N)+" → "+pc(keeper.gkStam/N));
+  const best=Math.max(...[center,left,right,both,counter,press,keeper].map(R=>gdOf(R)-gdOf(base)));
   check("どの指示も出しっぱなしでは勝ち筋にならない(得失点差の上積み < 0.3)",best<0.3,
     "最大 "+(best>=0?"+":"")+f2(best));
   const M=E.createMatch(home(),away(),3);
-  E.orderMatch(M,"H",{ type:"ins", line:1 }); E.orderMatch(M,"H",{ type:"ins", side:-1 });
+  E.orderMatch(M,"H",{ type:"ins", center:true }); E.orderMatch(M,"H",{ type:"ins", left:true });
   E.stepMatch(M);
-  check("指示は項目ごとに独立して残る",M.home.ins.line===1&&M.home.ins.side===-1&&M.home.ins.press===false);
+  check("指示は項目ごとに独立して残る(同時に点けられる)",M.home.ins.center&&M.home.ins.left&&!M.home.ins.press&&M.home.ins.side===-1);
 }
 
 // ---------- ⑦ スキル・スタイル・連携 ----------

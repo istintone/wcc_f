@@ -51,9 +51,24 @@ function clampPos(gk,h,x){
   return { h:clamp(h,B.minH,B.maxH), x:clamp(x,B.minX,B.maxX) };
 }
 /** GK がどれだけ前に出ているか(0=定位置 〜 1=エリアの端) */
+/** 指示の状態。十字の5つ + キーパー(→docs/04 §4.9b)。side・line は中から使う派生の値 */
+function insOf(o){
+  const n={ center:!!o.center, left:!!o.left, right:!!o.right, counter:!!o.counter, press:!!o.press, keeper:!!o.keeper };
+  n.side=n.left&&!n.right?-1:n.right&&!n.left?1:0;
+  n.line=n.counter?-1:0;
+  return n;
+}
+/** 指示が手の行き先に掛ける重み(中央突破・サイド攻撃) */
+function insLane(ins){
+  const I=TUNING.ins, w={ in:1, out:1, box:1, switch:1, same:1, any:1 };
+  const mul=o=>{ for(const k in o)w[k]*=o[k]; };
+  if(ins.center)mul(I.center);
+  if(ins.left&&ins.right)mul(I.both); else if(ins.left||ins.right)mul(I.side);
+  return w;
+}
 function gkOut(gk){
   const K=TUNING.gk;
-  return gk&&gk.gk?clamp((gk.h-K.baseH)/(K.maxH-K.baseH),0,1):0;
+  return gk&&gk.gk?clamp((gk.h+(gk.up||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
 }
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
@@ -99,7 +114,7 @@ function buildTeam(def,side){
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
     kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
-    ins:{ line:0, side:0, press:false },
+    ins:insOf({}),
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -189,7 +204,8 @@ function refreshFx(M,min){
     // 相手のアンチキープレイヤーは、こちらのスタイルの効きを落とす
     T.rk=T.rk0*(ds&&ds.scope==="team"&&ds.gain.antiRank!=null?Math.max(0,1+(ds.gain.antiRank-1)*D.rk0):1);
     T.fx=teamFx(st,T.rk);
-    const lineOff=T.lineOff=T.ins.line*TUNING.ins.line+(T.fx.push||0);
+    const lineOff=T.lineOff=T.ins.line*TUNING.ins.line+(T.fx.push||0);   // カウンターは隊列を下げる
+    T.lane=insLane(T.ins);
     const late=T.fx.late&&(min>=Y.lateMin||T.score<D.score)?T.fx.late:1;
     const solo=st&&st.scope==="solo";
     const kp=T.players.find(p=>p.kp)||null;
@@ -203,6 +219,10 @@ function refreshFx(M,min){
         if(lv)fx.all*=1+st.fx.team*lv*T.rk;
       }
       fx.all*=late;
+      if(p.gk){                                 // キーパーの指示: 高い位置で裏を処理する。ループに弱く、疲れる
+        const I=TUNING.ins; p.up=T.ins.keeper?I.keeperH:0;
+        if(T.ins.keeper){ fx.sweep*=I.keeperSweep; fx.lob*=I.keeperLob; fx.sta*=I.keeperSta; }
+      }
       p.fx=fx; p.lo=lineOff;
       p.stayK=T.fx.fwStay!=null&&GROUP_OF[p.role]==="FW"?T.fx.fwStay:1;
       p.fxName=p.kp&&solo?st.name:sk?sk.label:undefined;
@@ -284,11 +304,14 @@ function strayOf(p,h,x){
   return Math.sqrt(dh*dh+dx*dx);
 }
 
-function pickChannel(rng,p,h,x,T,fast){
-  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx;
+function pickChannel(rng,p,h,x,T,fast,ctr){
+  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{};
   return pickW(rng,CHANNELS[p.role],ch=>{
     let w=eff(p,ch.stat)*chW(p,ch);
     if(A.lane)w*=A.lane[ch.lane]||1;
+    w*=L[ch.lane]||1;                          // 監督の指示(中央突破・サイド攻撃)
+    if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
+    if(ctr&&ch.to)w*=I.counterTo;              // カウンター: 奪った直後は裏へ
     if(A.chW&&A.chW[ch.id])w*=A.chW[ch.id];
     if(A.safe)w*=Math.pow(ch.risk,A.safe);
     if(ch.to){ if(fast&&A.fastTo)w*=A.fastTo; if(A.direct)w*=A.direct; }
@@ -357,7 +380,7 @@ function matchMin(M){ return M.ix?timeOf(M,Math.min(M.ix,M.len1+M.len2)-1).min:0
  *   { type:"move", id, h, x }        カードを動かす
  *   { type:"sub", out, in }          交代(控えは出る選手の位置を引き継ぐ)
  *   { type:"kp", id }                KP を決める。**そのカードのスキルが引くスタイルが発動する**
- *   { type:"ins", line, side, press } 監督の指示(渡した項目だけ変わる)
+ *   { type:"ins", center, left, right, counter, press, keeper } 監督の指示(渡した項目だけ変わる。→docs/04 §4.9b)
  *                                      line: -1 下げる / 0 / +1 上げる
  *                                      side: -1 左(x<50) / 0 / +1 右
  *                                      press: true / false
@@ -390,13 +413,11 @@ function changeKp(M,T,id,t){
   return true;
 }
 function setIns(M,T,o,t){
-  const n={ line:o.line!=null?clamp(Math.sign(o.line),-1,1):T.ins.line,
-    side:o.side!=null?clamp(Math.sign(o.side),-1,1):T.ins.side,
-    press:o.press!=null?!!o.press:T.ins.press };
-  if(n.line===T.ins.line&&n.side===T.ins.side&&n.press===T.ins.press)return;
-  T.ins=n;
-  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"ins",
-    line:n.line, lane:n.side, press:n.press });
+  const keys=["center","left","right","counter","press","keeper"], cur=T.ins, nx={};
+  for(const k of keys)nx[k]=o[k]!=null?!!o[k]:cur[k];
+  if(keys.every(k=>nx[k]===cur[k]))return;
+  T.ins=insOf(nx);
+  M.events.push(Object.assign({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"ins" },nx));
 }
 function applyOrders(M,t){
   for(const side of ["H","A"]){
@@ -469,7 +490,7 @@ function coachMove(M,T,t){
     coachKp(M,T,mode,t);
   }
   if(!T.kp)coachKp(M,T,mode,t);
-  setIns(M,T,{ line:mode==="attack"?1:mode==="defend"?-1:0,
+  setIns(M,T,{ center:mode==="attack", counter:mode==="defend",
     press:mode==="attack"&&t.min>=K.allOutMin },t);
   const nar=mode==="defend"?K.narrow:1;
   const markX=new Map();
@@ -500,7 +521,7 @@ function coachMove(M,T,t){
 function refreshStamina(M,t){
   const S=TUNING.stam, I=TUNING.ins;
   for(const T of [M.home,M.away]){
-    const tk=(T.fx.sta||1)*(T.ins.press?I.pressSta:1);
+    const tk=(T.fx.sta||1)*(T.ins.press?I.pressSta:1);   // GK のキーパー指示は p.fx.sta に入っている
     for(const p of T.players){
       const mul=(1-(p.c.sta-1)/(STAT_MAX-1)*S.staReduce)*tk*p.fx.sta;
       p.fat+=S.perStep*S.offBall[p.role]*mul;
@@ -587,7 +608,8 @@ function stepMatch(M){
   }
 
   const U=TUNING.duel;
-  const ch=pickChannel(rng,c,h,x,T,fast), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
+  const ctr=T.ins.counter&&M.poss.n<TUNING.ins.counterN&&M.poss.h0<0.5;
+  const ch=pickChannel(rng,c,h,x,T,fast,ctr), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
   const rc=ch.kind==="pass"?receiverAt(rng,T,D,tg,c,h):null;
   const dest=rc?{ h:rc.h, x:rc.x }:tg;
   // 競る場所: パスは届け先(カットされる場所)、持ち運びはいま居る場所
@@ -617,6 +639,7 @@ function stepMatch(M){
     if(c.kp)tA*=(A.kpS||1)*(Dt.antiDuel!=null?Dt.antiDuel:1);
     if(strayOf(c,h,x)<Y.zoneNear)tA*=c.fx.zone;
     if(!high)tA*=1+T.lineOff*I.lineAtk;         // ラインが高いほど敵陣に人数が掛かる
+    if(ctr)tA*=I.counterK;                     // カウンター: 守備が整う前に攻め切る
     if(rc){
       const lv=linkLv(T,c.id,rc.p.id);
       tA*=lv?1+TUNING.link.pass*lv*(A.linkK||1):(A.noLinkK||1);

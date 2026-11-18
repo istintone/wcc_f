@@ -1,18 +1,18 @@
 /* =========================================================================
    wcc_f — カード盤面(下半分)。筐体のフラットパネルにあたる。
    カードを動かすと orderMatch に積まれ、次のステップから試合に効く。
-   盤面は映像と同じ向き(左=自陣ゴール / 右=敵陣ゴール)。
+   盤面は筐体と同じ縦向き(下=自陣ゴール / 上=敵陣ゴール。左サイドが左)。映像(モニター)は横向きのまま。
    カードを動かさずに離す(タップ)と、そのカードの詳細が開く。
    ========================================================================= */
 
 const BD={ cards:null, bench:null, board:null, map:new Map(), drag:null, pendingIn:new Set(), kp:null };
 const TAP_PX=7;                              // これ未満の動きはタップとみなす
 
-// 盤面の % 座標。端のカードが切れないよう内側に寄せる
-const bdPos=(h,x)=>[6+h*88, 11+x*0.78];
+// 盤面の % 座標 [左, 上]。端のカードが切れないよう内側に寄せる(SQUAD の盤面と同じ考え方 →clubui.js sqPos)
+const bdPos=(h,x)=>[9+x*0.82, 93-h*86];
 function bdInv(cx,cy){
   const r=BD.board.getBoundingClientRect();
-  return { h:((cx-r.left)/r.width*100-6)/88, x:((cy-r.top)/r.height*100-11)/0.78 };
+  return { x:((cx-r.left)/r.width*100-9)/0.82, h:(93-(cy-r.top)/r.height*100)/86 };
 }
 const aptClass=a=>a>=TUNING.apt.own?"a0":a>=TUNING.apt.group?"a1":"a2";
 
@@ -31,12 +31,12 @@ function initBoard(){
   BD.cards=document.getElementById("cards");
   BD.bench=document.getElementById("bench");
   // ペナルティエリアを判定と同じ値から引く(自陣 h≦1-boxH / 敵陣 h≧boxH / 左右は中央 ±boxX)
-  const O=TUNING.rule, top=bdPos(0,50-O.boxX)[1], bot=100-bdPos(0,50+O.boxX)[1];
-  const edge=bdPos(1-O.boxH,0)[0];
+  const O=TUNING.rule, lf=bdPos(0,50-O.boxX)[0], rt=100-bdPos(0,50+O.boxX)[0];
+  const depth=100-bdPos(1-O.boxH,0)[1];       // 自陣のエリアの奥行き(下の端から)
   for(const id of ["paOwn","paOpp"]){
     const el=document.getElementById(id);
-    el.style.top=top+"%"; el.style.bottom=bot+"%";
-    el.style.width="calc("+edge+"% - 6px)";
+    el.style.left=lf+"%"; el.style.right=rt+"%";
+    el.style.height="calc("+depth+"% - 6px)";
   }
 }
 

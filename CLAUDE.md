@@ -40,7 +40,8 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 指示の種類を増やす | `engine.js` の `orderMatch` / `applyOrders` |
 | スタイルを足す・変える | `data.js` の `STYLES`(全体は `gain` と `cost`、個人は `fx`)→ `enginetest.js` の ⑦。**全体は必ず失うものを持たせる**。設計の正本は docs/04 |
 | スキルを足す | `data.js` の `SKILLS`(`style` と `buff`)。語彙は `engine.js` の `FX0` にあるものを使う。**新しい語彙が要るときだけ**判定に1行足す |
-| 監督の指示を変える | `data.js` の `TUNING.ins` → `enginetest.js` の ⑥ |
+| 監督の指示(十字の戦術ボタン + キーパー)を変える | `data.js` の `TUNING.ins`、`engine.js` の `insOf` / `insLane` / `setIns` → `enginetest.js` の ⑥。設計は docs/04 §4.9b、実測は docs/02 §2.11 |
+| 試合画面の配置(モニター・縦の盤面・操作の台)を変える | `src/index.html` の `#deck` / `#pad`、`board.js` の `bdPos`、`base.css` の「操作の台」。正本は docs/07 §7.11 |
 | 本家との対応表を直す | `tools/gen_kp_design.py` の `MAP` → 実行して docs/04 に書き出す(手で編集しない) |
 | 規則の率を変える | `data.js` の `TUNING.rule` → `enginetest.js` の ③b |
 | 大会・日程・出場条件を変える | `club.js` の `COMPS` / `SCHED` / `entryOk` → `clubtest.js`。設計の正本は docs/05 |

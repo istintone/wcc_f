@@ -30,7 +30,7 @@
 .th-wr #hudScore,.th-wr #hudClock,.th-wr .tn,
 .k-no,.k-pos,.k-rar,.k-st b,
 #scene .logo b,#scene .vs-mark,#scene .res-word,#scene .rn,#scene .pk-head b,#scene .touch,
-.th-wr #club .chd .num b,.th-wr .btn-ins,.th-wr .btn-shoot,.th-wr #flash b,.th-wr .cd .no{
+.th-wr #club .chd .num b,.th-wr #pad .tac,.th-wr .btn-shoot,.th-wr #flash b,.th-wr .cd .no{
   font-family:"Oswald","Arial Narrow","Helvetica Neue",system-ui,sans-serif}
 
 /* =========================================================================
@@ -219,16 +219,16 @@
 .th-wr .cd.hasball{border-color:var(--t-gold);box-shadow:0 0 0 2px var(--t-gold2),0 2px 4px rgba(0,0,0,.4)}
 .th-wr .cd.iskp{border-color:var(--t-sub)}
 .th-wr .cd .kpm{background:var(--t-sub);color:#fff}
-.th-wr #bench{background:var(--t-paper2);border-top:1px solid var(--t-rule)}
+.th-wr #bench{background:var(--t-paper2);border-left:1px solid var(--t-rule)}
 .th-wr #bench .lbl{color:var(--t-mute)}
-.th-wr #tac,.th-wr #ctl{background:var(--t-card);border-top:1px solid var(--t-rule)}
+.th-wr #pad{background:var(--t-card);border-top:1px solid var(--t-rule)}
 .th-wr .btn{background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule)}
-.th-wr .btn-ins{background:linear-gradient(180deg,#fff,#efebe4);color:var(--t-ink);border:1px solid #cfc6b7;
+.th-wr #pad .tac{background:linear-gradient(180deg,#fff,#efebe4);color:var(--t-ink);border:1px solid #cfc6b7;
   box-shadow:0 3px 0 #b7ac9a;font-weight:700;letter-spacing:.04em}
-.th-wr .btn-ins small{color:var(--t-mute)}
-.th-wr .btn-ins:active{box-shadow:0 1px 0 #b7ac9a}
-.th-wr .btn-ins.on{background:var(--t-sub);color:#fff;border-color:var(--t-sub2);box-shadow:0 3px 0 var(--t-sub2),0 0 10px rgba(200,16,46,.35)}
-.th-wr .btn-ins.on small{color:rgba(255,255,255,.85)}
+.th-wr #pad .tac small{color:var(--t-mute)}
+.th-wr #pad .tac:active{box-shadow:0 1px 0 #b7ac9a}
+.th-wr #pad .tac.on{background:var(--t-sub);color:#fff;border-color:var(--t-sub2);box-shadow:0 3px 0 var(--t-sub2),0 0 10px rgba(200,16,46,.35)}
+.th-wr #pad .tac.on small{color:rgba(255,255,255,.85)}
 .th-wr .btn-kp{color:var(--t-gold3);border-color:var(--t-gold)}
 .th-wr .btn-shoot{background:var(--t-sub);border:0;border-radius:3px;color:#fff;font-style:normal;font-weight:700;letter-spacing:.2em;
   clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);box-shadow:none}
@@ -469,3 +469,11 @@
 #club .lklg i{display:inline-block;vertical-align:middle;width:22px;margin-right:4px;border-top:2px solid #6b8f78}
 #club .lklg i.l2{border-top-width:4px;border-color:#2c5a3d} #club .lklg i.l3{border-top-width:5px;border-color:#e2b23d}
 #club .lklg i.omen{border-top:2px dashed #e2b23d}
+
+/* ---- 操作の台(白×赤) ---- */
+.th-wr #pad .tac{font-size:10.5px}
+.th-wr .btn-shoot,.th-wr .btn-keeper{border-radius:22px;font-family:"Oswald",sans-serif;font-weight:700;letter-spacing:.12em;
+  box-shadow:0 3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35)}
+.th-wr .btn-keeper{background:#1d5fbf;border:0;color:#fff}
+.th-wr .btn-keeper.on{background:var(--t-gold);color:#fff;box-shadow:0 3px 0 var(--t-gold3),0 0 10px rgba(184,137,44,.5)}
+.th-wr .btn-kp.on{background:var(--t-gold);color:#fff;border-color:var(--t-gold3)}

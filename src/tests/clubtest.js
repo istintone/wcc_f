@@ -110,7 +110,9 @@ function develop(S,log,intensity){
 // 検証用の方針(→docs/08 §8.5 の遊び方): 育てる選手を絞って集中させる。
 //   ★突破の話 → ミーティング / 先発の絶不調 → 声かけ / 3回目は連携(ラウンジ) / それ以外は「育てる選手」に集中
 const FOCUS=["h10","h08","h04","h07","h02"];
-const focusOf=S=>FOCUS.find(id=>S.g.pl[id]&&(S.g.pl[id].is<5||S.g.pl[id].ss<5));
+// 兆しが出たら(あとはフレンドリーマッチで勝つのを待つだけなので)次の選手へ移る
+const waiting=g=>(g.is===5||g.q)&&(g.ss===5||g.sq);
+const focusOf=S=>FOCUS.find(id=>S.g.pl[id]&&!waiting(S.g.pl[id]));
 function commOnce(S,log){
   const xi=E.squadXi(S), out=log||[];
   const ready=Object.keys(S.g.pl).find(id=>E.spReady(S,id));
@@ -247,11 +249,16 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   // ハードを続けた場合と、普通を続けた場合の強さ(1任期の途中まで)
   const fatRun=lv=>{ const T=E.newCareer(2026), TW=E.worldOf(T);
     for(let i=0;i<40;i++)playOne(T,TW,null,{ intensity:lv });
-    return { fat:E.teamFatigue(T), is:Object.values(T.g.pl).reduce((s,g)=>s+g.is,0)/16, rec:T.rec }; };
+    // 強度の効きは「育てる選手以外」(練習だけで経験がたまる選手)の累計の経験で見る
+    const need=E.TUNING.grow.ind.need, cum=g=>need.slice(0,Math.min(g.is,4)).reduce((a,b)=>a+b,0)+g.ie;
+    const rest=Object.keys(T.g.pl).filter(id=>!FOCUS.includes(id)).map(id=>T.g.pl[id]);
+    return { fat:E.teamFatigue(T), is:Object.values(T.g.pl).reduce((s,g)=>s+g.is,0)/16,
+      exp:rest.reduce((s,g)=>s+cum(g),0)/rest.length, rec:T.rec }; };
   const r1=fatRun(1), r2=fatRun(2), r0=fatRun(0);
   console.log("    40試合で  軽め: ★"+f2(r0.is)+" 疲労"+pc(r0.fat)+" "+r0.rec.w+"勝"+r0.rec.l+"敗 / 普通: ★"+f2(r1.is)+" 疲労"+pc(r1.fat)+" "+r1.rec.w+"勝"+r1.rec.l+"敗 / ハード: ★"+
     f2(r2.is)+" 疲労"+pc(r2.fat)+" "+r2.rec.w+"勝"+r2.rec.l+"敗");
-  check("ハードを続けると★は早いが、疲労が高止まりする",r2.is>r1.is&&r2.fat>r1.fat*1.5);
+  check("ハードを続けると経験は早くたまるが、疲労が高止まりする",r2.exp>r1.exp&&r1.exp>r0.exp&&r2.fat>r1.fat*1.5,
+    "育てる選手以外の経験 "+[r0,r1,r2].map(r=>f2(r.exp)).join(" / "));
   // 3択の当たり外れ
   const cnt=(fn,n)=>{ const c=[0,0,0]; for(let i=0;i<n;i++){ const T=E.newCareer(5000+i); T.g.step="comm"; c[fn(T)]++; } return c.map(v=>v/n); };
   const good=cnt(T=>E.doLounge(T,"h07","h08",E.LOUNGE_BEST[E.compatOf("h07","h08")]).res,600);

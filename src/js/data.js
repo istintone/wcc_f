@@ -110,7 +110,18 @@ const TUNING={
   //   lineBeaten … ラインを上げたぶん、裏を取られたときに戻れなくなる強さ
   //   lineAtk    … ラインを上げたぶん、敵陣での攻撃に人数が掛かる(下げれば減る)
   //   lineDef    … ラインを下げたぶん、自陣の守備が堅くなる(上げれば薄くなる)
-  ins:{ line:0.05, lineBeaten:3, lineAtk:2.4, lineDef:1.6, sideOn:1.6, sideOff:0.6, pressHigh:1.12, pressLow:0.97, pressSta:1.12 },
+  // 監督の指示 = 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられる
+  //   line…カウンターで隊列を下げる量 / lineBeaten・lineAtk・lineDef…隊列の高さの得失(スタイルの push にも効く)
+  //   sideOn・sideOff…サイド攻撃で受け手に掛ける倍率 / press*…プレス
+  //   center・side・both…手(チャンネル)の行き先ごとの重み(in=真ん中へ / out=外へ / box=エリアへ / switch=逆サイドへ)
+  //   centerCarry…中央突破の持ち運び / counterTo・counterN…カウンター: 自陣で奪ってから counterN 手のあいだ、裏へのボールの重み
+  //   counterK…その間の攻めの通りやすさ(相手の守備が整う前)
+  //   keeper*…キーパー: GK の定位置を上げる量・裏の処理・ループへの弱さ・GK のスタミナ消費
+  ins:{ line:0.05, lineBeaten:3, lineAtk:2.4, lineDef:1.6, sideOn:1.6, sideOff:0.6, pressHigh:1.12, pressLow:0.97, pressSta:1.12,
+        center:{ in:1.8, box:1.2, out:0.5, switch:0.5 }, centerCarry:1.3,
+        side:{ out:1.4, box:1.15, in:0.75 }, both:{ out:1.7, switch:2.0, in:0.65 },
+        counterTo:2.6, counterN:4, counterK:1.15,
+        keeperH:0.05, keeperSweep:2.2, keeperLob:1.25, keeperSta:1.3 },
   // スタイルの細かい条件
   //   lateMin … 「終盤」とみなす分 / zoneNear … エリア支配が効く、持ち場からの距離
   //   fastOwn … ロングカウンターが「自陣で奪った」とみなす高さ

@@ -4,7 +4,7 @@
    ========================================================================= */
 
 const G={ M:null, seed:1, playing:false, speed:1, queue:[], cur:null, curT:0, hold:0,
-  flash:false, last:0, stopAt:0, onOv:null, ins:{ line:0, side:0, press:false }, info:null, kpMode:false };
+  flash:false, last:0, stopAt:0, onOv:null, ins:{}, info:null, kpMode:false };
 const $=id=>document.getElementById(id);
 const SPEEDS=[1,2,4];
 
@@ -17,7 +17,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false;
-  G.ins={ line:0, side:0, press:false }; G.kpMode=false;
+  G.ins={}; G.kpMode=false;
   RV.vis.clear(); RV.ball=[0.5,0.5];
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
@@ -48,11 +48,7 @@ function updateCtl(){
   $("subInfo").textContent="交代 "+(G.M.home.subs+BD.pendingIn.size)+"/"+TUNING.squad.subMax;
   $("btnKp").classList.toggle("on",G.kpMode);
   $("board").classList.toggle("kpmode",G.kpMode);
-  $("btnUp").classList.toggle("on",G.ins.line===1);
-  $("btnDown").classList.toggle("on",G.ins.line===-1);
-  $("btnLeft").classList.toggle("on",G.ins.side===-1);
-  $("btnRight").classList.toggle("on",G.ins.side===1);
-  $("btnPress").classList.toggle("on",G.ins.press);
+  for(const [id,k] of INS_BTN)$(id).classList.toggle("on",!!G.ins[k]);
   updateStyleBar();
 }
 /** いま有効なスタイルを両チームぶん出す(映像の下の帯) */
@@ -105,10 +101,12 @@ function pickKp(id){
 }
 /** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に、そうでなければ詳細を開く */
 function tapCard(id){ if(G.kpMode)pickKp(id); else showInfo(id); }
-/** 監督の指示。同じボタンをもう一度押すと解除。上げる/下げる、左/右はどちらか一方 */
-function toggleIns(key,val){
-  G.ins[key]=key==="press"?!G.ins.press:(G.ins[key]===val?0:val);
-  orderMatch(G.M,"H",{ type:"ins", line:G.ins.line, side:G.ins.side, press:G.ins.press });
+/** 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられ、もう一度押すと消える */
+const INS_BTN=[["btnCenter","center"],["btnLeft","left"],["btnRight","right"],["btnCounter","counter"],["btnPress","press"],["btnKeeper","keeper"]];
+function toggleIns(key){
+  if(!G.M||G.M.over)return;
+  G.ins[key]=!G.ins[key];
+  orderMatch(G.M,"H",Object.assign({ type:"ins" },{ [key]:G.ins[key] }));
   updateCtl();
 }
 
@@ -217,10 +215,8 @@ function startEvent(ev){
   }
   if(ev.type==="ins"){
     if(ev.side==="H")return;                 // 自分の指示はボタンに出ている
-    const a=[];
-    if(ev.line)a.push(ev.line>0?"ラインを上げる":"ラインを下げる");
-    if(ev.lane)a.push(ev.lane<0?"左サイド重視":"右サイド重視");
-    if(ev.press)a.push("プレス");
+    const a=[["center","中央突破"],["left","左サイド"],["right","右サイド"],["counter","カウンター"],["press","プレス"],["keeper","キーパー"]]
+      .filter(k=>ev[k[0]]).map(k=>k[1]);
     say(tag(ev)+"指示: "+(a.join("・")||"解除"));
     G.hold=500;
     return;
@@ -328,11 +324,7 @@ function boot(){
     if(G.kpMode)say("KP にする選手のカードをタップ(もう一度 KP ボタンで取り消し)");
     updateCtl();
   });
-  $("btnUp").addEventListener("click",()=>toggleIns("line",1));
-  $("btnDown").addEventListener("click",()=>toggleIns("line",-1));
-  $("btnLeft").addEventListener("click",()=>toggleIns("side",-1));
-  $("btnRight").addEventListener("click",()=>toggleIns("side",1));
-  $("btnPress").addEventListener("click",()=>toggleIns("press"));
+  for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("infoClose").addEventListener("click",hideInfo);
   $("infoKp").addEventListener("click",()=>{
     if(!G.info||G.M.over)return;

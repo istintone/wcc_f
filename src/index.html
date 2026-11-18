@@ -28,21 +28,27 @@
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
-  <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
-  <div id="bench"></div>
-  <div id="tac">
-    <button id="btnKp" class="btn btn-ins btn-kp">KP<small>選手をタップ</small></button>
-    <button id="btnUp" class="btn btn-ins">上げろ<small>ライン ▶</small></button>
-    <button id="btnDown" class="btn btn-ins">下げろ<small>◀ ライン</small></button>
-    <button id="btnLeft" class="btn btn-ins">左サイド<small>▲ 上側</small></button>
-    <button id="btnRight" class="btn btn-ins">右サイド<small>▼ 下側</small></button>
-    <button id="btnPress" class="btn btn-ins">プレス<small>奪いに行け</small></button>
+  <div id="deck">
+    <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
+    <div id="bench"></div>
   </div>
-  <div id="ctl">
-    <button id="btnPlay" class="btn">▶</button>
-    <button id="btnSpeed" class="btn">×1</button>
-    <span id="subInfo">交代 0/3</span>
-    <button id="btnShoot" class="btn btn-shoot">SHOOT</button>
+  <div id="pad">
+    <div class="cross">
+      <button id="btnCenter" class="btn tac up">中央突破</button>
+      <button id="btnLeft" class="btn tac lf">左サイド</button>
+      <button id="btnPress" class="btn tac md">プレス</button>
+      <button id="btnRight" class="btn tac rt">右サイド</button>
+      <button id="btnCounter" class="btn tac dn">カウンター</button>
+    </div>
+    <div class="mid">
+      <button id="btnKp" class="btn btn-kp">KP</button>
+      <div class="pr"><button id="btnPlay" class="btn">▶</button><button id="btnSpeed" class="btn">×1</button></div>
+      <span id="subInfo">交代 0/3</span>
+    </div>
+    <div class="act">
+      <button id="btnShoot" class="btn btn-shoot">SHOOT</button>
+      <button id="btnKeeper" class="btn btn-keeper">KEEPER</button>
+    </div>
   </div>
   <div id="club"></div>
   <div id="scene"></div>
