@@ -49,8 +49,11 @@ function initBoard(){
 function fitBoard(){
   const P=TUNING.play, deck=document.getElementById("deck");
   if(!BD.board||!deck)return;
-  const h=BD.board.clientHeight; if(!h)return;
-  const k=clamp(h/P.cardRef,P.cardMin,P.cardMax);
+  const dh=deck.clientHeight, dw=deck.clientWidth; if(!dh||!dw)return;
+  // ピッチは縦長の比率を保つ(筐体の盤面と同じ)。幅が余れば、控えの列と合わせて中央に寄せる
+  const bw=BD.bench?BD.bench.offsetWidth:52, w=Math.min(dw-bw,Math.round(dh*P.boardAspect));
+  BD.board.style.flex="0 0 "+w+"px";
+  const k=clamp(Math.min(dh/P.cardRef,w/(P.cardRef*P.boardAspect)),P.cardMin,P.cardMax);
   deck.style.setProperty("--k",k.toFixed(3));
 }
 function buildBoard(M){

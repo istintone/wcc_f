@@ -546,3 +546,6 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 /* 試合映像を大きく(→docs/07 §7.11)。立体の見え方で奥行きを出す。盤面のカードは fitBoard が残りの高さに合わせて縮める */
 #viewWrap{height:clamp(150px,28dvh,260px)}
 @media (max-height:700px){ #viewWrap{height:clamp(130px,25dvh,200px)} }
+
+/* 盤面は縦長の比率を保って中央へ。余った左右は筐体の天板の色(→docs/07 §7.11) */
+#deck{justify-content:center;background:#15171c}

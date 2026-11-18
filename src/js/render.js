@@ -64,6 +64,8 @@ function drawStands(c,W,H){
 }
 function drawPitch(){
   const c=RV.ctx, W=RV.w, H=RV.h;
+  // 毎回、画面全体を塗り直す(遠近で芝が届かない左右の外側に、前の場面のボールや選手が残らないように)
+  c.fillStyle="#17603a"; c.fillRect(0,0,W,H);
   drawStands(c,W,H);
   // 芝(縦の縞を遠近つきで)
   const ext=0.03;
