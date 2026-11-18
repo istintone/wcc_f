@@ -114,7 +114,7 @@ function buildTeam(def,side){
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
     kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
-    ins:insOf({}),
+    ins:insOf({}), injK:def.injK!=null?def.injK:1,
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -716,7 +716,7 @@ function setPiece(M,T,kind,h,x){
 function injCheck(M,push,T,p,base){
   const J=TUNING.inj;
   if(!p||p.inj||!M.irng)return;
-  if(M.irng()<base*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
+  if(M.irng()<base*T.injK*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
 }
 function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   const O=TUNING.rule, pk=forcePk||inBox(h,x), k=pk?O.pkCardK:1, r=rng();

@@ -11,7 +11,7 @@ const EXPORTS=["TUNING","CARDS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","
   "commLeft","teamFatigue","INT_LABEL",
   "POOL","RARITY","RAR_ORDER","REAL_IDS","PACK","drawCard","payout","swapSquad","moveSquad","startSquad",
   "TITLES","titleOf","termFacts","followers","facLevel","endTerm","startNextTerm",
-  "compatOf","linkBonusOf","linkBonusK","linkCap","ANIMALS","aniOfDate","aniCompat","NAT_NAME","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm","doRest","indProgress","linkProgress","voiceOf","trustLv","matchStats","matchRatings","meetNear","SECS","secOf","secLv","secSay","secGain","chooseSec","answerSecEvent","secFollow","SEC_EVENTS","migrate"];
+  "compatOf","linkBonusOf","linkBonusK","linkCap","ANIMALS","aniOfDate","aniCompat","NAT_NAME","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm","doRest","indProgress","linkProgress","voiceOf","trustLv","matchStats","matchRatings","meetNear","SECS","secOf","secLv","secSay","secGain","chooseSec","answerSecEvent","secFollow","SEC_EVENTS","migrate","newBiz","buildFac","answerStadium","facK","stadOf","bizAfterMatch","spOffers","spRenew","signSponsor","spRankMax","missionTxt","SP_IND","spBoost","spDur","spIndOf"];
 
 function load(){
   const src=ENGINE_FILES

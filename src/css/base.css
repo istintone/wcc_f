@@ -521,3 +521,28 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #replay b{position:relative;font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;letter-spacing:.2em;padding:1px 8px;
   background:#c8102e;transform:skewX(-10deg);animation:blink 1.1s infinite}
 #replay small{position:relative;align-self:flex-end;font-size:10px;font-weight:700;padding:1px 6px;background:rgba(0,0,0,.55)}
+
+/* ---- 画面の大きさに合わせたカード(→docs/07 §7.11)。--k は board.js の fitBoard が盤面の高さから決める ---- */
+#board .cd{transform:scale(var(--k,1))}
+#board .cd.drag{transform:scale(calc(var(--k,1)*1.14))}
+#board.subbing .cd.drop{transform:scale(calc(var(--k,1)*1.18))}
+#bench{overflow-y:auto;overscroll-behavior:contain}
+#bench .cd{transform:scale(var(--k,1));margin:calc(-26px*(1 - var(--k,1))) 0}
+#bench{gap:calc(6px*var(--k,1))}
+@media (max-height:700px){ #viewWrap{height:clamp(92px,16dvh,140px)} }
+
+/* ---- 試合の区切りの字幕(→docs/07 §7.11)。モニターの中の中継の字幕として出る ---- */
+#cap{position:absolute;left:0;right:0;top:50%;z-index:4;display:none;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 0 9px;transform:translateY(-50%);pointer-events:none;color:#fff;text-align:center;
+  background:linear-gradient(90deg,transparent,rgba(10,14,24,.88) 18%,rgba(10,14,24,.88) 82%,transparent);
+  border-top:2px solid #c9a23a;border-bottom:2px solid #c9a23a}
+#cap.on{display:flex;animation:capIn .45s cubic-bezier(.2,1.3,.4,1)}
+@keyframes capIn{from{transform:translateY(-50%) scaleY(0);opacity:0}to{transform:translateY(-50%);opacity:1}}
+#cap b{font-family:"Oswald",sans-serif;font-size:26px;font-weight:700;font-style:italic;letter-spacing:.14em;line-height:1.05;
+  background:linear-gradient(180deg,#fff,#ffe28a 60%,#d9a52e);-webkit-background-clip:text;background-clip:text;color:transparent}
+#cap .sc{font-family:"Oswald",sans-serif;font-size:20px;font-weight:700}
+#cap small{font-size:11px;color:#dfe6f2}
+
+/* 試合映像を大きく(→docs/07 §7.11)。立体の見え方で奥行きを出す。盤面のカードは fitBoard が残りの高さに合わせて縮める */
+#viewWrap{height:clamp(150px,28dvh,260px)}
+@media (max-height:700px){ #viewWrap{height:clamp(130px,25dvh,200px)} }

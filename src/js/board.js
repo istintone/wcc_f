@@ -41,8 +41,18 @@ function initBoard(){
     el.style.left=lf+"%"; el.style.right=rt+"%";
     el.style.height="calc("+depth+"% - 6px)";
   }
+  fitBoard();
+  window.addEventListener("resize",fitBoard);
 }
 
+/** 画面の大きさに合わせて、盤面と控えのカードの倍率(--k)を決める。盤面の高さが基準より低いほど小さく */
+function fitBoard(){
+  const P=TUNING.play, deck=document.getElementById("deck");
+  if(!BD.board||!deck)return;
+  const h=BD.board.clientHeight; if(!h)return;
+  const k=clamp(h/P.cardRef,P.cardMin,P.cardMax);
+  deck.style.setProperty("--k",k.toFixed(3));
+}
 function buildBoard(M){
   BD.cards.textContent=""; BD.bench.textContent=""; BD.map.clear(); BD.drag=null;
   for(const p of M.home.players){
@@ -60,6 +70,7 @@ function buildBoard(M){
     BD.bench.appendChild(el);
   }
   syncBoard(M);
+  fitBoard();
 }
 
 /** 連携の線を引き直す。段が高いほど太く、金色に近い */

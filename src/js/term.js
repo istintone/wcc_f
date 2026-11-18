@@ -56,7 +56,7 @@ function termFacts(S){
     koWins:t.filter(x=>x.comp!=="LG"&&x.comp!=="W4").length,
     awake:pl.filter(g=>g.is>=5).length,
     gold:Object.values(S.g.links).filter(l=>l.lv>=3).length,
-    money:S.money-S.money0,
+    money:S.biz?S.biz.earn:S.money-S.money0,   // 稼いだ額(施設やスタジアムに使っても減らない)
     kpCh:S.ts.kpCh, subs:S.ts.subs, used:S.ts.used.length, topW:S.ts.topW, psoW:S.ts.psoW, psoL:S.ts.psoL };
 }
 /** 絆の深い選手(次の任期についてくる候補)。絆が mono 以上で、深い順に max 人 */
@@ -92,6 +92,7 @@ function startNextTerm(S,W){
   newTerm(S,W);
   if(!end)return;
   S.grade=Math.max(1,end.grade);
+  if(S.biz)spRenew(S);                         // 引き継いだ格でスポンサーの候補を出し直す
   S.league=newLeague(S,W);
   for(const id of keep){
     const o=old.pl[id], g=S.g.pl[id];        // 登録を外れていればついてこない

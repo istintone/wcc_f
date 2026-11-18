@@ -383,7 +383,7 @@ function collectionHtml(){
   return h+'</section>';
 }
 
-/** 任期終了の画面。称号・年俸・施設・ついてくる選手(→term.js) */
+/** 任期終了の画面。称号・年俸・監督ランク・ついてくる選手(→term.js) */
 function termEndHtml(){
   const S=CL.S, e=S.tend, x=e.facts, t=titleOf(e.title);
   const ttl=S.titles.filter(z=>z.term===S.term).map(z=>COMPS[z.comp].name);
@@ -394,8 +394,8 @@ function termEndHtml(){
     (ttl.length?'<p class="dim">'+ttl.join(" / ")+'</p>':'')+
     '<p>覚醒 '+x.awake+'人 ・ 黄金線 '+x.gold+'本 ・ KP 変更 '+x.kpCh+'回 ・ 先発で使った選手 '+x.used+'人</p>'+
     '<div class="sal"><div><small>年俸</small><b>'+e.salary+'<i>億</i></b></div><div><small>累計</small><b>'+e.total+'<i>億</i></b></div>'+
-      '<div><small>施設</small><b>Lv'+e.fac+'</b>'+(e.facUp?'<i class="up">UP</i>':'')+'</div></div>'+
-    '<p class="dim">施設が上がると、特殊練習が候補に出やすくなる</p>';
+      '<div><small>監督ランク</small><b>'+e.fac+'</b>'+(e.facUp?'<i class="up">UP</i>':'')+'</div></div>'+
+    '<p class="dim">監督ランクが上がると、特殊練習が候補に出やすくなる</p>';
   h+='<h4>次の任期についてくる選手</h4>'+(e.follow.length?'<ul class="fol">'+e.follow.map(id=>{
       const g=S.g.pl[id], c=CARDS[id];
       return '<li><b>'+c.no+' '+nameOf(c)+'</b> 個人'+stars(g.is)+' 特殊'+stars(g.ss)+' <small>絆 '+g.bond+'</small></li>'; }).join("")+'</ul>'
@@ -451,9 +451,10 @@ function hypeOf(S,fx){
 function homeHeadHtml(){
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   return '<header class="chd">'+emblemSvg(TEAMS.azr,30)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>第'+S.term+'任期 ・ 格 '+S.grade+
-    ' ・ 施設 Lv'+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
+    ' ・ ランク '+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
     '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>MATCH</small></div>'+
-    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>PRIZE</small></div></header>';
+    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>FUNDS</small></div>'+
+    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>FANS</small></div>':'')+'</header>';
 }
 /** 次の試合のタイル。**タイル全体が押す面**で、中にボタンを置かない(pftb の決まり) */
 function nextTileHtml(){
@@ -489,6 +490,77 @@ function secClubHtml(){
     '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
     ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
 }
+/* ---- スタジアムと施設(→docs/05 §5.13) ---- */
+/** スタジアムの絵。段が上がるほどスタンドが高く広くなり、照明塔と屋根が付く(独自の意匠) */
+function stadiumSvg(lv){
+  const st=(x,w,h,c)=>'<rect x="'+x+'" y="'+(92-h)+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'+
+    '<g stroke="rgba(255,255,255,.35)" stroke-width="1">'+Array.from({ length:Math.floor(h/6) },(_,i)=>'<line x1="'+x+'" x2="'+(x+w)+'" y1="'+(92-h+4+i*6)+'" y2="'+(92-h+4+i*6)+'"/>').join("")+'</g>';
+  let g='<rect x="0" y="0" width="300" height="120" fill="#cfe6f5"/><rect x="0" y="92" width="300" height="28" fill="#3f8f4a"/>'+
+    '<rect x="70" y="96" width="160" height="16" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="150" y1="96" x2="150" y2="112" stroke="#fff" stroke-width="1.5"/>';
+  const H=[0,14,24,36,52,58][lv]||14, side=lv>=2;
+  g+=st(20,lv>=4?110:80,H,"#8a1c2b")+(side?st(lv>=4?170:200,lv>=4?110:80,H,"#8a1c2b"):'');
+  if(lv>=4)g+=st(130,40,H-8,"#6e1622");
+  if(lv>=3)[12,288].forEach(x=>{ g+='<line x1="'+x+'" y1="92" x2="'+x+'" y2="'+(lv>=4?18:28)+'" stroke="#555" stroke-width="3"/>'+
+    '<rect x="'+(x-8)+'" y="'+(lv>=4?12:22)+'" width="16" height="7" fill="#fff6c8" stroke="#555"/>'; });
+  if(lv>=5)g+='<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#d8dde3" stroke-width="7"/>'+
+    '<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#8d97a3" stroke-width="1.5"/>';
+  return '<svg class="stad-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMax meet">'+g+'</svg>';
+}
+/** HOME の改修の知らせ(秘書の言葉で)。払うか見送るか */
+function stadOfferHtml(){
+  const S=CL.S, o=S.biz&&S.biz.offer; if(!o||S.termOver)return "";
+  const nx=TUNING.biz.stad[o.lv-1], why=o.why==="資金"?"資金がたまりました。":o.why+"で、クラブの評価が上がっています。";
+  return '<section class="sec stad-offer"><i class="sec-ic">STADIUM</i><div><b class="sec-nm">'+secOf(S).name+'</b>'+
+    '<p>'+why+'スタジアムを「'+nx.name+'」(収容 '+(nx.cap/10000).toFixed(1)+'万人)に改修しませんか。費用は '+o.cost+'億です'+(o.why!=="資金"?'(今なら割引)':'')+'。</p>'+
+    stadiumSvg(o.lv)+
+    '<div class="sec-ch"><button class="btn ch" data-act="stad" data-v="1"'+(S.money<o.cost?' disabled':'')+'>改修する(資金 '+S.money.toFixed(0)+'億)</button>'+
+    '<button class="btn ch" data-act="stad" data-v="0">見送る</button></div></div></section>';
+}
+/* ---- スポンサー(→docs/05 §5.14)。マスタは club.js の SP_IND(業種 × ☆1〜5) ---- */
+const spStars=r=>"★".repeat(r)+"☆".repeat(5-r);
+function missionsHtml(ms){
+  return '<ul class="msn">'+ms.map(m=>'<li class="'+(m.done?'ok':m.fail?'ng':'')+'"><b>'+missionTxt(m)+'</b><em>'+missionProg(m)+'</em></li>').join("")+'</ul>';
+}
+/** 1社ぶん(業種・☆・収入・報酬・ミッション) */
+function spCardHtml(o){
+  const ind=spIndOf(o.ind);
+  return '<div class="spo-h"><b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
+    '<small>1試合 '+o.pay.toFixed(2)+'億 ・ ミッションを達成するたびに報酬</small></div>'+
+    '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+missionsHtml(o.ms);
+}
+/** 候補から選ぶ。first なら選ばないと始められない(任期の始め)、そうでなければ今の契約を続けられる */
+function spPickHtml(first){
+  const S=CL.S, Z=S.biz;
+  return '<section class="card sppick"><h3>スポンサーを選ぶ <small>'+(first?'任期の始め':'リーグの1周が終わった')+' ・ 契約は次の区切りまで</small></h3>'+
+    Z.offers.map((o,i)=>'<div class="spo r'+o.rank+'">'+spCardHtml(o)+
+      '<button class="btn" data-act="spsign" data-i="'+i+'">この社と契約する</button></div>').join("")+
+    (!first&&Z.sp?'<button class="btn btn-sub" data-act="spkeep">'+Z.sp.name+' との契約を続ける(ミッションは新しくなる)</button>':'')+'</section>';
+}
+/** いま効いている報酬の効果 */
+function spBoostHtml(){
+  const Z=CL.S.biz, on=SP_IND.filter(x=>Z.boost[x.eff]>0);
+  return on.length?'<p class="boost">'+on.map(x=>{ const r=Z.boostRank[x.eff]||1; return spItem(x,r)+': '+spEffTxt(x.eff,r)+' 残り'+Z.boost[x.eff]+'試合'; }).join('<br>')+'</p>':'';
+}
+/** HOME のスポンサーの欄(胸ロゴとミッションの進み) */
+function spTileHtml(){
+  const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
+  return '<section class="tile sptile"><h3><span class="logo r'+sp.rank+'">'+sp.name+'</span></h3><div class="spo r'+sp.rank+'">'+spCardHtml(sp)+'</div>'+spBoostHtml()+'</section>';
+}
+/** CLUB のスタジアムと施設の欄 */
+function bizClubHtml(){
+  const S=CL.S, Z=S.biz; if(!Z)return "";
+  const sd=stadOf(S), nx=TUNING.biz.stad[Z.stad];
+  let h='<section class="card stad"><h3>スタジアム <small>Lv'+Z.stad+' ・ '+sd.name+'</small></h3>'+stadiumSvg(Z.stad)+
+    '<p>収容 <b>'+(sd.cap/10000).toFixed(1)+'万人</b> ・ ファン <b>'+(Z.fans/10000).toFixed(1)+'万人</b>'+(Z.att?' ・ 前のホーム '+(Z.att/10000).toFixed(1)+'万人':'')+'</p>'+
+    '<p class="dim">'+(nx?'次の改修: 「'+nx.name+'」'+nx.cost+'億(資金がたまるか、優勝・昇格のときに秘書が知らせる)':'これ以上の改修はない')+'</p></section>';
+  h+='<section class="card facs"><h3>施設 <small>資金 '+S.money.toFixed(0)+'億 ・ 育成に効く</small></h3>'+FAC_KEYS.map(k=>{
+    const lv=Z.fac[k], c=facCost(S,k), f=FAC_INFO[k];
+    return '<div class="fac"><div><b>'+f.name+' <i>Lv'+lv+'</i></b><small>'+f.eff+(lv?'(いま '+facEffTxt(k,lv)+')':'')+'</small></div>'+
+      (c==null?'<span class="dim">最大</span>':'<button class="btn btn-sub" data-act="fac" data-v="'+k+'"'+(S.money<c?' disabled':'')+'>'+c+'億で'+(lv?'上げる':'建てる')+'</button>')+'</div>'; }).join("")+'</section>';
+  return h;
+}
+const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"・ケガが治る率 +"+Math.round(TUNING.biz.medHeal[lv]*100)+"%"
+  :"経験 ×"+TUNING.biz.facK[lv];
 /** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
 function secPickHtml(title){
   const S=CL.S;
@@ -511,7 +583,9 @@ function lastHtml(){
 function homeHtml(){
   const S=CL.S;
   if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+secPickHtml("秘書を選ぶ");
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+secHtml()+lastHtml());
+  // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
+  if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+spPickHtml(true);
+  return homeHeadHtml()+(S.termOver?termEndHtml():(S.biz&&S.biz.offers?spPickHtml(false):'')+nextTileHtml()+stadOfferHtml()+secHtml()+spTileHtml()+lastHtml());
 }
 /** SEASON: リーグの順位と大会 */
 function seasonHtml(){
@@ -537,7 +611,7 @@ function clubTabHtml(){
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p></section>'+
-    secClubHtml()+careerHtml()+settingsHtml();
+    spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
   const S=CL.S, sign=Object.keys(S.g.pl).some(id=>hasSign(S,id));
@@ -590,6 +664,9 @@ function onClubClick(e){
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
+  if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
+  if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }

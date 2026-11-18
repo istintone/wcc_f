@@ -22,7 +22,7 @@
     <div class="clk"><small id="hudComp"></small><span id="hudClock">0'</span></div>
     <button id="btnSpeed" class="btn spd">×1</button>
   </header>
-  <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div><button id="replay" class="replay"><b>REPLAY</b><small>タッチでスキップ ▶▶</small></button>
+  <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div><div id="cap"></div><button id="replay" class="replay"><b>REPLAY</b><small>タッチでスキップ ▶▶</small></button>
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
@@ -46,7 +46,6 @@
     </div>
     <div class="mid">
       <button id="btnKp" class="btn btn-kp">KP</button>
-      <button id="btnPlay" class="btn">▶</button>
       <span id="subInfo">交代 0/3</span>
     </div>
     <div class="act">
@@ -56,7 +55,6 @@
   </div>
   <div id="club"></div>
   <div id="scene"></div>
-  <div id="ov"><div id="ovBox"><h1 id="ovTitle"></h1><div id="ovBody"></div><button id="ovBtn" class="btn btn-main"></button></div></div>
 </div>
 <script>
 // 起動の確認(tools/publish.py が見る): 起動中のエラーを html の data-boot に残す

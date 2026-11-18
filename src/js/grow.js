@@ -163,7 +163,7 @@ const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.
 function linkExp(S,a,b,v,cap){
   const l=linkSet(S,a,b);
   l.cap=Math.max(l.cap||0,cap);
-  if(l.lv<Math.min(l.cap,2))l.exp+=v;
+  if(l.lv<Math.min(l.cap,2))l.exp+=v*facK(S,"lounge");
 }
 /** 試合のあと、たまった経験で連携の段を上げる(黄金線=3 はここでは上がらない) */
 function settleLinks(S,out){
@@ -194,7 +194,7 @@ function doTraining(S,i,intensity){
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
-      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id);
+      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
     graphAdd(S,PARAM_AXIS[o.param],R.basic*k);
@@ -202,9 +202,9 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id);
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
-      if(e.sp)g.se+=e.sp*G0.sp.train*k;
+      if(e.sp)g.se+=e.sp*G0.sp.train*k*facK(S,"tact");
     }
     if(e.link){
       const xi=squadXi(S);
@@ -318,9 +318,15 @@ const canComm=S=>S.g.step==="comm"&&S.g.cn<TUNING.grow.comm.max;
 function doIndTrain(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
-  g.ie+=C.ind*growK(id);
+  g.ie+=C.ind*growK(id)*facK(S,"train")*(spBoost(S,"indExp")||1);
   g.bond++;
   out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
+  // スポンサーの効果: 秘書がもう1人の先発にも経験の半分を入れる
+  const si=spBoost(S,"indSec");
+  if(si&&mulberry32((S.seed^hashStr("isec:"+S.term+":"+S.played+":"+S.g.cn))>>>0)()<si){
+    const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].is<5).sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is)[0];
+    if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
+  }
   useComm(S,"ind");
   return { res:1, lines:out };
 }
@@ -331,6 +337,14 @@ function doTalk(S,id){
   const was=g.mot;
   g.mot=Math.min(4,g.mot+(g.mot<=2?C.talkLow:C.talk));
   g.bond++;
+  // スポンサーの効果: もう1段上がることがある / 秘書がもう1人の落ちた先発もケアする
+  const rc=mulberry32((S.seed^hashStr("care:"+S.term+":"+S.played+":"+S.g.cn+":"+id))>>>0);
+  const ca=spBoost(S,"care"); if(ca&&was>0&&g.mot<4&&rc()<ca)g.mot++;
+  const cs=spBoost(S,"careSec");
+  if(cs&&rc()<cs){
+    const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].mot>0&&S.g.pl[x].mot<=2).sort((a,b)=>S.g.pl[a].mot-S.g.pl[b].mot)[0];
+    if(o){ const q=S.g.pl[o], w=q.mot; q.mot=Math.min(4,q.mot+1); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" もケアしてくれた("+MOT_LABEL[w]+" → "+MOT_LABEL[q.mot]+")"); }
+  }
   if(was===0)g.injN=0;
   out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
   useComm(S,"talk");
@@ -356,16 +370,17 @@ function doLounge(S,a,b,choice){
   const L=TUNING.grow.link, out=[];
   if(!canComm(S)||a===b||!S.g.pl[a]||!S.g.pl[b])return { res:-1, lines:out };
   const c=compatOf(a,b), best=LOUNGE_BEST[c];
-  const p=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad;
+  const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=spBoost(S,"loungeOk")||0;
+  const p=[p0[0]+ok,p0[1],Math.max(0,p0[2]-ok)];   // スポンサーの効果: 失敗のぶんが大成功に回る
   const r=mulberry32((S.seed^hashStr("lg:"+S.term+":"+S.played+":"+S.g.cn+":"+lkey(a,b)+":"+choice))>>>0)();
   const res=r<p[0]?0:r<p[0]+p[1]?1:2, l=linkSet(S,a,b);
   out.push(["大成功！","成功","失敗…"][res]);
   if(res<2){
     // 太線の2人は、**大成功のときだけ**黄金線の兆しが出る。ラウンジは相性に関係なく太線まで育てられる
     if(l.lv===2){ if(res===0&&!l.gold){ l.gold=true; out.push("フレンドリーマッチで新たな連携が生まれそうだ"); } }
-    else{ linkExp(S,a,b,L.lounge[res],2); out.push("連携の経験 +"+L.lounge[res]+"(試合のあとに太くなる)"); }
+    else{ linkExp(S,a,b,L.lounge[res]*(spBoost(S,"loungeExp")||1),2); out.push("連携の経験 +"+L.lounge[res]+"(試合のあとに太くなる)"); }
     S.g.pl[a].bond++; S.g.pl[b].bond++;
-  }else secFollow(S,[],[a,b],out,"lg:"+lkey(a,b));
+  }else secFollow(S,[],[a,b],out,"lg:"+lkey(a,b),spBoost(S,"loungeSec")||0);
   useComm(S,"lounge");
   return { res, lines:out };
 }
@@ -409,7 +424,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
-    g.se+=P.meet;
+    g.se+=P.meet*facK(S,"tact");
     out.push(nameOf(CARDS[id])+" と戦術の話をした(特殊能力の経験 +"+P.meet+")");
   }
   g.bond+=2;
@@ -472,7 +487,7 @@ function afterMatchGrowth(S,fx,res){
   GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
-  for(const id of played)S.g.pl[id].ie+=I.match*growK(id);
+  for(const id of played)S.g.pl[id].ie+=I.match*growK(id)*facK(S,"train");
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
     linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
@@ -496,7 +511,7 @@ function afterMatchGrowth(S,fx,res){
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
   for(const id in S.g.pl){
     const g=S.g.pl[id];
-    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad:0))*N.recover);
+    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1):0))*N.recover*medFat(S));
   }
   // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
   const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
@@ -504,7 +519,7 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。ケアで手当てできる)"); newsOf("inj",[id],out); }
     else if(g.mot===0){
-      if((g.injN||0)>=J.maxN||rng()<J.heal){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
+      if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
     }
   }
@@ -517,11 +532,11 @@ function afterMatchGrowth(S,fx,res){
     if(played.includes(id)){
       g.bench=0;
       if(res.win&&rng()<Mo.winUp*sw)g.mot=Math.min(4,g.mot+1);
-      else if(res.lose&&rng()<Mo.loseDown*sw)g.mot=Math.max(1,g.mot-1);
+      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1))g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
     }else{
       g.bench=(g.bench||0)+1;
-      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw)g.mot=Math.max(1,g.mot-1);
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1))g.mot=Math.max(1,g.mot-1);
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
@@ -648,9 +663,9 @@ function answerSecEvent(S,i){
  * 秘書のフォロー。コミュニケーションが失敗したときに呼ぶ。起きたら下がったやる気を戻す(drops: [[id, 元のやる気]])、
  * ups の選手はやる気を1段上げる。起きたかどうかを返す
  */
-function secFollow(S,drops,ups,out,salt){
+function secFollow(S,drops,ups,out,salt,plus){
   if(!S.sec)return false;
-  const p=TUNING.sec.follow[secLv(S)];
+  const p=TUNING.sec.follow[secLv(S)]+(plus||0);   // plus … スポンサーの効果(旅行・航空)
   const r=mulberry32((S.seed^hashStr("sf:"+S.term+":"+S.played+":"+S.g.cn+":"+salt))>>>0)();
   if(r>=p)return false;
   const names=[];

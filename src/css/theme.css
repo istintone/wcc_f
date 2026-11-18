@@ -660,3 +660,41 @@
 #club .secpick .sp.on{border-left-color:var(--t-sub);box-shadow:0 0 0 1px var(--t-sub)}
 #club .secpick .sp b{font-size:14px} #club .secpick .sp small{margin-left:8px;font-size:11px;color:var(--t-mute)}
 #club .secpick .sp i{display:block;margin-top:3px;font-style:normal;font-size:11.5px;color:var(--t-ink2)}
+
+/* ---- スタジアムと施設(→docs/05 §5.13) ---- */
+#club .stad-svg{display:block;width:100%;height:auto;margin:6px 0;border:1px solid var(--t-rule)}
+#club .stad-offer{border-left:4px solid var(--t-sub)}
+#club .stad p b,#club .facs b{font-family:"Oswald",sans-serif}
+#club .facs .fac{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--t-rule)}
+#club .facs .fac b{font-size:13px} #club .facs .fac b i{font-style:normal;font-size:11px;color:var(--t-sub);margin-left:4px}
+#club .facs .fac small{display:block;font-size:10.5px;color:var(--t-mute)}
+#club .facs .fac .btn{flex:none;padding:6px 10px;font-size:11.5px}
+#club .facs .fac>div{flex:1;min-width:0}
+#club .facs .fac .btn{width:auto;margin:0}
+
+/* ---- スポンサー(→docs/05 §5.14) ---- */
+#club .msn{list-style:none;margin:6px 0 4px;padding:0}
+#club .msn li{display:grid;grid-template-columns:1fr auto;gap:0 8px;padding:4px 0;border-top:1px dashed var(--t-rule);font-size:11.5px}
+#club .msn li b{font-weight:700} #club .msn li span{color:var(--t-gold);font-weight:700;text-align:right}
+#club .msn li em{grid-column:1/3;font-style:normal;font-size:10.5px;color:var(--t-mute)}
+#club .msn li.ok b{color:#1f8a4c} #club .msn li.ok em{color:#1f8a4c;font-weight:700} #club .msn li.ng{opacity:.5}
+#club .sppick .spo{margin:8px 0;padding:8px 10px;border:1px solid var(--t-rule);border-left:4px solid #8a8a8a;background:var(--t-card)}
+#club .sppick .spo.t1{border-left-color:#1d5fbf} #club .sppick .spo.t2{border-left-color:var(--t-gold)}
+#club .spo-h b{font-size:14px} #club .spo-h i{font-style:normal;font-size:10px;margin-left:6px;padding:0 5px;background:var(--t-black);color:#fff}
+#club .spo-h small{display:block;font-size:11px;color:var(--t-mute)}
+#club .sppick .spo .btn{margin-top:4px}
+#club .sptile h3 .logo{display:inline-block;padding:2px 8px;margin-right:6px;font-size:12px;font-weight:900;letter-spacing:.04em;
+  background:#fff;color:var(--t-ink);border:2px solid var(--t-ink);transform:skewX(-8deg)}
+#club .sptile h3 .logo.t2{background:var(--t-gold2)}
+#club .sptile .boost{margin:4px 0 0;font-size:11px;font-weight:700;color:#1d5fbf}
+.vs-sp{display:inline-block;margin-top:3px;padding:1px 8px;font-size:11px;font-weight:900;letter-spacing:.04em;background:#fff;color:#121212;transform:skewX(-8deg)}
+
+/* スポンサーのマスタ(業種 × ☆) */
+#club .spo.r1,#club .spo.r2{border-left-color:#8a8a8a} #club .spo.r3{border-left-color:#1d5fbf} #club .spo.r4,#club .spo.r5{border-left-color:var(--t-gold)}
+#club .spo-h .st{margin-left:6px;font-size:11px;color:var(--t-gold);letter-spacing:.05em}
+#club .spo .rw{margin:4px 0 2px;font-size:11.5px;line-height:1.5} #club .spo .rw b{color:var(--t-sub)} #club .spo .rw u{text-decoration:none;font-weight:700}
+#club .sptile .spo{border:0;padding:0;background:none}
+#club .sptile h3 .logo.r4,#club .sptile h3 .logo.r5{background:var(--t-gold2)}
+
+/* 対戦カード: 画面の高さの中央にそろえる */
+.sc-vs{justify-content:center!important;gap:16px}

@@ -206,6 +206,26 @@ const TUNING={
     save:0.25, block:0.15, concede:-0.35, concedeDf:-0.15, win:0.3, lose:-0.3, foul:-0.05, red:-1.5, min:3.5, max:10 },
   // PK戦。5人ずつ蹴り、決まらなければ1人ずつ。maxKicks は打ち切り(暴走を防ぐ安全網)
   pso:{ kicks:5, maxKicks:30 },
+  // クラブの経営(→docs/08 §8.9・docs/05 §5.13)。お金の単位は億
+  //   fans0/fansMin … 初めのファン数・下限 / fill … ファンのうち観客になる割合 / price … 1人あたりの入場料
+  //   cupK・finalK・friendlyK … 試合の大きさで観客が変わる倍率 / fansWin・fansDraw・fansLose … 1試合ごとのファンの増減
+  //   fansStadK … スタジアムの段ごとに勝ったときの増え方が増す割合 / fansTitle・fansPromo・fansStad … 優勝・昇格・改修で増えるファン
+  //   stad … スタジアムの段(cap 収容人数 / cost 改修の費用)/ chanceK … 優勝・昇格のときの改修費の割引 / cool … 見送ったあと知らせない試合数
+  //   facCost … 施設の段ごとの費用 / facK … 練習場・戦術室・ラウンジの効き目(経験の倍率)/ medFat … 疲労の残り方 / medHeal … ケガの治りやすさ
+  biz:{ fans0:6000, fansMin:2000, fill:0.9, price:0.00006, cupK:1.25, finalK:1.6, friendlyK:0.6,
+        fansWin:260, fansDraw:60, fansLose:-120, fansStadK:0.15, fansTitle:2500, fansPromo:4000, fansStad:3000,
+        stad:[ { cap:8000,  cost:0,   name:"地方の小さなスタジアム" }, { cap:15000, cost:40,  name:"スタンドを広げたスタジアム" },
+               { cap:25000, cost:90,  name:"照明塔の立つスタジアム" }, { cap:40000, cost:180, name:"大きなスタジアム" },
+               { cap:60000, cost:320, name:"屋根付きの大スタジアム" } ],
+        // sp … スポンサー(→docs/05 §5.14)。マスタは club.js の SP_IND(業種 × ☆1〜5)
+        //   rankFans … ☆2〜5 が届くファン数(その7割でも、リーグの格 rankGrade か今の任期の優勝 rankTitles があれば届く)/ pay … ☆ごとの1試合の収入
+        //   eff … 報酬の効果の大きさ(☆1〜5)。care・careSec・indSec・loungeSec は率、loungeOk は大成功に足す率、indExp・loungeExp は経験の倍率、
+        //         noFat は試合の疲労の倍率、injury はケガの起きやすさの倍率、bench・keepForm はやる気が下がる率の倍率
+        sp:{ rankFans:[12000,25000,45000,70000], rankGrade:[2,2,3,3], rankTitles:[1,1,2,3], pay:[0.2,0.4,0.7,1.1,1.6],
+             eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
+                   loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
+                   noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
+        chanceK:0.8, cool:8, facCost:[20,50,100], facK:[1,1.1,1.2,1.3], medFat:[1,0.9,0.8,0.7], medHeal:[0,0.1,0.2,0.3] },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
   sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
@@ -213,10 +233,18 @@ const TUNING={
   //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
   //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
   inj:{ duel:0.00045, foul:0.0058, fatK:4.0, k:0.85, heal:0.5, maxN:3, healTo:2 },
+  // 試合映像の見え方(→docs/07 §7.11)。斜め上の横から見た立体
+  //   far … 奥のタッチラインの縮み(手前 = 1)/ farY・nearY … 奥と手前のタッチラインの高さ(モニターの高さに対する割合)/ nearW … 手前の幅
+  //   manH … 手前での選手の高さ / goalH … ゴールの高さ / standH … スタジアムの段ごとの奥のスタンドの高さ
+  view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22] },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
-    replayN:5, replaySlow:0.5, replayEnd:600 }
+    replayN:5, replaySlow:0.5, replayEnd:600,
+    // 盤面のカードの大きさ(→docs/07 §7.11): 盤面の高さ ÷ cardRef の倍率を cardMin〜cardMax に収める(小さい画面で重ならないように)
+    cardRef:400, cardMin:0.7, cardMax:1.12,
+    // 試合の区切りの字幕(→docs/07 §7.11)。本家と同じく、数秒で自動で進む(ミリ秒)
+    capKick:3200, capHalf:4200, capEnd:2400 }
 };
 
 const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW" };

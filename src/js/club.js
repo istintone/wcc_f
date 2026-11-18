@@ -148,9 +148,10 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec() };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz() };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
+  spRenew(S);                                  // 最初のスポンサーの候補
   return S;
 }
 /** 読み込んだセーブに世界を作り直して返す(世界はたねから決まる) */
@@ -273,6 +274,7 @@ function playerDef(S){
   def.bench=def.bench.map(c=>growCard(S,c));
   def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
+  def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
   return def;
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
@@ -358,6 +360,13 @@ function applyResult(S,W,fx,res){
   const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[] };
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
+  // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ
+  // (昇格のファンと改修の知らせは、1周の終わり endCycle で足す)
+  if(S.biz){
+    const titles=out.filter(x=>/^🏆 /.test(x)).length;
+    bizAfterMatch(S,fx,{ win:hg>ag||win, lose:hg<ag&&!win, titles, prize:got },out);
+    S.biz.earn+=spAfterMatch(S,fx,{ hg, ag, winPso:win&&hg===ag, titles },out);
+  }
   // 秘書の親密度(→docs/08 §8.7): 試合のたびと大会の優勝で上がる。ときどき監督室で短い会話が起きる
   if(S.sec){
     const n=out.filter(x=>/^🏆 /.test(x)).length, up=secGain(S,TUNING.sec.match+n*TUNING.sec.title);
@@ -393,9 +402,12 @@ function endCycle(S,W,out){
   S.prev={ rank, won };
   if(rank<=TUNING.club.promoteRank&&S.grade<TUNING.club.leagueTiers.length){
     S.grade++; out.push("リーグの格が上がった(格 "+S.grade+")");
+    if(S.biz){ S.biz.fans+=TUNING.biz.fansPromo; const nx=TUNING.biz.stad[S.biz.stad], disc=nx?Math.round(nx.cost*TUNING.biz.chanceK):0;
+      if(!S.biz.offer&&nx&&S.money>=disc)S.biz.offer={ lv:S.biz.stad+1, cost:disc, why:"昇格" }; }
   }
   S.cyc++; S.slot=0;
   S.league=newLeague(S,W); S.cups=newCups();
+  if(S.biz&&S.played+1<TUNING.club.termLen)spRenew(S);   // リーグの1周ごとにスポンサーを選び直す(任期の最後は除く)
 }
 /** 任期が終わったあと、次の任期を始める(称号・年俸・引き継ぎは 3c で足す) */
 function newTerm(S,W){
@@ -406,6 +418,7 @@ function newTerm(S,W){
   S.ts=newTermStats(); S.money0=S.money;
   S.league=newLeague(S,W); S.cups=newCups();
   if(S.sec){ S.sec.chosen=false; S.sec.ev=null; }   // 任期の始めに秘書を選び直す(親密度は残る)
+  if(S.biz){ S.biz.earn=0; S.biz.offer=null; spRenew(S); }   // スタジアム・施設・ファンはクラブに残る。スポンサーは選び直す
 }
 
 /* ---------- 保存 ---------- */
@@ -457,6 +470,204 @@ function migrate(S){
   if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
+  if(!S.biz){ S.biz=newBiz(); S.biz.earn=Math.max(0,S.money-(S.money0||0)); }   // それまでの賞金は稼いだ額に数える
+  if(!S.biz.boostRank||(S.biz.sp&&!S.biz.sp.ind)){ S.biz.boost={}; S.biz.boostRank={}; S.biz.sp=null; S.biz.offers=null; }   // 前の形のスポンサーは選び直す
+  if(!S.biz.sp&&!S.biz.offers&&!S.termOver)spRenew(S);
   return S;
 }
 function clearCareer(store){ try{ store.removeItem(SAVE_KEY); }catch(e){} }
+
+/* ---------- クラブの経営(→docs/08 §8.9・docs/05 §5.13) ----------
+ * クラブ資金(S.money)には 賞金・入場料(ホームの試合)・スポンサー収入(2回目)が入り、施設とスタジアム改修に使う。
+ * 年俸は任期中に**稼いだ額**(S.biz.earn)で決まる(使っても減らない)。
+ * ファン数がクラブの格: 勝利・優勝・昇格・スタジアムで増え、負けで少し減る。観客の数を決める。
+ * S.biz = { fans, stad:スタジアムの段(1〜), fac:{ train, tact, lounge, med }(各 0〜3), earn, offer:改修の知らせ | null, cool:知らせを出さない残り試合 } */
+const FAC_KEYS=["train","tact","lounge","med"];
+const FAC_INFO={
+  train: { name:"練習場",     eff:"個人能力が育ちやすい" },
+  tact:  { name:"戦術室",     eff:"特殊能力が育ちやすい" },
+  lounge:{ name:"ラウンジ",   eff:"連携がつながりやすい" },
+  med:   { name:"メディカル", eff:"疲労が抜けやすく、ケガが治りやすい" }
+};
+function newBiz(){ return { fans:TUNING.biz.fans0, stad:1, fac:{ train:0, tact:0, lounge:0, med:0 }, earn:0, offer:null, cool:0, att:0,
+  sp:null, offers:null, boost:{}, boostRank:{} }; }
+const stadOf=S=>TUNING.biz.stad[(S.biz?S.biz.stad:1)-1];
+/** 施設の効き目(育成に掛ける倍率)。建てていなければ 1 */
+const facK=(S,k)=>S&&S.biz?TUNING.biz.facK[S.biz.fac[k]||0]:1;
+const medFat=S=>S&&S.biz?TUNING.biz.medFat[S.biz.fac.med||0]:1;
+const medHeal=S=>S&&S.biz?TUNING.biz.medHeal[S.biz.fac.med||0]:0;
+const facCost=(S,k)=>{ const lv=S.biz.fac[k]||0; return lv<TUNING.biz.facCost.length?TUNING.biz.facCost[lv]:null; };
+/** 施設を建てる・上げる。資金が足りなければ false */
+function buildFac(S,k){
+  const c=facCost(S,k);
+  if(c==null||S.money<c)return false;
+  S.money-=c; S.biz.fac[k]++;
+  return true;
+}
+/** 観客の数。ホームの試合だけ。収容人数が上限 */
+function attendanceOf(S,fx,rng){
+  const B=TUNING.biz, cap=stadOf(S).cap;
+  const big=fx.kind==="friendly"?B.friendlyK:fx.kind==="cup"?(fx.ko&&/決勝/.test(fx.label||"")?B.finalK:B.cupK):1;
+  return Math.min(cap,Math.round(S.biz.fans*B.fill*big*(0.9+0.2*rng())/100)*100);
+}
+/**
+ * 試合のあとの経営。入場料・ファン数・改修の知らせ(資金が費用に届いたとき。優勝・昇格のときは割り引いた費用に届けば)。行(画面に出す)を out に足す。
+ * res: { win, lose, titles:優勝した数, prize:この試合の賞金 }
+ */
+function bizAfterMatch(S,fx,res,out){
+  const B=TUNING.biz, Z=S.biz, rng=mulberry32((S.seed^hashStr("biz:"+S.term+":"+S.played))>>>0);
+  let gate=0;
+  if(fx.home){
+    Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*10)/10;
+    S.money+=gate;
+    out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+gate.toFixed(1)+"億)");
+  }else Z.att=0;
+  Z.earn+=(res.prize||0)+gate;
+  // ファン: 勝てば増え(スタジアムが大きいほど多く)、負ければ少し減る。優勝・昇格で大きく増える
+  const f0=Z.fans, sk=1+B.fansStadK*(Z.stad-1);
+  Z.fans+=res.win?B.fansWin*sk:res.lose?B.fansLose:B.fansDraw*sk;
+  Z.fans+=(res.titles||0)*B.fansTitle;
+  Z.fans=Math.max(B.fansMin,Math.round(Z.fans));
+  if(Math.floor(Z.fans/10000)>Math.floor(f0/10000))out.push("ファンが "+Math.floor(Z.fans/10000)+"万人を超えた");
+  // スタジアム改修の知らせ: 資金が費用に届いたとき、または優勝・昇格のとき(少し安く)
+  if(Z.cool>0)Z.cool--;
+  const nx=B.stad[Z.stad];
+  if(nx&&!Z.offer){
+    const disc=Math.round(nx.cost*B.chanceK);
+    if((res.titles||0)>0&&S.money>=disc)Z.offer={ lv:Z.stad+1, cost:disc, why:"優勝" };
+    else if(Z.cool<=0&&S.money>=nx.cost)Z.offer={ lv:Z.stad+1, cost:nx.cost, why:"資金" };
+  }
+}
+/** 改修の知らせに答える。yes なら払って改修、no なら見送り(しばらく知らせない) */
+function answerStadium(S,yes){
+  const Z=S.biz, o=Z.offer; if(!o)return null;
+  Z.offer=null;
+  if(!yes){ Z.cool=TUNING.biz.cool; return { ok:false }; }
+  if(S.money<o.cost){ Z.cool=TUNING.biz.cool; return { ok:false, short:true }; }
+  S.money-=o.cost; Z.stad=o.lv; Z.fans+=TUNING.biz.fansStad;
+  return { ok:true, lv:o.lv };
+}
+
+/* ---------- スポンサーとミッション(→docs/08 §8.9・docs/05 §5.14) ----------
+ * **マスタ**: 業種(11)× ランク(☆1〜5)。業種が報酬の効果の系統を、ランクが 収入・ミッションの難しさ・効果の大きさ・続く試合数 を決める。
+ * 任期の始めとリーグの1周の終わりに、3社の候補(すべて架空の企業)から選ぶ。契約はその次の選び直しまで。
+ * 報酬は持ち物にしない。ミッションを達成すると、その業種・ランクの報酬の名前で効果が始まり、決まった試合数だけ続く(重なると長い方)。
+ * S.biz.sp = { ind:業種, rank:1〜5, name, pay, ms:[ミッション], at } | null、S.biz.offers = [候補] | null、S.biz.boost = { 効果: 残り試合 } */
+const SP_IND=[
+  { id:"kaden",  name:"家電",       eff:"care",     effName:"ケアの効果アップ",               dur:[3,7], items:["家電製品","最新家電","高級家電","全自動掃除機","IoT家電"],
+    pre:["ミナト","ヒカリ","アオバ","シンセイ","ユメノ"], suf:["電機","家電","エレクトリック"] },
+  { id:"car",    name:"自動車",     eff:"careSec",  effName:"ケアで秘書が手伝う",             dur:[3,7], items:["軽自動車","自動車","高級車","EV車","AI搭載車"],
+    pre:["カゼミチ","ハヤブサ","ミライ","アークス","ソウマ"], suf:["自動車","モーターズ","オート"] },
+  { id:"food",   name:"食品",       eff:"indExp",   effName:"個人練習の経験アップ",           dur:[3,7], items:["健康食品","サプリメント","プロテイン","最新アスリートフード","専属カリスマ栄養士"],
+    pre:["ミノリ","アサヒノ","ユタカ","ハルカ","ミドリ"], suf:["食品","フーズ","ニュートリション"] },
+  { id:"sports", name:"スポーツ用品", eff:"indSec", effName:"個人練習で秘書が手伝う",         dur:[3,7], items:["ウォーターボトル","サッカーウェア","サッカーボール","高級サッカーウェア","最高級サッカースパイク"],
+    pre:["ストライダ","ハヤテ","ジンバ","アスリオ","トップス"], suf:["スポーツ","アスレチック"] },
+  { id:"it",     name:"IT機器",     eff:"loungeOk", effName:"ラウンジが成功しやすい",         dur:[3,7], items:["最新モバイル","高性能PC","次世代ツール","スマートウォッチ","AIスピーカー"],
+    pre:["ネクサ","ルミナ","カナタ","ソラ","ゼニス"], suf:["テック","デバイス","システムズ"] },
+  { id:"game",   name:"ゲーム",     eff:"loungeExp",effName:"ラウンジの連携の経験アップ",     dur:[3,7], items:["人気ゲーム機","最新ゲーム機","次世代ゲーム機","VRヘッドセット","ARゴーグル"],
+    pre:["ピクセル","スターリ","ノヴァ","ワンダ","ミラージュ"], suf:["ゲームス","エンタテインメント"] },
+  { id:"travel", name:"旅行・航空", eff:"loungeSec",effName:"ラウンジの失敗に秘書のフォロー", dur:[3,7], items:["往復航空券","国内旅行","海外旅行","世界一周旅行","宇宙旅行"],
+    pre:["ツバサ","アオゾラ","セレスタ","オリオン","カモメ"], suf:["トラベル","エアラインズ","ツーリスト"] },
+  { id:"drink",  name:"飲料",       eff:"noFat",    effName:"試合の疲労がたまりにくい",       dur:[2,6], items:["スポーツドリンク","エナジードリンク","栄養ドリンク","フレッシュジュース","最高級ミネラルウォーター"],
+    pre:["シズク","イズミ","ミナモ","サワ","アクア"], suf:["飲料","ビバレッジ","ウォーター"] },
+  { id:"medic",  name:"医療",       eff:"injury",   effName:"ケガに強くなる",                 dur:[2,6], items:["テーピングセット","リハビリグッズ","専属フィジオセラピスト","スポーツ人間ドック","専属スポーツドクター"],
+    pre:["ケンセイ","ヤスラギ","ミマモリ","ユウキ","サクラ"], suf:["メディカル","製薬","ヘルスケア"] },
+  { id:"finance",name:"金融",       eff:"bench",    effName:"控えの不満がたまりにくい",       dur:[3,7], items:["宝くじ","有価証券","ゴールドバー","プラチナバー","仮想通貨"],
+    pre:["ヤマト","コガネ","アストラ","グランデ","ホクト"], suf:["銀行","証券","フィナンシャル"] },
+  { id:"media",  name:"放送・芸能", eff:"keepForm", effName:"好調を維持しやすい",             dur:[2,5], items:["ラジオ番組出演オファー","テレビ番組出演オファー","CM出演オファー","ドラマ出演オファー","映画出演オファー"],
+    pre:["ステラ","ヒノデ","アカツキ","ミライ","ルクス"], suf:["放送","エンタープライズ","プロダクション"] }
+];
+const spIndOf=id=>SP_IND.find(x=>x.id===id)||SP_IND[0];
+const spDur=(ind,rank)=>Math.round(ind.dur[0]+(ind.dur[1]-ind.dur[0])*(rank-1)/4);
+const spItem=(ind,rank)=>ind.items[rank-1];
+/** 効果の大きさ(☆1〜5)。effTxt は画面の説明 */
+const spEffK=(eff,rank)=>TUNING.biz.sp.eff[eff][rank-1];
+function spEffTxt(eff,rank){
+  const v=spEffK(eff,rank), pc=x=>Math.round(x*100)+"%";
+  return eff==="care"?"ケアで やる気がもう1段上がる率 "+pc(v):eff==="careSec"?"ケアのあと秘書がもう1人ケアする率 "+pc(v)
+    :eff==="indExp"?"個人練習の経験 ×"+v:eff==="indSec"?"個人練習のあと秘書がもう1人に経験の半分を入れる率 "+pc(v)
+    :eff==="loungeOk"?"ラウンジの大成功 +"+pc(v):eff==="loungeExp"?"ラウンジの連携の経験 ×"+v:eff==="loungeSec"?"ラウンジの失敗に秘書のフォロー +"+pc(v)
+    :eff==="noFat"?"試合の疲労 ×"+v:eff==="injury"?"ケガの起きやすさ ×"+v:eff==="bench"?"控えのやる気が下がる率 ×"+v:"負けてやる気が下がる率 ×"+v;
+}
+/** いま効いている効果の大きさ(効いていなければ null) */
+const spBoost=(S,eff)=>S&&S.biz&&S.biz.boost&&S.biz.boost[eff]>0?spEffK(eff,S.biz.boostRank[eff]||1):null;
+/** その時点で届くランク(1〜5)。ファン数と実績(リーグの格・今の任期の優勝) */
+function spRankMax(S){
+  const B=TUNING.biz.sp, Z=S.biz, t=S.titles.filter(x=>x.term===S.term).length;
+  let r=1;
+  for(let i=0;i<B.rankFans.length;i++)if(Z.fans>=B.rankFans[i]||(Z.fans>=B.rankFans[i]*0.7&&(S.grade>=B.rankGrade[i]||t>=B.rankTitles[i])))r=i+2;
+  return r;
+}
+/** ミッションを1つ作る。ランクが上がるほど難しい */
+function mkMission(rng,rank){
+  const k=rank-1, r=rng();
+  const m=r<0.3?{ t:"win", n:[3,4,5,6,7][k], m:[8,8,9,10,10][k] }
+    :r<0.5?{ t:"cs", n:[1,2,2,3,4][k] }
+    :r<0.65?{ t:"goals", n:[10,12,15,18,22][k], m:10 }
+    :r<0.8?{ t:"unb", n:[3,4,5,6,8][k] }
+    :r<0.9?{ t:"att", n:[6000,10000,18000,30000,45000][k] }
+    :{ t:"title" };
+  m.p=0; m.st=0; m.done=false; m.fail=false;
+  return m;
+}
+const missionTxt=m=>m.t==="win"?m.m+"試合以内に"+m.n+"勝":m.t==="cs"?"無失点の試合を"+m.n+"回":m.t==="goals"?m.m+"試合以内に"+m.n+"得点"
+  :m.t==="unb"?m.n+"試合負けなし":m.t==="att"?"ホームの観客 "+(m.n/10000).toFixed(1)+"万人":"大会で優勝";
+const missionProg=m=>m.done?"達成":m.fail?"期限切れ":m.t==="win"||m.t==="goals"?m.p+"/"+m.n+"(残り "+Math.max(0,m.m-m.st)+"試合)"
+  :m.t==="att"||m.t==="title"?"まだ":m.p+"/"+m.n;
+/** 報酬の説明(例: 最高級ミネラルウォーター — 試合の疲労 ×0.35 を6試合) */
+const spRewardTxt=sp=>{ const ind=spIndOf(sp.ind); return spItem(ind,sp.rank)+" — "+spEffTxt(ind.eff,sp.rank)+" を"+spDur(ind,sp.rank)+"試合"; };
+/** 3社の候補を作る。業種は重ならない。1社は届くいちばん上のランク、残りはその1つ下まで */
+function spOffers(S){
+  const top=spRankMax(S), rng=mulberry32((S.seed^hashStr("spo:"+S.term+":"+S.cyc+":"+S.played))>>>0), out=[], used=new Set();
+  for(let i=0;i<3;i++){
+    let ind; do{ ind=SP_IND[Math.floor(rng()*SP_IND.length)]; }while(used.has(ind.id)); used.add(ind.id);
+    const rank=Math.max(1,i===0?top:top-(rng()<0.5?1:0));
+    const name=ind.pre[Math.floor(rng()*ind.pre.length)]+ind.suf[Math.floor(rng()*ind.suf.length)];
+    const pay=Math.round(TUNING.biz.sp.pay[rank-1]*(0.9+0.2*rng())*100)/100;
+    const n=rank>=4?3:2, ms=[]; for(let j=0;j<n;j++)ms.push(mkMission(rng,rank));
+    out.push({ ind:ind.id, rank, name, pay, ms });
+  }
+  return out;
+}
+/** 契約する(i = 候補の番号)。keep なら今の社と、ミッションを新しくして続ける */
+function signSponsor(S,i,keep){
+  const Z=S.biz;
+  if(keep&&Z.sp){ const rng=mulberry32((S.seed^hashStr("spk:"+S.term+":"+S.played))>>>0);
+    Z.sp.ms=Z.sp.ms.map(()=>mkMission(rng,Z.sp.rank)); Z.sp.at=S.played; Z.offers=null; return true; }
+  const o=Z.offers&&Z.offers[i]; if(!o)return false;
+  Z.sp=Object.assign({},o,{ at:S.played }); Z.offers=null;
+  return true;
+}
+/** 契約の区切り(任期の始め・リーグの1周の終わり)。終わっていないミッションは期限切れにして、候補を出す */
+function spRenew(S){
+  const Z=S.biz;
+  if(Z.sp)Z.sp.ms.forEach(m=>{ if(!m.done)m.fail=true; });
+  Z.offers=spOffers(S);
+}
+/** 試合のあと: スポンサー収入・ミッションの進み・報酬の効果・効果の残り。行を out に足す。収入を返す */
+function spAfterMatch(S,fx,r,out){
+  const Z=S.biz, sp=Z.sp;
+  for(const k in Z.boost)if(Z.boost[k]>0)Z.boost[k]--;
+  if(!sp)return 0;
+  const pay=sp.pay; S.money+=pay;
+  out.push("スポンサー収入 +"+pay.toFixed(2)+"億("+sp.name+")");
+  const won=r.hg>r.ag||r.winPso, lost=r.hg<r.ag&&!r.winPso, ind=spIndOf(sp.ind);
+  for(const m of sp.ms){
+    if(m.done||m.fail)continue;
+    m.st++;
+    if(m.t==="win"&&won)m.p++;
+    else if(m.t==="cs"&&r.ag===0)m.p++;
+    else if(m.t==="goals")m.p+=r.hg;
+    else if(m.t==="unb")m.p=lost?0:m.p+1;
+    const ok=m.t==="att"?Z.att>=m.n:m.t==="title"?r.titles>0:m.p>=m.n;
+    if(ok){
+      m.done=true;
+      const d=spDur(ind,sp.rank);
+      // 同じ効果が重なったら、残りは長い方・大きさは高い☆の方
+      const on=(Z.boost[ind.eff]||0)>0;
+      Z.boostRank[ind.eff]=Math.max(on?(Z.boostRank[ind.eff]||1):1,sp.rank); Z.boost[ind.eff]=Math.max(Z.boost[ind.eff]||0,d);
+      out.push("📣 ミッション達成「"+missionTxt(m)+"」→ "+spItem(ind,sp.rank)+"("+spEffTxt(ind.eff,sp.rank)+"、"+d+"試合)");
+    }else if((m.t==="win"||m.t==="goals")&&m.st>=m.m){ m.fail=true; out.push("ミッション「"+missionTxt(m)+"」は期限切れ"); }
+  }
+  return pay;
+}

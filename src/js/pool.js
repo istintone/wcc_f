@@ -65,16 +65,17 @@ function newCollection(){
 const startSquad=()=>TEAMS.azr.xi.concat(TEAMS.azr.bench);
 
 /** 試合のあとに1枚引く。たねは任期と試合数で決まる(読み込み直しても同じカード) */
-function drawCard(S){
-  const P=TUNING.pack, rng=mulberry32((S.seed^hashStr("pack:"+S.term+":"+S.played))>>>0);
+function drawCard(S,salt){
+  // salt … 同じ試合で何枚か引くとき(スポンサーの選手パック)に1枚ずつ変える
+  const P=TUNING.pack, rng=mulberry32((S.seed^hashStr("pack:"+S.term+":"+S.played+(salt?":"+salt:"")))>>>0);
   let r=rng(), rar="W";
   for(const k of RAR_ORDER){ if(r<P.rate[k]){ rar=k; break; } r-=P.rate[k]; }
   const list=POOL.filter(id=>CARDS[id].rar===rar);
   return list[Math.floor(rng()*list.length)];
 }
 /** 払い出し。コレクションに足して、何を引いたかを返す */
-function payout(S){
-  const id=drawCard(S), isNew=!S.coll[id];
+function payout(S,salt){
+  const id=drawCard(S,salt), isNew=!S.coll[id];
   S.coll[id]=(S.coll[id]||0)+1;
   return { id, isNew };
 }

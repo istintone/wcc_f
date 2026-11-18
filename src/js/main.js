@@ -30,9 +30,9 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   hideInfo();
   buildBoard(M);
   updateCtl();
-  overlay(G.meta.title,"カードを動かして布陣を決める。<br>KP ボタン → カードをタップで、そのスタイルが発動する。"+
-    (G.M.opts.agg?"<br>第1試合 "+G.M.opts.agg[0]+" - "+G.M.opts.agg[1]:"")+
-    (G.M.opts.ko?"<br>同点なら PK 戦":""),"試合開始",true,()=>setPlaying(true));
+  overlay("KICK OFF",'<small>'+G.meta.title+'</small>'+
+    (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small>同点なら PK 戦</small>':''),
+    TUNING.play.capKick,()=>setPlaying(true));
 }
 
 /* ---- 表示まわり ---- */
@@ -44,7 +44,6 @@ function say(text,goal){
   const t=$("ticker"); t.textContent=text; t.classList.toggle("goal",!!goal);
 }
 function updateCtl(){
-  $("btnPlay").textContent=G.playing?"⏸":"▶";
   $("btnSpeed").textContent="×"+G.speed;
   $("subInfo").textContent="交代 "+(G.M.home.subs+BD.pendingIn.size)+"/"+TUNING.squad.subMax;
   $("btnKp").classList.toggle("on",G.kpMode);
@@ -76,17 +75,18 @@ function wakeLock(on){
     else if(!on&&WL.s){ const s=WL.s; WL.s=null; s.release().catch(()=>{}); }
   }catch(e){}
 }
-function overlay(title,body,btn,top,fn){
-  $("ovTitle").textContent=title; $("ovBody").innerHTML=body; $("ovBtn").textContent=btn;
-  const ov=$("ov");
-  ov.classList.add("on");
-  // top: 盤面を隠さない(キックオフ前とハーフタイムはカードを触れる)
-  ov.style.bottom=top?"auto":"0";
-  ov.style.height=top?($("hud").offsetHeight+$("viewWrap").offsetHeight+$("ticker").offsetHeight)+"px":"auto";
-  G.onOv=fn;
+/**
+ * 試合の区切りの字幕(→docs/07 §7.11)。モニターの上に中継の字幕として出し、ms ミリ秒で自動で消えて fn を呼ぶ(本家と同じく強制で進む)。
+ * 出ているあいだ試合は止まる。盤面のカードは触れる
+ */
+function overlay(title,body,ms,fn){
+  const c=$("cap");
+  c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'');
+  c.className="on"; G.onOv=fn; G.capT=ms;
 }
+const capOn=()=>$("cap").classList.contains("on");
 function closeOverlay(){
-  $("ov").classList.remove("on");
+  $("cap").className=""; G.capT=0;
   const fn=G.onOv; G.onOv=null;
   if(fn)fn();
 }
@@ -245,7 +245,9 @@ function startEvent(ev){
     sndWhistle(2,true);
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
-    overlay("HALF TIME",statsHtml(),"後半へ",true,()=>setPlaying(true));
+    const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
+    overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
+      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>',TUNING.play.capHalf,()=>setPlaying(true));
     return;
   }
   if(ev.type==="fulltime"){
@@ -254,8 +256,8 @@ function startEvent(ev){
     setHud(ev.hg,ev.ag,"FT");
     const H=G.M.home, A=G.M.away, pso=G.M.pso;
     const d=pso?pso[0]-pso[1]:H.score-A.score;
-    overlay(d>0?"WIN":d<0?"LOSE":"DRAW",(pso?"<p>PK戦 "+pso[0]+" - "+pso[1]+"</p>":"")+statsHtml(),
-      G.meta.career?"結果へ":"もう一度",false,
+    // 試合の結果は結果の画面で出すので、ここは短い字幕だけ。数秒で結果へ(練習試合は次の試合へ)
+    overlay("FULL TIME",'<span class="sc">'+H.score+' - '+A.score+'</span>'+(pso?'<small>PK '+pso[0]+' - '+pso[1]+'</small>':''),TUNING.play.capEnd,
       ()=>{ if(G.meta.career)finishFixture(G.M); else newMatch(null,null,G.seed+1); });
     return;
   }
@@ -328,7 +330,8 @@ function endReplay(){
 function skipReplay(){ if(!G.replay)return; endReplay(); G.hold=200; sndUi("tap"); }
 function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
-  if(G.playing&&!$("ov").classList.contains("on"))advance(dt*G.speed);
+  if(G.capT>0){ G.capT-=dt; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
+  if(G.playing&&!capOn())advance(dt*G.speed);
   drawFrame(G,dt);
   // 攻め込むほど歓声が大きい(どちらのゴールに近いか)
   if(G.playing&&G.M&&G.M.ball)sndCrowdLevel(Math.max(0,(G.M.ball.h-0.62)/0.38));
@@ -338,8 +341,6 @@ function frame(ts){
 /* ---- 起動 ---- */
 function boot(){
   initView(); initBoard();
-  $("ovBtn").addEventListener("click",closeOverlay);
-  $("btnPlay").addEventListener("click",()=>{ if(!G.M.over)setPlaying(!G.playing); });
   $("btnSpeed").addEventListener("click",()=>{
     G.speed=SPEEDS[(SPEEDS.indexOf(G.speed)+1)%SPEEDS.length]; updateCtl();
     if(G.speed>1&&G.replay){ endReplay(); G.hold=200; }   // 倍速にしたらリプレイは飛ばす
@@ -407,7 +408,7 @@ function boot(){
   if(q.get("ff")){                            // 描画を待たずに stopat まで進める(スクリーンショット用)
     for(let i=0;i<200000;i++){
       if(!G.playing){
-        if(q.get("auto")&&!G.M.over&&$("ov").classList.contains("on"))closeOverlay(); else break;
+        if(q.get("auto")&&!G.M.over&&capOn())closeOverlay(); else break;
       }
       advance(100);
     }

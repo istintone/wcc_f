@@ -300,6 +300,51 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
     }
     check("★突破が成功すると周りのやる気が上がり、失敗すると下がることがある",up>0&&down>0,"上がった "+up+" / 下がった "+down);
   }
+  { // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修・施設
+    const T=E.newCareer(71), TW=E.worldOf(T), on=T.sq.slice(0,11);
+    let home=0, away=0, gateH=0, gateA=0;
+    for(let i=0;i<12;i++){ const fx=E.nextFixture(T,TW), m0=T.money;
+      const L=E.applyResult(T,TW,fx,{ hg:2, ag:0, played:on, onPitch:on, starters:on });
+      const g=L.some(x=>/入場料/.test(x)); if(fx.home){ home++; if(g)gateH++; } else { away++; if(g)gateA++; } }
+    check("入場料はホームの試合だけに入る",gateH===home&&gateA===0,"ホーム "+home+" / アウェイ "+away);
+    check("勝てばファンが増える",T.biz.fans>E.TUNING.biz.fans0,E.TUNING.biz.fans0+" → "+T.biz.fans);
+    check("年俸に使う額は、施設やスタジアムに使っても減らない",(()=>{ const e=T.biz.earn; T.money+=100; E.buildFac(T,"train"); return T.biz.earn===e&&T.biz.fac.train===1; })());
+    T.money=500; T.biz.offer={ lv:2, cost:40, why:"資金" };
+    const r=E.answerStadium(T,true);
+    check("改修すると資金を払い、スタジアムが上がり、収容人数が増える",r.ok&&T.biz.stad===2&&T.money===460&&E.stadOf(T).cap>E.TUNING.biz.stad[0].cap);
+    T.biz.offer={ lv:3, cost:90, why:"資金" }; E.answerStadium(T,false);
+    check("見送るとしばらく知らせが出ない",T.biz.offer===null&&T.biz.cool===E.TUNING.biz.cool);
+    // 施設の効き目: 練習場があると個人練習で入る経験が多い
+    const A=E.newCareer(72), B=E.newCareer(72); B.biz.fac.train=3; A.g.step=B.g.step="comm";
+    E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
+    check("練習場 Lv3 は個人能力の経験を ×1.3",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.3)<1e-9,f2(A.g.pl.h10.ie)+" → "+f2(B.g.pl.h10.ie));
+  }
+  { // スポンサーとミッション(→docs/05 §5.14・docs/08 §8.9): マスタ = 業種 × ☆1〜5
+    check("マスタは11業種 × ☆5(報酬の名前が5つずつ)",E.SP_IND.length===11&&E.SP_IND.every(x=>x.items.length===5));
+    const T=E.newCareer(81), TW=E.worldOf(T), on=T.sq.slice(0,11), o=T.biz.offers;
+    check("任期の始めに3社の候補(業種は重ならない)",o&&o.length===3&&new Set(o.map(x=>x.ind)).size===3&&o.every(x=>x.rank>=1&&x.rank<=5)&&!T.biz.sp,
+      o.map(x=>E.spIndOf(x.ind).name+"☆"+x.rank).join(" / "));
+    const i=o.findIndex(x=>E.spIndOf(x.ind).eff!=="injury"); E.signSponsor(T,i);
+    const sp=T.biz.sp, ind=E.spIndOf(sp.ind);
+    sp.ms=[{ t:"win", n:1, m:5, p:0, st:0, done:false, fail:false }];
+    const m0=T.money, L=E.applyResult(T,TW,E.nextFixture(T,TW),{ hg:2, ag:0, played:on, onPitch:on, starters:on });
+    check("試合のたびにスポンサー収入が入る",L.some(x=>/スポンサー収入/.test(x))&&T.money>m0);
+    check("ミッションを達成すると、業種の効果が☆で決まる試合数だけ始まる",sp.ms[0].done&&T.biz.boost[ind.eff]===E.spDur(ind,sp.rank)&&L.some(x=>x.includes(ind.items[sp.rank-1])),
+      L.filter(x=>/ミッション/.test(x)).join(" / "));
+    const on5=U=>{ U.biz.boost={ indExp:3, noFat:3 }; U.biz.boostRank={ indExp:5, noFat:5 }; };
+    const A=E.newCareer(82), B=E.newCareer(82); on5(B); A.g.step=B.g.step="comm";
+    E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
+    check("食品☆5: 個人練習の経験 ×1.4",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.4)<1e-9);
+    const C=E.newCareer(84), D=E.newCareer(84); on5(D);
+    for(const X of [C,D]){ const W2=E.worldOf(X); X.g.step="ready"; E.applyResult(X,W2,E.nextFixture(X,W2),{ hg:1, ag:1, played:on, onPitch:on, starters:on }); }
+    check("飲料☆5: 試合の疲労がたまりにくい",D.g.pl.h10.fat<C.g.pl.h10.fat*0.5,(C.g.pl.h10.fat*100).toFixed(1)+"% → "+(D.g.pl.h10.fat*100).toFixed(1)+"%");
+    const G=E.newCareer(85); G.biz.boost={ injury:3 }; G.biz.boostRank={ injury:5 };
+    check("医療☆5: 試合に渡すケガの起きやすさ ×0.2",E.playerDef(G).injK===0.2&&E.playerDef(E.newCareer(85)).injK===1);
+    E.spRenew(T);
+    check("区切りで候補が出直し、終わっていないミッションは期限切れになる",T.biz.offers.length===3&&T.biz.sp.ms.every(m=>m.done||m.fail));
+    const U=E.newCareer(83); U.biz.fans=80000;
+    check("ファンが増えると上のランクのスポンサーが届く",E.spRankMax(E.newCareer(83))===1&&E.spRankMax(U)===5);
+  }
   { // 秘書(→docs/08 §8.7): 選べる4人・親密度・フォロー
     const T=E.newCareer(61), TW=E.worldOf(T);
     check("新しい任期では秘書を選ぶ(初めは未選択)",T.sec&&!T.sec.chosen&&E.chooseSec(T,"s2")&&T.sec.chosen&&E.secOf(T).id==="s2");
