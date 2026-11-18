@@ -107,28 +107,29 @@ function develop(S,log,intensity){
   }
   for(let k=0;k<3&&S.g.step==="comm";k++)commOnce(S,log);
 }
+// 検証用の方針(→docs/08 §8.5 の遊び方): 育てる選手を絞って集中させる。
+//   ★突破の話 → ミーティング / 先発の絶不調 → 声かけ / 3回目は連携(ラウンジ) / それ以外は「育てる選手」に集中
+const FOCUS=["h10","h08","h04","h07","h02"];
+const focusOf=S=>FOCUS.find(id=>S.g.pl[id]&&(S.g.pl[id].is<5||S.g.pl[id].ss<5));
 function commOnce(S,log){
-  const xi=E.squadXi(S);
+  const xi=E.squadXi(S), out=log||[];
   const ready=Object.keys(S.g.pl).find(id=>E.spReady(S,id));
-  if(ready){ (log||[]).push(...E.doMeeting(S,ready,E.persOf(ready)).lines); return; }
+  if(ready){ out.push(...E.doMeeting(S,ready,E.persOf(ready)).lines); return; }
   const low=xi.find(id=>S.g.pl[id].mot<=1);
-  if(low){ (log||[]).push(...E.doTalk(S,low).lines); return; }
-  // 太線になった組は黄金線の兆しを取りに行く。次に、相性が悪くて自然には育たない組を育てる
-  let pair=null;
-  for(let a=0;a<xi.length&&!pair;a++)for(let b=a+1;b<xi.length&&!pair;b++){
-    const l=E.linkOf(S,xi[a],xi[b]); if(l.lv===2&&!l.gold)pair=[xi[a],xi[b]];
+  if(low){ out.push(...E.doTalk(S,low).lines); return; }
+  if(S.g.cn===2){
+    // 太線の組は黄金線の兆しを、そうでなければ相性が悪くて自然には育たない組を育てる
+    let pair=null;
+    for(let a=0;a<xi.length&&!pair;a++)for(let b=a+1;b<xi.length&&!pair;b++){
+      const l=E.linkOf(S,xi[a],xi[b]); if(l.lv===2&&!l.gold)pair=[xi[a],xi[b]]; }
+    for(let a=0;a<xi.length&&!pair;a++)for(let b=a+1;b<xi.length&&!pair;b++){
+      const l=E.linkOf(S,xi[a],xi[b]); if(l.lv<2&&E.compatOf(xi[a],xi[b])<2)pair=[xi[a],xi[b]]; }
+    if(pair){ out.push(...E.doLounge(S,pair[0],pair[1],E.LOUNGE_BEST[E.compatOf(pair[0],pair[1])]).lines); return; }
   }
-  // 2試合に1回は、KP にする選手(h10)とミーティングして特殊能力を伸ばす
-  const star="h10";
-  if(S.g.cn===0&&S.g.pl[star].ss<5&&!S.g.pl[star].sq){
-    (log||[]).push(...E.doMeeting(S,star,E.persOf(star)).lines); return;
-  }
-  for(let a=0;a<xi.length&&!pair;a++)for(let b=a+1;b<xi.length&&!pair;b++){
-    const l=E.linkOf(S,xi[a],xi[b]); if(l.lv<2&&E.compatOf(xi[a],xi[b])<2)pair=[xi[a],xi[b]];
-  }
-  if(pair){ (log||[]).push(...E.doLounge(S,pair[0],pair[1],E.LOUNGE_BEST[E.compatOf(pair[0],pair[1])]).lines); return; }
-  const low2=xi.slice().sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is||S.g.pl[a].ie-S.g.pl[b].ie)[0];
-  (log||[]).push(...E.doIndTrain(S,low2).lines);
+  const id=focusOf(S)||xi.slice().sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is)[0], g=S.g.pl[id];
+  if(g.is<4||(g.is===4&&!g.q))out.push(...E.doIndTrain(S,id).lines);
+  else if(g.ss<5&&!g.sq)out.push(...E.doMeeting(S,id,E.persOf(id)).lines);
+  else out.push(...E.doIndTrain(S,id).lines);
 }
 function playOne(S,W,decline,opt){
   opt=opt||{};
@@ -285,11 +286,16 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   console.log("    モチベーション "+[1,2,3,4].map(m=>E.MOT_LABEL[m]+" "+pl.filter(g=>g.mot===m).length).join(" / "));
   console.log("    成績 "+S.rec.w+"勝"+S.rec.d+"分"+S.rec.l+"敗   段4の相手との得失点差 "+f2(before)+" → "+f2(after));
   check("値が範囲を出ない(★0〜5・モチベーション1〜4・グラフの上下限・能力20以下)",ok&&maxStat<=20,"能力の最大 "+maxStat);
-  check("任期の終わりに個人能力の★平均が 2.5〜4.5",avg(g=>g.is)>=2.5&&avg(g=>g.is)<=4.5,f2(avg(g=>g.is)));
-  check("覚醒する選手が出るが、全員ではない(1〜10人)",awake>=1&&awake<=10,awake+"人");
+  // 集中育成の釣り合い(→docs/08 §8.5)
+  const fo=FOCUS.slice(0,3).map(id=>S.g.pl[id]), never=Object.keys(S.g.pl).filter(id=>!FOCUS.includes(id)&&!xi.includes(id)).map(id=>S.g.pl[id]);
+  const nevAvg=never.reduce((s,g)=>s+g.is,0)/(never.length||1);
+  check("集中して育てた3人は、個人・特殊とも★5に届く",fo.every(g=>g.is===5&&g.ss===5),fo.map(g=>"★"+g.is+"/"+g.ss).join(" "));
+  check("覚醒は狙った選手が中心で、全員ではない(3〜8人)",awake>=3&&awake<=8,awake+"人");
+  check("関わらなかった選手は★2以下にとどまる",nevAvg<=2,"控えの★平均 "+f2(nevAvg));
   check("特殊能力は KP に絞れば ★4 以上まで届く",spMax>=4,"★"+spMax);
   check("連携が育ち、黄金線も生まれる",lv[2]>=5&&lv[3]>=1,"太線 "+lv[2]+" / 黄金線 "+lv[3]);
-  check("育てると強くなる(得失点差 +0.3 以上)",after>before+0.3,f2(before)+" → "+f2(after));
+  // 集中育成(→docs/08 §8.5)では覚醒するのは3人ほどなので、チーム全体の伸びは控えめ(2026-11-18 に +0.3 から改めた)
+  check("育てると強くなる(得失点差 +0.2 以上)",after>before+0.2,f2(before)+" → "+f2(after));
   check("ただし別物にはならない(+2.0 未満)",after<before+2.0);
   check("任期の初めは段4の相手より弱い",before<0,f2(before));
   // ★と連携の段の上昇は、試合のあとの行に出る(練習の行には出ない)

@@ -84,7 +84,9 @@ const COMM_UI={
   ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(個人能力の経験 +"+TUNING.grow.comm.ind+" × 伸びやすさ。★は試合のあとに上がる)",
            info:(g,id)=>"個★"+g.is+" "+CARDS[id].age+"歳" },
   meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)", info:g=>"特★"+g.ss },
-  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>"組"+"ABCDEFGHIJK"[affOf(id)] },
+  // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
+  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
+    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id); return LINK_LABEL[l.lv]+(l.gold?"・兆し":""); } },
   talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */

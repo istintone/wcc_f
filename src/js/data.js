@@ -138,6 +138,7 @@ const TUNING={
   //          failKeep=失敗で残る経験の割合 / star5P=フレンドリー勝利で★5になる率 / buff=★1つでバフが強まる割合
   //   link … 連携。need=薄線・太線に要る経験 / match=一緒に試合に出た経験 / lounge=大成功・成功・失敗の経験
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
+  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
   //   graph… 戦力グラフ。basic=基本練習 / up・upAll・down=特殊練習 / decay=練習のたびに全軸が0へ戻る割合
   //   set  … セットプレイの練習。星1つぶん / 上限(FK・CK・PK に掛かる)
@@ -147,17 +148,22 @@ const TUNING={
   //   age  … 年齢による違い(→docs/05 §5.4)。若いほど育ちやすいが、やる気の上下が大きい
   //          band=年齢の区切り / grow=区切りごとの伸びやすさ / swing=やる気の上下の起きやすさ
   //   abil … 能力による違い。得意な2能力の平均が ref より高いほど、伸びが遅い(1ごとに k、lo〜hi に収める)
+  //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
+  //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=声かけで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
-         ind:{ need:[26,48,68,94], awake:40, train:2, trainFit:1, match:1, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
-         sp:{ need:[12,18,24,30], awake:30, meet:8, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
-         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5,
+         ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
+         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25,
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
          graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
          set:{ per:0.02, max:0.2 },
-         mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, benchDown:0.35, drawSwing:0.15 },
+         mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
+           // 控え(→docs/08 §8.4): 出番の無い試合が benchGrace 続くと下がり始める。勝てば控えも少し上がる。
+           // どの選手も、何も起きなかった試合では普通(start)へ revert の率で戻る
+           benchGrace:3, benchDown:0.25, teamWinUp:0.12, revert:0.15 },
          int:{ k:[0.5,1.0,1.6], fat:[0,0.02,0.05], matchLoad:0.02, recover:0.4, fatMax:0.20, tiredSign:0.04 },
-         comm:{ max:3, ind:8, talk:1, talkLow:2 },
+         comm:{ max:3, ind:20, talk:1, talkLow:2 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
   // 任期の終わり(→docs/05 §5.8)

@@ -1146,6 +1146,7 @@ const TUNING={
   //          failKeep=失敗で残る経験の割合 / star5P=フレンドリー勝利で★5になる率 / buff=★1つでバフが強まる割合
   //   link … 連携。need=薄線・太線に要る経験 / match=一緒に試合に出た経験 / lounge=大成功・成功・失敗の経験
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
+  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
   //   graph… 戦力グラフ。basic=基本練習 / up・upAll・down=特殊練習 / decay=練習のたびに全軸が0へ戻る割合
   //   set  … セットプレイの練習。星1つぶん / 上限(FK・CK・PK に掛かる)
@@ -1155,17 +1156,22 @@ const TUNING={
   //   age  … 年齢による違い(→docs/05 §5.4)。若いほど育ちやすいが、やる気の上下が大きい
   //          band=年齢の区切り / grow=区切りごとの伸びやすさ / swing=やる気の上下の起きやすさ
   //   abil … 能力による違い。得意な2能力の平均が ref より高いほど、伸びが遅い(1ごとに k、lo〜hi に収める)
+  //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
+  //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=声かけで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
-         ind:{ need:[26,48,68,94], awake:40, train:2, trainFit:1, match:1, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
-         sp:{ need:[12,18,24,30], awake:30, meet:8, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
-         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5,
+         ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
+         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25,
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
          graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
          set:{ per:0.02, max:0.2 },
-         mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, benchDown:0.35, drawSwing:0.15 },
+         mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
+           // 控え(→docs/08 §8.4): 出番の無い試合が benchGrace 続くと下がり始める。勝てば控えも少し上がる。
+           // どの選手も、何も起きなかった試合では普通(start)へ revert の率で戻る
+           benchGrace:3, benchDown:0.25, teamWinUp:0.12, revert:0.15 },
          int:{ k:[0.5,1.0,1.6], fat:[0,0.02,0.05], matchLoad:0.02, recover:0.4, fatMax:0.20, tiredSign:0.04 },
-         comm:{ max:3, ind:8, talk:1, talkLow:2 },
+         comm:{ max:3, ind:20, talk:1, talkLow:2 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
   // 任期の終わり(→docs/05 §5.8)
@@ -3513,7 +3519,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(1+(e.ind||0))*k*growK(id);
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id);
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       if(e.sp)g.se+=e.sp*G0.sp.train*k;
     }
@@ -3567,9 +3573,17 @@ function doTalk(S,id){
   useComm(S,"talk");
   return { res:1, lines:out };
 }
+/**
+ * ラウンジで見える2人の様子。相性の組そのものは見せない。
+ * 様子の文は相性を映すが、hintNoise の率で隣の相性の文になる(見れば答えが決まる当て物にしない)。
+ * 同じ試合の同じ2人なら毎回同じ文
+ */
 function loungeInfo(S,a,b){
   const c=compatOf(a,b), l=linkOf(S,a,b);
-  return { compat:c, hint:LOUNGE_HINT[c], lv:l.lv, gold:l.gold, choices:LOUNGE_CHOICE };
+  const r=mulberry32((S.seed^hashStr("lh:"+S.term+":"+S.played+":"+lkey(a,b)))>>>0);
+  let h=c;
+  if(r()<TUNING.grow.link.hintNoise)h=c===0?1:c===2?1:(r()<0.5?0:2);
+  return { compat:c, hint:LOUNGE_HINT[h], lv:l.lv, gold:l.gold, choices:LOUNGE_CHOICE };
 }
 /**
  * ラウンジ。2人を呼び出して3択に答える。結果は 0=大成功 / 1=成功 / 2=失敗。
@@ -3631,7 +3645,8 @@ function skipComm(S){ if(S.g.step==="comm")S.g.step="ready"; }
  * 選手の上に「！」が出るか(★突破の3択が待っている / やる気が絶不調)。
  * **疲労では出さない**(練習のたびに全員に付いて、印の意味が無くなるため。疲労は選手一覧と秘書が伝える)
  */
-function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||g.mot<=1; }
+/** 「！」の印。★突破の話がある選手と、先発で絶不調の選手だけ(控えにまで付けると印の意味が薄れる) */
+function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||(g.mot<=1&&S.sq.indexOf(id)<11); }
 
 /* ---------- ③ 試合のあと ---------- */
 
@@ -3681,15 +3696,22 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad:0))*N.recover);
   }
-  // モチベーション: 出て勝てば上がり、負ければ下がる。出番が無いと下がる
+  // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
+  // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
-    const g=S.g.pl[id];
+    const g=S.g.pl[id], was=g.mot;
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
+      g.bench=0;
       if(res.win&&rng()<Mo.winUp*sw)g.mot=Math.min(4,g.mot+1);
       else if(res.lose&&rng()<Mo.loseDown*sw)g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
-    }else if(rng()<Mo.benchDown*sw)g.mot=Math.max(1,g.mot-1);
+    }else{
+      g.bench=(g.bench||0)+1;
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw)g.mot=Math.max(1,g.mot-1);
+      else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
+    }
+    if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   return out;
@@ -3722,8 +3744,8 @@ const TITLES=[
     ok:x=>x.sWins>=1&&x.lgWins>=2 },
   { id:"master",  name:"名将",         grade:3, bonus:70,  need:"タイトル8つ以上、勝率 60% 以上",
     ok:x=>x.titles>=8&&x.wr>=0.60 },
-  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"8人以上を覚醒させた",
-    ok:x=>x.awake>=8 },
+  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"5人以上を覚醒させた",
+    ok:x=>x.awake>=5 },                        // 集中育成では3人ほどが普通(→docs/08 §8.5)
   { id:"magic",   name:"魔術師",       grade:2, bonus:50,  need:"KP を30回以上替え、勝率 55% 以上",
     ok:x=>x.kpCh>=30&&x.wr>=0.55 },
   { id:"heir",    name:"伝承者",       grade:2, bonus:40,  need:"黄金線を10本以上つないだ",
@@ -4210,7 +4232,9 @@ const COMM_UI={
   ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(個人能力の経験 +"+TUNING.grow.comm.ind+" × 伸びやすさ。★は試合のあとに上がる)",
            info:(g,id)=>"個★"+g.is+" "+CARDS[id].age+"歳" },
   meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)", info:g=>"特★"+g.ss },
-  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>"組"+"ABCDEFGHIJK"[affOf(id)] },
+  // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
+  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
+    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id); return LINK_LABEL[l.lv]+(l.gold?"・兆し":""); } },
   talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */

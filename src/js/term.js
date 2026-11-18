@@ -25,8 +25,8 @@ const TITLES=[
     ok:x=>x.sWins>=1&&x.lgWins>=2 },
   { id:"master",  name:"名将",         grade:3, bonus:70,  need:"タイトル8つ以上、勝率 60% 以上",
     ok:x=>x.titles>=8&&x.wr>=0.60 },
-  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"8人以上を覚醒させた",
-    ok:x=>x.awake>=8 },
+  { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"5人以上を覚醒させた",
+    ok:x=>x.awake>=5 },                        // 集中育成では3人ほどが普通(→docs/08 §8.5)
   { id:"magic",   name:"魔術師",       grade:2, bonus:50,  need:"KP を30回以上替え、勝率 55% 以上",
     ok:x=>x.kpCh>=30&&x.wr>=0.55 },
   { id:"heir",    name:"伝承者",       grade:2, bonus:40,  need:"黄金線を10本以上つないだ",

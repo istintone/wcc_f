@@ -188,7 +188,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(1+(e.ind||0))*k*growK(id);
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id);
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       if(e.sp)g.se+=e.sp*G0.sp.train*k;
     }
@@ -242,9 +242,17 @@ function doTalk(S,id){
   useComm(S,"talk");
   return { res:1, lines:out };
 }
+/**
+ * ラウンジで見える2人の様子。相性の組そのものは見せない。
+ * 様子の文は相性を映すが、hintNoise の率で隣の相性の文になる(見れば答えが決まる当て物にしない)。
+ * 同じ試合の同じ2人なら毎回同じ文
+ */
 function loungeInfo(S,a,b){
   const c=compatOf(a,b), l=linkOf(S,a,b);
-  return { compat:c, hint:LOUNGE_HINT[c], lv:l.lv, gold:l.gold, choices:LOUNGE_CHOICE };
+  const r=mulberry32((S.seed^hashStr("lh:"+S.term+":"+S.played+":"+lkey(a,b)))>>>0);
+  let h=c;
+  if(r()<TUNING.grow.link.hintNoise)h=c===0?1:c===2?1:(r()<0.5?0:2);
+  return { compat:c, hint:LOUNGE_HINT[h], lv:l.lv, gold:l.gold, choices:LOUNGE_CHOICE };
 }
 /**
  * ラウンジ。2人を呼び出して3択に答える。結果は 0=大成功 / 1=成功 / 2=失敗。
@@ -306,7 +314,8 @@ function skipComm(S){ if(S.g.step==="comm")S.g.step="ready"; }
  * 選手の上に「！」が出るか(★突破の3択が待っている / やる気が絶不調)。
  * **疲労では出さない**(練習のたびに全員に付いて、印の意味が無くなるため。疲労は選手一覧と秘書が伝える)
  */
-function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||g.mot<=1; }
+/** 「！」の印。★突破の話がある選手と、先発で絶不調の選手だけ(控えにまで付けると印の意味が薄れる) */
+function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||(g.mot<=1&&S.sq.indexOf(id)<11); }
 
 /* ---------- ③ 試合のあと ---------- */
 
@@ -356,15 +365,22 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad:0))*N.recover);
   }
-  // モチベーション: 出て勝てば上がり、負ければ下がる。出番が無いと下がる
+  // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
+  // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
-    const g=S.g.pl[id];
+    const g=S.g.pl[id], was=g.mot;
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
+      g.bench=0;
       if(res.win&&rng()<Mo.winUp*sw)g.mot=Math.min(4,g.mot+1);
       else if(res.lose&&rng()<Mo.loseDown*sw)g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
-    }else if(rng()<Mo.benchDown*sw)g.mot=Math.max(1,g.mot-1);
+    }else{
+      g.bench=(g.bench||0)+1;
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw)g.mot=Math.max(1,g.mot-1);
+      else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
+    }
+    if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   return out;
