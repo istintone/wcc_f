@@ -2,7 +2,7 @@
    wcc_f — 育成(DOM非依存)→docs/05 §5.3〜5.6
    1試合ごとに:
      ① チーム練習  メニューを1つ + 強度(軽め / 普通 / ハード)。強いほど伸びるが、疲労がたまる
-     ② コミュニケーション  最大3回。個人練習 / ミーティング / ラウンジ / 声かけ
+     ② コミュニケーション  最大3回。個人練習 / ミーティング / ラウンジ / ケア
      ③ 試合  経験がたまり、**試合のあとに**★の上昇・覚醒・連携の変化が起きる
    ★の上がり方
      個人能力 ★0〜5 … 経験がたまると試合後に上がる。★5(覚醒)は兆しのあとフレンドリーマッチの勝利で
@@ -16,7 +16,7 @@ const AXIS_PARAM={ O:"off", D:"def", R:"tec", P:"pow", S:"spd", C:"sta" };
 const MOT_LABEL=["ケガ","絶不調","不調","好調","絶好調"];
 const LINK_LABEL=["線なし","薄線","太線","黄金線"];
 const INT_LABEL=["軽め","普通","ハード"];
-const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"声かけ" };
+const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"ケア" };
 /** ラウンジの3択。相性(2=良い / 1=ふつう / 0=悪い)ごとに、いちばん合う手が違う */
 const LOUNGE_CHOICE=["連携の練習をさせる","食事に行かせる","競わせる"];
 const LOUNGE_HINT=["ふたりは張り合っているようだ","ふたりはまだよそよそしい","ふたりは気が合うようだ"];
@@ -25,8 +25,6 @@ const LOUNGE_BEST=[2,0,1];                   // 相性 0/1/2 のときにいち�
 const MEET_CHOICE=["褒めて伸ばす","厳しく求める","本人に任せる"];
 const PERS_LABEL=["褒められて伸びる","負けず嫌い","マイペース"];
 
-const AFF_N=11;                              // 相性の組(本家の A〜K)
-const affOf=id=>hashStr("aff:"+id)%AFF_N;
 const persOf=id=>hashStr("pers:"+id)%3;
 /** 年齢の区切り(0 = 21歳以下 〜 4 = 32歳以上) */
 const ageBand=id=>{ const a=CARDS[id].age||26, b=TUNING.grow.age.band; let i=0; while(i<b.length&&a>b[i])i++; return i; };
@@ -41,11 +39,25 @@ function growK(id){
 }
 /** やる気の上下の起きやすさ。若いほどむらがある */
 const motSwing=id=>TUNING.grow.age.swing[ageBand(id)];
-/** 2人の相性。2=良い(試合に出るだけで太線まで)/ 1=ふつう(薄線まで)/ 0=悪い(ラウンジでしか育たない) */
-function compatOf(a,b){
-  const d=Math.abs(affOf(a)-affOf(b)), c=Math.min(d,AFF_N-d);
-  return c<=1?2:c<=3?1:0;
+/**
+ * 2人の相性(→docs/08 §8.6)。**動物占いの群れ**で決まる。2=良い(試合に出るだけで太線まで)/ 1=ふつう(薄線まで)/ 0=張り合う(ラウンジでしか育たない)。
+ * ラウンジの合う手もこれで決まる
+ */
+const compatOf=(a,b)=>aniCompat(CARDS[a].ani,CARDS[b].ani);
+/** 同じ実在クラブか(アズーロFC の初めの16人には付けない。全員に付くと最初から連携が育ちすぎる) */
+const sameClub=(a,b)=>{ const x=CARDS[a], y=CARDS[b]; return !!x.team&&x.team===y.team; };
+/** 連携が付きやすくなる理由(画面にも出す): 同じ国籍 / 同じクラブ / 同じ動物 */
+function linkBonusOf(a,b){
+  const x=CARDS[a], y=CARDS[b], out=[];
+  if(x.nat&&x.nat===y.nat)out.push("nat");
+  if(sameClub(a,b))out.push("club");
+  if(x.ani===y.ani)out.push("ani");
+  return out;
 }
+/** 試合で入る連携の経験の倍率(重なる) */
+const linkBonusK=(a,b)=>linkBonusOf(a,b).reduce((k,t)=>k*TUNING.grow.link.bonus[t],1);
+/** 試合だけで育つ上限。相性で決まり、国籍かクラブが同じなら少なくとも薄線(1) */
+function linkCap(a,b){ const c=compatOf(a,b), bo=linkBonusOf(a,b); return Math.max(c,(bo.includes("nat")||bo.includes("club"))?1:0); }
 const lkey=(a,b)=>a<b?a+"|"+b:b+"|"+a;
 
 /* ---------- 状態 ---------- */
@@ -137,8 +149,9 @@ function checkInd(S,id,out){
     if(best)g.up[best]=(g.up[best]||0)+I.starUp;
     g.tr={};
     out.push(nameOf(card)+" 個人能力 ★"+g.is+(best?"("+STAT_LABEL[best]+" +"+I.starUp+")":""));
+    newsOf("star",[id],out);
   }
-  if(g.is===4&&!g.q&&g.ie>=I.awake){ g.q=true; out.push(nameOf(card)+" に覚醒の兆し(フレンドリーマッチで勝てば覚醒)"); }
+  if(g.is===4&&!g.q&&g.ie>=I.awake){ g.q=true; out.push(nameOf(card)+" に覚醒の兆し(フレンドリーマッチで勝てば覚醒)"); newsOf("q",[id],out); }
 }
 function checkSp(S,id,out){
   const P=TUNING.grow.sp, g=S.g.pl[id];
@@ -160,6 +173,7 @@ function settleLinks(S,out){
     while(l.lv<cap&&l.exp>=L.need[l.lv]){
       l.exp-=L.need[l.lv]; l.lv++;
       out.push(nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が"+LINK_LABEL[l.lv]+"に");
+      newsOf("link",[p[0],p[1]],out);
     }
   }
 }
@@ -195,7 +209,7 @@ function doTraining(S,i,intensity){
     if(e.link){
       const xi=squadXi(S);
       for(let a=0;a<xi.length;a++)for(let b=a+1;b<xi.length;b++)
-        linkExp(S,xi[a],xi[b],e.link*k,compatOf(xi[a],xi[b]));
+        linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k);
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
@@ -278,7 +292,7 @@ function voiceOf(S,id){
   const list=VOICE[k], r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
 }
-/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・声かけは成功) */
+/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・ケアは成功) */
 const REACT={
   ind:   [["ありがとうございます！手応えがありました。"],["勉強になりました。"],["……はい。"]],
   talk:  [["気持ちが楽になりました！"],["ありがとうございます。切り替えます。"],["……分かりました。"]],
@@ -310,14 +324,15 @@ function doIndTrain(S,id){
   useComm(S,"ind");
   return { res:1, lines:out };
 }
-/** 声かけ。調子の落ちた選手を立て直す。モチベーションが上がる */
+/** ケア。調子の落ちた選手を立て直す。モチベーションが上がる。**ケガの選手は手当てで「不調」まで戻る**(→docs/08 §8.8) */
 function doTalk(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
   const was=g.mot;
   g.mot=Math.min(4,g.mot+(g.mot<=2?C.talkLow:C.talk));
   g.bond++;
-  out.push(nameOf(CARDS[id])+" に声をかけた("+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
+  if(was===0)g.injN=0;
+  out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
   useComm(S,"talk");
   return { res:1, lines:out };
 }
@@ -350,14 +365,28 @@ function doLounge(S,a,b,choice){
     if(l.lv===2){ if(res===0&&!l.gold){ l.gold=true; out.push("フレンドリーマッチで新たな連携が生まれそうだ"); } }
     else{ linkExp(S,a,b,L.lounge[res],2); out.push("連携の経験 +"+L.lounge[res]+"(試合のあとに太くなる)"); }
     S.g.pl[a].bond++; S.g.pl[b].bond++;
-  }
+  }else secFollow(S,[],[a,b],out,"lg:"+lkey(a,b));
   useComm(S,"lounge");
   return { res, lines:out };
+}
+/**
+ * ミーティングが一緒に効く「周り」の選手(→docs/08 §8.3: 仲のよい選手など)。合わせて near.max 人まで:
+ *   ① 呼んだ選手と連携のある登録選手(太い順)
+ *   ② 呼んだ選手が先発なら、SQUAD の盤面(S.layout の [h, x])で近い先発(距離 near.r 以内。距離は h と x/100 の直線)
+ */
+function meetNear(S,id){
+  fillLayout(S);                              // 先発の位置が無ければ陣形の枠で埋める(何度呼んでも同じ)
+  const N=TUNING.grow.sp.near, on=S.sq.slice(0,11), me=S.layout[id];
+  const linked=S.sq.filter(x=>x!==id&&S.g.pl[x]&&linkOf(S,id,x).lv>0).sort((a,b)=>linkOf(S,id,b).lv-linkOf(S,id,a).lv);
+  const close=on.includes(id)&&me?on.filter(x=>x!==id&&S.layout[x]&&S.g.pl[x]&&!linked.includes(x))
+    .map(x=>({ x, d:Math.hypot(S.layout[x][0]-me[0],(S.layout[x][1]-me[1])/100) }))
+    .filter(o=>o.d<=N.r).sort((a,b)=>a.d-b.d).map(o=>o.x):[];
+  return linked.concat(close).slice(0,N.max);
 }
 function meetInfo(S,id){
   const g=S.g.pl[id];
   return { ready:spReady(S,id), pers:PERS_LABEL[persOf(id)], choices:MEET_CHOICE, mot:g.mot, ss:g.ss, se:g.se,
-    need:g.ss<4?TUNING.grow.sp.need[g.ss]:TUNING.grow.sp.awake };
+    need:g.ss<4?TUNING.grow.sp.need[g.ss]:TUNING.grow.sp.awake, near:meetNear(S,id) };
 }
 /**
  * ミーティング。1人を呼び出す。特殊能力の経験がたまる。
@@ -366,6 +395,7 @@ function meetInfo(S,id){
 function doMeeting(S,id,choice){
   const P=TUNING.grow.sp, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
+  const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
     const p=choice===persOf(id)?P.qOk:P.qNg;
@@ -375,7 +405,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;
-      g.mot=Math.max(1,g.mot-1);
+      if(g.mot>0)g.mot=Math.max(1,g.mot-1);
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
@@ -384,6 +414,23 @@ function doMeeting(S,id,choice){
   }
   g.bond+=2;
   checkSp(S,id,out);
+  // 周りにも効く: 話を聞いていた近くの選手にも経験が入る。★突破の成否は周りのやる気にも響く
+  const N=P.near, near=meetNear(S,id);
+  if(near.length){
+    const rn=mulberry32((S.seed^hashStr("mn:"+S.term+":"+S.played+":"+S.g.cn+":"+id))>>>0);
+    const add=Math.round(P.meet*N.se), up=[], down=[];
+    for(const x of near){
+      const q=S.g.pl[x];
+      if(q.ss<5){ q.se+=add; checkSp(S,x,out); }
+      q.bond++;
+      if(res===0&&rn()<N.up&&q.mot>0&&q.mot<4){ q.mot++; up.push(x); }
+      else if(res===2&&rn()<N.down&&q.mot>1){ q.mot--; down.push(x); }
+    }
+    out.push("周りの "+near.map(x=>nameOf(CARDS[x])).join("・")+" も聞いていた(特殊能力の経験 +"+add+")");
+    if(up.length)out.push(up.map(x=>nameOf(CARDS[x])).join("・")+" も奮い立った(やる気が上がった)");
+    if(down.length)out.push(down.map(x=>nameOf(CARDS[x])).join("・")+" にも動揺が広がった(やる気が下がった)");
+    if(res===2)secFollow(S,[[id,mot0]].concat(down.map(x=>[x,S.g.pl[x].mot+1])),[],out,"mt:"+id);
+  }else if(res===2)secFollow(S,[[id,mot0]],[],out,"mt:"+id);
   useComm(S,"meet");
   return { res, lines:out };
 }
@@ -409,26 +456,32 @@ function awaken(S,id,rng,out){
   }
   g.is=5; g.q=false; g.ie=0;
   out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  newsOf("awake",[id],out);
 }
 /**
  * 試合の結果を育成に反映する。**★の上昇・覚醒・連携の変化はここで起きる**。
  *   res.played  … その試合に出た選手 / res.onPitch … 最後に盤面に居た選手 / res.win
  * フレンドリーマッチに勝つと、兆しのある選手・連携が開花する(必ずではない)。
  */
+/* 試合のあとの知らせ(誰に何が起きたか)。ロッカールームで話す選手を選ぶのに使う(→docs/07 §7.12)。
+ * 試合のあとだけ集める(練習・コミュニケーションの最中は集めない) */
+let GROW_NEWS=null;
+function newsOf(kind,ids,out){ if(GROW_NEWS)GROW_NEWS.push({ kind, ids, line:out[out.length-1] }); }
 function afterMatchGrowth(S,fx,res){
   const G0=TUNING.grow, I=G0.ind, L=G0.link, Mo=G0.mot, N=G0.int, out=[];
+  GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
   for(const id of played)S.g.pl[id].ie+=I.match*growK(id);
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
-    linkExp(S,on[a],on[b],L.match,compatOf(on[a],on[b]));
+    linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
   settleLinks(S,out);
   if(fx.kind==="friendly"&&res.win){
     for(const id of on){
       const g=S.g.pl[id];
       if(g.q&&rng()<I.awakeP)awaken(S,id,rng,out);
-      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); }
+      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
     }
     // 黄金線は1試合に1本まで(兆しのある組のうち、たねで1つ選ぶ)
     const cand=Object.keys(S.g.links).filter(k=>{ const l=S.g.links[k], p=k.split("|");
@@ -437,6 +490,7 @@ function afterMatchGrowth(S,fx,res){
       const k=cand[Math.floor(rng()*cand.length)], l=S.g.links[k], p=k.split("|");
       l.lv=3; l.gold=false;
       out.push("✨ "+nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が黄金の輝きに");
+      newsOf("gold",[p[0],p[1]],out);
     }
   }
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
@@ -444,10 +498,21 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad:0))*N.recover);
   }
+  // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
+  const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
+  for(const id in S.g.pl){
+    const g=S.g.pl[id];
+    if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。ケアで手当てできる)"); newsOf("inj",[id],out); }
+    else if(g.mot===0){
+      if((g.injN||0)>=J.maxN||rng()<J.heal){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
+      else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
+    }
+  }
   // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
   // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
     const g=S.g.pl[id], was=g.mot;
+    if(g.mot===0||newInj.includes(id)){ if(!played.includes(id))g.bench=(g.bench||0)+1; else g.bench=0; continue; }
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
@@ -462,5 +527,136 @@ function afterMatchGrowth(S,fx,res){
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
+  GROW_NEWS=null;
   return out;
+}
+
+/* ---------- 秘書(→docs/08 §8.7・docs/05 §5.12) ----------
+ * 4人から選ぶ。**能力の差はなく、口調だけが違う**。親密度は秘書ごとに持つ(替えても消えない)。
+ * 親密度: 試合のたびに +1、大会の優勝で +3、監督室の短い会話で +0〜3。段(0〜3)で話し方が少し変わり、フォローが起きやすくなる。
+ * フォロー: ミーティングの★突破・ラウンジが失敗したとき、秘書が入ってやる気を戻す(段ごとの率 TUNING.sec.follow)
+ * 状態は S.sec = { id, bond:{ 秘書id: 親密度 }, chosen:その任期に選んだか, ev:待っている会話の番号 | null } */
+const SECS=[
+  { id:"s0", name:"白石 葵",   desc:"丁寧で落ち着いた" },
+  { id:"s1", name:"日向 夏美", desc:"元気で明るい" },
+  { id:"s2", name:"氷室 玲",   desc:"クールで分析的" },
+  { id:"s3", name:"春野 静香", desc:"おっとりした年上" }
+];
+const SEC_LV_LABEL=["他人行儀","打ち解けた","信頼","相棒"];
+/** 秘書の言葉。値が [段0〜1, 段2〜3] の組なら親密度で替わる。{n} {c} は差し込み */
+const SEC_LINES={
+  s0:{ hello:"白石です。今日から監督の秘書を務めます。よろしくお願いいたします。",
+    welcome:["ようこそ、監督。まずは次の試合に向けて準備を始めましょう。","監督、今日もよろしくお願いします。準備を始めましょうか。"],
+    next:["次の試合の準備を始めましょう。","監督、次の試合の準備をいたしましょう。私もお手伝いします。"],
+    comm:"練習は済みました。コミュニケーションがあと {n} 回使えます。",
+    tired:"選手が疲れています。今日の練習は軽めにしてはいかがでしょう。",
+    sign:"「！」の付いた選手が {n} 人います。話を聞いてあげてください。",
+    omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花します。",
+    final:"{c}の決勝です。ここで勝てばタイトルです。",
+    hurt:"{n} がケガをしています。SQUAD で控えと入れ替えるか、ケアで手当てしましょう。",
+    termOver:"任期が終わりました。お疲れさまでした。",
+    win:["お疲れさまでした。見事な勝利です。","お疲れさまでした。監督の采配、見事でした。"],
+    lose:["お疲れさまでした。切り替えて次へ行きましょう。","悔しいですね……。でも監督なら大丈夫です。次へ行きましょう。"],
+    draw:"お疲れさまでした。引き分けでした。",
+    follow:"{n} には私から話しておきました。少し落ち着いたようです。",
+    lvup:"監督……これからも、そばで支えさせてください。" },
+  s1:{ hello:"日向夏美です！ 秘書として全力でサポートしますね、監督！",
+    welcome:["監督、はじめましょう！ まずは次の試合の準備から！","監督！ 今日もいっしょに頑張りましょう！"],
+    next:["次の試合、準備していきましょう！","よーし監督、次もいっちゃいましょう！"],
+    comm:"練習おわりました！ コミュニケーションはあと {n} 回できますよ！",
+    tired:"みんなヘトヘトみたいです……。今日は軽めにしませんか？",
+    sign:"「！」の付いた選手が {n} 人いますよ！ 話を聞いてあげてください！",
+    omen:"フレンドリーマッチです！ 兆しのある選手を出して勝てば、きっと開花します！",
+    final:"{c}の決勝ですよ！ 勝てばタイトルです、ドキドキしますね！",
+    hurt:"{n} がケガしちゃってます！ 控えと入れ替えるか、ケアしてあげてください！",
+    termOver:"任期おわりましたー！ 監督、おつかれさまでした！",
+    win:["やりましたね監督！ 勝ちましたー！","さっすがボス！ 最高の試合でした！"],
+    lose:["うう、くやしい……。でも次こそ勝ちましょう！","ボス、落ち込まないで！ 次はぜったい勝てます！"],
+    draw:"引き分けかぁ……。次は勝ちきりましょう！",
+    follow:"{n} にはわたしから声かけときました！ 元気出たみたいです！",
+    lvup:"ボス、これからもずーっといっしょに頑張りましょうね！" },
+  s2:{ hello:"氷室です。データの整理と報告は任せてください。",
+    welcome:["監督。まずは次の試合の準備を。","監督、準備はできています。始めましょう。"],
+    next:["次の試合の準備を。","次の相手の資料はまとめてあります。準備を始めましょう。"],
+    comm:"練習は完了。コミュニケーションの残りは {n} 回です。",
+    tired:"チームの疲労が溜まっています。今日の練習は軽めが合理的です。",
+    sign:"「！」の付いた選手が {n} 人。対応を推奨します。",
+    omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花の確率があります。",
+    final:"{c}の決勝です。勝てばタイトル。",
+    hurt:"{n} が負傷中。控えとの入れ替えか、ケアでの処置を推奨します。",
+    termOver:"任期終了です。お疲れさまでした。",
+    win:["勝利です。内容も悪くありません。","勝利です。……監督の判断は、正しかったと思います。"],
+    lose:["敗戦です。原因は分析しておきます。","敗戦です。でも、修正点は見えています。監督なら立て直せます。"],
+    draw:"引き分けです。決定力に課題が残りました。",
+    follow:"{n} の件は処理しておきました。問題ありません。",
+    lvup:"……監督の隣で仕事をするのは、悪くないです。" },
+  s3:{ hello:"春野静香です。ふふ、監督のお手伝い、のんびりやらせてもらいますね。",
+    welcome:["あら監督、いらっしゃい。まずは次の試合の準備からね。","監督、今日も来てくれたのね。さ、準備しましょうか。"],
+    next:["次の試合の準備、始めましょうか。","次の試合も、監督らしくいきましょうね。"],
+    comm:"練習はおしまい。コミュニケーションはあと {n} 回できるわよ。",
+    tired:"みんな少しお疲れみたい。今日は軽めにしてあげたら？",
+    sign:"「！」の付いた子が {n} 人いるわ。お話、聞いてあげて。",
+    omen:"フレンドリーマッチね。兆しのある子を出して勝てば、花が開くかも。",
+    final:"{c}の決勝ね。勝てばタイトルよ。",
+    hurt:"{n} がケガをしてるの。控えと替えるか、ケアしてあげてね。",
+    termOver:"任期はおしまい。本当にお疲れさま。",
+    win:["お疲れさま。いい試合だったわね。","ふふ、さすが監督。みんな誇らしそうよ。"],
+    lose:["お疲れさま。負けた日は、ゆっくり休むのも大事よ。","大丈夫。監督が下を向かなければ、みんなついてくるわ。"],
+    draw:"お疲れさま。引き分けね、惜しかったわ。",
+    follow:"{n} とは私がお茶でもしながら話しておいたわ。もう大丈夫よ。",
+    lvup:"監督と一緒にいると、なんだか楽しいわ。これからもよろしくね。" }
+};
+/** 監督室の短い会話(親密度のイベント)。答えごとに親密度が上がる量 */
+const SEC_EVENTS=[
+  { q:"差し入れを持ってきました。どれにしますか？", ch:[["コーヒーを頼む",2],["紅茶がいいな",2],["今はいらない",0]] },
+  { q:"次の相手の資料、まとめておきましょうか？", ch:[["頼む。助かるよ",3],["自分でやるよ",1]] },
+  { q:"今日のスタジアム、すごい歓声でしたね。", ch:[["君の支えのおかげだ",3],["選手たちのおかげだ",2],["まだまだこれからだ",1]] },
+  { q:"お休みの日は、何をしているんですか？", ch:[["試合の研究だ",1],["街を散歩している",2],["それは秘密だ",2]] },
+  { q:"選手たちの写真、クラブの広報に使ってもいいですか？", ch:[["いい写真を頼む",2],["任せるよ",3],["試合に集中させたい",1]] }
+];
+const SEC_EV_REPLY=["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"];
+const secOf=S=>SECS.find(x=>x.id===(S.sec&&S.sec.id))||SECS[0];
+const secBond=S=>(S.sec&&S.sec.bond[secOf(S).id])||0;
+function secLv(S){ const t=TUNING.sec.lv, b=secBond(S); let i=0; while(i<t.length&&b>=t[i])i++; return i; }
+function newSec(){ return { id:"s0", bond:{}, chosen:false, ev:null }; }
+/** 秘書の言葉。key の言葉を、いまの秘書の口調と親密度で返す */
+function secSay(S,key,vars){
+  const L=SEC_LINES[secOf(S).id]||SEC_LINES.s0;
+  let t=L[key]!=null?L[key]:SEC_LINES.s0[key];
+  if(Array.isArray(t))t=t[secLv(S)>=2?1:0];
+  t=t||"";
+  for(const k in (vars||{}))t=t.split("{"+k+"}").join(vars[k]);
+  return t;
+}
+/** 親密度を上げる。段が上がったら秘書の一言を返す */
+function secGain(S,v){
+  if(!S.sec||v<=0)return null;
+  const id=secOf(S).id, lv0=secLv(S);
+  S.sec.bond[id]=(S.sec.bond[id]||0)+v;
+  const lv=secLv(S);
+  return lv>lv0?"💬 "+secOf(S).name+"との仲が「"+SEC_LV_LABEL[lv]+"」に"+(lv===SEC_LV_LABEL.length-1?"。「"+secSay(S,"lvup")+"」":""):null;
+}
+function chooseSec(S,id){ if(!SECS.some(x=>x.id===id))return false; S.sec.id=id; S.sec.chosen=true; return true; }
+/** 監督室の会話に答える。親密度が上がる量を返す */
+function answerSecEvent(S,i){
+  const ev=SEC_EVENTS[S.sec.ev]; if(!ev||!ev.ch[i])return null;
+  const v=ev.ch[i][1]; S.sec.ev=null;
+  const up=secGain(S,v);
+  return { v, line:secOf(S).name+"「"+SEC_EV_REPLY[Math.min(3,v)]+"」", up };
+}
+/**
+ * 秘書のフォロー。コミュニケーションが失敗したときに呼ぶ。起きたら下がったやる気を戻す(drops: [[id, 元のやる気]])、
+ * ups の選手はやる気を1段上げる。起きたかどうかを返す
+ */
+function secFollow(S,drops,ups,out,salt){
+  if(!S.sec)return false;
+  const p=TUNING.sec.follow[secLv(S)];
+  const r=mulberry32((S.seed^hashStr("sf:"+S.term+":"+S.played+":"+S.g.cn+":"+salt))>>>0)();
+  if(r>=p)return false;
+  const names=[];
+  for(const [id,was] of drops){ const g=S.g.pl[id]; if(g&&g.mot>0&&g.mot<was){ g.mot=was; names.push(nameOf(CARDS[id])); } }
+  for(const id of ups){ const g=S.g.pl[id]; if(g&&g.mot>0&&g.mot<4){ g.mot++; if(!names.includes(nameOf(CARDS[id])))names.push(nameOf(CARDS[id])); } }
+  if(!names.length)return false;
+  out.push("💬 秘書のフォロー: "+secOf(S).name+"「"+secSay(S,"follow",{ n:names.join("・") })+"」(やる気が戻った)");
+  return true;
 }

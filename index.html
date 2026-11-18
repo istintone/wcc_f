@@ -528,6 +528,16 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #pad .mid .btn{height:38px;min-width:56px;font-size:15px}
 .btn-shoot,.btn-keeper{width:84px;height:58px;border-radius:29px;font-size:13px}
 
+/* ---- ゴールのリプレイ(→docs/07 §7.12)。モニターの上に札を出し、押せば飛ばす ---- */
+#replay{position:absolute;inset:0;z-index:3;display:none;border:0;padding:6px 8px;background:transparent;cursor:pointer;
+  flex-direction:column;align-items:flex-start;justify-content:space-between;color:#fff;text-align:left}
+#replay.on{display:flex}
+#replay::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.05) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 3px rgba(200,16,46,.8)}
+#replay b{position:relative;font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;letter-spacing:.2em;padding:1px 8px;
+  background:#c8102e;transform:skewX(-10deg);animation:blink 1.1s infinite}
+#replay small{position:relative;align-self:flex-end;font-size:10px;font-weight:700;padding:1px 6px;background:rgba(0,0,0,.55)}
+
 /* =========================================================================
    wcc_f — テーマ(→docs/07 §7.8)
    色はすべてトークン(--t-*)を通す。テーマを足すときは、下のトークンの組を1つ増やすだけ。
@@ -1060,6 +1070,136 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #club .kmeta{margin:0 0 6px;font-size:11.5px;color:var(--t-ink2)}
 #club .kmeta b{font-family:"Oswald",sans-serif}
 #club .tabs.sorts{margin-top:4px}
+
+/* ---- レアリティは台紙と枠と箔で見分ける(→docs/06・docs/08 §8.10) ----
+ * REGULAR 白い紙・灰の細い枠 / SPECIAL 黒い紙・銀の枠 / WORLD CLASS 虹色の紙・虹の太い枠・流れる箔 / LEGENDS 金の紙・金の二重枠・光の筋 */
+.kc.r-W::after{border:1.5px solid #b8b2a6}
+.kc.r-B::after{inset:2px;border:2px solid transparent;border-image:linear-gradient(135deg,#f4f4f4,#8a8a8a 30%,#e6e6e6 55%,#7a7a7a 80%,#f4f4f4) 1}
+.kc.r-K{background:linear-gradient(135deg,#ffe9f5 0%,#e6f4ff 30%,#fffbe0 55%,#e8ffef 75%,#f1e8ff 100%);color:#1c1430}
+.kc.r-K::after{inset:2px;border:3px solid transparent;border-image:linear-gradient(135deg,#ff7ac8,#79d8ff,#ffe36e,#8cffaa,#c69bff,#ff7ac8) 1}
+.kc.r-K .k-foil{mix-blend-mode:normal;opacity:.75}
+.kc.r-K .k-st b{color:#2a1a4a} .kc.r-K .k-st i,.kc.r-K .k-sk em{color:#6f5a9a} .kc.r-K .k-sk{color:#2a1a4a}
+.kc.r-K .k-name{background:linear-gradient(90deg,#c8102e,#d6336c 60%,#8a5cd6)}
+.kc.r-L::after{inset:2px;border:3px double #7d5a14}
+.kc.r-L{box-shadow:0 0 0 1px #b8892c,0 3px 10px rgba(120,80,10,.45)}
+
+/* =========================================================================
+   試合のあと(→docs/07 §7.12): 結果(チームの数字・採点)/ ロッカールーム / 優勝の撮影
+   ========================================================================= */
+.th-wr .sc-res .res-word,.sc-res .res-word{font-size:74px}
+.sc-res{gap:7px!important;padding-top:calc(env(safe-area-inset-top) + 14px)!important;padding-bottom:34px!important;overflow-y:auto!important}
+.sc-res .res-score .rn{font-size:48px}
+.res-st{width:100%;max-width:360px;display:flex;flex-direction:column;gap:3px;padding:6px 10px;background:rgba(0,0,0,.28);
+  font-size:12px;animation:fadeIn .4s 1.1s both}
+.res-st>div{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+.res-st b{font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;text-align:center}
+.res-st span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.res-st span i{font-style:normal;font-size:10px;opacity:.85}
+.res-st span em{display:block;width:100%;height:4px;background:rgba(255,255,255,.25);position:relative}
+.res-st span em::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p);background:var(--t-gold2,#ffe28a)}
+.res-rt{width:100%;max-width:360px;display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;animation:fadeIn .4s 1.3s both}
+.res-rt span{display:grid;grid-template-columns:24px 1fr 30px;align-items:center;gap:4px;padding:2px 4px;
+  background:rgba(255,255,255,.92);color:#121212;font-size:11px}
+.res-rt span.mvp{box-shadow:inset 0 0 0 2px var(--t-gold,#b8892c)}
+.res-rt .pos{font-style:normal;font-size:8.5px;font-weight:700;color:#fff;text-align:center;padding:1px 0;font-family:"Oswald",sans-serif}
+.res-rt .pos.gk{background:#c48a12} .res-rt .pos.df{background:#1d5fbf} .res-rt .pos.mf{background:#1f8a4c} .res-rt .pos.fw{background:#c8102e}
+.res-rt b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res-rt b u{text-decoration:none;font-size:8px;margin-left:2px}
+.res-rt em{font-style:normal;font-family:"Oswald",sans-serif;font-weight:700;font-size:14px;text-align:right}
+.res-rt em.hi{color:#b8892c} .res-rt em.lo{color:#1d5fbf}
+.res-mvp em{font-style:normal;font-family:"Oswald",sans-serif;font-size:16px;font-weight:700;color:var(--t-gold,#b8892c)}
+.th-wr .res-mvp{animation-delay:1.5s}
+
+/* ロッカールーム: 木のロッカーが並ぶ壁と床 */
+.sc-lock{justify-content:flex-start!important;gap:10px;padding-top:calc(env(safe-area-inset-top) + 16px)!important;
+  padding-bottom:34px!important;overflow-y:auto!important;color:#f4efe6;
+  background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.55) 60%,#120c06 100%),
+    repeating-linear-gradient(90deg,#5a3d22 0 58px,#3c2814 58px 61px),#4a321b}
+.sc-lock::before{content:"";position:absolute;left:0;right:0;top:0;height:46%;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0 22px,rgba(0,0,0,.25) 22px 24px);opacity:.5}
+.lk-head{position:relative;text-align:center;animation:fadeIn .4s .2s both}
+.lk-head b{display:block;font-family:"Oswald",sans-serif;font-size:30px;font-weight:700;letter-spacing:.18em;color:#ffe9a8}
+.lk-head small{font-size:11px;opacity:.85}
+.lk-sec{position:relative;width:100%;max-width:360px;display:flex;gap:8px;align-items:flex-start;padding:8px 10px;
+  background:rgba(255,255,255,.95);color:#121212;border-left:5px solid #c8102e;animation:fadeIn .4s .3s both}
+.lk-sec .sec-ic{flex:none;font-style:normal;font-size:9px;font-weight:900;padding:2px 5px;background:#121212;color:#e9c76b;font-family:"Oswald",sans-serif}
+.lk-sec p{margin:0;font-size:12.5px;font-weight:700}
+.lk-sec ul{margin:4px 0 0;padding:0 0 0 14px;font-size:11px;line-height:1.55;color:#3a3a3a}
+.lk-pl{position:relative;width:100%;max-width:360px;display:flex;gap:10px;align-items:center;animation:fromL .45s cubic-bezier(.2,1.2,.4,1) both}
+.lk-card{flex:none;width:74px}
+.lk-say{flex:1;min-width:0;position:relative;padding:8px 10px;background:#fffdf7;color:#121212;border-radius:8px}
+.lk-say::before{content:"";position:absolute;left:-7px;top:18px;border:7px solid transparent;border-right-color:#fffdf7;border-left:0}
+.lk-say b{font-size:11px;color:#c8102e}
+.lk-say p{margin:2px 0 0;font-size:13px;font-weight:700;line-height:1.45}
+.lk-say em{display:block;margin-top:4px;font-style:normal;font-size:10.5px;color:#7d766b}
+.lk-say em.hi{color:#b8892c;font-weight:900}
+.lk-grow{position:relative;list-style:none;margin:0;padding:6px 10px;width:100%;max-width:360px;background:rgba(0,0,0,.45);
+  border-left:3px solid #e9c76b;font-size:11.5px;line-height:1.6}
+.lk-grow li{animation:fadeIn .35s both} .lk-grow li.hi{color:#ffe28a;font-weight:900}
+
+/* 優勝の撮影: スポットライトとトロフィー、フラッシュが2回 */
+.sc-trophy{justify-content:flex-start!important;gap:8px;padding-top:calc(env(safe-area-inset-top) + 22px)!important;padding-bottom:34px!important;
+  background:radial-gradient(ellipse at 50% 38%,#fff6d6 0%,#e9c76b 18%,#7a1020 52%,#1a0508 100%)}
+.tr-head{text-align:center;animation:fadeIn .4s .2s both}
+.tr-head small{display:block;font-size:13px;font-weight:900;color:#fff;letter-spacing:.06em;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.tr-head b{display:block;font-family:"Oswald",sans-serif;font-size:50px;font-weight:700;letter-spacing:.06em;line-height:1;
+  color:#fff;text-shadow:3px 3px 0 #7a1020,0 0 18px rgba(255,233,168,.8)}
+.tr-stage{position:relative;width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center}
+.tr-cup{width:150px;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:cupUp .8s .3s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes cupUp{from{transform:translateY(60px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.tr-team{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 4px;margin-top:8px;animation:fadeIn .5s .9s both}
+.tr-team span{font-size:10.5px;font-weight:700;padding:2px 6px;background:rgba(255,255,255,.92);color:#121212;transform:skewX(-8deg)}
+.tr-club{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;font-style:italic;animation:fadeIn .4s 1.1s both}
+.sc-trophy .flash{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none;animation:flash2 1.4s .6s both}
+@keyframes flash2{0%,100%{opacity:0}6%{opacity:.95}20%{opacity:0}38%{opacity:0}44%{opacity:.9}58%{opacity:0}}
+/* 文字色: .th-wr #scene(濃い文字)より強く指定する。暗い背景の場面は白 */
+.th-wr #scene.sc-res.r-win,.th-wr #scene.sc-res.r-lose{color:#fff}
+.th-wr #scene.sc-lock{color:#f4efe6}
+.th-wr #scene.sc-trophy{color:#fff}
+
+/* ---- めくる前の予兆(→docs/07 §7.12): 裏の後ろの光 ---- */
+.pk-aura{position:absolute;inset:-18px;z-index:1;border-radius:24px;pointer-events:none;opacity:0;transition:opacity .4s}
+.om-B .pk-aura{opacity:1;background:radial-gradient(ellipse,rgba(235,240,250,.9) 30%,rgba(180,190,210,.0) 72%);animation:auraP 1.6s ease-in-out infinite}
+.om-K .pk-aura{opacity:1;inset:-14px;filter:blur(10px);
+  background:conic-gradient(from 0deg,#ff7ac8,#79d8ff,#ffe36e,#8cffaa,#c69bff,#ff7ac8);animation:spin 2.4s linear infinite}
+.om-L .pk-aura{opacity:1;inset:-24px;filter:blur(6px);
+  background:radial-gradient(ellipse,#fff3c4 20%,#f2c14e 45%,rgba(184,137,44,0) 72%);animation:auraP .7s ease-in-out infinite}
+.om-L .pk-card:not(.open){animation:cardOut .7s cubic-bezier(.2,1.2,.4,1) both,shake .18s .8s linear infinite}
+@keyframes auraP{50%{transform:scale(1.06);opacity:.65}}
+@keyframes shake{0%,100%{translate:0 0}25%{translate:-2px 1px}75%{translate:2px -1px}}
+.promo .pk-aura{animation-name:auraP,promoIn;animation-duration:1s,.5s;animation-iteration-count:infinite,1}
+.om-K.promo .pk-aura{animation:spin 2.4s linear infinite,promoIn .5s 1}
+@keyframes promoIn{from{transform:scale(1.8);opacity:0}}
+/* 明るい紙の背景でも見えるように(白×赤のテーマ) */
+.om-B .pk-aura{background:radial-gradient(ellipse,rgba(110,130,165,.75) 35%,rgba(110,130,165,0) 72%)}
+.om-L .pk-aura{inset:-34px;filter:none;
+  background:radial-gradient(ellipse,rgba(255,214,90,1) 40%,rgba(242,170,30,.85) 55%,rgba(242,170,30,0) 74%),
+    repeating-conic-gradient(from 0deg,rgba(242,170,30,.55) 0 8deg,transparent 8deg 20deg)}
+.om-L .pk-aura{-webkit-mask:radial-gradient(closest-side,#000 82%,transparent 100%);mask:radial-gradient(closest-side,#000 82%,transparent 100%)}
+
+/* CARDS の一覧: 登録中のカードの印 */
+.kc.insq .k-top::after{content:"登録中";margin-top:3px;padding:1px 4px;font-family:system-ui,sans-serif;font-size:7.5px;font-weight:900;
+  letter-spacing:.04em;color:#fff;background:#121212;box-shadow:0 0 0 1px rgba(255,255,255,.7)}
+
+/* ケガをした盤面のカード(→docs/08 §8.8): 赤十字の札と、少し沈んだ色 */
+.cd.inj{filter:saturate(.6) brightness(.92)}
+.cd.inj::after{content:"+";position:absolute;right:-4px;top:-6px;z-index:5;width:15px;height:15px;border-radius:50%;
+  background:#c8102e;color:#fff;font:900 13px/15px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff}
+
+/* ラウンジ: 連携が付きやすくなる理由(→docs/08 §8.6) */
+#club .bonus{margin:4px 0;font-size:11.5px;color:var(--t-ink2)}
+#club .bonus b{display:inline-block;margin-right:4px;padding:1px 6px;font-size:10.5px;background:var(--t-gold2);color:#201400;border-radius:2px}
+
+/* ---- 秘書(→docs/08 §8.7) ---- */
+#club .sec .sec-nm,.lk-sec .sec-nm{display:block;font-size:10.5px;color:var(--t-sub,#c8102e);margin-bottom:1px}
+#club .sec-ev{border-left:4px solid var(--t-gold)}
+#club .sec-ch{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+#club .sec-ch .btn{padding:7px 10px;font-size:12.5px}
+#club .secpick .sp{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;background:var(--t-card);color:var(--t-ink);
+  border:1px solid var(--t-rule);border-left:4px solid var(--t-rule);cursor:pointer}
+#club .secpick .sp.on{border-left-color:var(--t-sub);box-shadow:0 0 0 1px var(--t-sub)}
+#club .secpick .sp b{font-size:14px} #club .secpick .sp small{margin-left:8px;font-size:11px;color:var(--t-mute)}
+#club .secpick .sp i{display:block;margin-top:3px;font-style:normal;font-size:11.5px;color:var(--t-ink2)}
 </style>
 </head>
 <body>
@@ -1069,7 +1209,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
     <div class="clk"><small id="hudComp"></small><span id="hudClock">0'</span></div>
     <button id="btnSpeed" class="btn spd">×1</button>
   </header>
-  <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div>
+  <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div><button id="replay" class="replay"><b>REPLAY</b><small>タッチでスキップ ▶▶</small></button>
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
@@ -1274,11 +1414,15 @@ const TUNING={
   //   abil … 能力による違い。得意な2能力の平均が ref より高いほど、伸びが遅い(1ごとに k、lo〜hi に収める)
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
-  //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=声かけで上がるやる気(落ちている選手は2段)
+  //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
-         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
-         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25,
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
+              // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
+              //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
+              near:{ r:0.35, max:3, se:0.35, up:0.5, down:0.3 } },
+         // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
+         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
          graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
          set:{ per:0.02, max:0.2 },
@@ -1303,11 +1447,28 @@ const TUNING={
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
-  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8 },
+  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+    // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
+    promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
+  // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
+  //   goal/assist … 得点・最後のパス / onT/miss … 枠内・枠外 / passOk … 通したパス・運び(合計は passMax まで)
+  //   lost … 奪われた / won … 奪った / save・block … 止めた / concede … 失点(GK) / concedeDf … 失点(DF 1人あたり)
+  //   win/lose … 勝ち負け(出た全員) / foul・red … 反則・退場
+  rate:{ base:6.0, goal:1.0, assist:0.5, onT:0.1, miss:-0.05, passOk:0.03, passMax:0.6, lost:-0.06, won:0.08,
+    save:0.25, block:0.15, concede:-0.35, concedeDf:-0.15, win:0.3, lose:-0.3, foul:-0.05, red:-1.5, min:3.5, max:10 },
   // PK戦。5人ずつ蹴り、決まらなければ1人ずつ。maxKicks は打ち切り(暴走を防ぐ安全網)
   pso:{ kicks:5, maxKicks:30 },
+  // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
+  //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
+  sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
+  // ケガ(→docs/08 §8.8)。判定は試合の中、別の乱数で行う(ほかの判定の並びを変えない)
+  //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
+  //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
+  inj:{ duel:0.00045, foul:0.0058, fatK:4.0, k:0.85, heal:0.5, maxN:3, healTo:2 },
   // 再生(見た目だけ。結果には触れない)
-  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650 }
+  //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
+  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
+    replayN:5, replaySlow:0.5, replayEnd:600 }
 };
 
 const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW" };
@@ -1586,10 +1747,38 @@ const CARD_ROWS=[
 ];
 /** 年齢(仮データ)。若い選手は能力が低めで育ちやすく、ベテランはその逆(→docs/05 §5.4) */
 const CARD_AGE={ h01:30, h02:26, h03:29, h04:27, h05:23, h06:31, h07:25, h08:27, h09:22, h10:29, h11:20, h12:34, h13:21, h14:24, h15:19, h16:32, a01:31, a02:24, a03:30, a04:27, a05:25, a06:23, a07:28, a08:26, a09:21, a10:31, a11:24, a12:20, a13:22, a14:29, a15:19, a16:33 };
+/* ---- 国籍と動物占い(→docs/08 §8.6・docs/05 §5.5) ----
+ * 動物は wcc_f 独自の12種。4つの群れに3種ずつ。**生年月日から出す**: 1900-01-01 からの日数を 12 で割った余り(tools/gen_cards.py と同じ)。
+ * 相性: 同じ群れ = 良い / 群れの並び(草原 → 森 → 海 → 空 → 草原)で隣 = ふつう / 向かいの群れ = 張り合う */
+const ANI_GROUP=["草原","森","海","空"];
+const ANIMALS=[
+  { name:"獅子", g:0 }, { name:"狼", g:1 }, { name:"鯱", g:2 }, { name:"鷲", g:3 },
+  { name:"馬",   g:0 }, { name:"熊", g:1 }, { name:"海豚", g:2 }, { name:"隼", g:3 },
+  { name:"犀",   g:0 }, { name:"鹿", g:1 }, { name:"鮫", g:2 }, { name:"梟", g:3 }
+];
+const ANI_ICON=["🦁","🐺","🐋","🦅","🐎","🐻","🐬","🦅","🦏","🦌","🦈","🦉"];
+function aniOfDate(y,m,d){ return Math.round((Date.UTC(y,m-1,d)-Date.UTC(1900,0,1))/864e5)%ANIMALS.length; }
+/** 動物の相性 2=良い / 1=ふつう / 0=張り合う */
+function aniCompat(a,b){ const d=Math.abs(ANIMALS[a].g-ANIMALS[b].g); return d===0?2:d===2?0:1; }
+const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"アイルランド", FRA:"フランス", ESP:"スペイン", POR:"ポルトガル",
+  ITA:"イタリア", GER:"ドイツ", NED:"オランダ", BEL:"ベルギー", SUI:"スイス", AUT:"オーストリア", CRO:"クロアチア", SRB:"セルビア",
+  SVN:"スロベニア", SVK:"スロバキア", POL:"ポーランド", HUN:"ハンガリー", UKR:"ウクライナ", RUS:"ロシア", GEO:"ジョージア", ARM:"アルメニア",
+  TUR:"トルコ", GRE:"ギリシャ", MNE:"モンテネグロ", KOS:"コソボ", DEN:"デンマーク", NOR:"ノルウェー", SWE:"スウェーデン",
+  BRA:"ブラジル", ARG:"アルゼンチン", URU:"ウルグアイ", COL:"コロンビア", ECU:"エクアドル", USA:"アメリカ", CAN:"カナダ", MEX:"メキシコ", JAM:"ジャマイカ",
+  EGY:"エジプト", ALG:"アルジェリア", MAR:"モロッコ", CMR:"カメルーン", CIV:"コートジボワール", NGA:"ナイジェリア", SEN:"セネガル", GUI:"ギニア",
+  UZB:"ウズベキスタン", KOR:"韓国", JPN:"日本" };
+/** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
+const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
+
 const CARDS={};
 CARD_ROWS.forEach(r=>{
   CARDS[r[0]]={ id:r[0], no:r[1], name:r[2], pos:r[3], roles:r[4],
     off:r[5], def:r[6], tec:r[7], pow:r[8], spd:r[9], sta:r[10], skill:r[11]||null, age:CARD_AGE[r[0]]||26 };
+  // 国籍と動物は id から決める疑似の値(誕生日は年齢に合う年の中で id から決まる日)
+  const h=hashStr("nat:"+r[0]), c=CARDS[r[0]], y=2025-c.age;
+  c.nat=NAT_POOL[h%NAT_POOL.length];
+  const day=hashStr("birth:"+r[0])%365, dt=new Date(Date.UTC(y,6,1)+day*864e5);
+  c.ani=aniOfDate(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate());
 });
 
 /**
@@ -1676,7 +1865,8 @@ const TRAIN_SP=[
 /* 生成物。手で編集しない。 python tools/gen_cards.py が tools/squads.local.txt から書き出す。
    実在クラブの選手(→docs/06)。**名前は偽名**。実名は packs/real.local.json(Git管理外)。
    REAL_CLUBS: [id, 偽名クラブ, 略称, 色, 陣形, KPの並び位置(1〜16)]
-   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル]
+   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物]
+     動物は生年月日から出した番号(→data.js の ANIMALS)。生年月日そのものは本体に載せない
      並びは陣形の枠の順に先発11人 → 控え5人。能力は役割のひな形 + 格 + 特徴から pool.js が作る */
 const REAL_CLUBS=[
   ["MCB","マンチェスター・ブルー","MCB","#6cabdd","4-3-3",10],
@@ -1697,262 +1887,262 @@ const REAL_CLUBS=[
   ["DOG","ドルトムント・ゲルプ","DOG","#fde100","3-5-2",10]
 ];
 const REAL_ROWS=[
-  ["mcb01",0,25,"G.ドシトルンマ","GK",27,2.6,"p+","stopper"],
-  ["mcb02",0,27,"M.キネス","SB/CMF",28,1.4,"s+","over"],
-  ["mcb03",0,3,"R.ディジス","CB",29,2.2,"d+","leader"],
-  ["mcb04",0,24,"J.グヴァルディナル","CB/SB",24,2.3,"t+","libero"],
-  ["mcb05",0,21,"R.アイト=ヌール","SB/SMF",25,1.6,"s+t+","allout"],
-  ["mcb06",0,16,"デドリ","DMF/CMF",30,2.6,"t+","maker"],
-  ["mcb07",0,4,"T.ライヤンデルス","CMF/OMF",28,2.1,"o+","middle"],
-  ["mcb08",0,47,"P.フォーデマ","OMF/WG",26,2.3,"t+","fanta"],
-  ["mcb09",0,26,"ボヴィーギョ","WG/SMF",22,1.7,"s+","wing"],
-  ["mcb10",0,9,"E.ハーラネド","CF",26,3.4,"o+p+","hunter"],
-  ["mcb11",0,11,"J.ドネ","WG/SMF",24,1.9,"s+","drib"],
-  ["mcb12",0,1,"J.トスムォード","GK",24,1.2,"","feeder"],
-  ["mcb13",0,45,"A.シルノフ","CB",22,1.1,"s+","mark"],
-  ["mcb14",0,20,"ベボナルド・ナルヴァ","CMF/SMF",32,1.9,"a+","team"],
-  ["mcb15",0,10,"R.グェキキ","OMF/WG",23,1.8,"t+","chance"],
-  ["mcb16",0,7,"O.マチムーシュ","CF/WG",27,1.8,"s+","runner"],
-  ["mcr01",1,31,"S.ラノンス","GK",24,1.3,"","stopper"],
-  ["mcr02",1,2,"D.ユワト","SB",27,1.3,"a+","over"],
-  ["mcr03",1,4,"M.デペリフト","CB",27,1.6,"p+","leader"],
-  ["mcr04",1,6,"L.マヤズィネス","CB/SB",28,1.7,"t+","libero"],
-  ["mcr05",1,23,"L.ギョー","SB",31,1.2,"t+","cross"],
-  ["mcr06",1,18,"カゼミーデ","DMF",34,1.4,"d+p+","hunt"],
-  ["mcr07",1,37,"K.プイヌー","CMF/DMF",21,1.3,"t+","passer"],
-  ["mcr08",1,19,"B.ペンベウタ","SMF/WG",27,1.9,"o+","wing"],
-  ["mcr09",1,8,"B.クェルナンデス","OMF/CMF",32,2.4,"t+o+","chance"],
-  ["mcr10",1,10,"M.シーニャ","SMF/CF",27,1.9,"t+","fanta"],
-  ["mcr11",1,30,"B.プェミュコ","CF",23,1.7,"p+","tower"],
-  ["mcr12",1,1,"A.バユトムゥル","GK",28,0.8,"","pkstop"],
-  ["mcr13",1,5,"H.マメワイア","CB",33,1.0,"p+","wall"],
-  ["mcr14",1,15,"L.ヨア","CB",20,1.0,"s+","cover"],
-  ["mcr15",1,16,"A.ディアト","SB/WG",24,1.5,"s+","sprint"],
-  ["mcr16",1,7,"M.マムプト","OMF/CMF",27,1.2,"a+","team"],
-  ["nld01",2,1,"D.ジス","GK",31,2.3,"","feeder"],
-  ["nld02",2,12,"J.ティヨバー","SB/CB",25,1.9,"d+","over"],
-  ["nld03",2,2,"W.サソイ","CB",25,2.6,"d+s+","leader"],
-  ["nld04",2,6,"ガツリゾウ","CB",28,2.3,"p+","tower"],
-  ["nld05",2,5,"P.イポカスエ","SB/CB",24,1.6,"s+","cover"],
-  ["nld06",2,36,"M.マビメウディ","DMF",27,2.2,"t+","maker"],
-  ["nld07",2,41,"D.テザス","CMF/DMF",27,2.6,"a+","captain"],
-  ["nld08",2,8,"M.ウーデゴーマ","OMF",27,2.3,"t+","chance"],
-  ["nld09",2,7,"B.クナ","WG/SMF",25,2.8,"t+o+","wing"],
-  ["nld10",2,14,"V.ユェケゼシュ","CF",28,2.4,"p+o+","hunter"],
-  ["nld11",2,11,"G.マルユィザッリ","WG",25,1.7,"s+","sprint"],
-  ["nld12",2,13,"ケロ","GK",32,1.0,"","stopper"],
-  ["nld13",2,33,"R.カラフィデーリ","SB/CB",24,1.5,"t+","allout"],
-  ["nld14",2,23,"M.メリーピ","CMF/CF",30,1.6,"p+","tower"],
-  ["nld15",2,10,"E.コウ","OMF/WG",28,2.1,"t+","fanta"],
-  ["nld16",2,20,"N.マドゥエノ","WG",24,1.5,"s+","drib"],
-  ["msd01",3,1,"アリゼヒ","GK",34,2.5,"d+","stopper"],
-  ["msd02",3,30,"J.デリンポン","SB/SMF",25,1.8,"s+","over"],
-  ["msd03",3,4,"V.ファン・ダトク","CB",35,2.6,"p+d+","leader"],
-  ["msd04",3,5,"I.スプテ","CB",27,2.0,"p+s+","wall"],
-  ["msd05",3,6,"M.ケルラポ","SB",23,1.5,"s+","cross"],
-  ["msd06",3,38,"R.フラーフェンベルワ","DMF/CMF",24,2.3,"t+","maker"],
-  ["msd07",3,10,"A.マク・アリスゲー","CMF/DMF",27,2.3,"t+","passer"],
-  ["msd08",3,11,"M.オメー","SMF/WG",34,2.9,"o+","ace"],
-  ["msd09",3,7,"F.ヴィナナ","OMF",23,2.6,"t+","fanta"],
-  ["msd10",3,18,"C.ガシポ","SMF/WG",27,1.9,"o+","wing"],
-  ["msd11",3,9,"A.イピア","CF",27,2.6,"t+o+","runner"],
-  ["msd12",3,25,"G.イマルダシュヴィリ","GK",26,1.4,"","sweeper"],
-  ["msd13",3,26,"A.タバートソン","SB",32,1.4,"a+","cross"],
-  ["msd14",3,8,"D.ソボスベイ","CMF/OMF",26,2.2,"a+p+","middle"],
-  ["msd15",3,17,"C.ニョーンヘ","CMF",25,1.2,"t+","combo"],
-  ["msd16",3,22,"H.エキティヅ","CF/WG",24,2.0,"s+","sprint"],
-  ["ldb01",4,1,"R.サベチェス","GK",29,1.5,"","feeder"],
-  ["ldb02",4,24,"R.グェージズ","SB",26,2.0,"t+","cross"],
-  ["ldb03",4,23,"T.チャタリー","CB",27,1.5,"p+","cover"],
-  ["ldb04",4,6,"L.ユルウィキ","CB",23,1.7,"t+","libero"],
-  ["ldb05",4,3,"M.ヘテレジャ","SB",28,1.8,"a+","over"],
-  ["ldb06",4,25,"M.カイザド","DMF",25,2.6,"d+a+","hunt"],
-  ["ldb07",4,8,"E.ヌェルナンデス","CMF",25,2.2,"t+","thru"],
-  ["ldb08",4,41,"エスプヴァン","SMF/WG",19,2.0,"t+s+","drib"],
-  ["ldb09",4,10,"C.ザーマー","OMF/WG",24,2.7,"t+o+","kicker"],
-  ["ldb10",4,7,"サドロ・ギト","SMF/WG",26,1.8,"s+","wing"],
-  ["ldb11",4,20,"ジョアス・ペドロ","CF/OMF",25,2.0,"t+","post"],
-  ["ldb12",4,12,"F.ヨマゲンセン","GK",24,0.9,"","stopper"],
-  ["ldb13",4,29,"W.ズォプァナ","CB",25,1.3,"p+","mark"],
-  ["ldb14",4,45,"R.クヴィサ","DMF",22,1.4,"t+","cover"],
-  ["ldb15",4,49,"A.ガルレピョ","WG",22,1.5,"s+","sprint"],
-  ["ldb16",4,9,"L.フシップ","CF",23,1.4,"p+","target"],
-  ["cat01",5,13,"J.ガウシゾ","GK",25,1.9,"","sweeper"],
-  ["cat02",5,23,"J.アンザ","SB/CB",28,2.2,"s+","over"],
-  ["cat03",5,2,"P.ヒバルシ","CB",19,2.1,"t+","libero"],
-  ["cat04",5,4,"R.メラウホ","CB",27,1.8,"p+s+","mark"],
-  ["cat05",5,3,"A.バルテ","SB",23,1.7,"s+","sprint"],
-  ["cat06",5,21,"F.ビ・テング","DMF/CMF",29,2.3,"t+","maker"],
-  ["cat07",5,8,"ガヅリ","CMF/OMF",23,2.9,"t+","passer"],
-  ["cat08",5,6,"ベビ","CMF/OMF",22,1.9,"a+","captain"],
-  ["cat09",5,10,"L.ミマグ","WG/SMF",19,3.0,"t+s+","fanta"],
-  ["cat10",5,9,"R.フヴァウドフスキ","CF",38,2.2,"o+","hunter"],
-  ["cat11",5,11,"ハフィーキャ","WG/SMF",29,2.8,"o+","wing"],
-  ["cat12",5,25,"W.ヒュチェヌニー","GK",36,1.3,"","stopper"],
-  ["cat13",5,5,"E.ゼルレア","CB/DMF",25,1.3,"t+","cover"],
-  ["cat14",5,16,"ズェルミレ","OMF/CMF",23,1.8,"o+","middle"],
-  ["cat15",5,20,"D.ゼルモ","OMF/WG",28,1.9,"t+","chance"],
-  ["cat16",5,14,"M.ラッシュユォード","WG/CF",29,1.8,"s+","runner"],
-  ["mdb01",6,1,"T.クヂトワ","GK",34,2.6,"p+","stopper"],
-  ["mdb02",6,12,"T.アレクサンダー=ドーノルド","SB",28,2.1,"t+","cross"],
-  ["mdb03",6,3,"E.ミミトン","CB",28,2.0,"s+","cover"],
-  ["mdb04",6,24,"D.ハイセハ","CB",21,1.9,"t+","libero"],
-  ["mdb05",6,18,"A.カレーモセ","SB",23,1.6,"s+","over"],
-  ["mdb06",6,14,"A.チュソメニ","DMF",26,2.2,"d+p+","hunt"],
-  ["mdb07",6,8,"F.バルゼルデ","CMF/SMF",28,2.6,"a+","dynamo"],
-  ["mdb08",6,5,"J.ベリフガシ","OMF/CMF",23,2.8,"o+","ace"],
-  ["mdb09",6,11,"ロドソゴ","WG/CF",25,1.9,"t+","drib"],
-  ["mdb10",6,10,"K.フベッペ","CF/WG",27,3.4,"s+o+","hunter"],
-  ["mdb11",6,7,"ヴィニシウソ","WG",26,2.9,"s+t+","wing"],
-  ["mdb12",6,13,"A.ルキヤ","GK",27,1.1,"","pkstop"],
-  ["mdb13",6,22,"A.ニュディロー","CB",33,1.7,"p+","wall"],
-  ["mdb14",6,6,"E.ヨマヴィンユ","CMF/DMF",24,1.9,"a+","counter"],
-  ["mdb15",6,15,"A.ギュガル","OMF/WG",21,2.0,"t+","kicker"],
-  ["mdb16",6,30,"F.ウスタントゥオーコ","WG/OMF",19,1.5,"t+","fanta"],
-  ["mdr01",7,13,"J.シブラネ","GK",33,2.2,"d+","stopper"],
-  ["mdr02",7,14,"M.ジョレメテ","SB/SMF",31,1.7,"a+s+","over"],
-  ["mdr03",7,24,"R.ルモノグマン","CB",30,1.3,"p+","leader"],
-  ["mdr04",7,2,"J.M.ヒフソス","CB",31,1.4,"p+","wall"],
-  ["mdr05",7,17,"D.ポンムコ","SB/CB",29,1.4,"t+","cover"],
-  ["mdr06",7,20,"G.ガメオラ","SMF/WG",24,1.5,"a+","dynamo"],
-  ["mdr07",7,8,"P.バボオチ","CMF/DMF",23,1.8,"t+","maker"],
-  ["mdr08",7,4,"C.ギャパボー","CMF",26,1.7,"a+","hunt"],
-  ["mdr09",7,10,"A.ウエオ","SMF/OMF",25,1.9,"t+","kicker"],
-  ["mdr10",7,19,"J.アルバレサ","CF",26,2.5,"o+a+","chase"],
-  ["mdr11",7,7,"A.グマーズマン","CF/OMF",35,2.2,"t+","fanta"],
-  ["mdr12",7,1,"J.アッア","GK",32,0.8,"","pkstop"],
-  ["mdr13",7,3,"M.ヌッルェーリ","SB",24,1.0,"s+","cross"],
-  ["mdr14",7,6,"コク","CMF/DMF",34,1.3,"t+","captain"],
-  ["mdr15",7,5,"J.カルニーゾ","DMF",25,1.3,"d+","manmark"],
-  ["mdr16",7,9,"A.セルルート","CF",31,1.7,"p+","tower"],
-  ["mir01",8,16,"M.ハニャン","GK",31,2.3,"s+","sweeper"],
-  ["mir02",8,23,"F.トギス","CB",28,1.4,"s+","mark"],
-  ["mir03",8,46,"M.ガッブツ","CB",27,1.3,"p+","leader"],
-  ["mir04",8,31,"S.パヴツヴィッチ","CB",25,1.5,"p+","tower"],
-  ["mir05",8,14,"L.ガドリッチ","DMF/CMF",41,1.9,"t+a-","maker"],
-  ["mir06",8,8,"R.ロフタス=チーワ","CMF/OMF",30,1.3,"p+","post"],
-  ["mir07",8,12,"A.スソオ","CMF",31,1.8,"a+","team"],
-  ["mir08",8,56,"A.サーレマーハルス","SMF/SB",27,1.4,"a+","over"],
-  ["mir09",8,2,"P.フストゥピビャン","SMF/SB",28,1.3,"s+","cross"],
-  ["mir10",8,11,"C.プリポッシ","CF/WG",28,2.3,"o+t+","ace"],
-  ["mir11",8,10,"R.ポオン","CF/WG",27,2.3,"s+","drib"],
-  ["mir12",8,1,"M.チッラッチャーノ","GK",36,0.6,"","stopper"],
-  ["mir13",8,29,"Y.ヅォファヨ","DMF/CMF",27,1.5,"d+","hunt"],
-  ["mir14",8,4,"S.ブッリ","DMF",25,1.1,"t+","cover"],
-  ["mir15",8,18,"C.エンクンソ","CF/OMF",29,1.6,"t+","fanta"],
-  ["mir16",8,7,"S.ヒネネペ","CF",25,1.4,"o+","hunter"],
-  ["mib01",9,1,"Y.ホメー","GK",37,1.7,"","stopper"],
-  ["mib02",9,25,"M.ポパンジ","CB",31,1.7,"t+","libero"],
-  ["mib03",9,15,"F.ドヌェルビ","CB",38,1.3,"p+","leader"],
-  ["mib04",9,95,"A.ロストーニ","CB",27,2.4,"t+","cover"],
-  ["mib05",9,20,"H.チャルゴギール","DMF",32,2.2,"t+","kicker"],
-  ["mib06",9,23,"N.サネッラ","CMF",29,2.5,"a+","dynamo"],
-  ["mib07",9,22,"H.ムミタリアン","CMF/OMF",37,1.6,"t+a-","passer"],
-  ["mib08",9,2,"D.ドゥヌユリース","SMF/SB",30,1.8,"p+s+","allout"],
-  ["mib09",9,32,"F.プィマモコ","SMF/SB",29,2.3,"t+","cross"],
-  ["mib10",9,10,"L.マヤズィネスス","CF",29,2.7,"o+","hunter"],
-  ["mib11",9,9,"M.ピュスム","CF",29,2.1,"p+s+","post"],
-  ["mib12",9,13,"J.マコティネス","GK",28,1.1,"","pkstop"],
-  ["mib13",9,31,"Y.シセッジ","CB",25,1.3,"p+","wall"],
-  ["mib14",9,16,"D.ブザッテージ","CMF/OMF",27,1.6,"o+","runner"],
-  ["mib15",9,8,"P.ササッチ","CMF/OMF",23,1.4,"t+","thru"],
-  ["mib16",9,14,"A.ワニー","CF",23,1.3,"s+","sprint"],
-  ["toz01",10,29,"M.ディ・ヘグゴリオ","GK",29,1.7,"","stopper"],
-  ["toz02",10,15,"P.イレル","CB/SB",26,1.4,"s+","cover"],
-  ["toz03",10,3,"ブポーメペ","CB",29,2.0,"p+d+","leader"],
-  ["toz04",10,4,"F.ゼッティ","CB",28,1.3,"p+","wall"],
-  ["toz05",10,5,"M.ロカヒッリ","DMF",28,1.7,"t+","maker"],
-  ["toz06",10,19,"K.ミュラタ","CMF",25,1.6,"p+","counter"],
-  ["toz07",10,8,"T.コープマイネグス","CMF/OMF",28,1.5,"o+","middle"],
-  ["toz08",10,11,"E.ジェグギヴァ","SMF/WG",27,1.6,"t+","drib"],
-  ["toz09",10,27,"A.カカエアーゾ","SMF/SB",26,1.7,"t+","over"],
-  ["toz10",10,10,"K.ズルドゥズ","CF/WG",21,2.4,"t+","fanta"],
-  ["toz11",10,30,"J.アイヴィッド","CF",26,1.8,"o+","hunter"],
-  ["toz12",10,1,"M.アリン","GK",34,0.9,"","pkstop"],
-  ["toz13",10,6,"L.ジアー","CB",27,1.1,"p+","tower"],
-  ["toz14",10,16,"W.パッケセー","CMF/SB",28,1.3,"a+","team"],
-  ["toz15",10,7,"F.コンギバソン","WG",24,1.6,"s+","wing"],
-  ["toz16",10,9,"D.ヴドメヴィッチ","CF",26,1.8,"p+","target"],
-  ["rmc01",11,94,"I.ロロヴェデプ","GK",32,1.4,"","feeder"],
-  ["rmc02",11,77,"A.ジルシッチ","SB",34,1.0,"a+","over"],
-  ["rmc03",11,34,"M.プジ","CB",26,1.5,"s+","cover"],
-  ["rmc04",11,13,"A.ロマニョーニ","CB",31,1.4,"p+","leader"],
-  ["rmc05",11,17,"N.タヴァラテ","SB",26,1.3,"s+","cross"],
-  ["rmc06",11,6,"N.ノヴェッヘ","DMF",25,1.5,"t+","maker"],
-  ["rmc07",11,8,"M.グロンフゥージ","CMF",27,1.6,"a+","dynamo"],
-  ["rmc08",11,7,"F.デプ=ドシル","CMF/OMF",25,1.0,"p+","counter"],
-  ["rmc09",11,18,"G.イサゲドン","WG/SMF",25,1.3,"s+","drib"],
-  ["rmc10",11,11,"T.カステジャーモス","CF",28,1.5,"o+","post"],
-  ["rmc11",11,10,"M.ヨッカーニ","WG/SMF",31,1.7,"t+","wing"],
-  ["rmc12",11,35,"C.レクダス","GK",25,1.0,"","sweeper"],
-  ["rmc13",11,29,"M.リッツァーガ","SB/SMF",33,0.9,"s+","allout"],
-  ["rmc14",11,5,"M.カシーシ","CMF/DMF",35,1.0,"p+","area"],
-  ["rmc15",11,9,"ペドカ","WG/CF",39,1.3,"t+a-","chance"],
-  ["rmc16",11,19,"B.ムィグ","CF",30,1.2,"o+","hunter"],
-  ["rmg01",12,99,"M.コヴィラロ","GK",27,2.0,"d+","stopper"],
-  ["rmg02",12,23,"G.マポチーニ","CB",30,1.4,"p+","manmark"],
-  ["rmg03",12,5,"E.ンディヌ","CB",27,1.6,"s+","leader"],
-  ["rmg04",12,22,"M.ゲルモソ","CB",31,1.2,"t+","libero"],
-  ["rmg05",12,4,"B.クアスタンテ","DMF/CMF",31,1.3,"p+","wall"],
-  ["rmg06",12,17,"M.ヅラ","CMF",25,1.7,"a+","hunt"],
-  ["rmg07",12,8,"N.プル・アイブウイ","CMF",25,1.2,"p+","counter"],
-  ["rmg08",12,43,"ムェズレイ","SMF/SB",23,1.5,"s+","over"],
-  ["rmg09",12,12,"K.クィミカス","SMF/SB",30,1.1,"t+","cross"],
-  ["rmg10",12,18,"M.オラ","CF/OMF",23,1.8,"t+","drib"],
-  ["rmg11",12,21,"P.ディゲワ","CF/OMF",33,1.9,"t+","kicker"],
-  ["rmg12",12,95,"P.ペッブーニ","GK",31,0.7,"","pkstop"],
-  ["rmg13",12,19,"Z.チェメニ","SB/CB",29,1.0,"a+","cover"],
-  ["rmg14",12,7,"L.ペッテグリール","OMF/CMF",30,1.4,"t+","chance"],
-  ["rmg15",12,16,"L.ベイユー","WG",29,1.3,"s+","sprint"],
-  ["rmg16",12,11,"E.クァーガソザ","CF",22,1.2,"p+","target"],
-  ["par01",13,30,"L.シュヴァリテ","GK",25,1.9,"","sweeper"],
-  ["par02",13,2,"A.ハキド","SB/SMF",28,2.8,"s+o+","over"],
-  ["par03",13,5,"マルゲーニョス","CB",32,2.1,"d+","leader"],
-  ["par04",13,51,"W.オチョ","CB",25,2.0,"p+","wall"],
-  ["par05",13,25,"N.ポンデス","SB",24,2.6,"s+t+","allout"],
-  ["par06",13,17,"ヴィティーミャ","DMF/CMF",26,2.8,"t+","maker"],
-  ["par07",13,87,"J.レヴェス","CMF",22,2.5,"a+","hunt"],
-  ["par08",13,8,"F.ネイス","CMF/OMF",30,2.0,"t+","passer"],
-  ["par09",13,14,"D.ツゥエ","WG/OMF",21,2.4,"t+s+","drib"],
-  ["par10",13,10,"O.デチベレ","CF/WG",29,3.0,"t+s+","ace"],
-  ["par11",13,7,"K.ズヴァラツヘリア","WG",25,2.8,"t+","fanta"],
-  ["par12",13,39,"M.サグォノフ","GK",27,1.3,"","pkstop"],
-  ["par13",13,33,"W.ザプール=エメリ","CMF/SB",20,1.7,"a+","team"],
-  ["par14",13,19,"イエキンイン","OMF/WG",25,1.6,"t+","kicker"],
-  ["par15",13,29,"B.バチコベ","WG",24,1.9,"s+","sprint"],
-  ["par16",13,9,"G.ラモレ","CF",25,1.6,"o+","hunter"],
-  ["mur01",14,1,"M.ニオアー","GK",40,1.9,"t+s-","sweeper"],
-  ["mur02",14,27,"K.ヒイムー","SB/CMF",29,1.6,"a+","dynamo"],
-  ["mur03",14,2,"D.ワパメカル","CB",28,2.1,"s+p+","cover"],
-  ["mur04",14,4,"J.ケー","CB",30,2.0,"p+","leader"],
-  ["mur05",14,19,"A.デネヴィム","SB",26,1.9,"s+","over"],
-  ["mur06",14,6,"J.ホミッヒ","DMF/SB",31,2.6,"t+","maker"],
-  ["mur07",14,45,"A.ヤヴマヴィッチ","DMF/CMF",22,1.8,"t+","passer"],
-  ["mur08",14,17,"M.オセーズ","SMF/WG",24,2.8,"t+o+","chance"],
-  ["mur09",14,42,"J.ムシアナ","OMF",23,2.8,"t+s+","fanta"],
-  ["mur10",14,14,"L.ディアヌ","SMF/WG",29,2.4,"s+","wing"],
-  ["mur11",14,9,"H.ライン","CF",33,3.1,"o+t+","ace"],
-  ["mur12",14,40,"J.ウデビノ","GK",23,1.0,"","stopper"],
-  ["mur13",14,3,"ヤム・シンジェ","CB",29,1.8,"p+","wall"],
-  ["mur14",14,44,"J.キタニネッチ","SB/CB",26,1.2,"d+","mark"],
-  ["mur15",14,8,"L.ゴハクカ","CMF",31,1.5,"p+","post"],
-  ["mur16",14,7,"S.ミャキリ","WG/OMF",31,1.6,"o+","middle"],
-  ["dog01",15,1,"G.コベア","GK",28,2.2,"d+","stopper"],
-  ["dog02",15,3,"W.アンマア","CB",30,1.4,"p+","leader"],
-  ["dog03",15,4,"N.シュロッケーベック","CB",26,1.9,"t+","libero"],
-  ["dog04",15,25,"N.エーツ","CB",31,1.2,"p+","wall"],
-  ["dog05",15,8,"F.メメチャ","DMF/CMF",26,1.5,"p+","post"],
-  ["dog06",15,13,"P.グリス","CMF/DMF",35,1.5,"t+","kicker"],
-  ["dog07",15,20,"M.ガダッツァー","CMF",32,1.3,"o+","middle"],
-  ["dog08",15,26,"J.ルイネソン","SMF/SB",28,1.4,"a+","over"],
-  ["dog09",15,24,"D.シヴェンニン","SMF/SB",24,1.4,"s+","cross"],
-  ["dog10",15,9,"S.ムラト","CF",30,2.3,"o+p+","hunter"],
-  ["dog11",15,27,"K.ガデイェカ","CF/WG",24,1.7,"s+","sprint"],
-  ["dog12",15,33,"A.コイコー","GK",31,0.7,"","pkstop"],
-  ["dog13",15,5,"R.ベブセバイニ","CB/SB",31,1.0,"p+","mark"],
-  ["dog14",15,7,"J.ベリフガシス","CMF/OMF",21,1.3,"a+","counter"],
-  ["dog15",15,10,"J.ブズコト","OMF",30,1.5,"t+","chance"],
-  ["dog16",15,14,"M.バヌペー","CF/WG",24,1.4,"o+","runner"]
+  ["mcb01",0,25,"G.ドシトルンマ","GK",27,2.6,"p+","stopper","ITA",10],
+  ["mcb02",0,27,"M.キネス","SB/CMF",28,1.4,"s+","over","POR",8],
+  ["mcb03",0,3,"R.ディジス","CB",29,2.2,"d+","leader","POR",6],
+  ["mcb04",0,24,"J.グヴァルディナル","CB/SB",24,2.3,"t+","libero","CRO",5],
+  ["mcb05",0,21,"R.アイト=ヌール","SB/SMF",25,1.6,"s+t+","allout","ALG",2],
+  ["mcb06",0,16,"デドリ","DMF/CMF",30,2.6,"t+","maker","ESP",4],
+  ["mcb07",0,4,"T.ライヤンデルス","CMF/OMF",28,2.1,"o+","middle","NED",3],
+  ["mcb08",0,47,"P.フォーデマ","OMF/WG",26,2.3,"t+","fanta","ENG",0],
+  ["mcb09",0,26,"ボヴィーギョ","WG/SMF",22,1.7,"s+","wing","BRA",9],
+  ["mcb10",0,9,"E.ハーラネド","CF",26,3.4,"o+p+","hunter","NOR",6],
+  ["mcb11",0,11,"J.ドネ","WG/SMF",24,1.9,"s+","drib","BEL",9],
+  ["mcb12",0,1,"J.トスムォード","GK",24,1.2,"","feeder","ENG",1],
+  ["mcb13",0,45,"A.シルノフ","CB",22,1.1,"s+","mark","UZB",4],
+  ["mcb14",0,20,"ベボナルド・ナルヴァ","CMF/SMF",32,1.9,"a+","team","POR",6],
+  ["mcb15",0,10,"R.グェキキ","OMF/WG",23,1.8,"t+","chance","FRA",0],
+  ["mcb16",0,7,"O.マチムーシュ","CF/WG",27,1.8,"s+","runner","EGY",4],
+  ["mcr01",1,31,"S.ラノンス","GK",24,1.3,"","stopper","BEL",6],
+  ["mcr02",1,2,"D.ユワト","SB",27,1.3,"a+","over","POR",7],
+  ["mcr03",1,4,"M.デペリフト","CB",27,1.6,"p+","leader","NED",10],
+  ["mcr04",1,6,"L.マヤズィネス","CB/SB",28,1.7,"t+","libero","ARG",3],
+  ["mcr05",1,23,"L.ギョー","SB",31,1.2,"t+","cross","ENG",6],
+  ["mcr06",1,18,"カゼミーデ","DMF",34,1.4,"d+p+","hunt","BRA",7],
+  ["mcr07",1,37,"K.プイヌー","CMF/DMF",21,1.3,"t+","passer","ENG",11],
+  ["mcr08",1,19,"B.ペンベウタ","SMF/WG",27,1.9,"o+","wing","CMR",5],
+  ["mcr09",1,8,"B.クェルナンデス","OMF/CMF",32,2.4,"t+o+","chance","POR",11],
+  ["mcr10",1,10,"M.シーニャ","SMF/CF",27,1.9,"t+","fanta","BRA",3],
+  ["mcr11",1,30,"B.プェミュコ","CF",23,1.7,"p+","tower","SVN",6],
+  ["mcr12",1,1,"A.バユトムゥル","GK",28,0.8,"","pkstop","TUR",11],
+  ["mcr13",1,5,"H.マメワイア","CB",33,1.0,"p+","wall","ENG",11],
+  ["mcr14",1,15,"L.ヨア","CB",20,1.0,"s+","cover","FRA",3],
+  ["mcr15",1,16,"A.ディアト","SB/WG",24,1.5,"s+","sprint","CIV",6],
+  ["mcr16",1,7,"M.マムプト","OMF/CMF",27,1.2,"a+","team","ENG",0],
+  ["nld01",2,1,"D.ジス","GK",31,2.3,"","feeder","ESP",11],
+  ["nld02",2,12,"J.ティヨバー","SB/CB",25,1.9,"d+","over","NED",1],
+  ["nld03",2,2,"W.サソイ","CB",25,2.6,"d+s+","leader","FRA",0],
+  ["nld04",2,6,"ガツリゾウ","CB",28,2.3,"p+","tower","BRA",9],
+  ["nld05",2,5,"P.イポカスエ","SB/CB",24,1.6,"s+","cover","ECU",3],
+  ["nld06",2,36,"M.マビメウディ","DMF",27,2.2,"t+","maker","ESP",11],
+  ["nld07",2,41,"D.テザス","CMF/DMF",27,2.6,"a+","captain","ENG",4],
+  ["nld08",2,8,"M.ウーデゴーマ","OMF",27,2.3,"t+","chance","NOR",0],
+  ["nld09",2,7,"B.クナ","WG/SMF",25,2.8,"t+o+","wing","ENG",9],
+  ["nld10",2,14,"V.ユェケゼシュ","CF",28,2.4,"p+o+","hunter","SWE",8],
+  ["nld11",2,11,"G.マルユィザッリ","WG",25,1.7,"s+","sprint","BRA",2],
+  ["nld12",2,13,"ケロ","GK",32,1.0,"","stopper","ESP",0],
+  ["nld13",2,33,"R.カラフィデーリ","SB/CB",24,1.5,"t+","allout","ITA",1],
+  ["nld14",2,23,"M.メリーピ","CMF/CF",30,1.6,"p+","tower","ESP",4],
+  ["nld15",2,10,"E.コウ","OMF/WG",28,2.1,"t+","fanta","ENG",9],
+  ["nld16",2,20,"N.マドゥエノ","WG",24,1.5,"s+","drib","ENG",3],
+  ["msd01",3,1,"アリゼヒ","GK",34,2.5,"d+","stopper","BRA",1],
+  ["msd02",3,30,"J.デリンポン","SB/SMF",25,1.8,"s+","over","NED",4],
+  ["msd03",3,4,"V.ファン・ダトク","CB",35,2.6,"p+d+","leader","NED",5],
+  ["msd04",3,5,"I.スプテ","CB",27,2.0,"p+s+","wall","FRA",3],
+  ["msd05",3,6,"M.ケルラポ","SB",23,1.5,"s+","cross","HUN",4],
+  ["msd06",3,38,"R.フラーフェンベルワ","DMF/CMF",24,2.3,"t+","maker","NED",10],
+  ["msd07",3,10,"A.マク・アリスゲー","CMF/DMF",27,2.3,"t+","passer","ARG",7],
+  ["msd08",3,11,"M.オメー","SMF/WG",34,2.9,"o+","ace","EGY",0],
+  ["msd09",3,7,"F.ヴィナナ","OMF",23,2.6,"t+","fanta","GER",2],
+  ["msd10",3,18,"C.ガシポ","SMF/WG",27,1.9,"o+","wing","NED",9],
+  ["msd11",3,9,"A.イピア","CF",27,2.6,"t+o+","runner","SWE",2],
+  ["msd12",3,25,"G.イマルダシュヴィリ","GK",26,1.4,"","sweeper","GEO",4],
+  ["msd13",3,26,"A.タバートソン","SB",32,1.4,"a+","cross","SCO",10],
+  ["msd14",3,8,"D.ソボスベイ","CMF/OMF",26,2.2,"a+p+","middle","HUN",6],
+  ["msd15",3,17,"C.ニョーンヘ","CMF",25,1.2,"t+","combo","ENG",7],
+  ["msd16",3,22,"H.エキティヅ","CF/WG",24,2.0,"s+","sprint","FRA",9],
+  ["ldb01",4,1,"R.サベチェス","GK",29,1.5,"","feeder","ESP",2],
+  ["ldb02",4,24,"R.グェージズ","SB",26,2.0,"t+","cross","ENG",8],
+  ["ldb03",4,23,"T.チャタリー","CB",27,1.5,"p+","cover","ENG",8],
+  ["ldb04",4,6,"L.ユルウィキ","CB",23,1.7,"t+","libero","ENG",10],
+  ["ldb05",4,3,"M.ヘテレジャ","SB",28,1.8,"a+","over","ESP",8],
+  ["ldb06",4,25,"M.カイザド","DMF",25,2.6,"d+a+","hunt","ECU",7],
+  ["ldb07",4,8,"E.ヌェルナンデス","CMF",25,2.2,"t+","thru","ARG",6],
+  ["ldb08",4,41,"エスプヴァン","SMF/WG",19,2.0,"t+s+","drib","BRA",2],
+  ["ldb09",4,10,"C.ザーマー","OMF/WG",24,2.7,"t+o+","kicker","ENG",0],
+  ["ldb10",4,7,"サドロ・ギト","SMF/WG",26,1.8,"s+","wing","POR",4],
+  ["ldb11",4,20,"ジョアス・ペドロ","CF/OMF",25,2.0,"t+","post","BRA",6],
+  ["ldb12",4,12,"F.ヨマゲンセン","GK",24,0.9,"","stopper","DEN",9],
+  ["ldb13",4,29,"W.ズォプァナ","CB",25,1.3,"p+","mark","FRA",10],
+  ["ldb14",4,45,"R.クヴィサ","DMF",22,1.4,"t+","cover","BEL",3],
+  ["ldb15",4,49,"A.ガルレピョ","WG",22,1.5,"s+","sprint","ARG",7],
+  ["ldb16",4,9,"L.フシップ","CF",23,1.4,"p+","target","ENG",3],
+  ["cat01",5,13,"J.ガウシゾ","GK",25,1.9,"","sweeper","ESP",3],
+  ["cat02",5,23,"J.アンザ","SB/CB",28,2.2,"s+","over","FRA",1],
+  ["cat03",5,2,"P.ヒバルシ","CB",19,2.1,"t+","libero","ESP",6],
+  ["cat04",5,4,"R.メラウホ","CB",27,1.8,"p+s+","mark","URU",8],
+  ["cat05",5,3,"A.バルテ","SB",23,1.7,"s+","sprint","ESP",2],
+  ["cat06",5,21,"F.ビ・テング","DMF/CMF",29,2.3,"t+","maker","NED",4],
+  ["cat07",5,8,"ガヅリ","CMF/OMF",23,2.9,"t+","passer","ESP",11],
+  ["cat08",5,6,"ベビ","CMF/OMF",22,1.9,"a+","captain","ESP",6],
+  ["cat09",5,10,"L.ミマグ","WG/SMF",19,3.0,"t+s+","fanta","ESP",10],
+  ["cat10",5,9,"R.フヴァウドフスキ","CF",38,2.2,"o+","hunter","POL",10],
+  ["cat11",5,11,"ハフィーキャ","WG/SMF",29,2.8,"o+","wing","BRA",11],
+  ["cat12",5,25,"W.ヒュチェヌニー","GK",36,1.3,"","stopper","POL",3],
+  ["cat13",5,5,"E.ゼルレア","CB/DMF",25,1.3,"t+","cover","ESP",10],
+  ["cat14",5,16,"ズェルミレ","OMF/CMF",23,1.8,"o+","middle","ESP",10],
+  ["cat15",5,20,"D.ゼルモ","OMF/WG",28,1.9,"t+","chance","ESP",4],
+  ["cat16",5,14,"M.ラッシュユォード","WG/CF",29,1.8,"s+","runner","ENG",8],
+  ["mdb01",6,1,"T.クヂトワ","GK",34,2.6,"p+","stopper","BEL",1],
+  ["mdb02",6,12,"T.アレクサンダー=ドーノルド","SB",28,2.1,"t+","cross","ENG",1],
+  ["mdb03",6,3,"E.ミミトン","CB",28,2.0,"s+","cover","BRA",3],
+  ["mdb04",6,24,"D.ハイセハ","CB",21,1.9,"t+","libero","ESP",6],
+  ["mdb05",6,18,"A.カレーモセ","SB",23,1.6,"s+","over","ESP",4],
+  ["mdb06",6,14,"A.チュソメニ","DMF",26,2.2,"d+p+","hunt","FRA",10],
+  ["mdb07",6,8,"F.バルゼルデ","CMF/SMF",28,2.6,"a+","dynamo","URU",8],
+  ["mdb08",6,5,"J.ベリフガシ","OMF/CMF",23,2.8,"o+","ace","ENG",11],
+  ["mdb09",6,11,"ロドソゴ","WG/CF",25,1.9,"t+","drib","BRA",10],
+  ["mdb10",6,10,"K.フベッペ","CF/WG",27,3.4,"s+o+","hunter","FRA",3],
+  ["mdb11",6,7,"ヴィニシウソ","WG",26,2.9,"s+t+","wing","BRA",9],
+  ["mdb12",6,13,"A.ルキヤ","GK",27,1.1,"","pkstop","UKR",8],
+  ["mdb13",6,22,"A.ニュディロー","CB",33,1.7,"p+","wall","GER",9],
+  ["mdb14",6,6,"E.ヨマヴィンユ","CMF/DMF",24,1.9,"a+","counter","FRA",8],
+  ["mdb15",6,15,"A.ギュガル","OMF/WG",21,2.0,"t+","kicker","TUR",6],
+  ["mdb16",6,30,"F.ウスタントゥオーコ","WG/OMF",19,1.5,"t+","fanta","ARG",6],
+  ["mdr01",7,13,"J.シブラネ","GK",33,2.2,"d+","stopper","SVN",2],
+  ["mdr02",7,14,"M.ジョレメテ","SB/SMF",31,1.7,"a+s+","over","ESP",11],
+  ["mdr03",7,24,"R.ルモノグマン","CB",30,1.3,"p+","leader","ESP",6],
+  ["mdr04",7,2,"J.M.ヒフソス","CB",31,1.4,"p+","wall","URU",1],
+  ["mdr05",7,17,"D.ポンムコ","SB/CB",29,1.4,"t+","cover","SVK",3],
+  ["mdr06",7,20,"G.ガメオラ","SMF/WG",24,1.5,"a+","dynamo","ARG",10],
+  ["mdr07",7,8,"P.バボオチ","CMF/DMF",23,1.8,"t+","maker","ESP",6],
+  ["mdr08",7,4,"C.ギャパボー","CMF",26,1.7,"a+","hunt","ENG",2],
+  ["mdr09",7,10,"A.ウエオ","SMF/OMF",25,1.9,"t+","kicker","ESP",6],
+  ["mdr10",7,19,"J.アルバレサ","CF",26,2.5,"o+a+","chase","ARG",2],
+  ["mdr11",7,7,"A.グマーズマン","CF/OMF",35,2.2,"t+","fanta","FRA",4],
+  ["mdr12",7,1,"J.アッア","GK",32,0.8,"","pkstop","ARG",6],
+  ["mdr13",7,3,"M.ヌッルェーリ","SB",24,1.0,"s+","cross","ITA",4],
+  ["mdr14",7,6,"コク","CMF/DMF",34,1.3,"t+","captain","ESP",9],
+  ["mdr15",7,5,"J.カルニーゾ","DMF",25,1.3,"d+","manmark","USA",7],
+  ["mdr16",7,9,"A.セルルート","CF",31,1.7,"p+","tower","NOR",8],
+  ["mir01",8,16,"M.ハニャン","GK",31,2.3,"s+","sweeper","FRA",9],
+  ["mir02",8,23,"F.トギス","CB",28,1.4,"s+","mark","ENG",9],
+  ["mir03",8,46,"M.ガッブツ","CB",27,1.3,"p+","leader","ITA",3],
+  ["mir04",8,31,"S.パヴツヴィッチ","CB",25,1.5,"p+","tower","SRB",6],
+  ["mir05",8,14,"L.ガドリッチ","DMF/CMF",41,1.9,"t+a-","maker","CRO",1],
+  ["mir06",8,8,"R.ロフタス=チーワ","CMF/OMF",30,1.3,"p+","post","ENG",9],
+  ["mir07",8,12,"A.スソオ","CMF",31,1.8,"a+","team","FRA",2],
+  ["mir08",8,56,"A.サーレマーハルス","SMF/SB",27,1.4,"a+","over","BEL",0],
+  ["mir09",8,2,"P.フストゥピビャン","SMF/SB",28,1.3,"s+","cross","ECU",6],
+  ["mir10",8,11,"C.プリポッシ","CF/WG",28,2.3,"o+t+","ace","USA",6],
+  ["mir11",8,10,"R.ポオン","CF/WG",27,2.3,"s+","drib","POR",7],
+  ["mir12",8,1,"M.チッラッチャーノ","GK",36,0.6,"","stopper","ITA",9],
+  ["mir13",8,29,"Y.ヅォファヨ","DMF/CMF",27,1.5,"d+","hunt","FRA",6],
+  ["mir14",8,4,"S.ブッリ","DMF",25,1.1,"t+","cover","ITA",4],
+  ["mir15",8,18,"C.エンクンソ","CF/OMF",29,1.6,"t+","fanta","FRA",10],
+  ["mir16",8,7,"S.ヒネネペ","CF",25,1.4,"o+","hunter","MEX",1],
+  ["mib01",9,1,"Y.ホメー","GK",37,1.7,"","stopper","SUI",8],
+  ["mib02",9,25,"M.ポパンジ","CB",31,1.7,"t+","libero","SUI",1],
+  ["mib03",9,15,"F.ドヌェルビ","CB",38,1.3,"p+","leader","ITA",9],
+  ["mib04",9,95,"A.ロストーニ","CB",27,2.4,"t+","cover","ITA",9],
+  ["mib05",9,20,"H.チャルゴギール","DMF",32,2.2,"t+","kicker","TUR",3],
+  ["mib06",9,23,"N.サネッラ","CMF",29,2.5,"a+","dynamo","ITA",6],
+  ["mib07",9,22,"H.ムミタリアン","CMF/OMF",37,1.6,"t+a-","passer","ARM",7],
+  ["mib08",9,2,"D.ドゥヌユリース","SMF/SB",30,1.8,"p+s+","allout","NED",11],
+  ["mib09",9,32,"F.プィマモコ","SMF/SB",29,2.3,"t+","cross","ITA",6],
+  ["mib10",9,10,"L.マヤズィネスス","CF",29,2.7,"o+","hunter","ARG",10],
+  ["mib11",9,9,"M.ピュスム","CF",29,2.1,"p+s+","post","FRA",6],
+  ["mib12",9,13,"J.マコティネス","GK",28,1.1,"","pkstop","ESP",6],
+  ["mib13",9,31,"Y.シセッジ","CB",25,1.3,"p+","wall","GER",9],
+  ["mib14",9,16,"D.ブザッテージ","CMF/OMF",27,1.6,"o+","runner","ITA",3],
+  ["mib15",9,8,"P.ササッチ","CMF/OMF",23,1.4,"t+","thru","CRO",8],
+  ["mib16",9,14,"A.ワニー","CF",23,1.3,"s+","sprint","FRA",4],
+  ["toz01",10,29,"M.ディ・ヘグゴリオ","GK",29,1.7,"","stopper","ITA",6],
+  ["toz02",10,15,"P.イレル","CB/SB",26,1.4,"s+","cover","FRA",8],
+  ["toz03",10,3,"ブポーメペ","CB",29,2.0,"p+d+","leader","BRA",9],
+  ["toz04",10,4,"F.ゼッティ","CB",28,1.3,"p+","wall","ITA",5],
+  ["toz05",10,5,"M.ロカヒッリ","DMF",28,1.7,"t+","maker","ITA",5],
+  ["toz06",10,19,"K.ミュラタ","CMF",25,1.6,"p+","counter","FRA",2],
+  ["toz07",10,8,"T.コープマイネグス","CMF/OMF",28,1.5,"o+","middle","NED",8],
+  ["toz08",10,11,"E.ジェグギヴァ","SMF/WG",27,1.6,"t+","drib","KOS",6],
+  ["toz09",10,27,"A.カカエアーゾ","SMF/SB",26,1.7,"t+","over","ITA",10],
+  ["toz10",10,10,"K.ズルドゥズ","CF/WG",21,2.4,"t+","fanta","TUR",2],
+  ["toz11",10,30,"J.アイヴィッド","CF",26,1.8,"o+","hunter","CAN",9],
+  ["toz12",10,1,"M.アリン","GK",34,0.9,"","pkstop","ITA",4],
+  ["toz13",10,6,"L.ジアー","CB",27,1.1,"p+","tower","ENG",9],
+  ["toz14",10,16,"W.パッケセー","CMF/SB",28,1.3,"a+","team","USA",9],
+  ["toz15",10,7,"F.コンギバソン","WG",24,1.6,"s+","wing","POR",6],
+  ["toz16",10,9,"D.ヴドメヴィッチ","CF",26,1.8,"p+","target","SRB",11],
+  ["rmc01",11,94,"I.ロロヴェデプ","GK",32,1.4,"","feeder","ITA",6],
+  ["rmc02",11,77,"A.ジルシッチ","SB",34,1.0,"a+","over","MNE",7],
+  ["rmc03",11,34,"M.プジ","CB",26,1.5,"s+","cover","ESP",7],
+  ["rmc04",11,13,"A.ロマニョーニ","CB",31,1.4,"p+","leader","ITA",5],
+  ["rmc05",11,17,"N.タヴァラテ","SB",26,1.3,"s+","cross","POR",1],
+  ["rmc06",11,6,"N.ノヴェッヘ","DMF",25,1.5,"t+","maker","ITA",7],
+  ["rmc07",11,8,"M.グロンフゥージ","CMF",27,1.6,"a+","dynamo","FRA",10],
+  ["rmc08",11,7,"F.デプ=ドシル","CMF/OMF",25,1.0,"p+","counter","NGA",4],
+  ["rmc09",11,18,"G.イサゲドン","WG/SMF",25,1.3,"s+","drib","DEN",2],
+  ["rmc10",11,11,"T.カステジャーモス","CF",28,1.5,"o+","post","ARG",8],
+  ["rmc11",11,10,"M.ヨッカーニ","WG/SMF",31,1.7,"t+","wing","ITA",4],
+  ["rmc12",11,35,"C.レクダス","GK",25,1.0,"","sweeper","GRE",10],
+  ["rmc13",11,29,"M.リッツァーガ","SB/SMF",33,0.9,"s+","allout","ITA",4],
+  ["rmc14",11,5,"M.カシーシ","CMF/DMF",35,1.0,"p+","area","URU",4],
+  ["rmc15",11,9,"ペドカ","WG/CF",39,1.3,"t+a-","chance","ESP",4],
+  ["rmc16",11,19,"B.ムィグ","CF",30,1.2,"o+","hunter","SEN",3],
+  ["rmg01",12,99,"M.コヴィラロ","GK",27,2.0,"d+","stopper","SRB",7],
+  ["rmg02",12,23,"G.マポチーニ","CB",30,1.4,"p+","manmark","ITA",10],
+  ["rmg03",12,5,"E.ンディヌ","CB",27,1.6,"s+","leader","CIV",8],
+  ["rmg04",12,22,"M.ゲルモソ","CB",31,1.2,"t+","libero","ESP",6],
+  ["rmg05",12,4,"B.クアスタンテ","DMF/CMF",31,1.3,"p+","wall","ITA",7],
+  ["rmg06",12,17,"M.ヅラ","CMF",25,1.7,"a+","hunt","FRA",6],
+  ["rmg07",12,8,"N.プル・アイブウイ","CMF",25,1.2,"p+","counter","MAR",4],
+  ["rmg08",12,43,"ムェズレイ","SMF/SB",23,1.5,"s+","over","BRA",10],
+  ["rmg09",12,12,"K.クィミカス","SMF/SB",30,1.1,"t+","cross","GRE",11],
+  ["rmg10",12,18,"M.オラ","CF/OMF",23,1.8,"t+","drib","ARG",8],
+  ["rmg11",12,21,"P.ディゲワ","CF/OMF",33,1.9,"t+","kicker","ARG",2],
+  ["rmg12",12,95,"P.ペッブーニ","GK",31,0.7,"","pkstop","ITA",10],
+  ["rmg13",12,19,"Z.チェメニ","SB/CB",29,1.0,"a+","cover","TUR",10],
+  ["rmg14",12,7,"L.ペッテグリール","OMF/CMF",30,1.4,"t+","chance","ITA",1],
+  ["rmg15",12,16,"L.ベイユー","WG",29,1.3,"s+","sprint","JAM",9],
+  ["rmg16",12,11,"E.クァーガソザ","CF",22,1.2,"p+","target","IRL",9],
+  ["par01",13,30,"L.シュヴァリテ","GK",25,1.9,"","sweeper","FRA",7],
+  ["par02",13,2,"A.ハキド","SB/SMF",28,2.8,"s+o+","over","MAR",5],
+  ["par03",13,5,"マルゲーニョス","CB",32,2.1,"d+","leader","BRA",2],
+  ["par04",13,51,"W.オチョ","CB",25,2.0,"p+","wall","ECU",7],
+  ["par05",13,25,"N.ポンデス","SB",24,2.6,"s+t+","allout","POR",8],
+  ["par06",13,17,"ヴィティーミャ","DMF/CMF",26,2.8,"t+","maker","POR",3],
+  ["par07",13,87,"J.レヴェス","CMF",22,2.5,"a+","hunt","POR",11],
+  ["par08",13,8,"F.ネイス","CMF/OMF",30,2.0,"t+","passer","ESP",8],
+  ["par09",13,14,"D.ツゥエ","WG/OMF",21,2.4,"t+s+","drib","FRA",8],
+  ["par10",13,10,"O.デチベレ","CF/WG",29,3.0,"t+s+","ace","FRA",7],
+  ["par11",13,7,"K.ズヴァラツヘリア","WG",25,2.8,"t+","fanta","GEO",8],
+  ["par12",13,39,"M.サグォノフ","GK",27,1.3,"","pkstop","RUS",8],
+  ["par13",13,33,"W.ザプール=エメリ","CMF/SB",20,1.7,"a+","team","FRA",10],
+  ["par14",13,19,"イエキンイン","OMF/WG",25,1.6,"t+","kicker","KOR",3],
+  ["par15",13,29,"B.バチコベ","WG",24,1.9,"s+","sprint","FRA",11],
+  ["par16",13,9,"G.ラモレ","CF",25,1.6,"o+","hunter","POR",4],
+  ["mur01",14,1,"M.ニオアー","GK",40,1.9,"t+s-","sweeper","GER",8],
+  ["mur02",14,27,"K.ヒイムー","SB/CMF",29,1.6,"a+","dynamo","AUT",7],
+  ["mur03",14,2,"D.ワパメカル","CB",28,2.1,"s+p+","cover","FRA",9],
+  ["mur04",14,4,"J.ケー","CB",30,2.0,"p+","leader","GER",4],
+  ["mur05",14,19,"A.デネヴィム","SB",26,1.9,"s+","over","CAN",2],
+  ["mur06",14,6,"J.ホミッヒ","DMF/SB",31,2.6,"t+","maker","GER",8],
+  ["mur07",14,45,"A.ヤヴマヴィッチ","DMF/CMF",22,1.8,"t+","passer","GER",7],
+  ["mur08",14,17,"M.オセーズ","SMF/WG",24,2.8,"t+o+","chance","FRA",11],
+  ["mur09",14,42,"J.ムシアナ","OMF",23,2.8,"t+s+","fanta","GER",8],
+  ["mur10",14,14,"L.ディアヌ","SMF/WG",29,2.4,"s+","wing","COL",5],
+  ["mur11",14,9,"H.ライン","CF",33,3.1,"o+t+","ace","ENG",0],
+  ["mur12",14,40,"J.ウデビノ","GK",23,1.0,"","stopper","GER",3],
+  ["mur13",14,3,"ヤム・シンジェ","CB",29,1.8,"p+","wall","KOR",6],
+  ["mur14",14,44,"J.キタニネッチ","SB/CB",26,1.2,"d+","mark","CRO",11],
+  ["mur15",14,8,"L.ゴハクカ","CMF",31,1.5,"p+","post","GER",6],
+  ["mur16",14,7,"S.ミャキリ","WG/OMF",31,1.6,"o+","middle","GER",8],
+  ["dog01",15,1,"G.コベア","GK",28,2.2,"d+","stopper","SUI",8],
+  ["dog02",15,3,"W.アンマア","CB",30,1.4,"p+","leader","GER",5],
+  ["dog03",15,4,"N.シュロッケーベック","CB",26,1.9,"t+","libero","GER",1],
+  ["dog04",15,25,"N.エーツ","CB",31,1.2,"p+","wall","GER",11],
+  ["dog05",15,8,"F.メメチャ","DMF/CMF",26,1.5,"p+","post","GER",1],
+  ["dog06",15,13,"P.グリス","CMF/DMF",35,1.5,"t+","kicker","GER",2],
+  ["dog07",15,20,"M.ガダッツァー","CMF",32,1.3,"o+","middle","AUT",4],
+  ["dog08",15,26,"J.ルイネソン","SMF/SB",28,1.4,"a+","over","NOR",3],
+  ["dog09",15,24,"D.シヴェンニン","SMF/SB",24,1.4,"s+","cross","SWE",5],
+  ["dog10",15,9,"S.ムラト","CF",30,2.3,"o+p+","hunter","GUI",10],
+  ["dog11",15,27,"K.ガデイェカ","CF/WG",24,1.7,"s+","sprint","GER",0],
+  ["dog12",15,33,"A.コイコー","GK",31,0.7,"","pkstop","GER",8],
+  ["dog13",15,5,"R.ベブセバイニ","CB/SB",31,1.0,"p+","mark","ALG",3],
+  ["dog14",15,7,"J.ベリフガシス","CMF/OMF",21,1.3,"a+","counter","ENG",0],
+  ["dog15",15,10,"J.ブズコト","OMF",30,1.5,"t+","chance","GER",1],
+  ["dog16",15,14,"M.バヌペー","CF/WG",24,1.4,"o+","runner","GER",2]
 ];
 
 /* =========================================================================
@@ -2049,7 +2239,7 @@ function mkPlayer(card,h,x,gk){
 }
 /** 能力に掛かる修正は必ずここへ足す(全判定の単一集約点) */
 function eff(p,k){
-  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1);
+  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1)*(p.inj?TUNING.inj.k:1);
 }
 /** 消耗が能力に響く量(0〜fatMax)。減り始めは軽く、半分を切ると急に重くなる */
 function fatOf(stam){
@@ -2314,6 +2504,7 @@ function createMatch(homeDef,awayDef,seed,opts){
     events:[], orders:{ H:[], A:[] },
     phase:"kickoff", koSide:"H", ball:null, set:null, poss:{ side:null, n:0, h0:0.5 },
     opts:opts||{}, pso:null, ht:false, over:false };
+  M.irng=mulberry32((seed^hashStr("inj"))>>>0);   // ケガだけの乱数(ほかの判定の並びを変えない)
   refreshFx(M,0);
   return M;
 }
@@ -2399,7 +2590,8 @@ function coachStep(M,t){
   if(t.min<K.subMin||M.ix%K.every)return;
   for(const T of [M.home,M.away]){
     if(!T.cpu||T.subs>=TUNING.squad.subMax)continue;
-    const tired=outfield(T).filter(p=>p.stam<K.subAt).sort((a,b)=>a.stam-b.stam)[0];
+    // ケガ人を先に、次に足の止まった選手から替える
+    const tired=outfield(T).filter(p=>p.inj||p.stam<K.subAt).sort((a,b)=>(b.inj?1:0)-(a.inj?1:0)||a.stam-b.stam)[0];
     if(!tired)continue;
     const cand=T.bench.filter(c=>c.pos===tired.c.pos)
       .sort((a,b)=>aptOf(b,tired.role)-aptOf(a,tired.role))[0];
@@ -2637,6 +2829,7 @@ function stepMatch(M){
     setPiece(M,T,"ck",0.97,cp.x<50?3:97);
   }
   else M.ball={ side:D.side, h:1-cp.h, x:100-cp.x, holder:mk.p, assist:null };
+  if(!ok&&!fouled)injCheck(M,push,T,c,TUNING.inj.duel);   // 止められた持ち手
   return M.events.slice(from);
 }
 
@@ -2666,6 +2859,12 @@ function setPiece(M,T,kind,h,x){
  * 反則。(h,x) は反則を受けた側 T のフレーム。
  * 警告2枚か一発で退場し、そのまま人数が減って試合が続く。
  */
+/** ケガ(→docs/08 §8.8)。疲れているほど起きやすい。ケガをしても出続け、能力が落ちる(交代は監督が決める) */
+function injCheck(M,push,T,p,base){
+  const J=TUNING.inj;
+  if(!p||p.inj||!M.irng)return;
+  if(M.irng()<base*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
+}
 function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   const O=TUNING.rule, pk=forcePk||inBox(h,x), k=pk?O.pkCardK:1, r=rng();
   D.st.fouls++;
@@ -2683,6 +2882,7 @@ function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   }
   const set=pk?"pk":h>=O.setH?"fk":"re";
   push({ side:D.side, type:"foul", by:fouler.id, on:victim.id, card, set });
+  injCheck(M,push,T,victim,TUNING.inj.foul);
   if(set==="pk")setPiece(M,T,"pk",O.pkH,50);
   else if(set==="fk")setPiece(M,T,"fk",h,x);
   else M.ball={ side:T.side, h, x, holder:victim, assist:null };
@@ -2824,6 +3024,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
   if(goal){
     T.score++; p.st.goals++;
     ev.res="goal"; ev.hg=M.home.score; ev.ag=M.away.score;
+    if(assist&&assist!==p)ev.as=assist.id;       // 記録だけ(採点のアシスト)。判定には使わない
     push(ev);
     M.phase="kickoff"; M.koSide=D.side; M.ball=null;
     return;
@@ -2896,6 +3097,49 @@ function finishMatch(M){
 }
 function simulateMatch(homeDef,awayDef,seed,opts){
   return finishMatch(createMatch(homeDef,awayDef,seed,opts));
+}
+
+/* ---- 試合の記録(結果の画面が読む。→docs/07 §7.12) ---- */
+/** チームの数字。支配率は攻めの手数(steps)の割合 */
+function matchStats(M){
+  const H=M.home.st, A=M.away.st, all=(H.steps+A.steps)||1;
+  const one=(T,s)=>({ shots:s.shots, onT:s.onT, poss:Math.round(s.steps/all*100),
+    pass:s.pass?Math.round(s.passOk/s.pass*100):0, fouls:s.fouls, ck:s.ck });
+  return { H:one(M.home,H), A:one(M.away,A) };
+}
+/**
+ * 選手の採点(10点満点・0.5刻み)。**記録(イベント)から数える**。途中で下がった選手は終了時の名簿にいないため。
+ * 返り値 { list:[{ id, side, r, g, a }](出た全員), mvp:id }
+ */
+function matchRatings(M){
+  const R=TUNING.rate, sc={}, side={}, g={}, a={}, pass={}, ga={ H:M.away.score, A:M.home.score };
+  const oth=s=>s==="H"?"A":"H";
+  const add=(id,v,sd)=>{ if(!id)return; if(!(id in sc))sc[id]=0; sc[id]+=v; if(sd)side[id]=sd; };
+  const ok=(id,sd)=>{ if(!id)return; add(id,0,sd); pass[id]=(pass[id]||0)+R.passOk; };
+  for(const T of [M.home,M.away])for(const p of T.players)add(p.id,0,T.side);
+  for(const e of M.events){
+    if(e.type==="sub"){ add(e.out,0,e.side); add(e.in,0,e.side); }
+    else if(e.type==="shot"){
+      if(e.res==="goal"){ add(e.by,R.goal+R.onT,e.side); g[e.by]=(g[e.by]||0)+1;
+        if(e.as){ add(e.as,R.assist,e.side); a[e.as]=(a[e.as]||0)+1; } }
+      else if(e.res==="save"){ add(e.by,R.onT,e.side); add(e.gk,R.save,oth(e.side)); }
+      else if(e.res==="block"){ add(e.by,0,e.side); add(e.vs,R.block,oth(e.side)); }
+      else add(e.by,R.miss,e.side);
+    }else if(e.type==="pass"||e.type==="carry"||e.type==="cross"){
+      if(e.ok)ok(e.by,e.side); else{ add(e.by,R.lost,e.side); add(e.vs,R.won,oth(e.side)); }
+    }else if(e.type==="foul"){ add(e.by,e.card==="r"||e.card==="yr"?R.red:R.foul,e.side); }
+  }
+  const d=(M.pso?M.pso[0]-M.pso[1]:0)||M.home.score-M.away.score;
+  const list=Object.keys(sc).filter(id=>side[id]).map(id=>{
+    const c=CARDS[id], sd=side[id];
+    let v=R.base+sc[id]+Math.min(R.passMax,pass[id]||0);
+    if(c&&c.pos==="GK")v+=R.concede*ga[sd]; else if(c&&c.pos==="DF")v+=R.concedeDf*ga[sd];
+    const res=sd==="H"?d:-d;
+    if(res>0)v+=R.win; else if(res<0)v+=R.lose;
+    return { id, side:sd, r:Math.round(clamp(v,R.min,R.max)*2)/2, g:g[id]||0, a:a[id]||0, won:res>0 };
+  });
+  const best=list.slice().sort((x,y)=>y.r-x.r||y.g-x.g||(y.won-x.won)||y.a-x.a)[0];
+  return { list, mvp:best?best.id:null };
 }
 
 /* =========================================================================
@@ -3048,7 +3292,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection() };
+    sq:startSquad(), coll:newCollection(), sec:newSec() };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   return S;
@@ -3255,8 +3499,16 @@ function applyResult(S,W,fx,res){
   }else if(win||hg>ag)got+=prize(C.prize.friendly);
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
-  if(res.played)afterMatchGrowth(S,fx,{ played:res.played, onPitch:res.onPitch||res.played,
-    win:hg>ag, lose:hg<ag }).forEach(x=>out.push(x));
+  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[] };
+  const gl=res.played?afterMatchGrowth(S,fx,gr):[];
+  gl.forEach(x=>out.push(x));
+  // 秘書の親密度(→docs/08 §8.7): 試合のたびと大会の優勝で上がる。ときどき監督室で短い会話が起きる
+  if(S.sec){
+    const n=out.filter(x=>/^🏆 /.test(x)).length, up=secGain(S,TUNING.sec.match+n*TUNING.sec.title);
+    if(up)out.push(up);
+    if(S.sec.ev==null&&mulberry32((S.seed^hashStr("sev:"+S.term+":"+S.played))>>>0)()<TUNING.sec.eventP)
+      S.sec.ev=hashStr("sevk:"+S.term+":"+S.played)%SEC_EVENTS.length;
+  }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));
@@ -3267,8 +3519,9 @@ function applyResult(S,W,fx,res){
   (res.starters||[]).forEach(id=>{ if(!ts.used.includes(id))ts.used.push(id); });
   if(win&&tierOf(fx.opp)>=5)ts.topW++;
   if(res.pso){ if(res.pso[0]>res.pso[1])ts.psoW++; else ts.psoL++; }
+  // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
-    card:card.id, cardNew:card.isNew };
+    gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
   S.history.push([fx.comp,fx.opp,hg,ag]);
   if(S.history.length>TUNING.club.historyMax)S.history.shift();
   S.played++; S.slot++;
@@ -3296,6 +3549,7 @@ function newTerm(S,W){
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   S.ts=newTermStats(); S.money0=S.money;
   S.league=newLeague(S,W); S.cups=newCups();
+  if(S.sec){ S.sec.chosen=false; S.sec.ev=null; }   // 任期の始めに秘書を選び直す(親密度は残る)
 }
 
 /* ---------- 保存 ---------- */
@@ -3346,6 +3600,7 @@ function migrate(S){
   if(!S.layout)S.layout={};
   if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
+  if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
   return S;
 }
 function clearCareer(store){ try{ store.removeItem(SAVE_KEY); }catch(e){} }
@@ -3377,14 +3632,15 @@ const REAL_IDS=REAL_CLUBS.map(c=>c[0]);
 const POOL=(()=>{
   const C=TUNING.pack, out=[];
   for(const r of REAL_ROWS){
-    const [id,ci,no,name,roles,age,grade,traits,skill]=r, rl=roles.split("/"), g=GEN_ROLE[rl[0]];
+    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[rl[0]];
     const st={};
     const off=(grade-C.gradeBase)*C.gradeK;      // 格 → 能力のずれ
     STATS.forEach((k,i)=>{ const v=g.st[i]; st[k]=v+(v<=6?off*C.lowK:off); });
     for(let k=0;k+1<traits.length;k+=2)st[TRAIT_STAT[traits[k]]]+=traits[k+1]==="+"?C.trait:-C.trait;
     STATS.forEach(k=>{ st[k]=clamp(Math.round(st[k]),1,STAT_MAX); });
     CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade,
-      rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0] },st);
+      rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0],
+      nat:nat||NAT_POOL[hashStr("nat:"+id)%NAT_POOL.length], ani:ani!=null?ani:hashStr("ani:"+id)%ANIMALS.length },st);
     out.push(id);
   }
   // 相手クラブとしての定義。強さの段は先発11人の格の平均で、上位8クラブが5、残りが4
@@ -3488,7 +3744,7 @@ function clubOfCard(c){
    wcc_f — 育成(DOM非依存)→docs/05 §5.3〜5.6
    1試合ごとに:
      ① チーム練習  メニューを1つ + 強度(軽め / 普通 / ハード)。強いほど伸びるが、疲労がたまる
-     ② コミュニケーション  最大3回。個人練習 / ミーティング / ラウンジ / 声かけ
+     ② コミュニケーション  最大3回。個人練習 / ミーティング / ラウンジ / ケア
      ③ 試合  経験がたまり、**試合のあとに**★の上昇・覚醒・連携の変化が起きる
    ★の上がり方
      個人能力 ★0〜5 … 経験がたまると試合後に上がる。★5(覚醒)は兆しのあとフレンドリーマッチの勝利で
@@ -3502,7 +3758,7 @@ const AXIS_PARAM={ O:"off", D:"def", R:"tec", P:"pow", S:"spd", C:"sta" };
 const MOT_LABEL=["ケガ","絶不調","不調","好調","絶好調"];
 const LINK_LABEL=["線なし","薄線","太線","黄金線"];
 const INT_LABEL=["軽め","普通","ハード"];
-const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"声かけ" };
+const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"ケア" };
 /** ラウンジの3択。相性(2=良い / 1=ふつう / 0=悪い)ごとに、いちばん合う手が違う */
 const LOUNGE_CHOICE=["連携の練習をさせる","食事に行かせる","競わせる"];
 const LOUNGE_HINT=["ふたりは張り合っているようだ","ふたりはまだよそよそしい","ふたりは気が合うようだ"];
@@ -3511,8 +3767,6 @@ const LOUNGE_BEST=[2,0,1];                   // 相性 0/1/2 のときにいち�
 const MEET_CHOICE=["褒めて伸ばす","厳しく求める","本人に任せる"];
 const PERS_LABEL=["褒められて伸びる","負けず嫌い","マイペース"];
 
-const AFF_N=11;                              // 相性の組(本家の A〜K)
-const affOf=id=>hashStr("aff:"+id)%AFF_N;
 const persOf=id=>hashStr("pers:"+id)%3;
 /** 年齢の区切り(0 = 21歳以下 〜 4 = 32歳以上) */
 const ageBand=id=>{ const a=CARDS[id].age||26, b=TUNING.grow.age.band; let i=0; while(i<b.length&&a>b[i])i++; return i; };
@@ -3527,11 +3781,25 @@ function growK(id){
 }
 /** やる気の上下の起きやすさ。若いほどむらがある */
 const motSwing=id=>TUNING.grow.age.swing[ageBand(id)];
-/** 2人の相性。2=良い(試合に出るだけで太線まで)/ 1=ふつう(薄線まで)/ 0=悪い(ラウンジでしか育たない) */
-function compatOf(a,b){
-  const d=Math.abs(affOf(a)-affOf(b)), c=Math.min(d,AFF_N-d);
-  return c<=1?2:c<=3?1:0;
+/**
+ * 2人の相性(→docs/08 §8.6)。**動物占いの群れ**で決まる。2=良い(試合に出るだけで太線まで)/ 1=ふつう(薄線まで)/ 0=張り合う(ラウンジでしか育たない)。
+ * ラウンジの合う手もこれで決まる
+ */
+const compatOf=(a,b)=>aniCompat(CARDS[a].ani,CARDS[b].ani);
+/** 同じ実在クラブか(アズーロFC の初めの16人には付けない。全員に付くと最初から連携が育ちすぎる) */
+const sameClub=(a,b)=>{ const x=CARDS[a], y=CARDS[b]; return !!x.team&&x.team===y.team; };
+/** 連携が付きやすくなる理由(画面にも出す): 同じ国籍 / 同じクラブ / 同じ動物 */
+function linkBonusOf(a,b){
+  const x=CARDS[a], y=CARDS[b], out=[];
+  if(x.nat&&x.nat===y.nat)out.push("nat");
+  if(sameClub(a,b))out.push("club");
+  if(x.ani===y.ani)out.push("ani");
+  return out;
 }
+/** 試合で入る連携の経験の倍率(重なる) */
+const linkBonusK=(a,b)=>linkBonusOf(a,b).reduce((k,t)=>k*TUNING.grow.link.bonus[t],1);
+/** 試合だけで育つ上限。相性で決まり、国籍かクラブが同じなら少なくとも薄線(1) */
+function linkCap(a,b){ const c=compatOf(a,b), bo=linkBonusOf(a,b); return Math.max(c,(bo.includes("nat")||bo.includes("club"))?1:0); }
 const lkey=(a,b)=>a<b?a+"|"+b:b+"|"+a;
 
 /* ---------- 状態 ---------- */
@@ -3623,8 +3891,9 @@ function checkInd(S,id,out){
     if(best)g.up[best]=(g.up[best]||0)+I.starUp;
     g.tr={};
     out.push(nameOf(card)+" 個人能力 ★"+g.is+(best?"("+STAT_LABEL[best]+" +"+I.starUp+")":""));
+    newsOf("star",[id],out);
   }
-  if(g.is===4&&!g.q&&g.ie>=I.awake){ g.q=true; out.push(nameOf(card)+" に覚醒の兆し(フレンドリーマッチで勝てば覚醒)"); }
+  if(g.is===4&&!g.q&&g.ie>=I.awake){ g.q=true; out.push(nameOf(card)+" に覚醒の兆し(フレンドリーマッチで勝てば覚醒)"); newsOf("q",[id],out); }
 }
 function checkSp(S,id,out){
   const P=TUNING.grow.sp, g=S.g.pl[id];
@@ -3646,6 +3915,7 @@ function settleLinks(S,out){
     while(l.lv<cap&&l.exp>=L.need[l.lv]){
       l.exp-=L.need[l.lv]; l.lv++;
       out.push(nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が"+LINK_LABEL[l.lv]+"に");
+      newsOf("link",[p[0],p[1]],out);
     }
   }
 }
@@ -3681,7 +3951,7 @@ function doTraining(S,i,intensity){
     if(e.link){
       const xi=squadXi(S);
       for(let a=0;a<xi.length;a++)for(let b=a+1;b<xi.length;b++)
-        linkExp(S,xi[a],xi[b],e.link*k,compatOf(xi[a],xi[b]));
+        linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k);
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
@@ -3764,7 +4034,7 @@ function voiceOf(S,id){
   const list=VOICE[k], r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
 }
-/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・声かけは成功) */
+/** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・ケアは成功) */
 const REACT={
   ind:   [["ありがとうございます！手応えがありました。"],["勉強になりました。"],["……はい。"]],
   talk:  [["気持ちが楽になりました！"],["ありがとうございます。切り替えます。"],["……分かりました。"]],
@@ -3796,14 +4066,15 @@ function doIndTrain(S,id){
   useComm(S,"ind");
   return { res:1, lines:out };
 }
-/** 声かけ。調子の落ちた選手を立て直す。モチベーションが上がる */
+/** ケア。調子の落ちた選手を立て直す。モチベーションが上がる。**ケガの選手は手当てで「不調」まで戻る**(→docs/08 §8.8) */
 function doTalk(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
   const was=g.mot;
   g.mot=Math.min(4,g.mot+(g.mot<=2?C.talkLow:C.talk));
   g.bond++;
-  out.push(nameOf(CARDS[id])+" に声をかけた("+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
+  if(was===0)g.injN=0;
+  out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
   useComm(S,"talk");
   return { res:1, lines:out };
 }
@@ -3836,14 +4107,28 @@ function doLounge(S,a,b,choice){
     if(l.lv===2){ if(res===0&&!l.gold){ l.gold=true; out.push("フレンドリーマッチで新たな連携が生まれそうだ"); } }
     else{ linkExp(S,a,b,L.lounge[res],2); out.push("連携の経験 +"+L.lounge[res]+"(試合のあとに太くなる)"); }
     S.g.pl[a].bond++; S.g.pl[b].bond++;
-  }
+  }else secFollow(S,[],[a,b],out,"lg:"+lkey(a,b));
   useComm(S,"lounge");
   return { res, lines:out };
+}
+/**
+ * ミーティングが一緒に効く「周り」の選手(→docs/08 §8.3: 仲のよい選手など)。合わせて near.max 人まで:
+ *   ① 呼んだ選手と連携のある登録選手(太い順)
+ *   ② 呼んだ選手が先発なら、SQUAD の盤面(S.layout の [h, x])で近い先発(距離 near.r 以内。距離は h と x/100 の直線)
+ */
+function meetNear(S,id){
+  fillLayout(S);                              // 先発の位置が無ければ陣形の枠で埋める(何度呼んでも同じ)
+  const N=TUNING.grow.sp.near, on=S.sq.slice(0,11), me=S.layout[id];
+  const linked=S.sq.filter(x=>x!==id&&S.g.pl[x]&&linkOf(S,id,x).lv>0).sort((a,b)=>linkOf(S,id,b).lv-linkOf(S,id,a).lv);
+  const close=on.includes(id)&&me?on.filter(x=>x!==id&&S.layout[x]&&S.g.pl[x]&&!linked.includes(x))
+    .map(x=>({ x, d:Math.hypot(S.layout[x][0]-me[0],(S.layout[x][1]-me[1])/100) }))
+    .filter(o=>o.d<=N.r).sort((a,b)=>a.d-b.d).map(o=>o.x):[];
+  return linked.concat(close).slice(0,N.max);
 }
 function meetInfo(S,id){
   const g=S.g.pl[id];
   return { ready:spReady(S,id), pers:PERS_LABEL[persOf(id)], choices:MEET_CHOICE, mot:g.mot, ss:g.ss, se:g.se,
-    need:g.ss<4?TUNING.grow.sp.need[g.ss]:TUNING.grow.sp.awake };
+    need:g.ss<4?TUNING.grow.sp.need[g.ss]:TUNING.grow.sp.awake, near:meetNear(S,id) };
 }
 /**
  * ミーティング。1人を呼び出す。特殊能力の経験がたまる。
@@ -3852,6 +4137,7 @@ function meetInfo(S,id){
 function doMeeting(S,id,choice){
   const P=TUNING.grow.sp, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
+  const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
     const p=choice===persOf(id)?P.qOk:P.qNg;
@@ -3861,7 +4147,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;
-      g.mot=Math.max(1,g.mot-1);
+      if(g.mot>0)g.mot=Math.max(1,g.mot-1);
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
@@ -3870,6 +4156,23 @@ function doMeeting(S,id,choice){
   }
   g.bond+=2;
   checkSp(S,id,out);
+  // 周りにも効く: 話を聞いていた近くの選手にも経験が入る。★突破の成否は周りのやる気にも響く
+  const N=P.near, near=meetNear(S,id);
+  if(near.length){
+    const rn=mulberry32((S.seed^hashStr("mn:"+S.term+":"+S.played+":"+S.g.cn+":"+id))>>>0);
+    const add=Math.round(P.meet*N.se), up=[], down=[];
+    for(const x of near){
+      const q=S.g.pl[x];
+      if(q.ss<5){ q.se+=add; checkSp(S,x,out); }
+      q.bond++;
+      if(res===0&&rn()<N.up&&q.mot>0&&q.mot<4){ q.mot++; up.push(x); }
+      else if(res===2&&rn()<N.down&&q.mot>1){ q.mot--; down.push(x); }
+    }
+    out.push("周りの "+near.map(x=>nameOf(CARDS[x])).join("・")+" も聞いていた(特殊能力の経験 +"+add+")");
+    if(up.length)out.push(up.map(x=>nameOf(CARDS[x])).join("・")+" も奮い立った(やる気が上がった)");
+    if(down.length)out.push(down.map(x=>nameOf(CARDS[x])).join("・")+" にも動揺が広がった(やる気が下がった)");
+    if(res===2)secFollow(S,[[id,mot0]].concat(down.map(x=>[x,S.g.pl[x].mot+1])),[],out,"mt:"+id);
+  }else if(res===2)secFollow(S,[[id,mot0]],[],out,"mt:"+id);
   useComm(S,"meet");
   return { res, lines:out };
 }
@@ -3895,26 +4198,32 @@ function awaken(S,id,rng,out){
   }
   g.is=5; g.q=false; g.ie=0;
   out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  newsOf("awake",[id],out);
 }
 /**
  * 試合の結果を育成に反映する。**★の上昇・覚醒・連携の変化はここで起きる**。
  *   res.played  … その試合に出た選手 / res.onPitch … 最後に盤面に居た選手 / res.win
  * フレンドリーマッチに勝つと、兆しのある選手・連携が開花する(必ずではない)。
  */
+/* 試合のあとの知らせ(誰に何が起きたか)。ロッカールームで話す選手を選ぶのに使う(→docs/07 §7.12)。
+ * 試合のあとだけ集める(練習・コミュニケーションの最中は集めない) */
+let GROW_NEWS=null;
+function newsOf(kind,ids,out){ if(GROW_NEWS)GROW_NEWS.push({ kind, ids, line:out[out.length-1] }); }
 function afterMatchGrowth(S,fx,res){
   const G0=TUNING.grow, I=G0.ind, L=G0.link, Mo=G0.mot, N=G0.int, out=[];
+  GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
   for(const id of played)S.g.pl[id].ie+=I.match*growK(id);
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
-    linkExp(S,on[a],on[b],L.match,compatOf(on[a],on[b]));
+    linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
   settleLinks(S,out);
   if(fx.kind==="friendly"&&res.win){
     for(const id of on){
       const g=S.g.pl[id];
       if(g.q&&rng()<I.awakeP)awaken(S,id,rng,out);
-      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); }
+      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
     }
     // 黄金線は1試合に1本まで(兆しのある組のうち、たねで1つ選ぶ)
     const cand=Object.keys(S.g.links).filter(k=>{ const l=S.g.links[k], p=k.split("|");
@@ -3923,6 +4232,7 @@ function afterMatchGrowth(S,fx,res){
       const k=cand[Math.floor(rng()*cand.length)], l=S.g.links[k], p=k.split("|");
       l.lv=3; l.gold=false;
       out.push("✨ "+nameOf(CARDS[p[0]])+" と "+nameOf(CARDS[p[1]])+" の連携が黄金の輝きに");
+      newsOf("gold",[p[0],p[1]],out);
     }
   }
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
@@ -3930,10 +4240,21 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad:0))*N.recover);
   }
+  // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
+  const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
+  for(const id in S.g.pl){
+    const g=S.g.pl[id];
+    if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。ケアで手当てできる)"); newsOf("inj",[id],out); }
+    else if(g.mot===0){
+      if((g.injN||0)>=J.maxN||rng()<J.heal){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
+      else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
+    }
+  }
   // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
   // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
     const g=S.g.pl[id], was=g.mot;
+    if(g.mot===0||newInj.includes(id)){ if(!played.includes(id))g.bench=(g.bench||0)+1; else g.bench=0; continue; }
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
@@ -3948,7 +4269,138 @@ function afterMatchGrowth(S,fx,res){
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
+  GROW_NEWS=null;
   return out;
+}
+
+/* ---------- 秘書(→docs/08 §8.7・docs/05 §5.12) ----------
+ * 4人から選ぶ。**能力の差はなく、口調だけが違う**。親密度は秘書ごとに持つ(替えても消えない)。
+ * 親密度: 試合のたびに +1、大会の優勝で +3、監督室の短い会話で +0〜3。段(0〜3)で話し方が少し変わり、フォローが起きやすくなる。
+ * フォロー: ミーティングの★突破・ラウンジが失敗したとき、秘書が入ってやる気を戻す(段ごとの率 TUNING.sec.follow)
+ * 状態は S.sec = { id, bond:{ 秘書id: 親密度 }, chosen:その任期に選んだか, ev:待っている会話の番号 | null } */
+const SECS=[
+  { id:"s0", name:"白石 葵",   desc:"丁寧で落ち着いた" },
+  { id:"s1", name:"日向 夏美", desc:"元気で明るい" },
+  { id:"s2", name:"氷室 玲",   desc:"クールで分析的" },
+  { id:"s3", name:"春野 静香", desc:"おっとりした年上" }
+];
+const SEC_LV_LABEL=["他人行儀","打ち解けた","信頼","相棒"];
+/** 秘書の言葉。値が [段0〜1, 段2〜3] の組なら親密度で替わる。{n} {c} は差し込み */
+const SEC_LINES={
+  s0:{ hello:"白石です。今日から監督の秘書を務めます。よろしくお願いいたします。",
+    welcome:["ようこそ、監督。まずは次の試合に向けて準備を始めましょう。","監督、今日もよろしくお願いします。準備を始めましょうか。"],
+    next:["次の試合の準備を始めましょう。","監督、次の試合の準備をいたしましょう。私もお手伝いします。"],
+    comm:"練習は済みました。コミュニケーションがあと {n} 回使えます。",
+    tired:"選手が疲れています。今日の練習は軽めにしてはいかがでしょう。",
+    sign:"「！」の付いた選手が {n} 人います。話を聞いてあげてください。",
+    omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花します。",
+    final:"{c}の決勝です。ここで勝てばタイトルです。",
+    hurt:"{n} がケガをしています。SQUAD で控えと入れ替えるか、ケアで手当てしましょう。",
+    termOver:"任期が終わりました。お疲れさまでした。",
+    win:["お疲れさまでした。見事な勝利です。","お疲れさまでした。監督の采配、見事でした。"],
+    lose:["お疲れさまでした。切り替えて次へ行きましょう。","悔しいですね……。でも監督なら大丈夫です。次へ行きましょう。"],
+    draw:"お疲れさまでした。引き分けでした。",
+    follow:"{n} には私から話しておきました。少し落ち着いたようです。",
+    lvup:"監督……これからも、そばで支えさせてください。" },
+  s1:{ hello:"日向夏美です！ 秘書として全力でサポートしますね、監督！",
+    welcome:["監督、はじめましょう！ まずは次の試合の準備から！","監督！ 今日もいっしょに頑張りましょう！"],
+    next:["次の試合、準備していきましょう！","よーし監督、次もいっちゃいましょう！"],
+    comm:"練習おわりました！ コミュニケーションはあと {n} 回できますよ！",
+    tired:"みんなヘトヘトみたいです……。今日は軽めにしませんか？",
+    sign:"「！」の付いた選手が {n} 人いますよ！ 話を聞いてあげてください！",
+    omen:"フレンドリーマッチです！ 兆しのある選手を出して勝てば、きっと開花します！",
+    final:"{c}の決勝ですよ！ 勝てばタイトルです、ドキドキしますね！",
+    hurt:"{n} がケガしちゃってます！ 控えと入れ替えるか、ケアしてあげてください！",
+    termOver:"任期おわりましたー！ 監督、おつかれさまでした！",
+    win:["やりましたね監督！ 勝ちましたー！","さっすがボス！ 最高の試合でした！"],
+    lose:["うう、くやしい……。でも次こそ勝ちましょう！","ボス、落ち込まないで！ 次はぜったい勝てます！"],
+    draw:"引き分けかぁ……。次は勝ちきりましょう！",
+    follow:"{n} にはわたしから声かけときました！ 元気出たみたいです！",
+    lvup:"ボス、これからもずーっといっしょに頑張りましょうね！" },
+  s2:{ hello:"氷室です。データの整理と報告は任せてください。",
+    welcome:["監督。まずは次の試合の準備を。","監督、準備はできています。始めましょう。"],
+    next:["次の試合の準備を。","次の相手の資料はまとめてあります。準備を始めましょう。"],
+    comm:"練習は完了。コミュニケーションの残りは {n} 回です。",
+    tired:"チームの疲労が溜まっています。今日の練習は軽めが合理的です。",
+    sign:"「！」の付いた選手が {n} 人。対応を推奨します。",
+    omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花の確率があります。",
+    final:"{c}の決勝です。勝てばタイトル。",
+    hurt:"{n} が負傷中。控えとの入れ替えか、ケアでの処置を推奨します。",
+    termOver:"任期終了です。お疲れさまでした。",
+    win:["勝利です。内容も悪くありません。","勝利です。……監督の判断は、正しかったと思います。"],
+    lose:["敗戦です。原因は分析しておきます。","敗戦です。でも、修正点は見えています。監督なら立て直せます。"],
+    draw:"引き分けです。決定力に課題が残りました。",
+    follow:"{n} の件は処理しておきました。問題ありません。",
+    lvup:"……監督の隣で仕事をするのは、悪くないです。" },
+  s3:{ hello:"春野静香です。ふふ、監督のお手伝い、のんびりやらせてもらいますね。",
+    welcome:["あら監督、いらっしゃい。まずは次の試合の準備からね。","監督、今日も来てくれたのね。さ、準備しましょうか。"],
+    next:["次の試合の準備、始めましょうか。","次の試合も、監督らしくいきましょうね。"],
+    comm:"練習はおしまい。コミュニケーションはあと {n} 回できるわよ。",
+    tired:"みんな少しお疲れみたい。今日は軽めにしてあげたら？",
+    sign:"「！」の付いた子が {n} 人いるわ。お話、聞いてあげて。",
+    omen:"フレンドリーマッチね。兆しのある子を出して勝てば、花が開くかも。",
+    final:"{c}の決勝ね。勝てばタイトルよ。",
+    hurt:"{n} がケガをしてるの。控えと替えるか、ケアしてあげてね。",
+    termOver:"任期はおしまい。本当にお疲れさま。",
+    win:["お疲れさま。いい試合だったわね。","ふふ、さすが監督。みんな誇らしそうよ。"],
+    lose:["お疲れさま。負けた日は、ゆっくり休むのも大事よ。","大丈夫。監督が下を向かなければ、みんなついてくるわ。"],
+    draw:"お疲れさま。引き分けね、惜しかったわ。",
+    follow:"{n} とは私がお茶でもしながら話しておいたわ。もう大丈夫よ。",
+    lvup:"監督と一緒にいると、なんだか楽しいわ。これからもよろしくね。" }
+};
+/** 監督室の短い会話(親密度のイベント)。答えごとに親密度が上がる量 */
+const SEC_EVENTS=[
+  { q:"差し入れを持ってきました。どれにしますか？", ch:[["コーヒーを頼む",2],["紅茶がいいな",2],["今はいらない",0]] },
+  { q:"次の相手の資料、まとめておきましょうか？", ch:[["頼む。助かるよ",3],["自分でやるよ",1]] },
+  { q:"今日のスタジアム、すごい歓声でしたね。", ch:[["君の支えのおかげだ",3],["選手たちのおかげだ",2],["まだまだこれからだ",1]] },
+  { q:"お休みの日は、何をしているんですか？", ch:[["試合の研究だ",1],["街を散歩している",2],["それは秘密だ",2]] },
+  { q:"選手たちの写真、クラブの広報に使ってもいいですか？", ch:[["いい写真を頼む",2],["任せるよ",3],["試合に集中させたい",1]] }
+];
+const SEC_EV_REPLY=["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"];
+const secOf=S=>SECS.find(x=>x.id===(S.sec&&S.sec.id))||SECS[0];
+const secBond=S=>(S.sec&&S.sec.bond[secOf(S).id])||0;
+function secLv(S){ const t=TUNING.sec.lv, b=secBond(S); let i=0; while(i<t.length&&b>=t[i])i++; return i; }
+function newSec(){ return { id:"s0", bond:{}, chosen:false, ev:null }; }
+/** 秘書の言葉。key の言葉を、いまの秘書の口調と親密度で返す */
+function secSay(S,key,vars){
+  const L=SEC_LINES[secOf(S).id]||SEC_LINES.s0;
+  let t=L[key]!=null?L[key]:SEC_LINES.s0[key];
+  if(Array.isArray(t))t=t[secLv(S)>=2?1:0];
+  t=t||"";
+  for(const k in (vars||{}))t=t.split("{"+k+"}").join(vars[k]);
+  return t;
+}
+/** 親密度を上げる。段が上がったら秘書の一言を返す */
+function secGain(S,v){
+  if(!S.sec||v<=0)return null;
+  const id=secOf(S).id, lv0=secLv(S);
+  S.sec.bond[id]=(S.sec.bond[id]||0)+v;
+  const lv=secLv(S);
+  return lv>lv0?"💬 "+secOf(S).name+"との仲が「"+SEC_LV_LABEL[lv]+"」に"+(lv===SEC_LV_LABEL.length-1?"。「"+secSay(S,"lvup")+"」":""):null;
+}
+function chooseSec(S,id){ if(!SECS.some(x=>x.id===id))return false; S.sec.id=id; S.sec.chosen=true; return true; }
+/** 監督室の会話に答える。親密度が上がる量を返す */
+function answerSecEvent(S,i){
+  const ev=SEC_EVENTS[S.sec.ev]; if(!ev||!ev.ch[i])return null;
+  const v=ev.ch[i][1]; S.sec.ev=null;
+  const up=secGain(S,v);
+  return { v, line:secOf(S).name+"「"+SEC_EV_REPLY[Math.min(3,v)]+"」", up };
+}
+/**
+ * 秘書のフォロー。コミュニケーションが失敗したときに呼ぶ。起きたら下がったやる気を戻す(drops: [[id, 元のやる気]])、
+ * ups の選手はやる気を1段上げる。起きたかどうかを返す
+ */
+function secFollow(S,drops,ups,out,salt){
+  if(!S.sec)return false;
+  const p=TUNING.sec.follow[secLv(S)];
+  const r=mulberry32((S.seed^hashStr("sf:"+S.term+":"+S.played+":"+S.g.cn+":"+salt))>>>0)();
+  if(r>=p)return false;
+  const names=[];
+  for(const [id,was] of drops){ const g=S.g.pl[id]; if(g&&g.mot>0&&g.mot<was){ g.mot=was; names.push(nameOf(CARDS[id])); } }
+  for(const id of ups){ const g=S.g.pl[id]; if(g&&g.mot>0&&g.mot<4){ g.mot++; if(!names.includes(nameOf(CARDS[id])))names.push(nameOf(CARDS[id])); } }
+  if(!names.length)return false;
+  out.push("💬 秘書のフォロー: "+secOf(S).name+"「"+secSay(S,"follow",{ n:names.join("・") })+"」(やる気が戻った)");
+  return true;
 }
 
 /* =========================================================================
@@ -4295,6 +4747,7 @@ function syncBoard(M){
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
     el.classList.toggle("booked",p.yc>0);
+    el.classList.toggle("inj",!!p.inj);
   }
   drawLinks(M);
 }
@@ -4482,6 +4935,10 @@ const clubShort=id=>id==="me"?TEAMS.azr.short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
+/** 国籍と動物(→docs/08 §8.6)。例: イタリア ・ 🦈鮫(海) */
+const natTxt=c=>NAT_NAME[c.nat]||c.nat||"";
+const aniTxt=c=>{ const a=ANIMALS[c.ani]; return a?ANI_ICON[c.ani]+a.name+"("+ANI_GROUP[a.g]+")":""; };
+const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動物" };
 
 /* ---- 育成の札 ---- */
 
@@ -4502,10 +4959,10 @@ const COMM_UI={
   meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)",
            info:g=>g.ss>=5?"特★5":g.sq?"特★4 極みの兆し":"特★"+g.ss+" "+Math.floor(spProgress(g)*100)+"%" },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
-  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
-    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
-    return LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
-  talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
+  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
+    if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
+    return ic+" "+LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
+  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
 function msgHtml(){
@@ -4539,12 +4996,17 @@ function commStepHtml(){
       TRUST_LABEL[trustLv(S.g.pl[x])]+'</small></p>').join("");
     if(CL.comm==="lounge"){
       const f=loungeInfo(S,CL.pick[0],CL.pick[1]);
+      const bo=linkBonusOf(CL.pick[0],CL.pick[1]);
+      h+='<p class="dim">'+CL.pick.map(x=>cname(x)+' '+aniTxt(CARDS[x])+' ・ '+natTxt(CARDS[x])).join('<br>')+'</p>'+
+        (bo.length?'<p class="bonus">'+bo.map(t=>'<b>'+BONUS_LABEL[t]+'</b>').join("")+' 連携が付きやすい</p>':'');
       h+='<p><b>'+cname(CL.pick[0])+'</b> と <b>'+cname(CL.pick[1])+'</b> ・ いま: '+LINK_LABEL[f.lv]+
         (f.gold?'(黄金線の兆し)':'')+'</p><p class="hint">'+f.hint+'</p>'+
         f.choices.map((t,i)=>'<button class="btn ch" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
     }else if(CL.comm==="meet"){
       const f=meetInfo(S,id);
-      h+='<p><b>'+cname(id)+'</b> ・ 特殊能力 '+stars(f.ss)+' ・ 経験 '+Math.min(Math.floor(f.se),f.need)+'/'+f.need+'</p>';
+      h+='<p><b>'+cname(id)+'</b> ・ 特殊能力 '+stars(f.ss)+' ・ 経験 '+Math.min(Math.floor(f.se),f.need)+'/'+f.need+'</p>'+
+        '<p class="dim near">'+(f.near.length?'周りで聞く選手: '+f.near.map(cname).join("・")+'(経験が少し入る。★突破の成否はやる気にも響く)'
+          :'周りで聞く選手はいない(連携のある選手と、先発なら盤面で近い選手にも効く)')+'</p>';
       if(f.ready)h+='<p class="hint">★突破の話を切り出してきた。性格: '+f.pers+'</p>'+
         f.choices.map((t,i)=>'<button class="btn ch" data-act="meet" data-i="'+i+'">'+t+'</button>').join("");
       else h+='<button class="btn ch" data-act="meet" data-i="0">戦術の話をする</button>';
@@ -4555,7 +5017,7 @@ function commStepHtml(){
     }else{
       const p=S.g.pl[id];
       h+='<p><b>'+cname(id)+'</b> ・ いま '+MOT_LABEL[p.mot]+' ・ 疲労 '+Math.round(p.fat*100)+'%</p>'+
-        '<button class="btn ch" data-act="talk">声をかける</button>';
+        '<button class="btn ch" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
     }
     h+='</div>';
   }
@@ -4648,6 +5110,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
+    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -4760,29 +5223,31 @@ function cardDetailHtml(id){
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
       '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
-    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p></div></div>';
-  if(inSq)h+='<p class="dim">登録中の選手</p>';
+    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
+    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p></div></div>';
+  if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
   else{
     h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+
       chipsHtml(S.sq,[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"控え ")+(g?"個★"+g.is:""),"swap");
   }
   return h;
 }
-/** コレクション(登録していないカード) */
+/** コレクション(持っているカード全部。登録中のカードには印) */
 function collectionHtml(){
   const S=CL.S, ids=Object.keys(S.coll), n=ids.reduce((s,id)=>s+S.coll[id],0);
   const ord=r=>RAR_ORDER.indexOf(r), posOrd={ GK:0, DF:1, MF:2, FW:3 };
   const by={ rar:(a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||cnoCmp(a,b),
     no:cnoCmp, tot:(a,b)=>statTotal(CARDS[b])-statTotal(CARDS[a])||cnoCmp(a,b) };
-  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf)).sort(by[CL.cs]||by.rar);
+  // 登録中のカードも並べて「登録中」の印を付ける(コレクションとして全部見えるように)
+  const list=ids.filter(id=>CL.cf==="ALL"||CARDS[id].pos===CL.cf).sort(by[CL.cs]||by.rar);
   let h='<section class="card coll"><h3>カード <small>'+ids.length+'種 ・ '+n+'枚 ・ 登録 16人</small></h3>'+
     '<div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
       (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
     '<div class="tabs t3 sorts">'+[["rar","レア順"],["no","No.順"],["tot","合計順"]].map(([k,t])=>'<button class="tab'+((CL.cs||"rar")===k?' on':'')+
       '" data-act="cs" data-v="'+k+'">'+t+'</button>').join("")+'</div>';
   if(CL.sel)h+=cardDetailHtml(CL.sel);
-  h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",CL.sel===id?" on":"")).join("")+'</div>'
-    :'<p class="dim">登録していないカードはまだ無い。試合のあとに1枚ずつ出る</p>';
+  h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",(CL.sel===id?" on":"")+(S.sq.includes(id)?" insq":""))).join("")+'</div>'
+    :'<p class="dim">このポジションのカードはまだ無い。試合のあとに1枚ずつ出る</p>';
   return h+'</section>';
 }
 
@@ -4821,20 +5286,23 @@ function careerHtml(){
 
 const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"],["season","SEASON","☰"],["club","CLUB","◎"]];
 
-/** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ */
+/** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ。言葉はいまの秘書の口調(→grow.js の secSay) */
 function secLine(S){
   const fx=CL.fx, g=S.g, pl=Object.values(g.pl);
   if(CL.alert)return CL.alert;                 // 保存の異常は何より先に知らせる
-  if(S.termOver)return "任期が終わりました。お疲れさまでした。";
+  if(S.termOver)return secSay(S,"termOver");
   const sign=Object.keys(g.pl).filter(id=>hasSign(S,id)).length;
   const omen=pl.filter(p=>p.q||p.sq).length+Object.values(g.links).filter(l=>l.gold).length;
-  if(fx.kind==="friendly"&&omen)return "フレンドリーマッチです。兆しのある選手を出して勝てば、開花します。";
-  if(g.step!=="train"&&commLeft(S))return "練習は済みました。コミュニケーションがあと "+commLeft(S)+" 回使えます。";
-  if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return "選手が疲れています。今日の練習は軽めにしては。";
-  if(sign)return "「！」の付いた選手が "+sign+" 人います。話を聞いてあげてください。";
-  if(fx.ko&&/決勝/.test(fx.label))return COMPS[fx.comp].name+"の決勝です。ここで勝てばタイトルです。";
-  if(S.played===0)return "ようこそ、監督。まずは次の試合に向けて準備を始めましょう。";
-  return "次の試合の準備を始めましょう。";
+  // ケガをした先発がいれば、入れ替えかケアを勧める(→docs/08 §8.8)
+  const hurt=S.sq.slice(0,11).filter(id=>g.pl[id]&&g.pl[id].mot===0);
+  if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
+  if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
+  if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
+  if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return secSay(S,"tired");
+  if(sign)return secSay(S,"sign",{ n:sign });
+  if(fx.ko&&/決勝/.test(fx.label))return secSay(S,"final",{ c:COMPS[fx.comp].name });
+  if(S.played===0)return secSay(S,"welcome");
+  return secSay(S,"next");
 }
 /** 次の試合の煽り(同じ試合なら毎回同じ文) */
 function hypeOf(S,fx){
@@ -4873,7 +5341,29 @@ function nextTileHtml(){
 }
 /** 秘書の一言 */
 function secHtml(){
-  return '<section class="sec"><i class="sec-ic">SEC</i><p>'+secLine(CL.S)+'</p></section>';
+  const S=CL.S, se=secOf(S);
+  let h='<section class="sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><p>'+secLine(S)+'</p></div></section>';
+  // 監督室の短い会話(親密度のイベント)
+  const ev=S.sec&&S.sec.ev!=null?SEC_EVENTS[S.sec.ev]:null;
+  if(ev&&!S.termOver)h+='<section class="sec sec-ev"><i class="sec-ic">TALK</i><div><b class="sec-nm">'+se.name+'</b><p>「'+ev.q+'」</p>'+
+    '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="secev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+  return h;
+}
+/** CLUB の秘書の欄: いまの秘書と親密度。開くと選び直せる */
+function secClubHtml(){
+  const S=CL.S, se=secOf(S), b=secBond(S), lv=secLv(S), t=TUNING.sec.lv;
+  if(CL.secOpen)return secPickHtml("秘書を替える");
+  return '<section class="card"><h3>秘書 <small><button class="lnk" data-act="secopen">替える</button></small></h3>'+
+    '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
+    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
+}
+/** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
+function secPickHtml(title){
+  const S=CL.S;
+  return '<section class="card secpick"><h3>'+title+' <small>能力の差はなく、口調だけが違う</small></h3>'+SECS.map(x=>{
+    const b=S.sec.bond[x.id]||0, t=TUNING.sec.lv; let lv=0; while(lv<t.length&&b>=t[lv])lv++;
+    return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
+      '<i>「'+SEC_LINES[x.id].hello+'」</i></button>'; }).join("")+'</section>';
 }
 /** 前の試合(要約) */
 function lastHtml(){
@@ -4888,6 +5378,7 @@ function lastHtml(){
 }
 function homeHtml(){
   const S=CL.S;
+  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+secPickHtml("秘書を選ぶ");
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+secHtml()+lastHtml());
 }
 /** SEASON: リーグの順位と大会 */
@@ -4914,7 +5405,7 @@ function clubTabHtml(){
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p></section>'+
-    careerHtml()+settingsHtml();
+    secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
   const S=CL.S, sign=Object.keys(S.g.pl).some(id=>hasSign(S,id));
@@ -4945,14 +5436,17 @@ function finishFixture(M){
   // 並びと KP は SQUAD で決めた既定のまま。試合中に動かしたぶんはその試合だけ(→docs/07 §7.10)
   const onPitch=M.home.players.map(p=>p.id);
   const played=[...new Set((G.meta.starters||[]).concat(onPitch))];
-  applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch,
+  const inj=M.events.filter(e=>e.type==="injury"&&e.side==="H").map(e=>e.by);
+  applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   persist(CL.S);
   const L=CL.S.last;
-  sceneResult(M,L,()=>{
+  // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
+  sceneResult(M,L,RT=>{
     const done=()=>{ sceneHide(); showClub(); };
-    if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done();
+    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done(); };
+    if(L&&L.lines.some(x=>/^🏆 /.test(x)))sceneTrophy(M,L,card); else sceneLocker(M,L,RT,card);
   });
 }
 function onClubClick(e){
@@ -4961,7 +5455,10 @@ function onClubClick(e){
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
   if(onSettingsClick(act,b))return;
-  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; showClub(); return; }
+  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
+  if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
+  if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }
   if(act==="play")startFixture();
@@ -4991,7 +5488,7 @@ function onClubClick(e){
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["声かけ"],r.lines,[reactOf(S,id,"talk",0)]);
+    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["ケア"],r.lines,[reactOf(S,id,"talk",0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="pick"){
@@ -5320,7 +5817,7 @@ function sndLose(){
 
 /* =========================================================================
    wcc_f — 場面(→docs/07 §7.2)。全画面の場面を順に進む。
-     タイトル → (監督室) → 対戦カード → 試合 → 結果 → カード排出 → 監督室
+     タイトル → (監督室) → 対戦カード → 試合 → 結果 → ロッカールーム(優勝なら撮影) → カード排出 → 監督室
    場面は #scene に描く。進むときは帯が横切る。押せば必ず音が返る。
    ========================================================================= */
 
@@ -5407,52 +5904,39 @@ function sceneMatchup(fx,go){
 /** 対戦カードの「どっ」 */
 function sndCrowdBurst(){ if(sndOk())noiseBurst(now(),1.6,0.22,"bandpass",600,900,0.6); }
 
-/* ---- 結果 ---- */
+/* ---- 結果(→docs/07 §7.12): スコア・得点者・チームの数字・採点・MVP ---- */
 function goalsOf(M,side){
   return M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side===side)
     .map(e=>'<li><i>'+(e.at?e.min+"+":e.min+"'")+'</i>'+nm(e.by)+(e.sp==="pk"?" (PK)":e.sp==="fk"?" (FK)":"")+'</li>').join("");
 }
-/**
- * MVP。**試合の記録(イベント)から数える**。途中で交代した選手は終了時の名簿にいないため。
- * 得点を最も重く、次に勝った側であること。競り合い・パス・セーブは差を付ける程度
- */
-function mvpOf(M){
-  const d=(M.pso?M.pso[0]-M.pso[1]:0)||M.home.score-M.away.score;
-  const sc={}, side={}, add=(id,v,sd)=>{ if(!id)return; sc[id]=(sc[id]||0)+v; if(sd)side[id]=sd; };
-  const other=s=>s==="H"?"A":"H";
-  for(const e of M.events){
-    if(e.type==="shot"){
-      add(e.by,e.res==="goal"?6:0.3,e.side);
-      if(e.res==="save")add(e.gk,0.6,other(e.side));
-      if(e.res==="block")add(e.vs,0.4,other(e.side));
-    }else if(e.type==="pass"||e.type==="carry"){
-      if(e.ok)add(e.by,0.08,e.side); else add(e.vs,0.25,other(e.side));
-    }
-  }
-  let best=null, bs=-1;
-  for(const id in sc){
-    const won=(side[id]==="H"?d:-d)>0, s=sc[id]+(won?3:0);
-    if(s>bs){ bs=s; best=id; }
-  }
-  return best?{ c:CARDS[best], side:side[best] }:null;
-}
+const POS_ORD={ GK:0, DF:1, MF:2, FW:3 };
+/** 採点の色: 7.5 以上は金、5.5 以下は青 */
+const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
+const rateTxt=r=>r.toFixed(1);
+const resOf=M=>{ const d=M.pso?M.pso[0]-M.pso[1]:M.home.score-M.away.score; return d>0?"WIN":d<0?"LOSE":"DRAW"; };
 function sceneResult(M,last,go){
-  const H=M.home, A=M.away, pso=M.pso, d=pso?pso[0]-pso[1]:H.score-A.score;
-  const res=d>0?"WIN":d<0?"LOSE":"DRAW", mvp=mvpOf(M);
-  const lines=(last&&last.lines||[]).filter(x=>!/^カード:/.test(x));
+  const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
+  const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
+  const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
+  const stHtml='<div class="res-st">'+rows.map(([l,k,u])=>{
+    const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
+    return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
+  const mine=RT.list.filter(x=>x.side==="H").sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
+  const rtHtml='<div class="res-rt">'+mine.map(x=>{ const c=CARDS[x.id];
+    return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
+      (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   sceneShow("sc-res r-"+res.toLowerCase(),
     '<div class="res-word">'+res+'</div>'+
     '<div class="res-score">'+
-      '<div class="rs">'+emblemSvg(H,44)+'<b>'+H.short+'</b></div>'+
+      '<div class="rs">'+emblemSvg(H,40)+'<b>'+H.short+'</b></div>'+
       '<div class="rn"><b class="cnt" data-v="'+H.score+'">0</b><i>-</i><b class="cnt" data-v="'+A.score+'">0</b></div>'+
-      '<div class="rs">'+emblemSvg(A,44)+'<b>'+A.short+'</b></div></div>'+
+      '<div class="rs">'+emblemSvg(A,40)+'<b>'+A.short+'</b></div></div>'+
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
-    (mvp?'<div class="res-mvp"><i>MVP</i><b>'+nameOf(mvp.c)+'</b><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
-    (lines.length?'<ul class="res-lines">'+lines.map((x,i)=>'<li style="animation-delay:'+(1.0+i*0.18)+'s"'+
-      (/覚醒|黄金|★5|🏆/.test(x)?' class="hi"':'')+'>'+x+'</li>').join("")+'</ul>':'')+
+    stHtml+rtHtml+
+    (mvp?'<div class="res-mvp"><i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
     '<div class="touch sm">TOUCH</div>',
-    { next:go, lock:1400 });
+    { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ
   SC.el.querySelectorAll(".cnt").forEach(el=>{
     const v=+el.dataset.v; let i=0;
@@ -5461,32 +5945,124 @@ function sceneResult(M,last,go){
   });
   sndCrowd(false);
   if(res==="WIN")setTimeout(sndFanfare,300); else if(res==="LOSE")setTimeout(sndLose,300); else setTimeout(()=>sndUi("ok"),300);
-  if(lines.some(x=>/覚醒|黄金|★5/.test(x)))setTimeout(()=>sndShimmer(true),1400);
 }
 
-/* ---- カード排出 ---- */
+/* ---- ロッカールーム(→docs/07 §7.12・docs/08 §8.11): 秘書のまとめ + 目立った選手1〜2人の一言 + 成長 ---- */
+const LOCKER_VOICE={
+  awake: ["体の奥から力が湧いてくる……これが本当の自分です！","監督、見ていてくれましたか。何かが目覚めました！"],
+  star5: ["自分のプレーの型が、ついに完成しました。","もう迷いはありません。この形で戦います。"],
+  gold:  ["あいつとは目を合わせるだけで分かるんです。","最高のコンビになれました！"],
+  q:     ["何かが変わりそうな予感がします。次のフレンドリーマッチで試させてください。","体が軽いんです。何かが起きそうです。"],
+  star:  ["練習の成果が出てきました！","少しずつ上手くなっているのが分かります。"],
+  link:  ["あいつとの呼吸が合ってきました。","だんだん息が合ってきた気がします。"],
+  mvpW:  ["今日は最高の気分です！","チームのみんなのおかげです。"],
+  mvpL:  ["……いい出来でも、勝てなきゃ意味がない。","次は必ず勝ちます。"],
+  mvpD:  ["勝ちきれなかったのが悔しいです。","次こそ決めます。"]
+};
+const NEWS_ORD=["awake","star5","gold","q","star","link"];
+/** 話す選手(最大2人)。知らせの重い順。足りなければ自チームでいちばん採点が高い選手 */
+function lockerSpeakers(last,RT){
+  const S=CL.S, out=[], seen=new Set();
+  const news=(last&&last.news||[]).slice().sort((a,b)=>NEWS_ORD.indexOf(a.kind)-NEWS_ORD.indexOf(b.kind));
+  for(const n of news){
+    const id=n.ids.find(x=>!seen.has(x)&&S.g.pl[x]);
+    if(!id)continue;
+    seen.add(id); out.push({ id, kind:n.kind, line:n.line });
+    if(out.length>=2)return out;
+  }
+  if(RT){
+    const best=RT.list.filter(x=>x.side==="H"&&!seen.has(x.id)&&CARDS[x.id]).sort((a,b)=>b.r-a.r)[0];
+    if(best)out.push({ id:best.id, kind:"mvp", r:best.r });
+  }
+  return out;
+}
+function lockerSay(sp,res){
+  const k=sp.kind==="mvp"?(res==="WIN"?"mvpW":res==="LOSE"?"mvpL":"mvpD"):sp.kind;
+  const list=LOCKER_VOICE[k]||LOCKER_VOICE.mvpD, S=CL.S;
+  return list[hashStr("lk:"+S.term+":"+S.played+":"+sp.id)%list.length];
+}
+function sceneLocker(M,last,RT,go){
+  const H=M.home, A=M.away, pso=M.pso, res=resOf(M);
+  const gl0=last&&last.gl||[], gset=new Set(gl0);
+  const rl=(last&&last.lines||[]).filter(x=>!/^カード:/.test(x)&&!gset.has(x));
+  const sps=lockerSpeakers(last,RT), said=new Set(sps.map(sp=>sp.line));
+  const gl=gl0.filter(x=>!said.has(x));                // 吹き出しで話した知らせは繰り返さない
+  sceneShow("sc-lock",
+    '<div class="lk-head"><b>LOCKER ROOM</b><small>'+H.short+' '+H.score+' - '+A.score+' '+A.short+(pso?' (PK '+pso[0]+'-'+pso[1]+')':'')+'</small></div>'+
+    '<div class="lk-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+secOf(CL.S).name+'</b><p>'+secSay(CL.S,res.toLowerCase())+'</p>'+
+      (rl.length?'<ul>'+rl.map(x=>'<li>'+x+'</li>').join("")+'</ul>':'')+'</div></div>'+
+    sps.map((sp,i)=>'<div class="lk-pl" style="animation-delay:'+(0.4+i*0.45)+'s">'+
+      '<div class="lk-card">'+cardHtml(sp.id,"s")+'</div>'+
+      '<div class="lk-say"><b>'+nameOf(CARDS[sp.id])+'</b><p>「'+lockerSay(sp,res)+'」</p>'+
+        (sp.line?'<em class="hi">'+sp.line+'</em>':sp.r!=null?'<em>採点 '+rateTxt(sp.r)+'</em>':'')+'</div></div>').join("")+
+    (gl.length?'<ul class="lk-grow">'+gl.map((x,i)=>'<li style="animation-delay:'+(1.2+i*0.12)+'s"'+
+      (/覚醒|黄金|★5/.test(x)?' class="hi"':'')+'>'+x+'</li>').join("")+'</ul>':'')+
+    '<div class="touch sm">TOUCH</div>',
+    { next:go, lock:900 });
+  setTimeout(()=>sndUi("ok"),200);
+  if(gl0.some(x=>/覚醒|黄金|★5/.test(x)))setTimeout(()=>sndShimmer(true),900);
+}
+
+/* ---- 優勝のウイニングショット(→docs/08 §8.11)。大会の優勝すべてで、ロッカールームの代わりに出す ---- */
+const TROPHY_SVG='<svg class="tr-cup" viewBox="0 0 120 150"><defs><linearGradient id="trg" x1="0" x2="1">'+
+  '<stop offset="0" stop-color="#8a6414"/><stop offset=".35" stop-color="#ffe9a3"/><stop offset=".6" stop-color="#e2b84a"/><stop offset="1" stop-color="#7a5510"/></linearGradient></defs>'+
+  '<path fill="url(#trg)" d="M28 10h64v8c0 26-12 44-26 50v18h10l6 14H38l6-14h10V68C40 62 28 44 28 18z"/>'+
+  '<path fill="none" stroke="url(#trg)" stroke-width="7" d="M30 22H12c0 18 8 28 20 30M90 22h18c0 18-8 28-20 30"/>'+
+  '<rect x="30" y="112" width="60" height="28" rx="2" fill="#1a1a1a"/><rect x="36" y="118" width="48" height="5" fill="url(#trg)"/></svg>';
+function sceneTrophy(M,last,go){
+  const titles=(last&&last.lines||[]).filter(x=>/^🏆 /.test(x)).map(x=>x.replace(/^🏆 | 優勝$/g,""));
+  const H=M.home, gl=last&&last.gl||[], hi=gl.filter(x=>/覚醒|黄金|★5/.test(x));
+  sceneShow("sc-trophy",
+    '<div class="tr-head"><small>'+titles.join(" ・ ")+'</small><b>CHAMPIONS</b></div>'+
+    '<div class="tr-stage">'+TROPHY_SVG+'<div class="tr-team">'+H.players.map(p=>'<span>'+nameOf(p.c)+'</span>').join("")+'</div></div>'+
+    '<div class="tr-club">'+emblemSvg(H,30)+'<b>'+H.name+'</b></div>'+
+    (hi.length?'<ul class="lk-grow">'+hi.map(x=>'<li class="hi">'+x+'</li>').join("")+'</ul>':'')+
+    '<div class="flash"></div><div class="touch sm">TOUCH</div>',
+    { next:go, lock:1600 });
+  setTimeout(sndFanfare,200);
+  [700,1150].forEach(t=>setTimeout(sndShutter,t));
+}
+function sndShutter(){ if(sndOk())noiseBurst(now(),0.08,0.35,"highpass",2500,4000,0.5); }
+
+/* ---- カード排出(→docs/07 §7.12) ----
+ * めくる前の予兆: 裏の後ろの光(pk-aura)がレア度どおりに光る(W なし / B 銀 / K 虹 / L 金で震える)。
+ * TUNING.pack.promo の割合で一段下の光り方から始まり、少しして本来の光り方へ「昇格」する。どちらになるかはたねで決まる */
+const OMEN_ORD=["W","B","K","L"];
 function sceneCard(id,isNew,go){
-  const c=CARDS[id], r=c.rar||"W";
+  const c=CARDS[id], r=c.rar||"W", P=TUNING.pack, S=CL.S;
+  const promo=r!=="W"&&(hashStr("om:"+id+":"+(S?S.term+":"+S.played:0))%1000)/1000<(P.promo[r]||0);
+  const shown=promo?OMEN_ORD[OMEN_ORD.indexOf(r)-1]:r;
   sceneShow("sc-card",
     '<div class="pk-head"><b>CARD</b><small>試合のあとに1枚</small></div>'+
-    '<div class="pk-slot"><div class="pk-card" data-sc="flip"><div class="pk-in">'+
+    '<div class="pk-slot om-'+shown+'"><i class="pk-aura"></i><div class="pk-card" data-sc="flip"><div class="pk-in">'+
       '<div class="pk-back"><b>wcc<span>_</span>f</b><i></i></div>'+
       '<div class="pk-front r-'+r+'">'+cardHtml(id,"m")+'</div>'+
     '</div></div>'+(r==="L"?'<div class="rays"></div>':'')+'</div>'+
     '<div class="pk-msg">カードをタッチしてめくる</div>',
     { lock:600 });
+  SC.promote=()=>{
+    clearTimeout(SC.promoT); SC.promote=null;
+    const slot=SC.el.querySelector(".pk-slot");
+    if(!slot||slot.classList.contains("om-"+r))return;
+    slot.className="pk-slot om-"+r+" promo";
+    sndShimmer(r==="L");
+  };
+  SC.promoT=promo?setTimeout(()=>SC.promote&&SC.promote(),P.promoMs):0;
+  if(!promo)SC.promote=null;
   SC.flipNext=()=>{
-    SC.el.querySelector(".pk-msg").innerHTML='<b class="rar r-'+r+'">'+RARITY[r].name+'</b>'+(isNew?' <b class="new">NEW</b>':'')+
-      '<br><span>'+nameOf(c)+' ・ '+(c.club||"")+'</span><br><small>TOUCH で監督室へ</small>';
+    SC.el.querySelector(".pk-msg").innerHTML='<b class="rar r-'+r+'">'+RAR_TAG[r]+'</b>'+(isNew?' <b class="new">NEW</b>':'')+
+      '<br><span>'+nameOf(c)+' ・ '+clubOfCard(c)+'</span><br><small>TOUCH で監督室へ</small>';
     SC.next=go; SC.busy=true; setTimeout(()=>{ SC.busy=false; },700);
   };
   sndUi("tap");
+  if(shown!=="W")setTimeout(()=>sndShimmer(shown==="L"),500);
 }
 function sceneAct(act,b){
   if(act==="snd"){ sndUnlock(); sndSetOn(!SND.on); b.textContent=SND.on?"🔊 音あり":"🔇 音なし"; sndUi("ok"); return; }
   if(act==="flip"){
     const card=SC.el.querySelector(".pk-card");
     if(card.classList.contains("open")){ if(SC.next&&!SC.busy){ const f=SC.next; SC.next=null; f(); } return; }
+    if(SC.promote)SC.promote();                 // 昇格の前にめくったら、先に昇格させる
     card.classList.add("open");
     const r=SC.el.querySelector(".pk-front").className.match(/r-(\w)/)[1];
     sndFlip();
@@ -5503,7 +6079,8 @@ function sceneAct(act,b){
    ========================================================================= */
 
 const G={ M:null, seed:1, playing:false, speed:1, queue:[], cur:null, curT:0, hold:0,
-  flash:false, last:0, stopAt:0, onOv:null, ins:{}, info:null, kpMode:false };
+  flash:false, last:0, stopAt:0, onOv:null, ins:{}, info:null, kpMode:false,
+  rec:[], replay:null };                     // rec … 得点に向かうボールの動き(リプレイ用)
 const $=id=>document.getElementById(id);
 const SPEEDS=[1,2,4];
 
@@ -5515,7 +6092,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.seed=seed>>>0;
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
-  G.queue=[]; G.cur=null; G.hold=0; G.playing=false;
+  G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
   G.ins={}; G.kpMode=false;
   RV.vis.clear(); RV.ball=[0.5,0.5];
   BD.pendingIn.clear(); BD.kp=null;
@@ -5707,6 +6284,11 @@ function startEvent(ev){
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
     return;
   }
+  if(ev.type==="injury"){
+    say(tag(ev)+nm(ev.by)+"が負傷(このまま出ると能力が落ちる)"+(ev.side==="H"?" ・ 控えと交代できる":""),ev.side==="H");
+    sndAww(); syncBoard(G.M); G.hold=ev.side==="H"?1100:500;
+    return;
+  }
   if(ev.type==="tired"){
     say(tag(ev)+nm(ev.by)+"の足が止まった");
     syncBoard(G.M); G.hold=ev.side==="H"?700:300;
@@ -5756,6 +6338,9 @@ function startEvent(ev){
   if(ev.type==="kickoff")sndWhistle(1);
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
+  const lr=G.rec[G.rec.length-1];
+  if(ev.type==="kickoff"||(lr&&lr.side!==ev.side))G.rec=[];
+  G.rec.push(ev); if(G.rec.length>P.replayN)G.rec.shift();
   G.cur=ev; G.curT=0;
   $("hudClock").textContent=ev.min+(ev.at?"+":"'");
   sayStart(ev);
@@ -5771,6 +6356,8 @@ function endEvent(ev){
     f.className="on"+(ev.side==="H"?" mine":""); G.flash=true;
     sndGoal(ev.side==="H");
     G.hold=P.goalHold;
+    if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない
+    G.rec=[];
   }else{ G.hold=P.shotHold; if(ev.res==="save"||ev.res==="miss")sndAww(); }
 }
 function advance(dt){
@@ -5779,6 +6366,7 @@ function advance(dt){
     if(G.hold<=0&&G.flash){ $("flash").className=""; G.flash=false; }
     return;
   }
+  if(G.replay){ stepReplay(dt); return; }
   if(G.cur){
     G.curT+=dt;
     if(G.curT>=G.cur.dur){ const ev=G.cur; G.cur=null; endEvent(ev); syncBoard(G.M); }
@@ -5795,6 +6383,24 @@ function advance(dt){
   const ev=G.queue.shift();
   if(ev)startEvent(ev);
 }
+/* ---- ゴールのリプレイ(→docs/07 §7.12)。記録したイベントを遅く描き直すだけで、試合は進めない ---- */
+function stepReplay(dt){
+  const R=G.replay, P=TUNING.play;
+  if(!R.on){ R.on=true; $("replay").classList.add("on"); G.cur=null; }
+  if(G.cur){
+    G.curT+=dt*P.replaySlow;
+    if(G.curT>=G.cur.dur)G.cur=null;
+    return;
+  }
+  const ev=R.list[R.i++];
+  if(!ev){ endReplay(); G.hold=P.replayEnd; return; }
+  G.cur=ev; G.curT=0;
+}
+function endReplay(){
+  if(G.replay&&G.replay.on)G.cur=null;
+  G.replay=null; const b=$("replay"); if(b)b.classList.remove("on");
+}
+function skipReplay(){ if(!G.replay)return; endReplay(); G.hold=200; sndUi("tap"); }
 function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
   if(G.playing&&!$("ov").classList.contains("on"))advance(dt*G.speed);
@@ -5811,6 +6417,7 @@ function boot(){
   $("btnPlay").addEventListener("click",()=>{ if(!G.M.over)setPlaying(!G.playing); });
   $("btnSpeed").addEventListener("click",()=>{
     G.speed=SPEEDS[(SPEEDS.indexOf(G.speed)+1)%SPEEDS.length]; updateCtl();
+    if(G.speed>1&&G.replay){ endReplay(); G.hold=200; }   // 倍速にしたらリプレイは飛ばす
   });
   $("btnShoot").addEventListener("click",()=>{
     orderMatch(G.M,"H",{ type:"shoot" });
@@ -5824,6 +6431,7 @@ function boot(){
     updateCtl();
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
+  $("replay").addEventListener("click",skipReplay);
   $("infoClose").addEventListener("click",hideInfo);
   $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
   $("subYes").addEventListener("click",()=>answerSub(true));

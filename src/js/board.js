@@ -99,6 +99,7 @@ function syncBoard(M){
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
     el.classList.toggle("booked",p.yc>0);
+    el.classList.toggle("inj",!!p.inj);
   }
   drawLinks(M);
 }

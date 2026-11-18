@@ -46,11 +46,15 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 規則の率を変える | `data.js` の `TUNING.rule` → `enginetest.js` の ③b |
 | 大会・日程・出場条件を変える | `club.js` の `COMPS` / `SCHED` / `entryOk` → `clubtest.js`。設計の正本は docs/05 |
 | 相手クラブの作り方を変える | `club.js` の `genWorld` と `GEN_*`、強さは `data.js` の `TUNING.club` |
+| ケガを変える | 起きる率・能力の落ち方・治り方は `data.js` の `TUNING.inj`。判定は `engine.js` の `injCheck`、試合のあとは `grow.js` の `afterMatchGrowth` → `clubtest.js`。正本は docs/05 §5.4・docs/08 §8.8 |
+| 連携の相性・付きやすさ(動物占い・国籍・クラブ)を変える | 動物と群れは `data.js` の `ANIMALS` / `aniOfDate` / `aniCompat`、ボーナスは `TUNING.grow.link.bonus`、判定は `grow.js` の `compatOf` / `linkBonusK` / `linkCap`。実在選手の国籍・生年月日は `tools/squads.local.txt` → `gen_cards.py`。正本は docs/05 §5.5 |
+| 秘書(口調・親密度・会話・フォロー)を変える | `grow.js` の末尾(`SECS` / `SEC_LINES` / `SEC_EVENTS` / `secFollow`)と `TUNING.sec`、画面は `clubui.js` の `secHtml` / `secPickHtml` / `secClubHtml`。正本は docs/05 §5.12 |
 | 育成の数値を変える | `data.js` の `TUNING.grow` → `clubtest.js` の ⑥。仕組みは `grow.js`、設計の正本は docs/05 §5.3〜5.6 |
 | 特殊練習を直す | `tools/train_source.txt` → `python tools/gen_trainings.py`(`trainings.js` は生成物。手で編集しない) |
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |
 | 実在クラブ・選手を直す・足す | `tools/squads.local.txt`(実名・Git管理外)→ `python tools/gen_cards.py` → `src/js/realcards.js`(偽名・生成物)と `packs/real.local.json`。**realcards.js は手で編集しない** |
 | 場面(タイトル・対戦カード・結果・カード排出)を変える | `src/js/scenes.js`(描画)と `base.css` の末尾。設計の正本は docs/07 |
+| 試合のあと(採点・チームの数字・ロッカールーム・優勝の撮影・排出の予兆・リプレイ)を変える | 採点は `engine.js` の `matchRatings` と `TUNING.rate` → `enginetest.js` の ⑨。場面は `scenes.js`、話す選手の知らせは `grow.js` の `newsOf`、リプレイは `main.js` の `stepReplay`。正本は docs/07 §7.12 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・操作)、`pool.js` の `fillLayout` / `setForm` / `moveSquad`(中身)。正本は docs/07 §7.10 |
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。設計の正本は docs/07 §7.8 |

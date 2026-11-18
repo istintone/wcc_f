@@ -162,11 +162,15 @@ const TUNING={
   //   abil … 能力による違い。得意な2能力の平均が ref より高いほど、伸びが遅い(1ごとに k、lo〜hi に収める)
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
-  //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=声かけで上がるやる気(落ちている選手は2段)
+  //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
-         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05 },
-         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25,
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
+              // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
+              //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
+              near:{ r:0.35, max:3, se:0.35, up:0.5, down:0.3 } },
+         // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
+         link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
          graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
          set:{ per:0.02, max:0.2 },
@@ -191,11 +195,28 @@ const TUNING={
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
-  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8 },
+  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+    // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
+    promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
+  // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
+  //   goal/assist … 得点・最後のパス / onT/miss … 枠内・枠外 / passOk … 通したパス・運び(合計は passMax まで)
+  //   lost … 奪われた / won … 奪った / save・block … 止めた / concede … 失点(GK) / concedeDf … 失点(DF 1人あたり)
+  //   win/lose … 勝ち負け(出た全員) / foul・red … 反則・退場
+  rate:{ base:6.0, goal:1.0, assist:0.5, onT:0.1, miss:-0.05, passOk:0.03, passMax:0.6, lost:-0.06, won:0.08,
+    save:0.25, block:0.15, concede:-0.35, concedeDf:-0.15, win:0.3, lose:-0.3, foul:-0.05, red:-1.5, min:3.5, max:10 },
   // PK戦。5人ずつ蹴り、決まらなければ1人ずつ。maxKicks は打ち切り(暴走を防ぐ安全網)
   pso:{ kicks:5, maxKicks:30 },
+  // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
+  //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
+  sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
+  // ケガ(→docs/08 §8.8)。判定は試合の中、別の乱数で行う(ほかの判定の並びを変えない)
+  //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
+  //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
+  inj:{ duel:0.00045, foul:0.0058, fatK:4.0, k:0.85, heal:0.5, maxN:3, healTo:2 },
   // 再生(見た目だけ。結果には触れない)
-  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650 }
+  //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
+  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
+    replayN:5, replaySlow:0.5, replayEnd:600 }
 };
 
 const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW" };
@@ -474,10 +495,38 @@ const CARD_ROWS=[
 ];
 /** 年齢(仮データ)。若い選手は能力が低めで育ちやすく、ベテランはその逆(→docs/05 §5.4) */
 const CARD_AGE={ h01:30, h02:26, h03:29, h04:27, h05:23, h06:31, h07:25, h08:27, h09:22, h10:29, h11:20, h12:34, h13:21, h14:24, h15:19, h16:32, a01:31, a02:24, a03:30, a04:27, a05:25, a06:23, a07:28, a08:26, a09:21, a10:31, a11:24, a12:20, a13:22, a14:29, a15:19, a16:33 };
+/* ---- 国籍と動物占い(→docs/08 §8.6・docs/05 §5.5) ----
+ * 動物は wcc_f 独自の12種。4つの群れに3種ずつ。**生年月日から出す**: 1900-01-01 からの日数を 12 で割った余り(tools/gen_cards.py と同じ)。
+ * 相性: 同じ群れ = 良い / 群れの並び(草原 → 森 → 海 → 空 → 草原)で隣 = ふつう / 向かいの群れ = 張り合う */
+const ANI_GROUP=["草原","森","海","空"];
+const ANIMALS=[
+  { name:"獅子", g:0 }, { name:"狼", g:1 }, { name:"鯱", g:2 }, { name:"鷲", g:3 },
+  { name:"馬",   g:0 }, { name:"熊", g:1 }, { name:"海豚", g:2 }, { name:"隼", g:3 },
+  { name:"犀",   g:0 }, { name:"鹿", g:1 }, { name:"鮫", g:2 }, { name:"梟", g:3 }
+];
+const ANI_ICON=["🦁","🐺","🐋","🦅","🐎","🐻","🐬","🦅","🦏","🦌","🦈","🦉"];
+function aniOfDate(y,m,d){ return Math.round((Date.UTC(y,m-1,d)-Date.UTC(1900,0,1))/864e5)%ANIMALS.length; }
+/** 動物の相性 2=良い / 1=ふつう / 0=張り合う */
+function aniCompat(a,b){ const d=Math.abs(ANIMALS[a].g-ANIMALS[b].g); return d===0?2:d===2?0:1; }
+const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"アイルランド", FRA:"フランス", ESP:"スペイン", POR:"ポルトガル",
+  ITA:"イタリア", GER:"ドイツ", NED:"オランダ", BEL:"ベルギー", SUI:"スイス", AUT:"オーストリア", CRO:"クロアチア", SRB:"セルビア",
+  SVN:"スロベニア", SVK:"スロバキア", POL:"ポーランド", HUN:"ハンガリー", UKR:"ウクライナ", RUS:"ロシア", GEO:"ジョージア", ARM:"アルメニア",
+  TUR:"トルコ", GRE:"ギリシャ", MNE:"モンテネグロ", KOS:"コソボ", DEN:"デンマーク", NOR:"ノルウェー", SWE:"スウェーデン",
+  BRA:"ブラジル", ARG:"アルゼンチン", URU:"ウルグアイ", COL:"コロンビア", ECU:"エクアドル", USA:"アメリカ", CAN:"カナダ", MEX:"メキシコ", JAM:"ジャマイカ",
+  EGY:"エジプト", ALG:"アルジェリア", MAR:"モロッコ", CMR:"カメルーン", CIV:"コートジボワール", NGA:"ナイジェリア", SEN:"セネガル", GUI:"ギニア",
+  UZB:"ウズベキスタン", KOR:"韓国", JPN:"日本" };
+/** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
+const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
+
 const CARDS={};
 CARD_ROWS.forEach(r=>{
   CARDS[r[0]]={ id:r[0], no:r[1], name:r[2], pos:r[3], roles:r[4],
     off:r[5], def:r[6], tec:r[7], pow:r[8], spd:r[9], sta:r[10], skill:r[11]||null, age:CARD_AGE[r[0]]||26 };
+  // 国籍と動物は id から決める疑似の値(誕生日は年齢に合う年の中で id から決まる日)
+  const h=hashStr("nat:"+r[0]), c=CARDS[r[0]], y=2025-c.age;
+  c.nat=NAT_POOL[h%NAT_POOL.length];
+  const day=hashStr("birth:"+r[0])%365, dt=new Date(Date.UTC(y,6,1)+day*864e5);
+  c.ani=aniOfDate(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate());
 });
 
 /**

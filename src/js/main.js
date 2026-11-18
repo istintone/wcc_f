@@ -4,7 +4,8 @@
    ========================================================================= */
 
 const G={ M:null, seed:1, playing:false, speed:1, queue:[], cur:null, curT:0, hold:0,
-  flash:false, last:0, stopAt:0, onOv:null, ins:{}, info:null, kpMode:false };
+  flash:false, last:0, stopAt:0, onOv:null, ins:{}, info:null, kpMode:false,
+  rec:[], replay:null };                     // rec … 得点に向かうボールの動き(リプレイ用)
 const $=id=>document.getElementById(id);
 const SPEEDS=[1,2,4];
 
@@ -16,7 +17,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.seed=seed>>>0;
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
-  G.queue=[]; G.cur=null; G.hold=0; G.playing=false;
+  G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
   G.ins={}; G.kpMode=false;
   RV.vis.clear(); RV.ball=[0.5,0.5];
   BD.pendingIn.clear(); BD.kp=null;
@@ -208,6 +209,11 @@ function startEvent(ev){
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
     return;
   }
+  if(ev.type==="injury"){
+    say(tag(ev)+nm(ev.by)+"が負傷(このまま出ると能力が落ちる)"+(ev.side==="H"?" ・ 控えと交代できる":""),ev.side==="H");
+    sndAww(); syncBoard(G.M); G.hold=ev.side==="H"?1100:500;
+    return;
+  }
   if(ev.type==="tired"){
     say(tag(ev)+nm(ev.by)+"の足が止まった");
     syncBoard(G.M); G.hold=ev.side==="H"?700:300;
@@ -257,6 +263,9 @@ function startEvent(ev){
   if(ev.type==="kickoff")sndWhistle(1);
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
+  const lr=G.rec[G.rec.length-1];
+  if(ev.type==="kickoff"||(lr&&lr.side!==ev.side))G.rec=[];
+  G.rec.push(ev); if(G.rec.length>P.replayN)G.rec.shift();
   G.cur=ev; G.curT=0;
   $("hudClock").textContent=ev.min+(ev.at?"+":"'");
   sayStart(ev);
@@ -272,6 +281,8 @@ function endEvent(ev){
     f.className="on"+(ev.side==="H"?" mine":""); G.flash=true;
     sndGoal(ev.side==="H");
     G.hold=P.goalHold;
+    if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない
+    G.rec=[];
   }else{ G.hold=P.shotHold; if(ev.res==="save"||ev.res==="miss")sndAww(); }
 }
 function advance(dt){
@@ -280,6 +291,7 @@ function advance(dt){
     if(G.hold<=0&&G.flash){ $("flash").className=""; G.flash=false; }
     return;
   }
+  if(G.replay){ stepReplay(dt); return; }
   if(G.cur){
     G.curT+=dt;
     if(G.curT>=G.cur.dur){ const ev=G.cur; G.cur=null; endEvent(ev); syncBoard(G.M); }
@@ -296,6 +308,24 @@ function advance(dt){
   const ev=G.queue.shift();
   if(ev)startEvent(ev);
 }
+/* ---- ゴールのリプレイ(→docs/07 §7.12)。記録したイベントを遅く描き直すだけで、試合は進めない ---- */
+function stepReplay(dt){
+  const R=G.replay, P=TUNING.play;
+  if(!R.on){ R.on=true; $("replay").classList.add("on"); G.cur=null; }
+  if(G.cur){
+    G.curT+=dt*P.replaySlow;
+    if(G.curT>=G.cur.dur)G.cur=null;
+    return;
+  }
+  const ev=R.list[R.i++];
+  if(!ev){ endReplay(); G.hold=P.replayEnd; return; }
+  G.cur=ev; G.curT=0;
+}
+function endReplay(){
+  if(G.replay&&G.replay.on)G.cur=null;
+  G.replay=null; const b=$("replay"); if(b)b.classList.remove("on");
+}
+function skipReplay(){ if(!G.replay)return; endReplay(); G.hold=200; sndUi("tap"); }
 function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
   if(G.playing&&!$("ov").classList.contains("on"))advance(dt*G.speed);
@@ -312,6 +342,7 @@ function boot(){
   $("btnPlay").addEventListener("click",()=>{ if(!G.M.over)setPlaying(!G.playing); });
   $("btnSpeed").addEventListener("click",()=>{
     G.speed=SPEEDS[(SPEEDS.indexOf(G.speed)+1)%SPEEDS.length]; updateCtl();
+    if(G.speed>1&&G.replay){ endReplay(); G.hold=200; }   // 倍速にしたらリプレイは飛ばす
   });
   $("btnShoot").addEventListener("click",()=>{
     orderMatch(G.M,"H",{ type:"shoot" });
@@ -325,6 +356,7 @@ function boot(){
     updateCtl();
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
+  $("replay").addEventListener("click",skipReplay);
   $("infoClose").addEventListener("click",hideInfo);
   $("info").addEventListener("click",e=>{ if(e.target===$("info"))hideInfo(); });
   $("subYes").addEventListener("click",()=>answerSub(true));

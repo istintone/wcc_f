@@ -11,7 +11,11 @@
 偽名は実名から機械的に作る: 姓の音を1〜2か所、別の音に替える(場所と音は名前ごとに決まる乱数。
 毎回同じ偽名になる)。実名を連想させすぎないため(2026-11-18 に母音をずらすだけの作り方から変えた)。
 一覧は手で書かない(→touchline P10)。squads.local.txt を直したら、これを実行する。
+
+国籍と生年月日(→docs/08 §8.6・docs/05): 本体には**国籍と、生年月日から出した動物だけ**を載せる。生年月日は実名パックだけ。
+生年月日が空欄の選手は、年齢と id から疑似の誕生日を作る(毎回同じ)。動物の決まりは data.js の aniOfDate と同じ。
 """
+import datetime
 import hashlib
 import json
 import random
@@ -22,6 +26,23 @@ ROOT = pathlib.Path(__file__).parent.parent
 SRC = ROOT / "tools" / "squads.local.txt"
 OUT_JS = ROOT / "src" / "js" / "realcards.js"
 OUT_PACK = ROOT / "packs" / "real.local.json"
+
+ANI_N = 12                                   # 動物の数(data.js の ANIMALS)
+EPOCH = datetime.date(1900, 1, 1)
+DATA_YEAR = 2026                             # 年齢の時点(2026年夏)
+
+
+def ani_of(d):
+    """生年月日 → 動物の番号。1900-01-01 からの日数を 12 で割った余り(data.js の aniOfDate と同じ)"""
+    return (d - EPOCH).days % ANI_N
+
+
+def pseudo_birth(pid, age):
+    """生年月日が分からない選手の疑似の誕生日。年齢に合う年の中で、id から決まる日"""
+    h = int(hashlib.md5(("birth:" + pid).encode("utf-8")).hexdigest(), 16)
+    start = datetime.date(DATA_YEAR - age - 1, 7, 1)
+    return start + datetime.timedelta(days=h % 365)
+
 
 ROLES = {"GK", "CB", "SB", "DMF", "CMF", "OMF", "SMF", "WG", "CF"}
 FORMS = {"4-3-3", "4-4-2", "4-2-3-1", "3-5-2"}
@@ -83,12 +104,16 @@ def main():
                    "form": form, "kp": int(kp), "pl": []}
             clubs.append(cur)
             continue
-        no, rname, roles, age, r, traits, skill = f
+        no, rname, roles, age, r, traits, skill = f[:7]
+        nat = f[7].strip() if len(f) > 7 else ""
+        birth = f[8].strip() if len(f) > 8 else ""
         rl = roles.split("/")
         assert all(x in ROLES for x in rl), (ln, roles)
+        assert nat == "" or (len(nat) == 3 and nat.isupper()), (ln, nat)
         cur["pl"].append({"no": int(no), "rname": rname, "roles": rl, "age": int(age), "r": float(r),
-                          "traits": traits, "skill": skill})
-    names, teams, rows, seen = {}, {}, [], set()
+                          "traits": traits, "skill": skill, "nat": nat,
+                          "birth": datetime.date.fromisoformat(birth) if birth else None})
+    names, teams, rows, seen, births, n_pb = {}, {}, [], set(), {}, 0
     for ci, c in enumerate(clubs):
         assert len(c["pl"]) == 16, (c["id"], len(c["pl"]))
         assert c["pl"][0]["roles"][0] == "GK", c["id"]
@@ -101,12 +126,19 @@ def main():
                 pn = pn + "ス"
             seen.add(pn)
             names[pid] = p["rname"]
-            rows.append('  ["%s",%d,%d,"%s","%s",%d,%s,"%s","%s"]' % (
-                pid, ci, p["no"], pn, "/".join(p["roles"]), p["age"], p["r"], p["traits"], p["skill"]))
+            b = p["birth"]
+            if b:
+                births[pid] = b.isoformat()
+            else:
+                b = pseudo_birth(pid, p["age"]); n_pb += 1
+            rows.append('  ["%s",%d,%d,"%s","%s",%d,%s,"%s","%s","%s",%d]' % (
+                pid, ci, p["no"], pn, "/".join(p["roles"]), p["age"], p["r"], p["traits"], p["skill"],
+                p["nat"], ani_of(b)))
     js = ["/* 生成物。手で編集しない。 python tools/gen_cards.py が tools/squads.local.txt から書き出す。",
           "   実在クラブの選手(→docs/06)。**名前は偽名**。実名は packs/real.local.json(Git管理外)。",
           "   REAL_CLUBS: [id, 偽名クラブ, 略称, 色, 陣形, KPの並び位置(1〜16)]",
-          "   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル]",
+          "   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物]",
+          "     動物は生年月日から出した番号(→data.js の ANIMALS)。生年月日そのものは本体に載せない",
           "     並びは陣形の枠の順に先発11人 → 控え5人。能力は役割のひな形 + 格 + 特徴から pool.js が作る */",
           "const REAL_CLUBS=["]
     js.append(",\n".join('  ["%s","%s","%s","%s","%s",%d]' % (c["id"], c["pname"], c["short"], c["color"], c["form"], c["kp"])
@@ -117,11 +149,11 @@ def main():
     js.append("];")
     OUT_JS.write_text("\n".join(js) + "\n", encoding="utf-8", newline="\n")
     OUT_PACK.parent.mkdir(exist_ok=True)
-    OUT_PACK.write_text(json.dumps({"names": names, "teams": teams}, ensure_ascii=False, indent=1) + "\n",
+    OUT_PACK.write_text(json.dumps({"names": names, "teams": teams, "births": births}, ensure_ascii=False, indent=1) + "\n",
                         encoding="utf-8", newline="\n")
     sample = [(p["rname"], pseudo(p["rname"])) for p in clubs[0]["pl"][:6]]
-    sys.stdout.buffer.write(("%d クラブ / %d 人 → %s と %s\n例: %s\n" % (
-        len(clubs), len(rows), OUT_JS.name, OUT_PACK.name,
+    sys.stdout.buffer.write(("%d クラブ / %d 人(生年月日が空欄で疑似の値 %d 人)→ %s と %s\n例: %s\n" % (
+        len(clubs), len(rows), n_pb, OUT_JS.name, OUT_PACK.name,
         " / ".join("%s→%s" % s for s in sample))).encode("utf-8"))
 
 

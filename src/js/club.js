@@ -148,7 +148,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection() };
+    sq:startSquad(), coll:newCollection(), sec:newSec() };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   return S;
@@ -355,8 +355,16 @@ function applyResult(S,W,fx,res){
   }else if(win||hg>ag)got+=prize(C.prize.friendly);
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
-  if(res.played)afterMatchGrowth(S,fx,{ played:res.played, onPitch:res.onPitch||res.played,
-    win:hg>ag, lose:hg<ag }).forEach(x=>out.push(x));
+  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[] };
+  const gl=res.played?afterMatchGrowth(S,fx,gr):[];
+  gl.forEach(x=>out.push(x));
+  // 秘書の親密度(→docs/08 §8.7): 試合のたびと大会の優勝で上がる。ときどき監督室で短い会話が起きる
+  if(S.sec){
+    const n=out.filter(x=>/^🏆 /.test(x)).length, up=secGain(S,TUNING.sec.match+n*TUNING.sec.title);
+    if(up)out.push(up);
+    if(S.sec.ev==null&&mulberry32((S.seed^hashStr("sev:"+S.term+":"+S.played))>>>0)()<TUNING.sec.eventP)
+      S.sec.ev=hashStr("sevk:"+S.term+":"+S.played)%SEC_EVENTS.length;
+  }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));
@@ -367,8 +375,9 @@ function applyResult(S,W,fx,res){
   (res.starters||[]).forEach(id=>{ if(!ts.used.includes(id))ts.used.push(id); });
   if(win&&tierOf(fx.opp)>=5)ts.topW++;
   if(res.pso){ if(res.pso[0]>res.pso[1])ts.psoW++; else ts.psoL++; }
+  // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
-    card:card.id, cardNew:card.isNew };
+    gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
   S.history.push([fx.comp,fx.opp,hg,ag]);
   if(S.history.length>TUNING.club.historyMax)S.history.shift();
   S.played++; S.slot++;
@@ -396,6 +405,7 @@ function newTerm(S,W){
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   S.ts=newTermStats(); S.money0=S.money;
   S.league=newLeague(S,W); S.cups=newCups();
+  if(S.sec){ S.sec.chosen=false; S.sec.ev=null; }   // 任期の始めに秘書を選び直す(親密度は残る)
 }
 
 /* ---------- 保存 ---------- */
@@ -446,6 +456,7 @@ function migrate(S){
   if(!S.layout)S.layout={};
   if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
+  if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
   return S;
 }
 function clearCareer(store){ try{ store.removeItem(SAVE_KEY); }catch(e){} }

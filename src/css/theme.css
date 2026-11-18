@@ -530,3 +530,133 @@
 #club .kmeta{margin:0 0 6px;font-size:11.5px;color:var(--t-ink2)}
 #club .kmeta b{font-family:"Oswald",sans-serif}
 #club .tabs.sorts{margin-top:4px}
+
+/* ---- レアリティは台紙と枠と箔で見分ける(→docs/06・docs/08 §8.10) ----
+ * REGULAR 白い紙・灰の細い枠 / SPECIAL 黒い紙・銀の枠 / WORLD CLASS 虹色の紙・虹の太い枠・流れる箔 / LEGENDS 金の紙・金の二重枠・光の筋 */
+.kc.r-W::after{border:1.5px solid #b8b2a6}
+.kc.r-B::after{inset:2px;border:2px solid transparent;border-image:linear-gradient(135deg,#f4f4f4,#8a8a8a 30%,#e6e6e6 55%,#7a7a7a 80%,#f4f4f4) 1}
+.kc.r-K{background:linear-gradient(135deg,#ffe9f5 0%,#e6f4ff 30%,#fffbe0 55%,#e8ffef 75%,#f1e8ff 100%);color:#1c1430}
+.kc.r-K::after{inset:2px;border:3px solid transparent;border-image:linear-gradient(135deg,#ff7ac8,#79d8ff,#ffe36e,#8cffaa,#c69bff,#ff7ac8) 1}
+.kc.r-K .k-foil{mix-blend-mode:normal;opacity:.75}
+.kc.r-K .k-st b{color:#2a1a4a} .kc.r-K .k-st i,.kc.r-K .k-sk em{color:#6f5a9a} .kc.r-K .k-sk{color:#2a1a4a}
+.kc.r-K .k-name{background:linear-gradient(90deg,#c8102e,#d6336c 60%,#8a5cd6)}
+.kc.r-L::after{inset:2px;border:3px double #7d5a14}
+.kc.r-L{box-shadow:0 0 0 1px #b8892c,0 3px 10px rgba(120,80,10,.45)}
+
+/* =========================================================================
+   試合のあと(→docs/07 §7.12): 結果(チームの数字・採点)/ ロッカールーム / 優勝の撮影
+   ========================================================================= */
+.th-wr .sc-res .res-word,.sc-res .res-word{font-size:74px}
+.sc-res{gap:7px!important;padding-top:calc(env(safe-area-inset-top) + 14px)!important;padding-bottom:34px!important;overflow-y:auto!important}
+.sc-res .res-score .rn{font-size:48px}
+.res-st{width:100%;max-width:360px;display:flex;flex-direction:column;gap:3px;padding:6px 10px;background:rgba(0,0,0,.28);
+  font-size:12px;animation:fadeIn .4s 1.1s both}
+.res-st>div{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+.res-st b{font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;text-align:center}
+.res-st span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.res-st span i{font-style:normal;font-size:10px;opacity:.85}
+.res-st span em{display:block;width:100%;height:4px;background:rgba(255,255,255,.25);position:relative}
+.res-st span em::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p);background:var(--t-gold2,#ffe28a)}
+.res-rt{width:100%;max-width:360px;display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;animation:fadeIn .4s 1.3s both}
+.res-rt span{display:grid;grid-template-columns:24px 1fr 30px;align-items:center;gap:4px;padding:2px 4px;
+  background:rgba(255,255,255,.92);color:#121212;font-size:11px}
+.res-rt span.mvp{box-shadow:inset 0 0 0 2px var(--t-gold,#b8892c)}
+.res-rt .pos{font-style:normal;font-size:8.5px;font-weight:700;color:#fff;text-align:center;padding:1px 0;font-family:"Oswald",sans-serif}
+.res-rt .pos.gk{background:#c48a12} .res-rt .pos.df{background:#1d5fbf} .res-rt .pos.mf{background:#1f8a4c} .res-rt .pos.fw{background:#c8102e}
+.res-rt b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res-rt b u{text-decoration:none;font-size:8px;margin-left:2px}
+.res-rt em{font-style:normal;font-family:"Oswald",sans-serif;font-weight:700;font-size:14px;text-align:right}
+.res-rt em.hi{color:#b8892c} .res-rt em.lo{color:#1d5fbf}
+.res-mvp em{font-style:normal;font-family:"Oswald",sans-serif;font-size:16px;font-weight:700;color:var(--t-gold,#b8892c)}
+.th-wr .res-mvp{animation-delay:1.5s}
+
+/* ロッカールーム: 木のロッカーが並ぶ壁と床 */
+.sc-lock{justify-content:flex-start!important;gap:10px;padding-top:calc(env(safe-area-inset-top) + 16px)!important;
+  padding-bottom:34px!important;overflow-y:auto!important;color:#f4efe6;
+  background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.55) 60%,#120c06 100%),
+    repeating-linear-gradient(90deg,#5a3d22 0 58px,#3c2814 58px 61px),#4a321b}
+.sc-lock::before{content:"";position:absolute;left:0;right:0;top:0;height:46%;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0 22px,rgba(0,0,0,.25) 22px 24px);opacity:.5}
+.lk-head{position:relative;text-align:center;animation:fadeIn .4s .2s both}
+.lk-head b{display:block;font-family:"Oswald",sans-serif;font-size:30px;font-weight:700;letter-spacing:.18em;color:#ffe9a8}
+.lk-head small{font-size:11px;opacity:.85}
+.lk-sec{position:relative;width:100%;max-width:360px;display:flex;gap:8px;align-items:flex-start;padding:8px 10px;
+  background:rgba(255,255,255,.95);color:#121212;border-left:5px solid #c8102e;animation:fadeIn .4s .3s both}
+.lk-sec .sec-ic{flex:none;font-style:normal;font-size:9px;font-weight:900;padding:2px 5px;background:#121212;color:#e9c76b;font-family:"Oswald",sans-serif}
+.lk-sec p{margin:0;font-size:12.5px;font-weight:700}
+.lk-sec ul{margin:4px 0 0;padding:0 0 0 14px;font-size:11px;line-height:1.55;color:#3a3a3a}
+.lk-pl{position:relative;width:100%;max-width:360px;display:flex;gap:10px;align-items:center;animation:fromL .45s cubic-bezier(.2,1.2,.4,1) both}
+.lk-card{flex:none;width:74px}
+.lk-say{flex:1;min-width:0;position:relative;padding:8px 10px;background:#fffdf7;color:#121212;border-radius:8px}
+.lk-say::before{content:"";position:absolute;left:-7px;top:18px;border:7px solid transparent;border-right-color:#fffdf7;border-left:0}
+.lk-say b{font-size:11px;color:#c8102e}
+.lk-say p{margin:2px 0 0;font-size:13px;font-weight:700;line-height:1.45}
+.lk-say em{display:block;margin-top:4px;font-style:normal;font-size:10.5px;color:#7d766b}
+.lk-say em.hi{color:#b8892c;font-weight:900}
+.lk-grow{position:relative;list-style:none;margin:0;padding:6px 10px;width:100%;max-width:360px;background:rgba(0,0,0,.45);
+  border-left:3px solid #e9c76b;font-size:11.5px;line-height:1.6}
+.lk-grow li{animation:fadeIn .35s both} .lk-grow li.hi{color:#ffe28a;font-weight:900}
+
+/* 優勝の撮影: スポットライトとトロフィー、フラッシュが2回 */
+.sc-trophy{justify-content:flex-start!important;gap:8px;padding-top:calc(env(safe-area-inset-top) + 22px)!important;padding-bottom:34px!important;
+  background:radial-gradient(ellipse at 50% 38%,#fff6d6 0%,#e9c76b 18%,#7a1020 52%,#1a0508 100%)}
+.tr-head{text-align:center;animation:fadeIn .4s .2s both}
+.tr-head small{display:block;font-size:13px;font-weight:900;color:#fff;letter-spacing:.06em;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.tr-head b{display:block;font-family:"Oswald",sans-serif;font-size:50px;font-weight:700;letter-spacing:.06em;line-height:1;
+  color:#fff;text-shadow:3px 3px 0 #7a1020,0 0 18px rgba(255,233,168,.8)}
+.tr-stage{position:relative;width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center}
+.tr-cup{width:150px;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:cupUp .8s .3s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes cupUp{from{transform:translateY(60px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.tr-team{display:flex;flex-wrap:wrap;justify-content:center;gap:3px 4px;margin-top:8px;animation:fadeIn .5s .9s both}
+.tr-team span{font-size:10.5px;font-weight:700;padding:2px 6px;background:rgba(255,255,255,.92);color:#121212;transform:skewX(-8deg)}
+.tr-club{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;font-style:italic;animation:fadeIn .4s 1.1s both}
+.sc-trophy .flash{position:absolute;inset:0;z-index:8;background:#fff;opacity:0;pointer-events:none;animation:flash2 1.4s .6s both}
+@keyframes flash2{0%,100%{opacity:0}6%{opacity:.95}20%{opacity:0}38%{opacity:0}44%{opacity:.9}58%{opacity:0}}
+/* 文字色: .th-wr #scene(濃い文字)より強く指定する。暗い背景の場面は白 */
+.th-wr #scene.sc-res.r-win,.th-wr #scene.sc-res.r-lose{color:#fff}
+.th-wr #scene.sc-lock{color:#f4efe6}
+.th-wr #scene.sc-trophy{color:#fff}
+
+/* ---- めくる前の予兆(→docs/07 §7.12): 裏の後ろの光 ---- */
+.pk-aura{position:absolute;inset:-18px;z-index:1;border-radius:24px;pointer-events:none;opacity:0;transition:opacity .4s}
+.om-B .pk-aura{opacity:1;background:radial-gradient(ellipse,rgba(235,240,250,.9) 30%,rgba(180,190,210,.0) 72%);animation:auraP 1.6s ease-in-out infinite}
+.om-K .pk-aura{opacity:1;inset:-14px;filter:blur(10px);
+  background:conic-gradient(from 0deg,#ff7ac8,#79d8ff,#ffe36e,#8cffaa,#c69bff,#ff7ac8);animation:spin 2.4s linear infinite}
+.om-L .pk-aura{opacity:1;inset:-24px;filter:blur(6px);
+  background:radial-gradient(ellipse,#fff3c4 20%,#f2c14e 45%,rgba(184,137,44,0) 72%);animation:auraP .7s ease-in-out infinite}
+.om-L .pk-card:not(.open){animation:cardOut .7s cubic-bezier(.2,1.2,.4,1) both,shake .18s .8s linear infinite}
+@keyframes auraP{50%{transform:scale(1.06);opacity:.65}}
+@keyframes shake{0%,100%{translate:0 0}25%{translate:-2px 1px}75%{translate:2px -1px}}
+.promo .pk-aura{animation-name:auraP,promoIn;animation-duration:1s,.5s;animation-iteration-count:infinite,1}
+.om-K.promo .pk-aura{animation:spin 2.4s linear infinite,promoIn .5s 1}
+@keyframes promoIn{from{transform:scale(1.8);opacity:0}}
+/* 明るい紙の背景でも見えるように(白×赤のテーマ) */
+.om-B .pk-aura{background:radial-gradient(ellipse,rgba(110,130,165,.75) 35%,rgba(110,130,165,0) 72%)}
+.om-L .pk-aura{inset:-34px;filter:none;
+  background:radial-gradient(ellipse,rgba(255,214,90,1) 40%,rgba(242,170,30,.85) 55%,rgba(242,170,30,0) 74%),
+    repeating-conic-gradient(from 0deg,rgba(242,170,30,.55) 0 8deg,transparent 8deg 20deg)}
+.om-L .pk-aura{-webkit-mask:radial-gradient(closest-side,#000 82%,transparent 100%);mask:radial-gradient(closest-side,#000 82%,transparent 100%)}
+
+/* CARDS の一覧: 登録中のカードの印 */
+.kc.insq .k-top::after{content:"登録中";margin-top:3px;padding:1px 4px;font-family:system-ui,sans-serif;font-size:7.5px;font-weight:900;
+  letter-spacing:.04em;color:#fff;background:#121212;box-shadow:0 0 0 1px rgba(255,255,255,.7)}
+
+/* ケガをした盤面のカード(→docs/08 §8.8): 赤十字の札と、少し沈んだ色 */
+.cd.inj{filter:saturate(.6) brightness(.92)}
+.cd.inj::after{content:"+";position:absolute;right:-4px;top:-6px;z-index:5;width:15px;height:15px;border-radius:50%;
+  background:#c8102e;color:#fff;font:900 13px/15px system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px #fff}
+
+/* ラウンジ: 連携が付きやすくなる理由(→docs/08 §8.6) */
+#club .bonus{margin:4px 0;font-size:11.5px;color:var(--t-ink2)}
+#club .bonus b{display:inline-block;margin-right:4px;padding:1px 6px;font-size:10.5px;background:var(--t-gold2);color:#201400;border-radius:2px}
+
+/* ---- 秘書(→docs/08 §8.7) ---- */
+#club .sec .sec-nm,.lk-sec .sec-nm{display:block;font-size:10.5px;color:var(--t-sub,#c8102e);margin-bottom:1px}
+#club .sec-ev{border-left:4px solid var(--t-gold)}
+#club .sec-ch{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+#club .sec-ch .btn{padding:7px 10px;font-size:12.5px}
+#club .secpick .sp{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;background:var(--t-card);color:var(--t-ink);
+  border:1px solid var(--t-rule);border-left:4px solid var(--t-rule);cursor:pointer}
+#club .secpick .sp.on{border-left-color:var(--t-sub);box-shadow:0 0 0 1px var(--t-sub)}
+#club .secpick .sp b{font-size:14px} #club .secpick .sp small{margin-left:8px;font-size:11px;color:var(--t-mute)}
+#club .secpick .sp i{display:block;margin-top:3px;font-style:normal;font-size:11.5px;color:var(--t-ink2)}

@@ -67,6 +67,10 @@ const clubShort=id=>id==="me"?TEAMS.azr.short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
+/** 国籍と動物(→docs/08 §8.6)。例: イタリア ・ 🦈鮫(海) */
+const natTxt=c=>NAT_NAME[c.nat]||c.nat||"";
+const aniTxt=c=>{ const a=ANIMALS[c.ani]; return a?ANI_ICON[c.ani]+a.name+"("+ANI_GROUP[a.g]+")":""; };
+const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動物" };
 
 /* ---- 育成の札 ---- */
 
@@ -87,10 +91,10 @@ const COMM_UI={
   meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)",
            info:g=>g.ss>=5?"特★5":g.sq?"特★4 極みの兆し":"特★"+g.ss+" "+Math.floor(spProgress(g)*100)+"%" },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
-  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ", info:(g,id)=>{ const a=CL.pick[0];
-    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
-    return LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
-  talk:  { sub:"やる気", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る)", info:g=>MOT_LABEL[g.mot] }
+  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
+    if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
+    return ic+" "+LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
+  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>MOT_LABEL[g.mot] }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
 function msgHtml(){
@@ -124,12 +128,17 @@ function commStepHtml(){
       TRUST_LABEL[trustLv(S.g.pl[x])]+'</small></p>').join("");
     if(CL.comm==="lounge"){
       const f=loungeInfo(S,CL.pick[0],CL.pick[1]);
+      const bo=linkBonusOf(CL.pick[0],CL.pick[1]);
+      h+='<p class="dim">'+CL.pick.map(x=>cname(x)+' '+aniTxt(CARDS[x])+' ・ '+natTxt(CARDS[x])).join('<br>')+'</p>'+
+        (bo.length?'<p class="bonus">'+bo.map(t=>'<b>'+BONUS_LABEL[t]+'</b>').join("")+' 連携が付きやすい</p>':'');
       h+='<p><b>'+cname(CL.pick[0])+'</b> と <b>'+cname(CL.pick[1])+'</b> ・ いま: '+LINK_LABEL[f.lv]+
         (f.gold?'(黄金線の兆し)':'')+'</p><p class="hint">'+f.hint+'</p>'+
         f.choices.map((t,i)=>'<button class="btn ch" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
     }else if(CL.comm==="meet"){
       const f=meetInfo(S,id);
-      h+='<p><b>'+cname(id)+'</b> ・ 特殊能力 '+stars(f.ss)+' ・ 経験 '+Math.min(Math.floor(f.se),f.need)+'/'+f.need+'</p>';
+      h+='<p><b>'+cname(id)+'</b> ・ 特殊能力 '+stars(f.ss)+' ・ 経験 '+Math.min(Math.floor(f.se),f.need)+'/'+f.need+'</p>'+
+        '<p class="dim near">'+(f.near.length?'周りで聞く選手: '+f.near.map(cname).join("・")+'(経験が少し入る。★突破の成否はやる気にも響く)'
+          :'周りで聞く選手はいない(連携のある選手と、先発なら盤面で近い選手にも効く)')+'</p>';
       if(f.ready)h+='<p class="hint">★突破の話を切り出してきた。性格: '+f.pers+'</p>'+
         f.choices.map((t,i)=>'<button class="btn ch" data-act="meet" data-i="'+i+'">'+t+'</button>').join("");
       else h+='<button class="btn ch" data-act="meet" data-i="0">戦術の話をする</button>';
@@ -140,7 +149,7 @@ function commStepHtml(){
     }else{
       const p=S.g.pl[id];
       h+='<p><b>'+cname(id)+'</b> ・ いま '+MOT_LABEL[p.mot]+' ・ 疲労 '+Math.round(p.fat*100)+'%</p>'+
-        '<button class="btn ch" data-act="talk">声をかける</button>';
+        '<button class="btn ch" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
     }
     h+='</div>';
   }
@@ -233,6 +242,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
+    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -345,29 +355,31 @@ function cardDetailHtml(id){
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
       '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
-    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p></div></div>';
-  if(inSq)h+='<p class="dim">登録中の選手</p>';
+    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
+    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p></div></div>';
+  if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
   else{
     h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+
       chipsHtml(S.sq,[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"控え ")+(g?"個★"+g.is:""),"swap");
   }
   return h;
 }
-/** コレクション(登録していないカード) */
+/** コレクション(持っているカード全部。登録中のカードには印) */
 function collectionHtml(){
   const S=CL.S, ids=Object.keys(S.coll), n=ids.reduce((s,id)=>s+S.coll[id],0);
   const ord=r=>RAR_ORDER.indexOf(r), posOrd={ GK:0, DF:1, MF:2, FW:3 };
   const by={ rar:(a,b)=>ord(CARDS[b].rar)-ord(CARDS[a].rar)||posOrd[CARDS[a].pos]-posOrd[CARDS[b].pos]||cnoCmp(a,b),
     no:cnoCmp, tot:(a,b)=>statTotal(CARDS[b])-statTotal(CARDS[a])||cnoCmp(a,b) };
-  const list=ids.filter(id=>!S.sq.includes(id)&&(CL.cf==="ALL"||CARDS[id].pos===CL.cf)).sort(by[CL.cs]||by.rar);
+  // 登録中のカードも並べて「登録中」の印を付ける(コレクションとして全部見えるように)
+  const list=ids.filter(id=>CL.cf==="ALL"||CARDS[id].pos===CL.cf).sort(by[CL.cs]||by.rar);
   let h='<section class="card coll"><h3>カード <small>'+ids.length+'種 ・ '+n+'枚 ・ 登録 16人</small></h3>'+
     '<div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
       (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
     '<div class="tabs t3 sorts">'+[["rar","レア順"],["no","No.順"],["tot","合計順"]].map(([k,t])=>'<button class="tab'+((CL.cs||"rar")===k?' on':'')+
       '" data-act="cs" data-v="'+k+'">'+t+'</button>').join("")+'</div>';
   if(CL.sel)h+=cardDetailHtml(CL.sel);
-  h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",CL.sel===id?" on":"")).join("")+'</div>'
-    :'<p class="dim">登録していないカードはまだ無い。試合のあとに1枚ずつ出る</p>';
+  h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",(CL.sel===id?" on":"")+(S.sq.includes(id)?" insq":""))).join("")+'</div>'
+    :'<p class="dim">このポジションのカードはまだ無い。試合のあとに1枚ずつ出る</p>';
   return h+'</section>';
 }
 
@@ -406,20 +418,23 @@ function careerHtml(){
 
 const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"],["season","SEASON","☰"],["club","CLUB","◎"]];
 
-/** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ */
+/** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ。言葉はいまの秘書の口調(→grow.js の secSay) */
 function secLine(S){
   const fx=CL.fx, g=S.g, pl=Object.values(g.pl);
   if(CL.alert)return CL.alert;                 // 保存の異常は何より先に知らせる
-  if(S.termOver)return "任期が終わりました。お疲れさまでした。";
+  if(S.termOver)return secSay(S,"termOver");
   const sign=Object.keys(g.pl).filter(id=>hasSign(S,id)).length;
   const omen=pl.filter(p=>p.q||p.sq).length+Object.values(g.links).filter(l=>l.gold).length;
-  if(fx.kind==="friendly"&&omen)return "フレンドリーマッチです。兆しのある選手を出して勝てば、開花します。";
-  if(g.step!=="train"&&commLeft(S))return "練習は済みました。コミュニケーションがあと "+commLeft(S)+" 回使えます。";
-  if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return "選手が疲れています。今日の練習は軽めにしては。";
-  if(sign)return "「！」の付いた選手が "+sign+" 人います。話を聞いてあげてください。";
-  if(fx.ko&&/決勝/.test(fx.label))return COMPS[fx.comp].name+"の決勝です。ここで勝てばタイトルです。";
-  if(S.played===0)return "ようこそ、監督。まずは次の試合に向けて準備を始めましょう。";
-  return "次の試合の準備を始めましょう。";
+  // ケガをした先発がいれば、入れ替えかケアを勧める(→docs/08 §8.8)
+  const hurt=S.sq.slice(0,11).filter(id=>g.pl[id]&&g.pl[id].mot===0);
+  if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
+  if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
+  if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
+  if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return secSay(S,"tired");
+  if(sign)return secSay(S,"sign",{ n:sign });
+  if(fx.ko&&/決勝/.test(fx.label))return secSay(S,"final",{ c:COMPS[fx.comp].name });
+  if(S.played===0)return secSay(S,"welcome");
+  return secSay(S,"next");
 }
 /** 次の試合の煽り(同じ試合なら毎回同じ文) */
 function hypeOf(S,fx){
@@ -458,7 +473,29 @@ function nextTileHtml(){
 }
 /** 秘書の一言 */
 function secHtml(){
-  return '<section class="sec"><i class="sec-ic">SEC</i><p>'+secLine(CL.S)+'</p></section>';
+  const S=CL.S, se=secOf(S);
+  let h='<section class="sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><p>'+secLine(S)+'</p></div></section>';
+  // 監督室の短い会話(親密度のイベント)
+  const ev=S.sec&&S.sec.ev!=null?SEC_EVENTS[S.sec.ev]:null;
+  if(ev&&!S.termOver)h+='<section class="sec sec-ev"><i class="sec-ic">TALK</i><div><b class="sec-nm">'+se.name+'</b><p>「'+ev.q+'」</p>'+
+    '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="secev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+  return h;
+}
+/** CLUB の秘書の欄: いまの秘書と親密度。開くと選び直せる */
+function secClubHtml(){
+  const S=CL.S, se=secOf(S), b=secBond(S), lv=secLv(S), t=TUNING.sec.lv;
+  if(CL.secOpen)return secPickHtml("秘書を替える");
+  return '<section class="card"><h3>秘書 <small><button class="lnk" data-act="secopen">替える</button></small></h3>'+
+    '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
+    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
+}
+/** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
+function secPickHtml(title){
+  const S=CL.S;
+  return '<section class="card secpick"><h3>'+title+' <small>能力の差はなく、口調だけが違う</small></h3>'+SECS.map(x=>{
+    const b=S.sec.bond[x.id]||0, t=TUNING.sec.lv; let lv=0; while(lv<t.length&&b>=t[lv])lv++;
+    return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
+      '<i>「'+SEC_LINES[x.id].hello+'」</i></button>'; }).join("")+'</section>';
 }
 /** 前の試合(要約) */
 function lastHtml(){
@@ -473,6 +510,7 @@ function lastHtml(){
 }
 function homeHtml(){
   const S=CL.S;
+  if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+secPickHtml("秘書を選ぶ");
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+secHtml()+lastHtml());
 }
 /** SEASON: リーグの順位と大会 */
@@ -499,7 +537,7 @@ function clubTabHtml(){
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p></section>'+
-    careerHtml()+settingsHtml();
+    secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
   const S=CL.S, sign=Object.keys(S.g.pl).some(id=>hasSign(S,id));
@@ -530,14 +568,17 @@ function finishFixture(M){
   // 並びと KP は SQUAD で決めた既定のまま。試合中に動かしたぶんはその試合だけ(→docs/07 §7.10)
   const onPitch=M.home.players.map(p=>p.id);
   const played=[...new Set((G.meta.starters||[]).concat(onPitch))];
-  applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch,
+  const inj=M.events.filter(e=>e.type==="injury"&&e.side==="H").map(e=>e.by);
+  applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   persist(CL.S);
   const L=CL.S.last;
-  sceneResult(M,L,()=>{
+  // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
+  sceneResult(M,L,RT=>{
     const done=()=>{ sceneHide(); showClub(); };
-    if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done();
+    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done(); };
+    if(L&&L.lines.some(x=>/^🏆 /.test(x)))sceneTrophy(M,L,card); else sceneLocker(M,L,RT,card);
   });
 }
 function onClubClick(e){
@@ -546,7 +587,10 @@ function onClubClick(e){
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
   if(onSettingsClick(act,b))return;
-  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; showClub(); return; }
+  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
+  if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
+  if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }
   if(act==="play")startFixture();
@@ -576,7 +620,7 @@ function onClubClick(e){
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["声かけ"],r.lines,[reactOf(S,id,"talk",0)]);
+    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["ケア"],r.lines,[reactOf(S,id,"talk",0)]);
     CL.pick=[]; save(); showClub(true);
   }
   else if(act==="pick"){

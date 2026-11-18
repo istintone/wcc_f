@@ -25,14 +25,15 @@ const REAL_IDS=REAL_CLUBS.map(c=>c[0]);
 const POOL=(()=>{
   const C=TUNING.pack, out=[];
   for(const r of REAL_ROWS){
-    const [id,ci,no,name,roles,age,grade,traits,skill]=r, rl=roles.split("/"), g=GEN_ROLE[rl[0]];
+    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[rl[0]];
     const st={};
     const off=(grade-C.gradeBase)*C.gradeK;      // 格 → 能力のずれ
     STATS.forEach((k,i)=>{ const v=g.st[i]; st[k]=v+(v<=6?off*C.lowK:off); });
     for(let k=0;k+1<traits.length;k+=2)st[TRAIT_STAT[traits[k]]]+=traits[k+1]==="+"?C.trait:-C.trait;
     STATS.forEach(k=>{ st[k]=clamp(Math.round(st[k]),1,STAT_MAX); });
     CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade,
-      rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0] },st);
+      rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0],
+      nat:nat||NAT_POOL[hashStr("nat:"+id)%NAT_POOL.length], ani:ani!=null?ani:hashStr("ani:"+id)%ANIMALS.length },st);
     out.push(id);
   }
   // 相手クラブとしての定義。強さの段は先発11人の格の平均で、上位8クラブが5、残りが4

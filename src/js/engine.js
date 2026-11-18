@@ -92,7 +92,7 @@ function mkPlayer(card,h,x,gk){
 }
 /** 能力に掛かる修正は必ずここへ足す(全判定の単一集約点) */
 function eff(p,k){
-  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1);
+  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1)*(p.inj?TUNING.inj.k:1);
 }
 /** 消耗が能力に響く量(0〜fatMax)。減り始めは軽く、半分を切ると急に重くなる */
 function fatOf(stam){
@@ -357,6 +357,7 @@ function createMatch(homeDef,awayDef,seed,opts){
     events:[], orders:{ H:[], A:[] },
     phase:"kickoff", koSide:"H", ball:null, set:null, poss:{ side:null, n:0, h0:0.5 },
     opts:opts||{}, pso:null, ht:false, over:false };
+  M.irng=mulberry32((seed^hashStr("inj"))>>>0);   // ケガだけの乱数(ほかの判定の並びを変えない)
   refreshFx(M,0);
   return M;
 }
@@ -442,7 +443,8 @@ function coachStep(M,t){
   if(t.min<K.subMin||M.ix%K.every)return;
   for(const T of [M.home,M.away]){
     if(!T.cpu||T.subs>=TUNING.squad.subMax)continue;
-    const tired=outfield(T).filter(p=>p.stam<K.subAt).sort((a,b)=>a.stam-b.stam)[0];
+    // ケガ人を先に、次に足の止まった選手から替える
+    const tired=outfield(T).filter(p=>p.inj||p.stam<K.subAt).sort((a,b)=>(b.inj?1:0)-(a.inj?1:0)||a.stam-b.stam)[0];
     if(!tired)continue;
     const cand=T.bench.filter(c=>c.pos===tired.c.pos)
       .sort((a,b)=>aptOf(b,tired.role)-aptOf(a,tired.role))[0];
@@ -680,6 +682,7 @@ function stepMatch(M){
     setPiece(M,T,"ck",0.97,cp.x<50?3:97);
   }
   else M.ball={ side:D.side, h:1-cp.h, x:100-cp.x, holder:mk.p, assist:null };
+  if(!ok&&!fouled)injCheck(M,push,T,c,TUNING.inj.duel);   // 止められた持ち手
   return M.events.slice(from);
 }
 
@@ -709,6 +712,12 @@ function setPiece(M,T,kind,h,x){
  * 反則。(h,x) は反則を受けた側 T のフレーム。
  * 警告2枚か一発で退場し、そのまま人数が減って試合が続く。
  */
+/** ケガ(→docs/08 §8.8)。疲れているほど起きやすい。ケガをしても出続け、能力が落ちる(交代は監督が決める) */
+function injCheck(M,push,T,p,base){
+  const J=TUNING.inj;
+  if(!p||p.inj||!M.irng)return;
+  if(M.irng()<base*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
+}
 function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   const O=TUNING.rule, pk=forcePk||inBox(h,x), k=pk?O.pkCardK:1, r=rng();
   D.st.fouls++;
@@ -726,6 +735,7 @@ function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   }
   const set=pk?"pk":h>=O.setH?"fk":"re";
   push({ side:D.side, type:"foul", by:fouler.id, on:victim.id, card, set });
+  injCheck(M,push,T,victim,TUNING.inj.foul);
   if(set==="pk")setPiece(M,T,"pk",O.pkH,50);
   else if(set==="fk")setPiece(M,T,"fk",h,x);
   else M.ball={ side:T.side, h, x, holder:victim, assist:null };
@@ -867,6 +877,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
   if(goal){
     T.score++; p.st.goals++;
     ev.res="goal"; ev.hg=M.home.score; ev.ag=M.away.score;
+    if(assist&&assist!==p)ev.as=assist.id;       // 記録だけ(採点のアシスト)。判定には使わない
     push(ev);
     M.phase="kickoff"; M.koSide=D.side; M.ball=null;
     return;
@@ -939,4 +950,47 @@ function finishMatch(M){
 }
 function simulateMatch(homeDef,awayDef,seed,opts){
   return finishMatch(createMatch(homeDef,awayDef,seed,opts));
+}
+
+/* ---- 試合の記録(結果の画面が読む。→docs/07 §7.12) ---- */
+/** チームの数字。支配率は攻めの手数(steps)の割合 */
+function matchStats(M){
+  const H=M.home.st, A=M.away.st, all=(H.steps+A.steps)||1;
+  const one=(T,s)=>({ shots:s.shots, onT:s.onT, poss:Math.round(s.steps/all*100),
+    pass:s.pass?Math.round(s.passOk/s.pass*100):0, fouls:s.fouls, ck:s.ck });
+  return { H:one(M.home,H), A:one(M.away,A) };
+}
+/**
+ * 選手の採点(10点満点・0.5刻み)。**記録(イベント)から数える**。途中で下がった選手は終了時の名簿にいないため。
+ * 返り値 { list:[{ id, side, r, g, a }](出た全員), mvp:id }
+ */
+function matchRatings(M){
+  const R=TUNING.rate, sc={}, side={}, g={}, a={}, pass={}, ga={ H:M.away.score, A:M.home.score };
+  const oth=s=>s==="H"?"A":"H";
+  const add=(id,v,sd)=>{ if(!id)return; if(!(id in sc))sc[id]=0; sc[id]+=v; if(sd)side[id]=sd; };
+  const ok=(id,sd)=>{ if(!id)return; add(id,0,sd); pass[id]=(pass[id]||0)+R.passOk; };
+  for(const T of [M.home,M.away])for(const p of T.players)add(p.id,0,T.side);
+  for(const e of M.events){
+    if(e.type==="sub"){ add(e.out,0,e.side); add(e.in,0,e.side); }
+    else if(e.type==="shot"){
+      if(e.res==="goal"){ add(e.by,R.goal+R.onT,e.side); g[e.by]=(g[e.by]||0)+1;
+        if(e.as){ add(e.as,R.assist,e.side); a[e.as]=(a[e.as]||0)+1; } }
+      else if(e.res==="save"){ add(e.by,R.onT,e.side); add(e.gk,R.save,oth(e.side)); }
+      else if(e.res==="block"){ add(e.by,0,e.side); add(e.vs,R.block,oth(e.side)); }
+      else add(e.by,R.miss,e.side);
+    }else if(e.type==="pass"||e.type==="carry"||e.type==="cross"){
+      if(e.ok)ok(e.by,e.side); else{ add(e.by,R.lost,e.side); add(e.vs,R.won,oth(e.side)); }
+    }else if(e.type==="foul"){ add(e.by,e.card==="r"||e.card==="yr"?R.red:R.foul,e.side); }
+  }
+  const d=(M.pso?M.pso[0]-M.pso[1]:0)||M.home.score-M.away.score;
+  const list=Object.keys(sc).filter(id=>side[id]).map(id=>{
+    const c=CARDS[id], sd=side[id];
+    let v=R.base+sc[id]+Math.min(R.passMax,pass[id]||0);
+    if(c&&c.pos==="GK")v+=R.concede*ga[sd]; else if(c&&c.pos==="DF")v+=R.concedeDf*ga[sd];
+    const res=sd==="H"?d:-d;
+    if(res>0)v+=R.win; else if(res<0)v+=R.lose;
+    return { id, side:sd, r:Math.round(clamp(v,R.min,R.max)*2)/2, g:g[id]||0, a:a[id]||0, won:res>0 };
+  });
+  const best=list.slice().sort((x,y)=>y.r-x.r||y.g-x.g||(y.won-x.won)||y.a-x.a)[0];
+  return { list, mvp:best?best.id:null };
 }

@@ -425,5 +425,25 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   check("ただし交代だけで決まらない(+0.6 未満)",gd(withSub)<gd(base)+0.6);
 }
 
+// ⑨ 試合の採点(→docs/07 §7.12)。記録から数える。10点満点・0.5刻み
+{
+  console.log("\n⑨ 試合の採点");
+  let sum=0, n=0, hi=0, goals=0, asst=0, mvpGoal=0, bad=0, poss=0;
+  const tm=Object.keys(E.TEAMS).filter(k=>E.TEAMS[k].real);
+  for(let i=0;i<200;i++){
+    const M=E.simulateMatch(E.makeTeamDef("azr",false),E.makeTeamDef(tm[i%tm.length],true),5000+i);
+    const R=E.matchRatings(M), S=E.matchStats(M);
+    poss+=S.H.poss+S.A.poss;
+    for(const x of R.list){ sum+=x.r; n++; if(x.r>=8)hi++; if(x.r*2!==Math.round(x.r*2)||x.r<3.5||x.r>10)bad++; goals+=x.g; asst+=x.a; }
+    const m=R.list.find(x=>x.id===R.mvp); if(m&&m.g)mvpGoal++;
+    if(R.list.reduce((s,x)=>s+x.g,0)!==M.home.score+M.away.score)bad++;
+  }
+  console.log("    平均 "+f2(sum/n)+"  8.0以上 "+pc(hi/n)+"  アシスト/得点 "+pc(asst/goals)+"  MVPが得点者 "+pc(mvpGoal/200));
+  check("採点は 0.5 刻みで 3.5〜10、得点は記録と一致",bad===0,bad+"件");
+  check("平均が 6.0〜6.8",sum/n>=6&&sum/n<=6.8,f2(sum/n));
+  check("8.0 以上は珍しい(3〜12%)",hi/n>=0.03&&hi/n<=0.12,pc(hi/n));
+  check("支配率は両チームで100%",Math.abs(poss/200-100)<=1,f2(poss/200));
+}
+
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

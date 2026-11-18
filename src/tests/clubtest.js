@@ -145,7 +145,8 @@ function playOne(S,W,decline,opt){
   const layout={}; M.home.players.forEach(p=>layout[p.id]=[p.b.h,p.b.x]);
   const onPitch=M.home.players.map(p=>p.id), played=[...new Set(starters.concat(onPitch))];
   const lines=E.applyResult(S,W,fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout, kp:M.home.kp,
-    played, onPitch, starters, subs:M.home.subs, kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
+    played, onPitch, starters, subs:M.home.subs, kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length,
+    inj:M.events.filter(e=>e.type==="injury"&&e.side==="H").map(e=>e.by) });
   return { fx, M, lines };
 }
 {
@@ -276,6 +277,79 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   const mt=ok=>cnt(T=>{ T.g.pl.h10.se=99; return E.doMeeting(T,"h10",ok?E.persOf("h10"):(E.persOf("h10")+1)%3).res; },600);
   const mOk=mt(true), mNg=mt(false);
   check("ミーティングの★突破は、性格に合う言い方で成功しやすい",mOk[0]>0.75&&mNg[0]<0.45,pc(mOk[0])+" / "+pc(mNg[0]));
+  { // ミーティングは周りにも効く(→docs/08 §8.3): 盤面で近い先発に経験。控えを呼んでも周りはいない
+    const T=E.newCareer(88); T.g.step="comm";
+    const near=E.meetNear(T,"h10"), far=T.sq.slice(0,11).filter(x=>x!=="h10"&&!near.includes(x));
+    const se0={}; for(const x of T.sq)se0[x]=T.g.pl[x].se;
+    const r=E.doMeeting(T,"h10",0);
+    const gotNear=near.every(x=>T.g.pl[x].se>se0[x]), gotFar=far.some(x=>T.g.pl[x].se>se0[x]);
+    check("ミーティングは盤面で近い先発(1〜3人)にも経験が入り、遠い選手には入らない",
+      near.length>=1&&near.length<=3&&gotNear&&!gotFar, near.join(",")+" ・ "+r.lines.slice(-1)[0]);
+    check("控えを呼んだときは、連携のある選手がいなければ周りに効かない",E.meetNear(T,T.sq[13]).length===0);
+    { const U=E.newCareer(88), b=U.sq[13], a=U.sq[2]; U.g.links[[a,b].sort().join("|")]={ lv:2, exp:0, gold:false };
+      check("連携のある選手は、控えでも盤面が遠くても周りに入る(先頭)",E.meetNear(U,b)[0]===a,E.meetNear(U,b).join(",")); }
+    // ★突破の成否が周りのやる気に響く(多くの任期で数える)
+    let up=0, down=0;
+    for(let i=0;i<300;i++){
+      for(const ok of [true,false]){
+        const U=E.newCareer(9000+i); U.g.step="comm"; U.g.pl.h10.se=99;
+        const nr=E.meetNear(U,"h10"), m0=nr.map(x=>U.g.pl[x].mot);
+        const res=E.doMeeting(U,"h10",ok?E.persOf("h10"):(E.persOf("h10")+1)%3).res;
+        nr.forEach((x,k)=>{ const d=U.g.pl[x].mot-m0[k]; if(res===0&&d>0)up++; if(res===2&&d<0)down++; });
+      }
+    }
+    check("★突破が成功すると周りのやる気が上がり、失敗すると下がることがある",up>0&&down>0,"上がった "+up+" / 下がった "+down);
+  }
+  { // 秘書(→docs/08 §8.7): 選べる4人・親密度・フォロー
+    const T=E.newCareer(61), TW=E.worldOf(T);
+    check("新しい任期では秘書を選ぶ(初めは未選択)",T.sec&&!T.sec.chosen&&E.chooseSec(T,"s2")&&T.sec.chosen&&E.secOf(T).id==="s2");
+    const on=T.sq.slice(0,11);
+    for(let i=0;i<6;i++)E.applyResult(T,TW,E.nextFixture(T,TW),{ hg:1, ag:0, played:on, onPitch:on, starters:on });
+    check("試合のたびに親密度が上がる",T.sec.bond.s2>=6&&E.secLv(T)>=1,"親密度 "+T.sec.bond.s2+" 段 "+E.secLv(T));
+    E.chooseSec(T,"s1"); const b1=T.sec.bond.s1||0; E.chooseSec(T,"s2");
+    check("秘書を替えても、元の秘書との親密度は消えない",b1===0&&T.sec.bond.s2>=6);
+    check("口調は秘書ごとに違う",E.secSay(T,"tired")!==(E.chooseSec(T,"s1"),E.secSay(T,"tired")));
+    // フォローの率: 親密度が高いほど起きる(ラウンジの失敗で数える)
+    const rate=bond=>{ let n=0, hit=0;
+      for(let i=0;i<400;i++){ const U=E.newCareer(30000+i); U.sec.bond.s0=bond; U.g.step="comm";
+        for(const id in U.g.pl)U.g.pl[id].mot=2;
+        const pick=(E.LOUNGE_BEST[E.compatOf("h07","h08")]+2)%3, r=E.doLounge(U,"h07","h08",pick);
+        if(r.res===2){ n++; if(r.lines.some(x=>/秘書のフォロー/.test(x)))hit++; } }
+      return hit/n; };
+    const lo=rate(0), hi=rate(99);
+    check("フォローは親密度が高いほど起きやすい(他人行儀 15% → 相棒 50% 前後)",lo>0.07&&lo<0.25&&hi>0.4&&hi<0.6,pc(lo)+" → "+pc(hi));
+    const M=E.migrate(JSON.parse(JSON.stringify(Object.assign({},T,{ sec:undefined }))));
+    check("古いセーブは秘書を補い、途中なら選び直しを求めない",M.sec&&M.sec.chosen===true);
+  }
+  { // 連携が付きやすくなるボーナス(→docs/08 §8.6): 国籍・同じ実在クラブ・動物占い
+    const C=E.CARDS;
+    check("動物は生年月日から出す(gen_cards.py と同じ決まり)",E.aniOfDate(1999,2,25)===C.mcb01.ani&&E.aniOfDate(1900,1,13)===0,
+      "mcb01 → "+E.ANIMALS[C.mcb01.ani].name);
+    check("相性は動物の群れで決まる(同じ群れ 良い / 向かい 張り合う)",E.aniCompat(0,4)===2&&E.aniCompat(0,2)===0&&E.aniCompat(0,1)===1);
+    const ids=Object.keys(C), pair=f=>{ for(const a of ids)for(const b of ids)if(a<b&&f(a,b))return [a,b]; };
+    const nat=pair((a,b)=>C[a].nat===C[b].nat&&C[a].team!==C[b].team&&C[a].ani!==C[b].ani);
+    const club=pair((a,b)=>C[a].team&&C[a].team===C[b].team&&C[a].nat!==C[b].nat&&C[a].ani!==C[b].ani&&E.compatOf(a,b)===0);
+    check("同じ国籍は ×1.5、同じクラブは張り合う相性でも薄線まで育つ",E.linkBonusK(nat[0],nat[1])===1.5&&E.linkCap(club[0],club[1])===1,
+      nat.join("・")+" / "+club.join("・"));
+    check("アズーロFC の初めの16人には、クラブのボーナスが付かない",!E.linkBonusOf("h01","h02").includes("club"));
+  }
+  { // ケガ(→docs/08 §8.8): 試合の中のケガ → 「ケガ」に。1〜3試合で治る。ケアで手当てできる
+    const T=E.newCareer(55), TW=E.worldOf(T), J=E.TUNING.inj;
+    const fx=E.nextFixture(T,TW), on=T.sq.slice(0,11);
+    E.applyResult(T,TW,fx,{ hg:1, ag:0, played:on, onPitch:on, starters:on, inj:["h10"] });
+    check("試合の中でケガをした選手は「ケガ」になる",T.g.pl.h10.mot===0,T.last.gl.filter(x=>/ケガ/.test(x)).join(" "));
+    let n=0;
+    while(T.g.pl.h10.mot===0&&n<10){ n++; const f=E.nextFixture(T,TW); E.applyResult(T,TW,f,{ hg:0, ag:0, played:on, onPitch:on, starters:on }); }
+    check("ケガは maxN 試合のうちに治る",n>=1&&n<=J.maxN&&T.g.pl.h10.mot===J.healTo,n+"試合で治った");
+    const U=E.newCareer(56); U.g.step="comm"; U.g.pl.h07.mot=0; U.g.pl.h07.injN=1;
+    E.doTalk(U,"h07");
+    check("ケガの選手はケアで手当てでき、「不調」以上に戻る",U.g.pl.h07.mot>=2,E.MOT_LABEL[U.g.pl.h07.mot]);
+    // 頻度(試合の中で、自チーム)
+    let hurt=0; const N=600, tm=Object.keys(E.TEAMS).filter(k=>E.TEAMS[k].real);
+    for(let i=0;i<N;i++){ const M=E.simulateMatch(E.makeTeamDef("azr",false),E.makeTeamDef(tm[i%tm.length],true),8100+i);
+      hurt+=M.events.filter(e=>e.type==="injury"&&e.side==="H").length; }
+    check("ケガは自チームで 9〜18 試合に1回",N/hurt>=9&&N/hurt<=18,"1回/"+f2(N/hurt)+"試合");
+  }
 
   // 育てる前の強さ(段4の相手に300試合)
   const strength=T=>{ let gd=0; const N=300, opp=W.clubs.filter(c=>E.tierOf(c)===4)[0];
@@ -286,7 +360,7 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   const log=[]; let ok=true;
   while(!S.termOver){
     playOne(S,W,null,{ log });
-    for(const id in S.g.pl){ const g=S.g.pl[id]; if(g.mot<1||g.mot>4||g.is>5||g.ss>5)ok=false; }
+    for(const id in S.g.pl){ const g=S.g.pl[id]; if(g.mot<0||g.mot>4||g.is>5||g.ss>5)ok=false; }
     for(const a in S.g.graph)if(S.g.graph[a]<G0.graph.min-1e-9||S.g.graph[a]>G0.graph.max+1e-9)ok=false;
   }
   const after=strength(S);
@@ -298,9 +372,9 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   console.log("    連携  薄線 "+lv[1]+" / 太線 "+lv[2]+" / 黄金線 "+lv[3]+"(盤面の11人で合計 "+
     def.links.filter(l=>xi.includes(l[0])&&xi.includes(l[1])).reduce((s,l)=>s+l[2],0)+")");
   console.log("    戦力グラフ "+Object.keys(S.g.graph).map(a=>a+" "+f2(S.g.graph[a])).join(" ")+"   セットプレイ +"+pc(S.g.set));
-  console.log("    モチベーション "+[1,2,3,4].map(m=>E.MOT_LABEL[m]+" "+pl.filter(g=>g.mot===m).length).join(" / "));
+  console.log("    モチベーション "+[0,1,2,3,4].map(m=>E.MOT_LABEL[m]+" "+pl.filter(g=>g.mot===m).length).join(" / "));
   console.log("    成績 "+S.rec.w+"勝"+S.rec.d+"分"+S.rec.l+"敗   段4の相手との得失点差 "+f2(before)+" → "+f2(after));
-  check("値が範囲を出ない(★0〜5・モチベーション1〜4・グラフの上下限・能力20以下)",ok&&maxStat<=20,"能力の最大 "+maxStat);
+  check("値が範囲を出ない(★0〜5・モチベーション0〜4(0=ケガ)・グラフの上下限・能力20以下)",ok&&maxStat<=20,"能力の最大 "+maxStat);
   // 集中育成の釣り合い(→docs/08 §8.5)
   const fo=FOCUS.slice(0,3).map(id=>S.g.pl[id]), never=Object.keys(S.g.pl).filter(id=>!FOCUS.includes(id)&&!xi.includes(id)).map(id=>S.g.pl[id]);
   const nevAvg=never.reduce((s,g)=>s+g.is,0)/(never.length||1);
