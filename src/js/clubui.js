@@ -149,7 +149,8 @@ function commChatHtml(){
     return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b></div><div class="ch-log">'+
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
-      '</div><div class="ch-acts"><button class="cr ok" data-act="chatok">OK</button></div></div>';
+      '</div><div class="ch-acts">'+(commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
+        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">キックオフへ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
@@ -189,7 +190,7 @@ function commStepHtml(){
   let h='<div class="step-h"><b>コミュニケーション</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
       (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">！</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
-  if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>';
+  if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
   h+=commChatHtml();
@@ -808,7 +809,7 @@ function startFixture(){
   skipComm(CL.S);                              // 残りのコミュニケーションは使わない
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
-  CL.msg=[]; CL.comm=null; CL.pick=[];
+  CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
   sceneMatchup(fx,()=>{
     sceneHide(); hideClub();
     newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
@@ -846,6 +847,7 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
+  if(act==="chatgo"){ CL.chat=null; startFixture(); return; }   // 最後の1回の結果を見てから試合へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; showClub(); return; }
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="none")return;
