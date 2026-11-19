@@ -93,7 +93,22 @@ const TUNING={
           atkMin:60, allOutMin:80,
           defMin:70, narrow:0.65,
           markH:0.62, markPull:0.4, markMax:10,
-          stepH:0.012, stepX:1.5, gkStep:2.5 },
+          stepH:0.012, stepX:1.5, gkStep:2.5,
+          // 陣形の変更(→docs/13 §13.3)。ppMin/shieldMin … パワープレー・守備固めを始める分 / ppUp … 前線へ上げる高さ /
+          //   ppSb・ppCb … SB・CB を上げる量 / shDown … 下げる FW の高さ / shWide・shDf … SMF・WG と DF を下げる量
+          ppMin:78, shieldMin:75, ppUp:0.80, ppSb:0.12, ppCb:0.05, shDown:0.22, shWide:0.08, shDf:0.04,
+          // 手薄なスペース(§13.4)。spaceEvery … 数え直す間隔(ステップ)/ sideGap … 左右の守備の人数の差 / pushN … 敵陣に入っている人数(裏を突く)
+          spaceEvery:6, sideGap:2, pushN:8,
+          // 点差で選ぶ交代(1試合1回)。tacMin … この分から
+          tacMin:62,
+          // 性格(§13.5)。atk/def … 構えの切り替えの分のずれ / space … スペースを狙い始める分(null は狙わない) / sub … 交代の分のずれ /
+          //   shape … 陣形を変えるか / drawAtk … 同点でもこの分から前がかり(null はしない) / pp … パワープレーの分のずれ(null はしない)
+          pers:{
+            steady:  { name:"堅実",   atk:0,   def:0,   space:25,   sub:0,   shape:true,  drawAtk:null, pp:0 },
+            quick:   { name:"即応",   atk:-15, def:-15, space:0,    sub:-10, shape:true,  drawAtk:null, pp:-5 },
+            stubborn:{ name:"頑固",   atk:15,  def:15,  space:null, sub:5,   shape:false, drawAtk:null, pp:null },
+            attack:  { name:"攻撃的", atk:-5,  def:10,  space:25,   sub:0,   shape:true,  drawAtk:72,   pp:-10 },
+            careful: { name:"慎重",   atk:5,   def:-20, space:25,   sub:0,   shape:true,  drawAtk:null, pp:null } } },
   // KP(→docs/04)。1クラブに1人。試合中も変えられる。recv = どのスタイルでも KP にボールが少し集まる
   kp:{ recv:1.25 },
   // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動

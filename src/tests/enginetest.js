@@ -503,5 +503,28 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   for(let k=0;k<20;k++){ S.played=k; E.setRole(S,"cap",id); const m0=S.g.pl[id].mot; E.setRole(S,"cap",null); E.setRole(S,"cap",id); if(S.g.pl[id].mot>m0)up++; }
   check("任命の付け替えでやる気を戻せない(上がるのは任期に1回まで)",up===0&&S.g.pl[id].mot<=2,"mot="+S.g.pl[id].mot);
 }
+// ⑭ 相手監督の性格・陣形・スペース(→docs/13)
+{
+  console.log("\n⑭ 相手監督");
+  const K=E.TUNING.coach, res={};
+  for(const ps of E.COACH_PERS){ let gd=0, sh=0;
+    for(let i=0;i<N/2;i++){ const d=E.makeTeamDef("azr",false); d.cpu=true; d.pers=ps; const o=E.makeTeamDef("ros",true); o.pers="steady";
+      const m=E.simulateMatch(d,o,95000+i); gd+=m.home.score-m.away.score; sh+=m.events.filter(e=>e.type==="shape"&&e.side==="H"&&e.shape!=="none").length; }
+    res[ps]={ gd:gd/(N/2), sh:sh/(N/2) }; }
+  console.log("    "+E.COACH_PERS.map(k=>K.pers[k].name+" "+f2(res[k].gd)+"(陣形 "+f2(res[k].sh)+")").join(" ・ "));
+  const base=res.steady.gd;
+  check("性格で勝ち負けが大きく偏らない(堅実との差 ±0.3 以内)",E.COACH_PERS.every(k=>Math.abs(res[k].gd-base)<0.3));
+  check("陣形を変える(頑固は変えない)",res.steady.sh>0&&res.stubborn.sh===0);
+  // プレイヤーが片側に寄せると、即応の監督は空いた側(相手から見て左)を狙う。偏った配置はそれだけで失点が増える
+  const run=(space,lop)=>{ const q=K.pers.quick.space; K.pers.quick.space=space; let ga=0, l=0, r=0;
+    for(let i=0;i<N;i++){ const d=E.makeTeamDef("azr",false);
+      if(lop)d.xi=d.xi.map((s,j)=>j>0&&s.h<0.45&&s.x>55?Object.assign({},s,{ x:30 }):s);
+      const o=E.makeTeamDef("ros",true); o.pers="quick"; const m=E.simulateMatch(d,o,97000+i); ga+=m.away.score;
+      for(const e of m.events)if(e.type==="ins"&&e.side==="A"){ if(e.left)l++; if(e.right)r++; } }
+    K.pers.quick.space=q; return { ga:ga/N, l, r }; };
+  const flat=run(0,false), off=run(null,true), on=run(0,true);
+  console.log("    取られた点  通常の配置 "+f2(flat.ga)+" ・ 片側に寄せた配置 "+f2(off.ga)+"(スペースを狙う "+f2(on.ga)+")  狙った側 左 "+on.l+" / 右 "+on.r);
+  check("偏った配置は失点が増え、相手監督は空いた側を狙う",off.ga>flat.ga+0.2&&on.l>on.r*3&&on.ga>off.ga-0.1,"左 "+on.l+" / 右 "+on.r);
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

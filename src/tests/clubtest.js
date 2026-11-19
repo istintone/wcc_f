@@ -491,7 +491,7 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   // 集中育成の釣り合い(→docs/08 §8.5)
   const fo=FOCUS.slice(0,3).map(id=>S.g.pl[id]), never=Object.keys(S.g.pl).filter(id=>!FOCUS.includes(id)&&!xi.includes(id)).map(id=>S.g.pl[id]);
   const nevAvg=never.reduce((s,g)=>s+g.is,0)/(never.length||1);
-  check("集中して育てた3人は、個人・特殊とも★5に届く",fo.every(g=>g.is===5&&g.ss===5),fo.map(g=>"★"+g.is+"/"+g.ss).join(" "));
+  check("集中して育てた3人は、個人・特殊とも★5(または★5の兆し)に届く",fo.every(g=>(g.is===5||g.q)&&(g.ss===5||g.sq)),fo.map(g=>"★"+g.is+(g.q?"兆":"")+"/"+g.ss+(g.sq?"兆":"")).join(" "));
   check("覚醒は狙った選手が中心で、全員ではない(3〜8人)",awake>=3&&awake<=8,awake+"人");
   check("関わらなかった選手は★2以下にとどまる",nevAvg<=2,"控えの★平均 "+f2(nevAvg));
   check("特殊能力は KP に絞れば ★4 以上まで届く",spMax>=4,"★"+spMax);

@@ -99,6 +99,9 @@ function fatOf(stam){
   const S=TUNING.stam;
   return Math.min(S.fatMax,Math.pow(1-stam,S.fatPow)*S.fatK);
 }
+/** 相手監督の性格。クラブごとに決まっている(試合ごとに変わらない) */
+const COACH_PERS=["steady","quick","stubborn","attack","careful"];
+const persOfClub=id=>COACH_PERS[hashStr("coach:"+id)%COACH_PERS.length];
 function makeTeamDef(teamId,cpu){
   const t=TEAMS[teamId], f=FORMS[t.form];
   // 相手クラブは育成しない代わりに、強さの段に応じた戦力グラフを初めから持つ(→docs/05 §5.6)
@@ -107,6 +110,7 @@ function makeTeamDef(teamId,cpu){
     kp:t.kp||null, links:t.links||[],
     graph:tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg }:null, setplay:0,
     rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
+    pers:t.pers||persOfClub(t.id),                   // 相手監督の性格(→docs/13 §13.5)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
     bench:t.bench.map(id=>CARDS[id]) };
 }
@@ -115,7 +119,8 @@ function buildTeam(def,side){
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
     kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null,
-    roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}), graph:def.graph||null, setplay:def.setplay||0,
+    roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}),
+    pers:def.pers||"steady", shape:"none", tacSub:false, aim:{ side:0, counter:false }, graph:def.graph||null, setplay:def.setplay||0,
     ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
@@ -443,7 +448,7 @@ function doSub(M,T,outId,inId,t){
   const i=T.players.findIndex(p=>p.id===outId), j=T.bench.findIndex(c=>c.id===inId);
   if(i<0||j<0)return false;
   const out=T.players[i], np=mkPlayer(T.bench[j],out.h,out.x,out.gk);
-  np.b=out.b;
+  np.b=out.b; np.b0=out.b0;
   T.players[i]=np; T.bench.splice(j,1); T.subs++;
   if(out.kp)T.kp=null;                       // KP を下げると KP は居なくなる
   if(M.ball&&M.ball.holder===out)M.ball.holder=np;
@@ -488,9 +493,12 @@ function applyOrders(M,t){
 function coachStep(M,t){
   const K=TUNING.coach;
   for(const T of [M.home,M.away])if(T.cpu)coachMove(M,T,t);
-  if(t.min<K.subMin||M.ix%K.every)return;
+  if(M.ix%K.every)return;
   for(const T of [M.home,M.away]){
+    const P=K.pers[T.pers]||K.pers.steady;
     if(!T.cpu||T.subs>=TUNING.squad.subMax)continue;
+    if(!T.tacSub&&T.posture!=="normal"&&t.min>=K.tacMin+P.sub&&coachTacSub(M,T,t))continue;   // 点差で選ぶ交代(→docs/13)
+    if(t.min<K.subMin+P.sub)continue;
     // ケガ人を先に、次に足の止まった選手から替える
     const tired=outfield(T).filter(p=>p.inj||p.stam<K.subAt).sort((a,b)=>(b.inj?1:0)-(a.inj?1:0)||a.stam-b.stam)[0];
     if(!tired)continue;
@@ -498,6 +506,56 @@ function coachStep(M,t){
       .sort((a,b)=>aptOf(b,tired.role)-aptOf(a,tired.role))[0];
     if(cand){ const was=tired.kp; doSub(M,T,tired.id,cand.id,t); if(was)coachKp(M,T,T.posture,t); }
   }
+}
+/**
+ * 点差で選ぶ交代(1試合1回。→docs/13 §13.2)。負けていれば守りの選手を FW・攻撃的MF に、勝っていれば前の選手を DF・守備的MF に。
+ * 入れた選手は攻め・守りの位置に置く
+ */
+function coachTacSub(M,T,t){
+  const K=TUNING.coach, atk=T.posture==="attack", fo=outfield(T).filter(p=>!p.kp);
+  const out=atk?fo.filter(p=>GROUP_OF[p.role]!=="FW").sort((a,b)=>a.b.h-b.b.h).find(p=>GROUP_OF[p.role]==="MF")||null
+    :fo.filter(p=>GROUP_OF[p.role]==="FW").sort((a,b)=>a.stam-b.stam)[0]||null;
+  if(!out)return false;
+  const want=atk?["FW","MF"]:["DF","MF"], cand=want.map(g=>T.bench.find(c=>c.pos===g)).find(Boolean);
+  if(!cand)return false;
+  T.tacSub=true;
+  const b=atk?{ h:K.ppUp, x:out.b.x }:{ h:0.24, x:out.b.x<50?40:60 };
+  if(!doSub(M,T,out.id,cand.id,t))return false;
+  const np=playerOf(T,cand.id); np.b=b; np.b0=b;
+  return true;
+}
+/**
+ * 陣形の変更(→docs/13 §13.3)。基準の位置(p.b)を動かす。元の位置は p.b0 に残し、"none" で戻す
+ *   pp     パワープレー: 攻撃的な MF 2人を前線へ、SB と CB を上げる
+ *   shield 守備固め: FW を1人残して中盤へ下げ、SMF・WG と DF を下げる
+ */
+function setShape(M,T,shape,t){
+  if(T.shape===shape)return;
+  const K=TUNING.coach, fo=outfield(T);
+  for(const p of fo){ if(!p.b0)p.b0={ h:p.b.h, x:p.b.x }; p.b={ h:p.b0.h, x:p.b0.x }; }
+  const g=p=>GROUP_OF[roleAt(p.b0.h,p.b0.x)], wide=p=>p.b0.x<25||p.b0.x>75;
+  if(shape==="pp"){
+    fo.filter(p=>g(p)==="MF").sort((a,b)=>b.b0.h-a.b0.h).slice(0,2).forEach(p=>{ p.b={ h:Math.max(p.b0.h,K.ppUp), x:p.b0.x }; });
+    fo.filter(p=>g(p)==="DF").forEach(p=>{ p.b={ h:p.b0.h+(wide(p)?K.ppSb:K.ppCb), x:p.b0.x }; });
+  }else if(shape==="shield"){
+    fo.filter(p=>g(p)==="FW").sort((a,b)=>b.b0.h-a.b0.h).slice(1).forEach(p=>{ p.b={ h:p.b0.h-K.shDown, x:p.b0.x }; });
+    fo.filter(p=>g(p)==="MF"&&wide(p)).forEach(p=>{ p.b={ h:p.b0.h-K.shWide, x:p.b0.x }; });
+    fo.filter(p=>g(p)==="DF").forEach(p=>{ p.b={ h:p.b0.h-K.shDf, x:p.b0.x }; });
+  }
+  for(const p of fo){ const q=clampPos(false,p.b.h,p.b.x); p.b={ h:q.h, x:q.x }; }
+  T.shape=shape;
+  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"shape", shape });
+}
+/**
+ * 手薄なスペースを数える(→docs/13 §13.4)。プレイヤーの自陣にいる守備の人数を左右で比べ、少ない側を攻める。
+ * 敵陣に人数をかけていれば裏を突く(カウンター)
+ */
+function coachAim(T,D){
+  const K=TUNING.coach, own=outfield(D).filter(q=>q.h<0.5);
+  // D の左右(D のフレーム)は T から見ると逆。D の x>55 が手薄なら、T の左(x<50)へ
+  const r=own.filter(q=>q.x>55).length, l=own.filter(q=>q.x<45).length;
+  const side=l-r>=K.sideGap?-1:r-l>=K.sideGap?1:0;
+  return { side, counter:outfield(D).filter(q=>q.h>=0.5).length>=K.pushN };
 }
 /** 適性を落とさない範囲で、基準の位置から狙いへ寄せる */
 function safeTarget(p,tgt){
@@ -532,15 +590,24 @@ function coachKp(M,T,mode,t){
  *   ③ GK     ボールのある側へ寄る
  */
 function coachMove(M,T,t){
-  const K=TUNING.coach, D=otherOf(M,T), diff=T.score-D.score;
-  const mode=diff<0&&t.min>=K.atkMin?"attack":diff>0&&t.min>=K.defMin?"defend":"normal";
+  const K=TUNING.coach, D=otherOf(M,T), diff=T.score-D.score, P=K.pers[T.pers]||K.pers.steady;
+  const mode=(diff<0&&t.min>=K.atkMin+P.atk)||(diff===0&&P.drawAtk!=null&&t.min>=P.drawAtk)?"attack"
+    :diff>0&&t.min>=K.defMin+P.def?"defend":"normal";
   if(mode!==T.posture){
     T.posture=mode;
     M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"posture", mode });
     coachKp(M,T,mode,t);
   }
   if(!T.kp)coachKp(M,T,mode,t);
-  setIns(M,T,{ center:mode==="attack", counter:mode==="defend",
+  // 陣形(性格で変えない監督もいる)
+  if(P.shape){
+    const sh=mode==="attack"&&diff<0&&P.pp!=null&&t.min>=K.ppMin+P.pp?"pp":mode==="defend"&&t.min>=K.shieldMin+P.def?"shield":"none";
+    setShape(M,T,sh,t);
+  }
+  // 手薄なスペース(性格で狙い始める時間が違う。頑固は狙わない)
+  if(P.space!=null&&t.min>=P.space&&M.ix%K.spaceEvery===0)T.aim=coachAim(T,D);
+  const A=P.space!=null&&t.min>=P.space?T.aim:{ side:0, counter:false };
+  setIns(M,T,{ center:mode==="attack", left:A.side<0, right:A.side>0, counter:mode==="defend"||A.counter,
     press:mode==="attack"&&t.min>=K.allOutMin },t);
   const nar=mode==="defend"?K.narrow:1;
   const markX=new Map();
