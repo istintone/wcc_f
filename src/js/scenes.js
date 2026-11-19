@@ -45,7 +45,7 @@ function sceneTitle(onStart){
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
-    { next:()=>{ sndUnlock(); sndUi("ok"); onStart(); } });
+    { next:()=>{ sndUnlock(); sndUi("ok"); bgmPlay("club"); onStart(); } });
 }
 
 /* ---- 対戦カード ---- */
@@ -83,6 +83,23 @@ function sceneMatchup(fx,go){
     { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
 }
+/**
+ * 入場(→docs/14 第4弾。本家にあった短い入場シーン。タッチで飛ばせる)。
+ * 両チームの先発11人が、奥のトンネルから2列で手前へ歩いて並ぶ。自チームは左の列、相手は右の列(左右反転)
+ */
+function sceneWalkout(H,A,go){
+  const P=TUNING.play, row=(def,side)=>def.xi.map((x,i)=>{ const src=artSrc(x.card,"stand"); if(!src)return "";
+    const t=(i+1)/11, X=50+(side==="home"?-1:1)*(6+30*t), Y=34+54*t, h=Math.round(34+46*t);
+    return '<img class="wk-p '+side+'" src="'+src+'" alt="" style="--x:'+X.toFixed(1)+'%;--y:'+Y.toFixed(1)+'%;--h:'+h+'px;--d:'+(i*P.walkStep)+'ms;z-index:'+(10+i)+'">'; }).join("");
+  sceneShow("sc-walk",
+    '<div class="wk-sky"></div><div class="wk-pitch"></div><div class="wk-tunnel"></div>'+
+    row(H,"home")+row(A,"away")+
+    '<div class="wk-band"><b style="--tc:'+H.color+'">'+H.short+'</b><i>ENTRANCE</i><b style="--tc:'+A.color+'">'+A.short+'</b></div>'+
+    '<div class="touch sm">TOUCH</div>',
+    { next:go, auto:P.walkMs, lock:250 });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(SC.el)SC.el.classList.add("go"); }));
+  sndCrowdBurst();
+}
 /** 対戦カードの「どっ」 */
 function sndCrowdBurst(){ if(sndOk())noiseBurst(now(),1.6,0.22,"bandpass",600,900,0.6); }
 
@@ -97,6 +114,7 @@ const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
 const rateTxt=r=>r.toFixed(1);
 const resOf=M=>{ const d=M.pso?M.pso[0]-M.pso[1]:M.home.score-M.away.score; return d>0?"WIN":d<0?"LOSE":"DRAW"; };
 function sceneResult(M,last,go){
+  bgmPlay("club");
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
   const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
   const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];

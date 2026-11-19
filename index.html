@@ -1728,6 +1728,33 @@ body.th-bk{
 /* 結果の採点表: 暗いテーマでは暗いセルに、色は数字だけ(→docs/14 第3弾) */
 .th-bk .res-rt span{background:#1b1f28;color:#eef0f4;border:1px solid #2b303c}
 .th-bk .res-rt em{color:#eef0f4} .th-bk .res-rt em.hi{color:#f0cf75} .th-bk .res-rt em.lo{color:#6fa3ff}
+/* ---- 入場シーン(→docs/14 第4弾) ---- */
+.sc-walk{background:#05070d;overflow:hidden}
+.sc-walk .wk-sky{position:absolute!important;inset:0 0 62% 0;background:radial-gradient(ellipse at 50% 120%,rgba(255,246,200,.35),transparent 60%),linear-gradient(#070a14,#1b2440)}
+.sc-walk .wk-pitch{position:absolute!important;left:-20%;right:-20%;top:36%;bottom:0;background:repeating-linear-gradient(180deg,#2a8442 0 8%,#24763b 8% 16%);
+  transform:perspective(320px) rotateX(38deg);transform-origin:50% 0}
+.sc-walk .wk-tunnel{position:absolute!important;left:50%;top:27%;width:70px;height:46px;transform:translateX(-50%);background:#020305;border-radius:35px 35px 0 0;box-shadow:0 0 0 4px #333a4a,0 0 30px rgba(255,246,200,.35)}
+.sc-walk .wk-p{position:absolute!important;left:50%;top:32%;height:calc(var(--h)*.35);transform:translate(-50%,-100%);opacity:0;image-rendering:pixelated;
+  filter:drop-shadow(0 4px 4px rgba(0,0,0,.6));transition:left .9s var(--d) ease-out,top .9s var(--d) ease-out,height .9s var(--d) ease-out,opacity .3s var(--d)}
+.sc-walk .wk-p.away{transform:translate(-50%,-100%) scaleX(-1)}
+.sc-walk.go .wk-p{left:var(--x);top:var(--y);height:var(--h);opacity:1}
+.sc-walk .wk-band{position:absolute!important;left:0;right:0;top:9%;display:flex;align-items:center;justify-content:center;gap:12px;z-index:30!important}
+.sc-walk .wk-band b{font-family:"Oswald",sans-serif;font-size:30px;font-style:italic;color:#fff;padding:0 12px;border-bottom:4px solid var(--tc)}
+.sc-walk .wk-band i{font-family:"Oswald",sans-serif;font-style:normal;font-size:11px;letter-spacing:.3em;color:#f0cf75}
+/* ---- ゴールの得点者のアップ(→docs/14 第4弾) ---- */
+#flash.gl{background:radial-gradient(ellipse at 50% 60%,rgba(224,31,61,.35),rgba(0,0,0,.55) 70%)}
+#flash:not(.mine).gl{background:radial-gradient(ellipse at 50% 60%,rgba(60,70,90,.35),rgba(0,0,0,.6) 70%)}
+#flash .gl-art{position:absolute;right:4%;bottom:0;height:92%;image-rendering:pixelated;filter:drop-shadow(0 8px 12px rgba(0,0,0,.6));animation:glIn .45s cubic-bezier(.2,1.2,.4,1) both;pointer-events:none}
+#flash .gl-art.opp{left:4%;right:auto;transform:scaleX(-1);opacity:.85;height:70%}
+#flash.gl b,#flash.gl i,#flash.gl small{position:relative;z-index:1}
+#flash.gl small{font-size:11px;letter-spacing:.06em;color:#ffe28a;background:rgba(0,0,0,.5);padding:2px 8px}
+@keyframes glIn{from{transform:translateX(40%) scale(.8);opacity:0}}
+#flash .gl-art.opp{animation-name:glInO}
+@keyframes glInO{from{transform:translateX(-40%) scaleX(-1) scale(.8);opacity:0}to{transform:scaleX(-1)}}
+/* 白い地に暗いテーマの文字色が乗っていた所(→docs/14 第4弾) */
+.th-bk #flash i{color:#121212}
+.th-bk .vs-kp,.th-bk #scene .vs-kp{color:#121212}
+.th-bk #club .logo{color:#121212;border-color:#121212}
 </style>
 </head>
 <body>
@@ -2075,7 +2102,8 @@ const TUNING={
          shapeTau:900, delay0:90, delayRnd:260, delaySpd:14, amp:{ GK:0.5, CB:0.75, SB:0.9, DMF:0.9, CMF:1.05, SMF:1.05, OMF:1.15, WG:1.2, CF:1.2 } } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
-  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
+  // walkMs/walkStep … 入場シーンの長さと、1人ずつの入りのずれ(→docs/14 第4弾)
+  play:{ walkMs:3200, walkStep:90, stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
     replayN:5, replaySlow:0.5, replayEnd:600,
     // 盤面のカードの大きさ(→docs/07 §7.11): 盤面の高さ ÷ cardRef の倍率を cardMin〜cardMax に収める(小さい画面で重ならないように)
     cardRef:400, cardMin:0.7, cardMax:1.12, boardAspect:0.7,   // boardAspect … 盤面のピッチの 幅 ÷ 高さ の上限(縦長を保つ)
@@ -4162,7 +4190,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[] };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{} };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -4435,6 +4463,7 @@ function newTerm(S,W){
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
+  S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
   // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
@@ -4516,6 +4545,7 @@ function migrate(S){
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
   if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
   if(!S.capHist)S.capHist=[];
+  if(!S.tgoals)S.tgoals={};
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
@@ -7204,6 +7234,7 @@ function persist(S){
   return ok;
 }
 function showClub(keepScroll){
+  if(typeof bgmPlay==="function")bgmPlay("club");   // 監督室の BGM(→docs/14 第4弾)
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
   CL.fx=nextFixture(CL.S,CL.W);
   el.innerHTML=clubHtml();
@@ -8043,11 +8074,11 @@ function startFixture(){
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
   CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
-  sceneMatchup(fx,()=>{
+  sceneMatchup(fx,()=>sceneWalkout(m.home,m.away,()=>{   // 対戦カード → 入場 → キックオフ(→docs/14 第4弾)
     sceneHide(); hideClub();
     newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
       starters:m.home.xi.map(x=>x.card.id) });
-  });
+  }));
 }
 /** 試合が終わったら呼ぶ。結果を反映して保存し、クラブハウスへ戻る */
 function finishFixture(M){
@@ -8055,6 +8086,9 @@ function finishFixture(M){
   const onPitch=M.home.players.map(p=>p.id);
   const played=[...new Set((G.meta.starters||[]).concat(onPitch))];
   const inj=M.events.filter(e=>e.type==="injury"&&e.side==="H").map(e=>e.by);
+  // この任期の選手ごとの得点(→docs/14 第4弾)
+  if(!CL.S.tgoals)CL.S.tgoals={};
+  for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")CL.S.tgoals[e.by]=(CL.S.tgoals[e.by]||0)+1;
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
@@ -8242,6 +8276,9 @@ function settingsHtml(){
   if(!CL.set)return '<footer class="cft"><button class="btn btn-sub" data-act="set">設定・データ</button></footer>';
   const S=CL.S, kb=(JSON.stringify(S).length/1024).toFixed(1);
   return '<section class="card set"><h3>設定・データ <small><button class="lnk" data-act="set">閉じる</button></small></h3>'+
+    // 音: 効果音と BGM を別々に(→docs/14 第4弾)
+    '<h4>音</h4><div class="tabs"><button class="tab'+(SND.on?' on':'')+'" data-act="sndtoggle">効果音 '+(SND.on?'あり':'なし')+'</button>'+
+      '<button class="tab'+(BGM.on?' on':'')+'" data-act="bgmtoggle">BGM '+(BGM.on?'あり':'なし')+'</button></div>'+
     '<h4>テーマ</h4><div class="tabs">'+Object.keys(THEMES).map(k=>'<button class="tab'+(document.body.classList.contains("th-"+k)&&(k!=="wr"||!document.body.classList.contains("th-bk"))?' on':'')+
       '" data-act="theme" data-v="'+k+'">'+THEMES[k]+'</button>').join("")+'</div>'+
     '<h4>実名パック</h4>'+
@@ -8268,6 +8305,8 @@ function rawBad(){ try{ return CL.store.getItem(SAVE_BAD_KEY); }catch(e){ return
 function settingsMsg(t){ CL.setMsg=t; showClub(true); }
 function onSettingsClick(act,b){
   const S=CL.S;
+  if(act==="sndtoggle"){ sndUnlock(); sndSetOn(!SND.on); showClub(true); return true; }
+  if(act==="bgmtoggle"){ sndUnlock(); bgmSetOn(!BGM.on); showClub(true); return true; }
   if(act==="theme"){ applyTheme(b.dataset.v); showClub(true); return true; }
   if(act==="exbad"){
     settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
@@ -8475,6 +8514,78 @@ function sndLose(){
 }
 
 /* =========================================================================
+   BGM(→docs/14 第4弾。本家はどこでも BGM が流れていた)。音声ファイルは持たず、その場で合成する独自の曲。
+     club  … 監督室・タイトル・結果。ゆったりした4和音の循環にパッド・ベース・アルペジオ・軽いドラム
+     match … 試合中。軽快な8分のベースと四つ打ち。歓声の下で小さく鳴らす
+   先読みで 8分音符ずつ予約する(setInterval で 120ms 先まで)。効果音とは別に、設定で切れる
+   ========================================================================= */
+const BGM={ on:true, cur:null, gain:null, timer:null, step:0, next:0 };
+const BGM_KEY="wcc_f.bgm";
+try{ BGM.on=localStorage.getItem(BGM_KEY)!=="off"; }catch(e){}
+const mtof=n=>440*Math.pow(2,(n-69)/12);
+/** 曲。prog は小節ごとの和音(MIDI の音の高さ)、bass は小節ごとの根音 */
+const BGM_TRACKS={
+  club:{ bpm:92, vol:0.10, prog:[[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,65]], bass:[45,41,36,43],
+    arp:[0,2,1,3,2,1,3,2], kick:[0,4], hat:[2,6], snare:[], bassPat:[0,3,4] },
+  match:{ bpm:124, vol:0.07, prog:[[62,65,69,72],[58,62,65,69],[53,57,60,64],[60,64,67,70]], bass:[38,34,41,36],
+    arp:[0,1,2,3,2,1,0,2], kick:[0,2,4,6], hat:[1,3,5,7], snare:[2,6], bassPat:[0,1,2,3,4,5,6,7] }
+};
+function bgmVoice(type,freq,t,dur,peak,cut){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  f.type="lowpass"; f.frequency.value=cut||2000;
+  env(g,t,Math.min(0.06,dur*0.2),peak,dur*0.35,dur*0.6);
+  o.connect(f); f.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+dur+0.1);
+}
+function bgmNoise(t,dur,peak,filt,f0){
+  const s=SND.ctx.createBufferSource(), f=SND.ctx.createBiquadFilter(), g=SND.ctx.createGain();
+  s.buffer=SND.noise; f.type=filt; f.frequency.value=f0;
+  env(g,t,0.003,peak,0.005,dur);
+  s.connect(f); f.connect(g); g.connect(BGM.gain); s.start(t,Math.random()); s.stop(t+dur+0.05);
+}
+function bgmKick(t,peak){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain();
+  o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(42,t+0.12);
+  env(g,t,0.004,peak,0.02,0.14); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.25);
+}
+/** 8分音符1つぶんを予約する */
+function bgmStep(T,i,t){
+  const e=60/T.bpm/2, pos=i%8, bar=Math.floor(i/8)%T.prog.length, ch=T.prog[bar];
+  if(pos===0)ch.forEach((n,k)=>{ bgmVoice("triangle",mtof(n),t,e*7.6,0.05,1400); bgmVoice("sawtooth",mtof(n)*1.003,t,e*7.6,0.012,900); });   // パッド
+  if(T.bassPat.includes(pos))bgmVoice("sine",mtof(T.bass[bar]),t,e*(T.bpm>110?0.9:2.6),0.16,600);              // ベース
+  bgmVoice("triangle",mtof(ch[T.arp[pos]]+12),t,e*0.9,0.03,2600);                                               // アルペジオ
+  if(T.kick.includes(pos))bgmKick(t,0.22);
+  if(T.hat.includes(pos))bgmNoise(t,0.04,0.035,"highpass",7000);
+  if(T.snare.includes(pos))bgmNoise(t,0.12,0.06,"bandpass",1800);
+}
+/** 曲を鳴らす(同じ曲なら何もしない)。音が出せない・切ってあるときは何もしない */
+function bgmPlay(name){
+  if(BGM.cur===name&&BGM.timer)return;
+  bgmStop();
+  BGM.cur=name;
+  if(!SND.ctx||!BGM.on||!BGM_TRACKS[name])return;
+  const T=BGM_TRACKS[name];
+  BGM.gain=SND.ctx.createGain(); BGM.gain.gain.setValueAtTime(0.0001,now()); BGM.gain.gain.exponentialRampToValueAtTime(T.vol,now()+1.2);
+  BGM.gain.connect(SND.master);
+  BGM.step=0; BGM.next=now()+0.1;
+  BGM.timer=setInterval(()=>{
+    if(!SND.ctx||SND.ctx.state!=="running")return;
+    while(BGM.next<now()+0.12){ bgmStep(T,BGM.step,BGM.next); BGM.step++; BGM.next+=60/T.bpm/2; }
+    if(BGM.next<now()-0.5)BGM.next=now()+0.05;      // 裏から戻ったときに溜まった分は飛ばす
+  },40);
+}
+function bgmStop(){
+  clearInterval(BGM.timer); BGM.timer=null;
+  if(BGM.gain&&SND.ctx){ const g=BGM.gain; try{ g.gain.cancelScheduledValues(now()); g.gain.setValueAtTime(g.gain.value||0.0001,now()); g.gain.exponentialRampToValueAtTime(0.0001,now()+0.6); }catch(e){} setTimeout(()=>{ try{ g.disconnect(); }catch(e){} },800); }
+  BGM.gain=null;
+}
+function bgmSetOn(v){
+  BGM.on=v;
+  try{ localStorage.setItem(BGM_KEY,v?"on":"off"); }catch(e){}
+  const c=BGM.cur; if(v&&c){ BGM.cur=null; bgmPlay(c); } else bgmStop();
+}
+
+/* =========================================================================
    wcc_f — 場面(→docs/07 §7.2)。全画面の場面を順に進む。
      タイトル → (監督室) → 対戦カード → 試合 → 結果 → ロッカールーム(優勝なら撮影) → カード排出 → 監督室
    場面は #scene に描く。進むときは帯が横切る。押せば必ず音が返る。
@@ -8521,7 +8632,7 @@ function sceneTitle(onStart){
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
-    { next:()=>{ sndUnlock(); sndUi("ok"); onStart(); } });
+    { next:()=>{ sndUnlock(); sndUi("ok"); bgmPlay("club"); onStart(); } });
 }
 
 /* ---- 対戦カード ---- */
@@ -8559,6 +8670,23 @@ function sceneMatchup(fx,go){
     { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
 }
+/**
+ * 入場(→docs/14 第4弾。本家にあった短い入場シーン。タッチで飛ばせる)。
+ * 両チームの先発11人が、奥のトンネルから2列で手前へ歩いて並ぶ。自チームは左の列、相手は右の列(左右反転)
+ */
+function sceneWalkout(H,A,go){
+  const P=TUNING.play, row=(def,side)=>def.xi.map((x,i)=>{ const src=artSrc(x.card,"stand"); if(!src)return "";
+    const t=(i+1)/11, X=50+(side==="home"?-1:1)*(6+30*t), Y=34+54*t, h=Math.round(34+46*t);
+    return '<img class="wk-p '+side+'" src="'+src+'" alt="" style="--x:'+X.toFixed(1)+'%;--y:'+Y.toFixed(1)+'%;--h:'+h+'px;--d:'+(i*P.walkStep)+'ms;z-index:'+(10+i)+'">'; }).join("");
+  sceneShow("sc-walk",
+    '<div class="wk-sky"></div><div class="wk-pitch"></div><div class="wk-tunnel"></div>'+
+    row(H,"home")+row(A,"away")+
+    '<div class="wk-band"><b style="--tc:'+H.color+'">'+H.short+'</b><i>ENTRANCE</i><b style="--tc:'+A.color+'">'+A.short+'</b></div>'+
+    '<div class="touch sm">TOUCH</div>',
+    { next:go, auto:P.walkMs, lock:250 });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(SC.el)SC.el.classList.add("go"); }));
+  sndCrowdBurst();
+}
 /** 対戦カードの「どっ」 */
 function sndCrowdBurst(){ if(sndOk())noiseBurst(now(),1.6,0.22,"bandpass",600,900,0.6); }
 
@@ -8573,6 +8701,7 @@ const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
 const rateTxt=r=>r.toFixed(1);
 const resOf=M=>{ const d=M.pso?M.pso[0]-M.pso[1]:M.home.score-M.away.score; return d>0?"WIN":d<0?"LOSE":"DRAW"; };
 function sceneResult(M,last,go){
+  bgmPlay("club");
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
   const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
   const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
@@ -8799,6 +8928,7 @@ const SPEEDS=[1,2,4];
  * 何も渡さなければ、その場かぎりの練習試合(検証用の ?quick=1)。
  */
 function newMatch(homeDef,awayDef,seed,opts,meta){
+  if(typeof bgmPlay==="function"&&(!meta||meta.career))bgmPlay("match");   // 試合の BGM(クラブハウスの下に作る見本の試合では鳴らさない)
   G.seed=seed>>>0;
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
@@ -9091,8 +9221,14 @@ function endEvent(ev){
   if(ev.res==="save"&&ev.mv===RARE_MOVES.godsave.label){ mvFlash(ev); return; }   // 神セーブ
   if(ev.res==="goal"){
     setHud(ev.hg,ev.ag,ev.min+(ev.at?"+":"'"));
-    const f=$("flash"); f.innerHTML='<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+'</small>';
-    f.className="on"+(ev.side==="H"?" mine":""); G.flash=true;
+    // 得点者のアップ(→docs/14 第4弾): 絵を大きく、名前・今季N点目・アシスト・時間。相手の得点は控えめに
+    const f=$("flash"), c=CARDS[ev.by], art=c&&typeof artSrc==="function"?artSrc(c,"play"):null;
+    let nth="";
+    if(ev.side==="H"&&G.meta.career&&CL.S){ const before=(CL.S.tgoals&&CL.S.tgoals[ev.by])||0;
+      const now=G.M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side==="H"&&e.by===ev.by&&e.ix<=ev.ix).length; nth="今季 "+(before+now)+" 点目"; }
+    f.innerHTML=(art?'<img class="gl-art'+(ev.side==="A"?' opp':'')+'" src="'+art+'" alt="">':'')+
+      '<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+' ・ '+ev.min+(ev.at?"+":"'")+(nth?' ・ '+nth:'')+(ev.as?' ・ アシスト '+nm(ev.as):'')+'</small>';
+    f.className="on gl"+(ev.side==="H"?" mine":""); G.flash=true;
     sndGoal(ev.side==="H");
     G.hold=P.goalHold;
     if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない

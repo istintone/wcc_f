@@ -149,7 +149,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[] };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{} };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -422,6 +422,7 @@ function newTerm(S,W){
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
+  S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
   // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
@@ -503,6 +504,7 @@ function migrate(S){
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
   if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
   if(!S.capHist)S.capHist=[];
+  if(!S.tgoals)S.tgoals={};
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま

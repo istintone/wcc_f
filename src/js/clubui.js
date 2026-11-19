@@ -56,6 +56,7 @@ function persist(S){
   return ok;
 }
 function showClub(keepScroll){
+  if(typeof bgmPlay==="function")bgmPlay("club");   // 監督室の BGM(→docs/14 第4弾)
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
   CL.fx=nextFixture(CL.S,CL.W);
   el.innerHTML=clubHtml();
@@ -895,11 +896,11 @@ function startFixture(){
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
   CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
-  sceneMatchup(fx,()=>{
+  sceneMatchup(fx,()=>sceneWalkout(m.home,m.away,()=>{   // 対戦カード → 入場 → キックオフ(→docs/14 第4弾)
     sceneHide(); hideClub();
     newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
       starters:m.home.xi.map(x=>x.card.id) });
-  });
+  }));
 }
 /** 試合が終わったら呼ぶ。結果を反映して保存し、クラブハウスへ戻る */
 function finishFixture(M){
@@ -907,6 +908,9 @@ function finishFixture(M){
   const onPitch=M.home.players.map(p=>p.id);
   const played=[...new Set((G.meta.starters||[]).concat(onPitch))];
   const inj=M.events.filter(e=>e.type==="injury"&&e.side==="H").map(e=>e.by);
+  // この任期の選手ごとの得点(→docs/14 第4弾)
+  if(!CL.S.tgoals)CL.S.tgoals={};
+  for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")CL.S.tgoals[e.by]=(CL.S.tgoals[e.by]||0)+1;
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });

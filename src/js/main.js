@@ -14,6 +14,7 @@ const SPEEDS=[1,2,4];
  * 何も渡さなければ、その場かぎりの練習試合(検証用の ?quick=1)。
  */
 function newMatch(homeDef,awayDef,seed,opts,meta){
+  if(typeof bgmPlay==="function"&&(!meta||meta.career))bgmPlay("match");   // 試合の BGM(クラブハウスの下に作る見本の試合では鳴らさない)
   G.seed=seed>>>0;
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
@@ -306,8 +307,14 @@ function endEvent(ev){
   if(ev.res==="save"&&ev.mv===RARE_MOVES.godsave.label){ mvFlash(ev); return; }   // 神セーブ
   if(ev.res==="goal"){
     setHud(ev.hg,ev.ag,ev.min+(ev.at?"+":"'"));
-    const f=$("flash"); f.innerHTML='<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+'</small>';
-    f.className="on"+(ev.side==="H"?" mine":""); G.flash=true;
+    // 得点者のアップ(→docs/14 第4弾): 絵を大きく、名前・今季N点目・アシスト・時間。相手の得点は控えめに
+    const f=$("flash"), c=CARDS[ev.by], art=c&&typeof artSrc==="function"?artSrc(c,"play"):null;
+    let nth="";
+    if(ev.side==="H"&&G.meta.career&&CL.S){ const before=(CL.S.tgoals&&CL.S.tgoals[ev.by])||0;
+      const now=G.M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side==="H"&&e.by===ev.by&&e.ix<=ev.ix).length; nth="今季 "+(before+now)+" 点目"; }
+    f.innerHTML=(art?'<img class="gl-art'+(ev.side==="A"?' opp':'')+'" src="'+art+'" alt="">':'')+
+      '<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+' ・ '+ev.min+(ev.at?"+":"'")+(nth?' ・ '+nth:'')+(ev.as?' ・ アシスト '+nm(ev.as):'')+'</small>';
+    f.className="on gl"+(ev.side==="H"?" mine":""); G.flash=true;
     sndGoal(ev.side==="H");
     G.hold=P.goalHold;
     if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない

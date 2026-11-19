@@ -154,3 +154,75 @@ function sndLose(){
   const t=now();
   [[392,0],[349,0.22],[294,0.44]].forEach(([f,d])=>tone("triangle",f,t+d,0.35,0.12));
 }
+
+/* =========================================================================
+   BGM(→docs/14 第4弾。本家はどこでも BGM が流れていた)。音声ファイルは持たず、その場で合成する独自の曲。
+     club  … 監督室・タイトル・結果。ゆったりした4和音の循環にパッド・ベース・アルペジオ・軽いドラム
+     match … 試合中。軽快な8分のベースと四つ打ち。歓声の下で小さく鳴らす
+   先読みで 8分音符ずつ予約する(setInterval で 120ms 先まで)。効果音とは別に、設定で切れる
+   ========================================================================= */
+const BGM={ on:true, cur:null, gain:null, timer:null, step:0, next:0 };
+const BGM_KEY="wcc_f.bgm";
+try{ BGM.on=localStorage.getItem(BGM_KEY)!=="off"; }catch(e){}
+const mtof=n=>440*Math.pow(2,(n-69)/12);
+/** 曲。prog は小節ごとの和音(MIDI の音の高さ)、bass は小節ごとの根音 */
+const BGM_TRACKS={
+  club:{ bpm:92, vol:0.10, prog:[[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,65]], bass:[45,41,36,43],
+    arp:[0,2,1,3,2,1,3,2], kick:[0,4], hat:[2,6], snare:[], bassPat:[0,3,4] },
+  match:{ bpm:124, vol:0.07, prog:[[62,65,69,72],[58,62,65,69],[53,57,60,64],[60,64,67,70]], bass:[38,34,41,36],
+    arp:[0,1,2,3,2,1,0,2], kick:[0,2,4,6], hat:[1,3,5,7], snare:[2,6], bassPat:[0,1,2,3,4,5,6,7] }
+};
+function bgmVoice(type,freq,t,dur,peak,cut){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  f.type="lowpass"; f.frequency.value=cut||2000;
+  env(g,t,Math.min(0.06,dur*0.2),peak,dur*0.35,dur*0.6);
+  o.connect(f); f.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+dur+0.1);
+}
+function bgmNoise(t,dur,peak,filt,f0){
+  const s=SND.ctx.createBufferSource(), f=SND.ctx.createBiquadFilter(), g=SND.ctx.createGain();
+  s.buffer=SND.noise; f.type=filt; f.frequency.value=f0;
+  env(g,t,0.003,peak,0.005,dur);
+  s.connect(f); f.connect(g); g.connect(BGM.gain); s.start(t,Math.random()); s.stop(t+dur+0.05);
+}
+function bgmKick(t,peak){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain();
+  o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(42,t+0.12);
+  env(g,t,0.004,peak,0.02,0.14); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.25);
+}
+/** 8分音符1つぶんを予約する */
+function bgmStep(T,i,t){
+  const e=60/T.bpm/2, pos=i%8, bar=Math.floor(i/8)%T.prog.length, ch=T.prog[bar];
+  if(pos===0)ch.forEach((n,k)=>{ bgmVoice("triangle",mtof(n),t,e*7.6,0.05,1400); bgmVoice("sawtooth",mtof(n)*1.003,t,e*7.6,0.012,900); });   // パッド
+  if(T.bassPat.includes(pos))bgmVoice("sine",mtof(T.bass[bar]),t,e*(T.bpm>110?0.9:2.6),0.16,600);              // ベース
+  bgmVoice("triangle",mtof(ch[T.arp[pos]]+12),t,e*0.9,0.03,2600);                                               // アルペジオ
+  if(T.kick.includes(pos))bgmKick(t,0.22);
+  if(T.hat.includes(pos))bgmNoise(t,0.04,0.035,"highpass",7000);
+  if(T.snare.includes(pos))bgmNoise(t,0.12,0.06,"bandpass",1800);
+}
+/** 曲を鳴らす(同じ曲なら何もしない)。音が出せない・切ってあるときは何もしない */
+function bgmPlay(name){
+  if(BGM.cur===name&&BGM.timer)return;
+  bgmStop();
+  BGM.cur=name;
+  if(!SND.ctx||!BGM.on||!BGM_TRACKS[name])return;
+  const T=BGM_TRACKS[name];
+  BGM.gain=SND.ctx.createGain(); BGM.gain.gain.setValueAtTime(0.0001,now()); BGM.gain.gain.exponentialRampToValueAtTime(T.vol,now()+1.2);
+  BGM.gain.connect(SND.master);
+  BGM.step=0; BGM.next=now()+0.1;
+  BGM.timer=setInterval(()=>{
+    if(!SND.ctx||SND.ctx.state!=="running")return;
+    while(BGM.next<now()+0.12){ bgmStep(T,BGM.step,BGM.next); BGM.step++; BGM.next+=60/T.bpm/2; }
+    if(BGM.next<now()-0.5)BGM.next=now()+0.05;      // 裏から戻ったときに溜まった分は飛ばす
+  },40);
+}
+function bgmStop(){
+  clearInterval(BGM.timer); BGM.timer=null;
+  if(BGM.gain&&SND.ctx){ const g=BGM.gain; try{ g.gain.cancelScheduledValues(now()); g.gain.setValueAtTime(g.gain.value||0.0001,now()); g.gain.exponentialRampToValueAtTime(0.0001,now()+0.6); }catch(e){} setTimeout(()=>{ try{ g.disconnect(); }catch(e){} },800); }
+  BGM.gain=null;
+}
+function bgmSetOn(v){
+  BGM.on=v;
+  try{ localStorage.setItem(BGM_KEY,v?"on":"off"); }catch(e){}
+  const c=BGM.cur; if(v&&c){ BGM.cur=null; bgmPlay(c); } else bgmStop();
+}

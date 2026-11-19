@@ -74,7 +74,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。**既定は暗い地の `th-bk`**(th-wr の形 + 暗い色の組。白を直に書いた部品は theme.css の末尾で直す)。設計の正本は docs/07 §7.8 |
 | カードの見た目を変える | `clubui.js` の `cardHtml`(構成)と `theme.css` の「カード」(意匠) |
-| 音を変える | `src/js/sound.js`(Web Audio で合成。音声ファイルは持たない) |
+| 音を変える | `src/js/sound.js`(Web Audio で合成。音声ファイルは持たない)。BGM は末尾の `BGM_TRACKS`(曲)と `bgmPlay`(どこで鳴らすかは `showClub` / `newMatch` / `sceneResult` / タイトル)。正本は docs/14 §14.9 |
 | 公開用を作る | `python build.py --dist` → `dist/`(index.html・manifest・sw.js・アイコン)。実名は入らない |
 | 公開する(外に出る操作。決めたときだけ) | `python tools/publish.py` → https://istintone.github.io/wcc_f/ |
 | 設定・データの画面を変える | `src/js/settings.js`(実名パックの読み込み・セーブの書き出しと読み込み) |

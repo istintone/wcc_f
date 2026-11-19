@@ -69,6 +69,9 @@ function settingsHtml(){
   if(!CL.set)return '<footer class="cft"><button class="btn btn-sub" data-act="set">設定・データ</button></footer>';
   const S=CL.S, kb=(JSON.stringify(S).length/1024).toFixed(1);
   return '<section class="card set"><h3>設定・データ <small><button class="lnk" data-act="set">閉じる</button></small></h3>'+
+    // 音: 効果音と BGM を別々に(→docs/14 第4弾)
+    '<h4>音</h4><div class="tabs"><button class="tab'+(SND.on?' on':'')+'" data-act="sndtoggle">効果音 '+(SND.on?'あり':'なし')+'</button>'+
+      '<button class="tab'+(BGM.on?' on':'')+'" data-act="bgmtoggle">BGM '+(BGM.on?'あり':'なし')+'</button></div>'+
     '<h4>テーマ</h4><div class="tabs">'+Object.keys(THEMES).map(k=>'<button class="tab'+(document.body.classList.contains("th-"+k)&&(k!=="wr"||!document.body.classList.contains("th-bk"))?' on':'')+
       '" data-act="theme" data-v="'+k+'">'+THEMES[k]+'</button>').join("")+'</div>'+
     '<h4>実名パック</h4>'+
@@ -95,6 +98,8 @@ function rawBad(){ try{ return CL.store.getItem(SAVE_BAD_KEY); }catch(e){ return
 function settingsMsg(t){ CL.setMsg=t; showClub(true); }
 function onSettingsClick(act,b){
   const S=CL.S;
+  if(act==="sndtoggle"){ sndUnlock(); sndSetOn(!SND.on); showClub(true); return true; }
+  if(act==="bgmtoggle"){ sndUnlock(); bgmSetOn(!BGM.on); showClub(true); return true; }
   if(act==="theme"){ applyTheme(b.dataset.v); showClub(true); return true; }
   if(act==="exbad"){
     settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
