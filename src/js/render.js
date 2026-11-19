@@ -60,13 +60,25 @@ function drawStands(c,W,H){
   c.fillStyle="#0b0f1a"; c.fillRect(0,yFar-5,W,5);
   c.fillStyle="#ffe28a"; c.font="700 "+Math.max(6,H*0.03)+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
-  for(let i=0;i<4;i++)c.fillText(sp,W*(0.125+i*0.25),yFar-2.5);
+  // 看板: スポンサーとロゴのマークを交互に(→docs/14 第3弾)
+  const lg=logoImg(), ls=Math.max(6,H*0.034);
+  for(let i=0;i<4;i++){ const x=W*(0.125+i*0.25);
+    if(i%2&&lg){ c.drawImage(lg,x-ls*1.9,yFar-2.5-ls/2,ls,ls); c.fillText("WCC F",x+ls*0.4,yFar-2.5); }
+    else c.fillText(sp,x,yFar-2.5); }
+}
+/** ロゴのマーク(看板に描く)。読み込みが済むまでは null */
+let RV_LOGO=null;
+function logoImg(){
+  if(typeof ballMarkSvg!=="function")return null;
+  if(!RV_LOGO){ RV_LOGO=new Image();
+    RV_LOGO.src="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+ballMarkSvg(50,50,46,"rvm")+'</svg>'); }
+  return RV_LOGO.complete&&RV_LOGO.naturalWidth?RV_LOGO:null;
 }
 /** 芝・ライン・スタンドは変わらないので、裏のキャンバスに描いておき毎フレーム貼るだけにする(大きさ・スタジアム・スポンサーが変わったら描き直す) */
 function drawPitch(){
   const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
   const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp;
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg();
   if(RV.bgKey!==key){
     const off=RV.bg||(RV.bg=document.createElement("canvas"));
     off.width=RV.cv.width; off.height=RV.cv.height;

@@ -1683,6 +1683,51 @@ body.th-bk{
 #club .cfrow{display:flex;gap:6px;align-items:stretch}
 #club .cfrow .tabs{flex:1;margin:0}
 #club .cfrow .sortb{flex:0 0 auto;padding:0 10px;font-size:12px;white-space:nowrap}
+
+/* ---- ロゴ「スラッシュ・ボール」(→docs/14 第3弾) ---- */
+#scene .logo svg.lg{display:block;width:min(86vw,340px);height:auto;overflow:visible;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.lg .lg-ball{transform-box:fill-box;transform-origin:center}
+.lg.anim .lg-ball{animation:lgRoll .7s .15s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes lgRoll{from{transform:translate(-230px,40px) rotate(-720deg)}}
+.lg.anim .lg-arc{stroke-dasharray:260;stroke-dashoffset:260;animation:lgArc .55s .05s ease-out forwards}
+@keyframes lgArc{to{stroke-dashoffset:0}}
+.lg .lg-shine{animation:lgShine 4s 1s ease-in-out infinite}
+@keyframes lgShine{0%{transform:translateX(0) skewX(-20deg)}30%,100%{transform:translateX(560px) skewX(-20deg)}}
+@media (prefers-reduced-motion:reduce){.lg *{animation:none!important;stroke-dashoffset:0!important}}
+#scene>.res-mark{position:absolute!important;left:50%;top:4%;transform:translateX(-50%) rotate(-12deg);opacity:.05;pointer-events:none;z-index:0!important}
+#scene .res-mark svg{width:300px;height:300px}
+
+/* ---- 操作の台(暗いテーマ): 立体のベージュをやめ、暗い平面の平行四辺形に(→docs/14 第3弾)。
+   点いているものだけ赤。中央(プレス)は形で区別(ひし形)。SHOOT・KEEPER の「玉」は光沢を弱める ---- */
+.th-bk #pad{background:linear-gradient(180deg,#14161c,#07080b);border-top:2px solid var(--t-sub)}
+.th-bk #pad .tac{color:#e9ebf0;background:#1f232d;border:1px solid #3a404e;border-radius:2px;box-shadow:none;
+  clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);font-weight:800;letter-spacing:.04em}
+.th-bk #pad .tac:active{transform:translateY(1px);box-shadow:none;background:#2a2f3b}
+.th-bk #pad .tac.md{color:#e9ebf0;background:#2a1418;border-color:#6b1a27;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border-radius:0}
+.th-bk #pad .tac.on{color:#fff;background:linear-gradient(90deg,var(--t-sub2),var(--t-sub));border-color:#ff8a9a;box-shadow:none;outline:none}
+.th-bk #pad .tac.md.on{background:linear-gradient(180deg,var(--t-sub3),var(--t-sub2))}
+.th-bk #pad .tac.on::before{right:9%;top:4px}
+.th-bk .btn-shoot,.th-bk .btn-keeper{box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18)}
+.th-bk .btn-shoot{background:linear-gradient(180deg,#f0344f,#a80d25)}
+.th-bk .btn-keeper{background:linear-gradient(180deg,#2f6fd0,#16438f)}
+.th-bk .btn-keeper.on,.th-bk .btn-shoot.armed{background:linear-gradient(180deg,#f7d77c,#c9971f);color:#201400}
+.th-bk #pad .btn-kp{border-radius:2px;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
+/* ---- 場面の空きを選手の絵で埋める(→docs/14 第3弾) ---- */
+#scene .vs-side{position:relative;overflow:visible}
+#scene .vs-art{position:absolute;bottom:-6px;height:150px;image-rendering:pixelated;opacity:.95;pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));z-index:0}
+#scene .vs-side.home .vs-art{right:-6px}
+#scene .vs-side.away .vs-art{left:-6px;transform:scaleX(-1)}
+#scene .vs-side .vs-info,#scene .vs-side .vs-em{position:relative;z-index:1}
+#scene .res-mvp{position:relative;padding-right:84px}
+#scene .res-mvp .mvp-art{position:absolute;right:0;bottom:-6px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+#scene .tr-photo{position:relative;z-index:2;margin-top:-6px}
+#scene .tr-photo .row{display:flex;justify-content:center}
+#scene .tr-photo .row img{height:64px;margin:0 -9px;image-rendering:pixelated;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#scene .tr-photo .row.r1{margin-top:-30px}
+#scene .tr-photo .row.r1 img{height:74px}
+/* 結果の採点表: 暗いテーマでは暗いセルに、色は数字だけ(→docs/14 第3弾) */
+.th-bk .res-rt span{background:#1b1f28;color:#eef0f4;border:1px solid #2b303c}
+.th-bk .res-rt em{color:#eef0f4} .th-bk .res-rt em.hi{color:#f0cf75} .th-bk .res-rt em.lo{color:#6fa3ff}
 </style>
 </head>
 <body>
@@ -6509,6 +6554,57 @@ function addArticle(S,a){
 }
 
 /* =========================================================================
+   wcc_f — ロゴ「スラッシュ・ボール」(→docs/14 第3弾)。独自の意匠。
+   本家のロゴは写さない。借りたのは「ボールを描いたスタイリッシュなロゴ」という方向性だけ。
+     マーク … 円の中の五角形と放射線の抽象的なボールに、赤い斜めの切れ込みが2本
+     文字   … 「WCC + ボール + F」(-8°の斜体)。ボールから金の弧(軌跡)が文字の下へ伸びる
+   DOM に触らない(SVG の文字列を返すだけ)。
+   ========================================================================= */
+
+/** ボールのマーク。r … 半径(viewBox の単位)、cx/cy … 中心 */
+function ballMarkSvg(cx,cy,r,id){
+  const P=[], R=r*0.4;
+  for(let i=0;i<5;i++){ const a=-Math.PI/2+i*Math.PI*2/5; P.push([cx+Math.cos(a)*R,cy+Math.sin(a)*R]); }
+  const pent=P.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  // 五角形の頂点から縁へ放射線(縫い目)
+  const rays=P.map(p=>{ const dx=p[0]-cx, dy=p[1]-cy, k=r/Math.hypot(dx,dy)*0.97;
+    return '<line x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+(cx+dx*k).toFixed(1)+'" y2="'+(cy+dy*k).toFixed(1)+'"/>'; }).join("");
+  // 斜めの切れ込み2本(ボールの真ん中を左下から右上へ横切る帯。円で切り抜く)
+  const band=(o,w)=>'<rect x="'+(cx-r*1.3).toFixed(1)+'" y="'+(cy+o).toFixed(1)+'" width="'+(r*2.6).toFixed(1)+'" height="'+w.toFixed(1)+'"/>';
+  return '<g class="lg-ball"><clipPath id="'+id+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath>'+
+    '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#fff"/>'+
+    '<g clip-path="url(#'+id+')"><g stroke="#16181f" stroke-width="'+(r*0.07).toFixed(2)+'" stroke-linecap="round">'+rays+'</g>'+
+      '<polygon points="'+pent+'" fill="#16181f"/>'+
+      '<g transform="rotate(-28 '+cx+' '+cy+')"><g fill="#fff">'+band(r*0.08,r*0.42)+'</g><g fill="#e01f3d">'+band(r*0.14,r*0.2)+band(r*0.4,r*0.08)+'</g></g></g>'+
+    '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r-r*0.035)+'" fill="none" stroke="#16181f" stroke-width="'+(r*0.07).toFixed(2)+'"/></g>';
+}
+/** マークだけ(アイコン・透かし・看板に) */
+function logoMarkSvg(size,cls){
+  return '<svg class="lg-mark '+(cls||"")+'" viewBox="0 0 100 100" width="'+size+'" height="'+size+'" aria-hidden="true">'+ballMarkSvg(50,50,46,"lgm"+(cls||""))+'</svg>';
+}
+/** ロゴ全体(文字・ボール・金の弧・副題)。anim … 入りの動きを付ける */
+let LOGO_N=0;
+function logoSvg(anim){
+  const id="lgc"+(++LOGO_N);
+  const F='font-family="Oswald,\'Arial Narrow\',\'Helvetica Neue\',system-ui,sans-serif" font-weight="700" font-style="italic"';
+  return '<svg class="lg'+(anim?' anim':'')+'" viewBox="0 0 312 150" role="img" aria-label="wcc_f">'+
+    '<defs><linearGradient id="'+id+'g" x1="0" x2="1"><stop offset="0" stop-color="#8a6a1e"/><stop offset=".55" stop-color="#f0cf75"/><stop offset="1" stop-color="#fff3c4"/></linearGradient>'+
+      '<linearGradient id="'+id+'s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
+      '<clipPath id="'+id+'t"><text x="6" y="104" '+F+' font-size="104" textLength="168" lengthAdjust="spacingAndGlyphs">WCC</text><text x="254" y="104" '+F+' font-size="104" textLength="44" lengthAdjust="spacingAndGlyphs">F</text></clipPath></defs>'+
+    // 金の弧(ボールの軌跡)
+    '<path class="lg-arc" d="M10 122 Q 140 138 200 96" fill="none" stroke="url(#'+id+'g)" stroke-width="7" stroke-linecap="round"/>'+
+    '<g transform="skewX(-8)">'+
+      '<g fill="#000" opacity=".55" transform="translate(5 5)"><text x="6" y="104" '+F+' font-size="104" textLength="168" lengthAdjust="spacingAndGlyphs">WCC</text><text x="254" y="104" '+F+' font-size="104" textLength="44" lengthAdjust="spacingAndGlyphs">F</text></g>'+
+      '<g fill="#fff"><text x="6" y="104" '+F+' font-size="104" textLength="168" lengthAdjust="spacingAndGlyphs">WCC</text><text x="254" y="104" '+F+' font-size="104" textLength="44" lengthAdjust="spacingAndGlyphs">F</text></g>'+
+      // 文字に走る光沢
+      '<g clip-path="url(#'+id+'t)"><rect class="lg-shine" x="-120" y="0" width="70" height="150" fill="url(#'+id+'s)" transform="skewX(-20)"/></g>'+
+    '</g>'+
+    ballMarkSvg(216,66,33,id+"b")+
+    '<text x="156" y="146" text-anchor="middle" font-family="Oswald,\'Arial Narrow\',system-ui,sans-serif" font-weight="400" font-size="13" letter-spacing="6" fill="#fff" opacity=".85">CLUB CARD FOOTBALL</text>'+
+    '</svg>';
+}
+
+/* =========================================================================
    wcc_f — 試合映像(上のモニター)。エンジンが解いた結果を読むだけで、何も書き戻さない。
    画面座標は u(0=左のゴール 〜 1=右のゴール) / v(0=奥のタッチライン 〜 1=手前)。ホームは右へ攻める。
    見え方(→docs/07 §7.11): テレビ中継のように**斜め上の横から見た立体**。奥ほど狭く小さい(遠近)。
@@ -6570,13 +6666,25 @@ function drawStands(c,W,H){
   c.fillStyle="#0b0f1a"; c.fillRect(0,yFar-5,W,5);
   c.fillStyle="#ffe28a"; c.font="700 "+Math.max(6,H*0.03)+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
-  for(let i=0;i<4;i++)c.fillText(sp,W*(0.125+i*0.25),yFar-2.5);
+  // 看板: スポンサーとロゴのマークを交互に(→docs/14 第3弾)
+  const lg=logoImg(), ls=Math.max(6,H*0.034);
+  for(let i=0;i<4;i++){ const x=W*(0.125+i*0.25);
+    if(i%2&&lg){ c.drawImage(lg,x-ls*1.9,yFar-2.5-ls/2,ls,ls); c.fillText("WCC F",x+ls*0.4,yFar-2.5); }
+    else c.fillText(sp,x,yFar-2.5); }
+}
+/** ロゴのマーク(看板に描く)。読み込みが済むまでは null */
+let RV_LOGO=null;
+function logoImg(){
+  if(typeof ballMarkSvg!=="function")return null;
+  if(!RV_LOGO){ RV_LOGO=new Image();
+    RV_LOGO.src="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+ballMarkSvg(50,50,46,"rvm")+'</svg>'); }
+  return RV_LOGO.complete&&RV_LOGO.naturalWidth?RV_LOGO:null;
 }
 /** 芝・ライン・スタンドは変わらないので、裏のキャンバスに描いておき毎フレーム貼るだけにする(大きさ・スタジアム・スポンサーが変わったら描き直す) */
 function drawPitch(){
   const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
   const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp;
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg();
   if(RV.bgKey!==key){
     const off=RV.bg||(RV.bg=document.createElement("canvas"));
     off.width=RV.cv.width; off.height=RV.cv.height;
@@ -7696,19 +7804,35 @@ function secClubHtml(){
     ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
 }
 /* ---- スタジアムと施設(→docs/05 §5.13) ---- */
-/** スタジアムの絵。段が上がるほどスタンドが高く広くなり、照明塔と屋根が付く(独自の意匠) */
+/** スタジアムの絵(夜)。段が上がるほどスタンドが高く広く、照明塔と屋根が付く(独自の意匠 →docs/14 第3弾) */
 function stadiumSvg(lv){
-  const st=(x,w,h,c)=>'<rect x="'+x+'" y="'+(92-h)+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'+
-    '<g stroke="rgba(255,255,255,.35)" stroke-width="1">'+Array.from({ length:Math.floor(h/6) },(_,i)=>'<line x1="'+x+'" x2="'+(x+w)+'" y1="'+(92-h+4+i*6)+'" y2="'+(92-h+4+i*6)+'"/>').join("")+'</g>';
-  let g='<rect x="0" y="0" width="300" height="120" fill="#cfe6f5"/><rect x="0" y="92" width="300" height="28" fill="#3f8f4a"/>'+
-    '<rect x="70" y="96" width="160" height="16" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="150" y1="96" x2="150" y2="112" stroke="#fff" stroke-width="1.5"/>';
-  const H=[0,14,24,36,52,58][lv]||14, side=lv>=2;
-  g+=st(20,lv>=4?110:80,H,"#8a1c2b")+(side?st(lv>=4?170:200,lv>=4?110:80,H,"#8a1c2b"):'');
-  if(lv>=4)g+=st(130,40,H-8,"#6e1622");
-  if(lv>=3)[12,288].forEach(x=>{ g+='<line x1="'+x+'" y1="92" x2="'+x+'" y2="'+(lv>=4?18:28)+'" stroke="#555" stroke-width="3"/>'+
-    '<rect x="'+(x-8)+'" y="'+(lv>=4?12:22)+'" width="16" height="7" fill="#fff6c8" stroke="#555"/>'; });
-  if(lv>=5)g+='<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#d8dde3" stroke-width="7"/>'+
-    '<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#8d97a3" stroke-width="1.5"/>';
+  const H=[0,16,26,38,50,58][lv]||16, top=92-H, wide=lv>=4;
+  let g='<defs><linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a14"/><stop offset="1" stop-color="#1c2540"/></linearGradient>'+
+    '<linearGradient id="stBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient>'+
+    '<linearGradient id="stPitch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e8a45"/><stop offset="1" stop-color="#1d6a33"/></linearGradient></defs>'+
+    '<rect x="0" y="0" width="300" height="120" fill="url(#stSky)"/>';
+  // 星
+  for(let k=0;k<18;k++){ const x=(k*53)%300, y=(k*29)%40+4; g+='<circle cx="'+x+'" cy="'+y+'" r="'+(k%3?0.6:1)+'" fill="#fff" opacity=".6"/>'; }
+  // 照明の光の筋(Lv3 から)
+  if(lv>=3)[[16,1],[284,-1]].forEach(([x,d])=>{ const y=lv>=4?14:24;
+    g+='<polygon points="'+x+','+y+' '+(x+d*150)+',100 '+(x+d*70)+',100" fill="url(#stBeam)"/>'; });
+  // スタンド: 斜めの段(左右の端ほど高い)。座席の赤と通路の線
+  const stand=(x0,x1,h)=>{ let q='<polygon points="'+x0+',92 '+x0+','+(92-h)+' '+x1+','+(92-h*0.82)+' '+x1+',92" fill="#5a0f1c"/>';
+    for(let y=92-h+5;y<92;y+=5)q+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+(y+(h*0.18)*(92-y)/h)+'" stroke="#c8102e" stroke-width="2.2" opacity=".85"/>';
+    return q; };
+  g+=stand(0,wide?130:110,H)+stand(300,wide?170:190,H);
+  if(lv>=2)g+='<rect x="'+(wide?130:110)+'" y="'+(92-H*0.55)+'" width="'+(wide?40:80)+'" height="'+(H*0.55)+'" fill="#3d0a14"/>';
+  // 観客の点(段が上がるほど多い)
+  for(let k=0;k<lv*26;k++){ const r1=hashStr("st"+k), x=r1%300, y=92-((r1>>9)%Math.max(4,H-4))-2; g+='<rect x="'+x+'" y="'+y+'" width="1.4" height="1.4" fill="'+(k%4?"#ffd9de":"#fff")+'" opacity=".7"/>'; }
+  // 屋根(Lv5)
+  if(lv>=5)g+='<path d="M0 '+(top-4)+' Q150 '+(top-22)+' 300 '+(top-4)+'" fill="none" stroke="#c9d1dc" stroke-width="5"/>';
+  // 照明塔(Lv3 から)
+  if(lv>=3)[16,284].forEach(x=>{ const y=lv>=4?14:24;
+    g+='<line x1="'+x+'" y1="92" x2="'+x+'" y2="'+y+'" stroke="#8a93a6" stroke-width="2.5"/><rect x="'+(x-9)+'" y="'+(y-5)+'" width="18" height="7" rx="1" fill="#fff6c8"/>'; });
+  // ピッチ
+  g+='<rect x="0" y="92" width="300" height="28" fill="url(#stPitch)"/>'+
+    '<rect x="60" y="96" width="180" height="20" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><line x1="150" y1="96" x2="150" y2="116" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>'+
+    '<circle cx="150" cy="106" r="5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>';
   return '<svg class="stad-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMax meet">'+g+'</svg>';
 }
 /** HOME の改修の知らせ(秘書の言葉で)。払うか見送るか */
@@ -8393,7 +8517,7 @@ function sceneTitle(onStart){
   const S=CL.S, sub=S?"第"+S.term+"任期 ・ "+S.played+"/"+TUNING.club.termLen+" 試合":"";
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
-    '<div class="logo"><b>wcc<span>_</span>f</b><small>CLUB CARD FOOTBALL</small></div>'+
+    '<div class="logo">'+logoSvg(true)+'</div>'+   // ロゴ「スラッシュ・ボール」(→docs/14 第3弾)
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
@@ -8412,7 +8536,8 @@ function axisBars(T){
 }
 function sideHtml(T,side,kpId){
   const kp=kpId?CARDS[kpId]:null, st=kp?styleOfCard(kp):null;
-  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+
+  const art=kp&&typeof artSrc==="function"?artSrc(kp,"play"):null;   // KP の絵を帯の奥に大きく(→docs/14 第3弾)
+  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+
     '<div class="vs-em">'+emblemSvg(T,74)+'</div>'+
     '<div class="vs-info"><b>'+teamNameOf(T)+'</b>'+
       '<small>'+(T.tier?"★".repeat(T.tier)+"☆".repeat(5-T.tier)+" ・ ":"")+T.form+'</small>'+
@@ -8459,6 +8584,7 @@ function sceneResult(M,last,go){
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   sceneShow("sc-res r-"+res.toLowerCase(),
+    '<div class="res-mark">'+logoMarkSvg(300,"wm")+'</div>'+   // ロゴのマークの透かし(→docs/14 第3弾)
     '<div class="res-word">'+res+'</div>'+
     '<div class="res-score">'+
       '<div class="rs">'+emblemSvg(H,40)+'<b>'+H.short+'</b></div>'+
@@ -8467,7 +8593,8 @@ function sceneResult(M,last,go){
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     stHtml+rtHtml+
-    (mvp?'<div class="res-mvp"><i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
+    (mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
+      '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
     '<div class="touch sm">TOUCH</div>',
     { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ
@@ -8548,6 +8675,9 @@ function sceneTrophy(M,last,go){
   sceneShow("sc-trophy",
     '<div class="tr-head"><small>'+titles.join(" ・ ")+'</small><b>CHAMPIONS</b></div>'+
     '<div class="tr-stage">'+TROPHY_SVG+'<div class="tr-team">'+H.players.map(p=>'<span>'+nameOf(p.c)+'</span>').join("")+'</div></div>'+
+    // 集合写真: 後ろの列(6人)と前の列(5人)。トロフィーを囲む(→docs/14 第3弾)
+    '<div class="tr-photo">'+[H.players.slice(5),H.players.slice(0,5)].map((row,ri)=>'<div class="row r'+ri+'">'+row.map(p=>{ const a=artSrc(p.c,"stand");
+      return a?'<img src="'+a+'" alt="">':''; }).join("")+'</div>').join("")+'</div>'+
     '<div class="tr-club">'+emblemSvg(H,30)+'<b>'+H.name+'</b></div>'+
     (hi.length?'<ul class="lk-grow">'+hi.map(x=>'<li class="hi">'+x+'</li>').join("")+'</ul>':'')+
     '<div class="flash"></div><div class="touch sm">TOUCH</div>',

@@ -41,7 +41,7 @@ function sceneTitle(onStart){
   const S=CL.S, sub=S?"第"+S.term+"任期 ・ "+S.played+"/"+TUNING.club.termLen+" 試合":"";
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
-    '<div class="logo"><b>wcc<span>_</span>f</b><small>CLUB CARD FOOTBALL</small></div>'+
+    '<div class="logo">'+logoSvg(true)+'</div>'+   // ロゴ「スラッシュ・ボール」(→docs/14 第3弾)
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
@@ -60,7 +60,8 @@ function axisBars(T){
 }
 function sideHtml(T,side,kpId){
   const kp=kpId?CARDS[kpId]:null, st=kp?styleOfCard(kp):null;
-  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+
+  const art=kp&&typeof artSrc==="function"?artSrc(kp,"play"):null;   // KP の絵を帯の奥に大きく(→docs/14 第3弾)
+  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+
     '<div class="vs-em">'+emblemSvg(T,74)+'</div>'+
     '<div class="vs-info"><b>'+teamNameOf(T)+'</b>'+
       '<small>'+(T.tier?"★".repeat(T.tier)+"☆".repeat(5-T.tier)+" ・ ":"")+T.form+'</small>'+
@@ -107,6 +108,7 @@ function sceneResult(M,last,go){
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   sceneShow("sc-res r-"+res.toLowerCase(),
+    '<div class="res-mark">'+logoMarkSvg(300,"wm")+'</div>'+   // ロゴのマークの透かし(→docs/14 第3弾)
     '<div class="res-word">'+res+'</div>'+
     '<div class="res-score">'+
       '<div class="rs">'+emblemSvg(H,40)+'<b>'+H.short+'</b></div>'+
@@ -115,7 +117,8 @@ function sceneResult(M,last,go){
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     stHtml+rtHtml+
-    (mvp?'<div class="res-mvp"><i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
+    (mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
+      '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
     '<div class="touch sm">TOUCH</div>',
     { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ
@@ -196,6 +199,9 @@ function sceneTrophy(M,last,go){
   sceneShow("sc-trophy",
     '<div class="tr-head"><small>'+titles.join(" ・ ")+'</small><b>CHAMPIONS</b></div>'+
     '<div class="tr-stage">'+TROPHY_SVG+'<div class="tr-team">'+H.players.map(p=>'<span>'+nameOf(p.c)+'</span>').join("")+'</div></div>'+
+    // 集合写真: 後ろの列(6人)と前の列(5人)。トロフィーを囲む(→docs/14 第3弾)
+    '<div class="tr-photo">'+[H.players.slice(5),H.players.slice(0,5)].map((row,ri)=>'<div class="row r'+ri+'">'+row.map(p=>{ const a=artSrc(p.c,"stand");
+      return a?'<img src="'+a+'" alt="">':''; }).join("")+'</div>').join("")+'</div>'+
     '<div class="tr-club">'+emblemSvg(H,30)+'<b>'+H.name+'</b></div>'+
     (hi.length?'<ul class="lk-grow">'+hi.map(x=>'<li class="hi">'+x+'</li>').join("")+'</ul>':'')+
     '<div class="flash"></div><div class="touch sm">TOUCH</div>',

@@ -656,19 +656,35 @@ function secClubHtml(){
     ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
 }
 /* ---- スタジアムと施設(→docs/05 §5.13) ---- */
-/** スタジアムの絵。段が上がるほどスタンドが高く広くなり、照明塔と屋根が付く(独自の意匠) */
+/** スタジアムの絵(夜)。段が上がるほどスタンドが高く広く、照明塔と屋根が付く(独自の意匠 →docs/14 第3弾) */
 function stadiumSvg(lv){
-  const st=(x,w,h,c)=>'<rect x="'+x+'" y="'+(92-h)+'" width="'+w+'" height="'+h+'" fill="'+c+'"/>'+
-    '<g stroke="rgba(255,255,255,.35)" stroke-width="1">'+Array.from({ length:Math.floor(h/6) },(_,i)=>'<line x1="'+x+'" x2="'+(x+w)+'" y1="'+(92-h+4+i*6)+'" y2="'+(92-h+4+i*6)+'"/>').join("")+'</g>';
-  let g='<rect x="0" y="0" width="300" height="120" fill="#cfe6f5"/><rect x="0" y="92" width="300" height="28" fill="#3f8f4a"/>'+
-    '<rect x="70" y="96" width="160" height="16" fill="none" stroke="#fff" stroke-width="1.5"/><line x1="150" y1="96" x2="150" y2="112" stroke="#fff" stroke-width="1.5"/>';
-  const H=[0,14,24,36,52,58][lv]||14, side=lv>=2;
-  g+=st(20,lv>=4?110:80,H,"#8a1c2b")+(side?st(lv>=4?170:200,lv>=4?110:80,H,"#8a1c2b"):'');
-  if(lv>=4)g+=st(130,40,H-8,"#6e1622");
-  if(lv>=3)[12,288].forEach(x=>{ g+='<line x1="'+x+'" y1="92" x2="'+x+'" y2="'+(lv>=4?18:28)+'" stroke="#555" stroke-width="3"/>'+
-    '<rect x="'+(x-8)+'" y="'+(lv>=4?12:22)+'" width="16" height="7" fill="#fff6c8" stroke="#555"/>'; });
-  if(lv>=5)g+='<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#d8dde3" stroke-width="7"/>'+
-    '<path d="M14 '+(92-H-2)+' Q150 '+(92-H-26)+' 286 '+(92-H-2)+'" fill="none" stroke="#8d97a3" stroke-width="1.5"/>';
+  const H=[0,16,26,38,50,58][lv]||16, top=92-H, wide=lv>=4;
+  let g='<defs><linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a14"/><stop offset="1" stop-color="#1c2540"/></linearGradient>'+
+    '<linearGradient id="stBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient>'+
+    '<linearGradient id="stPitch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2e8a45"/><stop offset="1" stop-color="#1d6a33"/></linearGradient></defs>'+
+    '<rect x="0" y="0" width="300" height="120" fill="url(#stSky)"/>';
+  // 星
+  for(let k=0;k<18;k++){ const x=(k*53)%300, y=(k*29)%40+4; g+='<circle cx="'+x+'" cy="'+y+'" r="'+(k%3?0.6:1)+'" fill="#fff" opacity=".6"/>'; }
+  // 照明の光の筋(Lv3 から)
+  if(lv>=3)[[16,1],[284,-1]].forEach(([x,d])=>{ const y=lv>=4?14:24;
+    g+='<polygon points="'+x+','+y+' '+(x+d*150)+',100 '+(x+d*70)+',100" fill="url(#stBeam)"/>'; });
+  // スタンド: 斜めの段(左右の端ほど高い)。座席の赤と通路の線
+  const stand=(x0,x1,h)=>{ let q='<polygon points="'+x0+',92 '+x0+','+(92-h)+' '+x1+','+(92-h*0.82)+' '+x1+',92" fill="#5a0f1c"/>';
+    for(let y=92-h+5;y<92;y+=5)q+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+(y+(h*0.18)*(92-y)/h)+'" stroke="#c8102e" stroke-width="2.2" opacity=".85"/>';
+    return q; };
+  g+=stand(0,wide?130:110,H)+stand(300,wide?170:190,H);
+  if(lv>=2)g+='<rect x="'+(wide?130:110)+'" y="'+(92-H*0.55)+'" width="'+(wide?40:80)+'" height="'+(H*0.55)+'" fill="#3d0a14"/>';
+  // 観客の点(段が上がるほど多い)
+  for(let k=0;k<lv*26;k++){ const r1=hashStr("st"+k), x=r1%300, y=92-((r1>>9)%Math.max(4,H-4))-2; g+='<rect x="'+x+'" y="'+y+'" width="1.4" height="1.4" fill="'+(k%4?"#ffd9de":"#fff")+'" opacity=".7"/>'; }
+  // 屋根(Lv5)
+  if(lv>=5)g+='<path d="M0 '+(top-4)+' Q150 '+(top-22)+' 300 '+(top-4)+'" fill="none" stroke="#c9d1dc" stroke-width="5"/>';
+  // 照明塔(Lv3 から)
+  if(lv>=3)[16,284].forEach(x=>{ const y=lv>=4?14:24;
+    g+='<line x1="'+x+'" y1="92" x2="'+x+'" y2="'+y+'" stroke="#8a93a6" stroke-width="2.5"/><rect x="'+(x-9)+'" y="'+(y-5)+'" width="18" height="7" rx="1" fill="#fff6c8"/>'; });
+  // ピッチ
+  g+='<rect x="0" y="92" width="300" height="28" fill="url(#stPitch)"/>'+
+    '<rect x="60" y="96" width="180" height="20" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/><line x1="150" y1="96" x2="150" y2="116" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>'+
+    '<circle cx="150" cy="106" r="5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.2"/>';
   return '<svg class="stad-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMax meet">'+g+'</svg>';
 }
 /** HOME の改修の知らせ(秘書の言葉で)。払うか見送るか */

@@ -29,7 +29,7 @@ OUT = ROOT / "index.html"
 
 # 結合順。data.js は先頭("use strict" を持つ)、main.js は起動の副作用を持つので最後。
 # DOM に触らない8つ(data / trainings / realcards / engine / club / pool / grow / term)は src/tests/_setup.js の ENGINE_FILES と同じ並びにする。
-JS_FILES = ["data.js", "trainings.js", "realcards.js", "rarekp.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "emblem-art.js", "emblem.js", "art-players.js", "paper.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
+JS_FILES = ["data.js", "trainings.js", "realcards.js", "rarekp.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "emblem-art.js", "emblem.js", "art-players.js", "paper.js", "logo.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
 CSS_FILES = ["base.css", "theme.css"]
 # 埋め込む書体(英数字だけの latin サブセット。日本語はシステムの書体)。Oswald は SIL Open Font License
 FONTS = [("oswald-latin.woff2", "Oswald", "200 700")]
@@ -96,22 +96,38 @@ def assemble(real=False):
 
 
 def _png(size):
-    """アイコン(PNG)を外部のライブラリなしで描く。紺の地に白いボールと金の縁"""
+    """アイコン(PNG)を外部のライブラリなしで描く。ロゴのマーク「スラッシュ・ボール」(→docs/14 第3弾):
+    黒の地に、白いボール・黒い五角形・赤い斜めの切れ込み2本・金の縁"""
+    import math
     rows = []
     c = (size - 1) / 2
+    R = 0.34 * size
+    pent = [(c + math.cos(-math.pi / 2 + i * 2 * math.pi / 5) * R * 0.4, c + math.sin(-math.pi / 2 + i * 2 * math.pi / 5) * R * 0.4) for i in range(5)]
+
+    def in_pent(x, y):
+        for i in range(5):
+            ax, ay = pent[i]; bx, by = pent[(i + 1) % 5]
+            if (bx - ax) * (y - ay) - (by - ay) * (x - ax) < 0:
+                return False
+        return True
+    t = math.radians(-28)
     for y in range(size):
         row = bytearray([0])
         for x in range(size):
             dx, dy = x - c, y - c
-            d = (dx * dx + dy * dy) ** 0.5 / size
-            if d < 0.30:
-                # ボールの中の五角形(中心付近)と縫い目の点
-                inner = abs(dx) / size + abs(dy) / size < 0.12
-                px = (26, 32, 48) if inner else (240, 242, 246)
-            elif d < 0.34:
-                px = (242, 193, 78)
+            d = (dx * dx + dy * dy) ** 0.5
+            if d < R:
+                v = (-dx * math.sin(t) + dy * math.cos(t)) / R      # 斜めの帯の位置(ボールの半径で正規化)
+                if 0.14 <= v < 0.34 or 0.40 <= v < 0.48:
+                    px = (224, 31, 61)
+                elif in_pent(x, y) or d > R * 0.93:
+                    px = (22, 24, 31)
+                else:
+                    px = (246, 247, 250)
+            elif d < R * 1.1:
+                px = (240, 207, 117)
             else:
-                px = (14, 19, 32)
+                px = (12, 14, 19)
             row += bytes(px)
         rows.append(bytes(row))
     raw = b"".join(rows)

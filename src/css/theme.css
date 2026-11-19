@@ -1106,3 +1106,48 @@ body.th-bk{
 #club .cfrow{display:flex;gap:6px;align-items:stretch}
 #club .cfrow .tabs{flex:1;margin:0}
 #club .cfrow .sortb{flex:0 0 auto;padding:0 10px;font-size:12px;white-space:nowrap}
+
+/* ---- ロゴ「スラッシュ・ボール」(→docs/14 第3弾) ---- */
+#scene .logo svg.lg{display:block;width:min(86vw,340px);height:auto;overflow:visible;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
+.lg .lg-ball{transform-box:fill-box;transform-origin:center}
+.lg.anim .lg-ball{animation:lgRoll .7s .15s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes lgRoll{from{transform:translate(-230px,40px) rotate(-720deg)}}
+.lg.anim .lg-arc{stroke-dasharray:260;stroke-dashoffset:260;animation:lgArc .55s .05s ease-out forwards}
+@keyframes lgArc{to{stroke-dashoffset:0}}
+.lg .lg-shine{animation:lgShine 4s 1s ease-in-out infinite}
+@keyframes lgShine{0%{transform:translateX(0) skewX(-20deg)}30%,100%{transform:translateX(560px) skewX(-20deg)}}
+@media (prefers-reduced-motion:reduce){.lg *{animation:none!important;stroke-dashoffset:0!important}}
+#scene>.res-mark{position:absolute!important;left:50%;top:4%;transform:translateX(-50%) rotate(-12deg);opacity:.05;pointer-events:none;z-index:0!important}
+#scene .res-mark svg{width:300px;height:300px}
+
+/* ---- 操作の台(暗いテーマ): 立体のベージュをやめ、暗い平面の平行四辺形に(→docs/14 第3弾)。
+   点いているものだけ赤。中央(プレス)は形で区別(ひし形)。SHOOT・KEEPER の「玉」は光沢を弱める ---- */
+.th-bk #pad{background:linear-gradient(180deg,#14161c,#07080b);border-top:2px solid var(--t-sub)}
+.th-bk #pad .tac{color:#e9ebf0;background:#1f232d;border:1px solid #3a404e;border-radius:2px;box-shadow:none;
+  clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);font-weight:800;letter-spacing:.04em}
+.th-bk #pad .tac:active{transform:translateY(1px);box-shadow:none;background:#2a2f3b}
+.th-bk #pad .tac.md{color:#e9ebf0;background:#2a1418;border-color:#6b1a27;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border-radius:0}
+.th-bk #pad .tac.on{color:#fff;background:linear-gradient(90deg,var(--t-sub2),var(--t-sub));border-color:#ff8a9a;box-shadow:none;outline:none}
+.th-bk #pad .tac.md.on{background:linear-gradient(180deg,var(--t-sub3),var(--t-sub2))}
+.th-bk #pad .tac.on::before{right:9%;top:4px}
+.th-bk .btn-shoot,.th-bk .btn-keeper{box-shadow:0 3px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18)}
+.th-bk .btn-shoot{background:linear-gradient(180deg,#f0344f,#a80d25)}
+.th-bk .btn-keeper{background:linear-gradient(180deg,#2f6fd0,#16438f)}
+.th-bk .btn-keeper.on,.th-bk .btn-shoot.armed{background:linear-gradient(180deg,#f7d77c,#c9971f);color:#201400}
+.th-bk #pad .btn-kp{border-radius:2px;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
+/* ---- 場面の空きを選手の絵で埋める(→docs/14 第3弾) ---- */
+#scene .vs-side{position:relative;overflow:visible}
+#scene .vs-art{position:absolute;bottom:-6px;height:150px;image-rendering:pixelated;opacity:.95;pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));z-index:0}
+#scene .vs-side.home .vs-art{right:-6px}
+#scene .vs-side.away .vs-art{left:-6px;transform:scaleX(-1)}
+#scene .vs-side .vs-info,#scene .vs-side .vs-em{position:relative;z-index:1}
+#scene .res-mvp{position:relative;padding-right:84px}
+#scene .res-mvp .mvp-art{position:absolute;right:0;bottom:-6px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+#scene .tr-photo{position:relative;z-index:2;margin-top:-6px}
+#scene .tr-photo .row{display:flex;justify-content:center}
+#scene .tr-photo .row img{height:64px;margin:0 -9px;image-rendering:pixelated;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#scene .tr-photo .row.r1{margin-top:-30px}
+#scene .tr-photo .row.r1 img{height:74px}
+/* 結果の採点表: 暗いテーマでは暗いセルに、色は数字だけ(→docs/14 第3弾) */
+.th-bk .res-rt span{background:#1b1f28;color:#eef0f4;border:1px solid #2b303c}
+.th-bk .res-rt em{color:#eef0f4} .th-bk .res-rt em.hi{color:#f0cf75} .th-bk .res-rt em.lo{color:#6fa3ff}
