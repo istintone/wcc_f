@@ -896,11 +896,11 @@ function startFixture(){
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
   CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
-  sceneMatchup(fx,()=>sceneWalkout(m.home,m.away,()=>{   // 対戦カード → 入場 → キックオフ(→docs/14 第4弾)
+  sceneMatchup(fx,()=>{
     sceneHide(); hideClub();
     newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
       starters:m.home.xi.map(x=>x.card.id) });
-  }));
+  });
 }
 /** 試合が終わったら呼ぶ。結果を反映して保存し、クラブハウスへ戻る */
 function finishFixture(M){

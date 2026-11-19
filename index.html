@@ -1728,19 +1728,6 @@ body.th-bk{
 /* 結果の採点表: 暗いテーマでは暗いセルに、色は数字だけ(→docs/14 第3弾) */
 .th-bk .res-rt span{background:#1b1f28;color:#eef0f4;border:1px solid #2b303c}
 .th-bk .res-rt em{color:#eef0f4} .th-bk .res-rt em.hi{color:#f0cf75} .th-bk .res-rt em.lo{color:#6fa3ff}
-/* ---- 入場シーン(→docs/14 第4弾) ---- */
-.sc-walk{background:#05070d;overflow:hidden}
-.sc-walk .wk-sky{position:absolute!important;inset:0 0 62% 0;background:radial-gradient(ellipse at 50% 120%,rgba(255,246,200,.35),transparent 60%),linear-gradient(#070a14,#1b2440)}
-.sc-walk .wk-pitch{position:absolute!important;left:-20%;right:-20%;top:36%;bottom:0;background:repeating-linear-gradient(180deg,#2a8442 0 8%,#24763b 8% 16%);
-  transform:perspective(320px) rotateX(38deg);transform-origin:50% 0}
-.sc-walk .wk-tunnel{position:absolute!important;left:50%;top:27%;width:70px;height:46px;transform:translateX(-50%);background:#020305;border-radius:35px 35px 0 0;box-shadow:0 0 0 4px #333a4a,0 0 30px rgba(255,246,200,.35)}
-.sc-walk .wk-p{position:absolute!important;left:50%;top:32%;height:calc(var(--h)*.35);transform:translate(-50%,-100%);opacity:0;image-rendering:pixelated;
-  filter:drop-shadow(0 4px 4px rgba(0,0,0,.6));transition:left .9s var(--d) ease-out,top .9s var(--d) ease-out,height .9s var(--d) ease-out,opacity .3s var(--d)}
-.sc-walk .wk-p.away{transform:translate(-50%,-100%) scaleX(-1)}
-.sc-walk.go .wk-p{left:var(--x);top:var(--y);height:var(--h);opacity:1}
-.sc-walk .wk-band{position:absolute!important;left:0;right:0;top:9%;display:flex;align-items:center;justify-content:center;gap:12px;z-index:30!important}
-.sc-walk .wk-band b{font-family:"Oswald",sans-serif;font-size:30px;font-style:italic;color:#fff;padding:0 12px;border-bottom:4px solid var(--tc)}
-.sc-walk .wk-band i{font-family:"Oswald",sans-serif;font-style:normal;font-size:11px;letter-spacing:.3em;color:#f0cf75}
 /* ---- ゴールの得点者のアップ(→docs/14 第4弾) ---- */
 #flash.gl{background:radial-gradient(ellipse at 50% 60%,rgba(224,31,61,.35),rgba(0,0,0,.55) 70%)}
 #flash:not(.mine).gl{background:radial-gradient(ellipse at 50% 60%,rgba(60,70,90,.35),rgba(0,0,0,.6) 70%)}
@@ -2102,8 +2089,7 @@ const TUNING={
          shapeTau:900, delay0:90, delayRnd:260, delaySpd:14, amp:{ GK:0.5, CB:0.75, SB:0.9, DMF:0.9, CMF:1.05, SMF:1.05, OMF:1.15, WG:1.2, CF:1.2 } } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
-  // walkMs/walkStep … 入場シーンの長さと、1人ずつの入りのずれ(→docs/14 第4弾)
-  play:{ walkMs:3200, walkStep:90, stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
+  play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
     replayN:5, replaySlow:0.5, replayEnd:600,
     // 盤面のカードの大きさ(→docs/07 §7.11): 盤面の高さ ÷ cardRef の倍率を cardMin〜cardMax に収める(小さい画面で重ならないように)
     cardRef:400, cardMin:0.7, cardMax:1.12, boardAspect:0.7,   // boardAspect … 盤面のピッチの 幅 ÷ 高さ の上限(縦長を保つ)
@@ -8074,11 +8060,11 @@ function startFixture(){
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
   CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
-  sceneMatchup(fx,()=>sceneWalkout(m.home,m.away,()=>{   // 対戦カード → 入場 → キックオフ(→docs/14 第4弾)
+  sceneMatchup(fx,()=>{
     sceneHide(); hideClub();
     newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
       starters:m.home.xi.map(x=>x.card.id) });
-  }));
+  });
 }
 /** 試合が終わったら呼ぶ。結果を反映して保存し、クラブハウスへ戻る */
 function finishFixture(M){
@@ -8669,23 +8655,6 @@ function sceneMatchup(fx,go){
     '<div class="touch sm">TOUCH</div>',
     { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
-}
-/**
- * 入場(→docs/14 第4弾。本家にあった短い入場シーン。タッチで飛ばせる)。
- * 両チームの先発11人が、奥のトンネルから2列で手前へ歩いて並ぶ。自チームは左の列、相手は右の列(左右反転)
- */
-function sceneWalkout(H,A,go){
-  const P=TUNING.play, row=(def,side)=>def.xi.map((x,i)=>{ const src=artSrc(x.card,"stand"); if(!src)return "";
-    const t=(i+1)/11, X=50+(side==="home"?-1:1)*(6+30*t), Y=34+54*t, h=Math.round(34+46*t);
-    return '<img class="wk-p '+side+'" src="'+src+'" alt="" style="--x:'+X.toFixed(1)+'%;--y:'+Y.toFixed(1)+'%;--h:'+h+'px;--d:'+(i*P.walkStep)+'ms;z-index:'+(10+i)+'">'; }).join("");
-  sceneShow("sc-walk",
-    '<div class="wk-sky"></div><div class="wk-pitch"></div><div class="wk-tunnel"></div>'+
-    row(H,"home")+row(A,"away")+
-    '<div class="wk-band"><b style="--tc:'+H.color+'">'+H.short+'</b><i>ENTRANCE</i><b style="--tc:'+A.color+'">'+A.short+'</b></div>'+
-    '<div class="touch sm">TOUCH</div>',
-    { next:go, auto:P.walkMs, lock:250 });
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(SC.el)SC.el.classList.add("go"); }));
-  sndCrowdBurst();
 }
 /** 対戦カードの「どっ」 */
 function sndCrowdBurst(){ if(sndOk())noiseBurst(now(),1.6,0.22,"bandpass",600,900,0.6); }
