@@ -1065,3 +1065,44 @@ body.th-bk{
 #club .paper{line-break:strict}
 /* 選んだ練習(決定の前)。赤い縁と左の帯 */
 #club .tr.on,.th-wr #club .tr.on,.th-bk #club .tr.on{border-color:var(--t-sub);background:linear-gradient(90deg,rgba(224,31,61,.28),rgba(224,31,61,.08));box-shadow:inset 4px 0 0 var(--t-sub)}
+
+/* ---- HOME の再構成と WEEKLY NEWS(→docs/14 第2弾) ---- */
+#club .chd small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+#club .nx-form{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 14px 0}
+#club .nx-form small{font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.14em;color:var(--t-mute);margin-right:4px}
+#club .nx-form .wdl{width:24px;height:24px;padding:0;border:0;border-radius:2px;font-family:"Oswald",sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;
+  transform:skewX(-8deg)}
+#club .nx-form .wdl.W{background:#1f8a4c} #club .nx-form .wdl.D{background:#6b6f78} #club .nx-form .wdl.L{background:#c8102e}
+#club .nx-form .wdl:last-child{box-shadow:0 0 0 2px var(--t-gold2)}
+#club .tile.next .nx-go{margin:12px 14px 0;text-align:center}
+#club .tile.next .nx-go span{display:block;padding:12px 0;font-size:16px;font-weight:900;letter-spacing:.06em;color:#fff;background:linear-gradient(90deg,var(--t-sub2),var(--t-sub) 40%,var(--t-sub3));
+  clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+#club .tile.next .nx-go span::after{content:" ›"}
+#club .tile.news{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;padding:8px 12px 8px 0;border:1px solid var(--t-rule);background:var(--t-card);
+  color:var(--t-ink);text-align:left;cursor:pointer;overflow:hidden}
+#club .tile.news .nw-tag{flex:0 0 auto;align-self:stretch;display:flex;align-items:center;margin:-8px 0;padding:0 10px 0 12px;font-style:normal;font-family:"Oswald",sans-serif;
+  font-size:10px;font-weight:700;line-height:1.05;letter-spacing:.1em;color:#16130e;background:#f4ecd8;clip-path:polygon(0 0,100% 0,88% 100%,0 100%)}
+#club .tile.news .nw-line{flex:1;min-width:0;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .tile.news em{flex:0 0 auto;font-style:normal;font-size:11px;color:var(--t-mute)}
+#club .tile.news b{flex:0 0 auto;color:var(--t-sub)}
+#club .tile.news.unread .nw-tag{position:relative}
+#club .tile.news.unread .nw-tag::after{content:"";position:absolute;right:2px;top:5px;width:7px;height:7px;border-radius:50%;background:#e01f3d;box-shadow:0 0 6px #e01f3d}
+#club .pp-nav{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;width:100%;max-width:400px;margin:0 auto 8px;color:#fff;font-size:12px}
+#club .pp-nav button{padding:6px 12px;border:1px solid rgba(255,255,255,.35);border-radius:2px;background:rgba(0,0,0,.4);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+#club .pp-nav button:disabled{opacity:.3}
+#club .paper-wrap{flex-direction:column;align-items:center}
+
+/* SEASON・SQUAD・CARDS の畳み(→docs/14 第2弾) */
+#club .tbl tr.gap td{text-align:center;color:var(--t-mute);padding:0;line-height:1}
+#club .lnk.more{display:block;margin:6px auto 0;font-size:12px}
+#club .tbl.cups .cond{display:block;font-size:9.5px;font-weight:400;color:var(--t-mute);line-height:1.35;margin-top:1px}
+#club .tbl.cups tr.ok td:last-child{color:#2fb26a;font-weight:700}
+#club details.fold>summary{list-style:none;cursor:pointer}
+#club details.fold>summary::-webkit-details-marker{display:none}
+#club details.fold>summary h3{position:relative;padding-right:18px;margin-bottom:0}
+#club details.fold>summary h3::after{content:"＋";position:absolute;right:0;top:0;color:var(--t-sub);font-weight:900}
+#club details.fold[open]>summary h3{margin-bottom:8px}
+#club details.fold[open]>summary h3::after{content:"−"}
+#club .cfrow{display:flex;gap:6px;align-items:stretch}
+#club .cfrow .tabs{flex:1;margin:0}
+#club .cfrow .sortb{flex:0 0 auto;padding:0 10px;font-size:12px;white-space:nowrap}

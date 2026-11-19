@@ -297,9 +297,10 @@ function sqDetailHtml(){
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
-  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
+  return '<details class="card htset fold"><summary><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ '+set.map(id=>htOf(id).name).join(" / ")+'</small></h3></summary>'+
+    '<p class="dim">同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</p>'+
     av.map(id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
-      (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; }).join("")+'</section>';
+      (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; }).join("")+'</details>';
 }
 function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
@@ -317,9 +318,9 @@ function squadHtml(){
   h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
   // 連携の数・戦力グラフ
   const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
-  h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
+  h+='<details class="card fold"><summary><h3>連携 <small>薄線 '+lv[1]+' ・ 太線 '+lv[2]+' ・ 黄金線 '+lv[3]+' ・ 線の見方</small></h3></summary><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
-    ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></section>';
+    ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   h+=htSetHtml();
   h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
     Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
@@ -498,10 +499,10 @@ function collectionHtml(){
   // 登録中のカードも並べて「登録中」の印を付ける(コレクションとして全部見えるように)
   const list=ids.filter(id=>CL.cf==="ALL"||CARDS[id].pos===CL.cf).sort(by[CL.cs]||by.rar);
   let h='<section class="card coll"><h3>カード <small>'+ids.length+'種 ・ '+n+'枚 ・ 登録 16人</small></h3>'+
-    '<div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
+    // 絞り込みと並べ替えを1段に。並べ替えは押すたびに切り替わる(→docs/14 第2弾)
+    '<div class="cfrow"><div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
       (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
-    '<div class="tabs t3 sorts">'+[["rar","レア順"],["no","No.順"],["tot","合計順"]].map(([k,t])=>'<button class="tab'+((CL.cs||"rar")===k?' on':'')+
-      '" data-act="cs" data-v="'+k+'">'+t+'</button>').join("")+'</div>';
+    '<button class="tab sortb" data-act="cs" data-v="next">↕ '+({ rar:"レア", no:"No.", tot:"合計" })[CL.cs||"rar"]+'</button></div>';
   if(CL.sel)h+=cardDetailHtml(CL.sel);
   h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",(CL.sel===id?" on":"")+(S.sq.includes(id)?" insq":""))).join("")+'</div>'
     :'<p class="dim">このポジションのカードはまだ無い。試合のあとに1枚ずつ出る</p>';
@@ -578,8 +579,8 @@ const powDelta=S=>{ const d=teamPower(S)-(S.ts.pow0||teamPower(S)); return d>=0.
 function homeHeadHtml(){
   if(CL.S.ts&&CL.S.ts.pow0==null)CL.S.ts.pow0=teamPower(CL.S);   // 任期の始め(または初めて見たとき)のチーム力
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
-  return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>'+(S.mgr?'監督 '+S.mgr.name+(S.mgr.ani!=null?ANI_ICON[S.mgr.ani]:'')+' ・ ':'')+(S.tset?'「'+titleOf(S.tset).name+'」 ・ ':'')+'第'+S.term+'任期 ・ 格 '+S.grade+
-    ' ・ ランク '+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
+  // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
+  return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
     '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>チーム力</small></div>'+
     '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
     '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>資金</small></div>'+
@@ -599,7 +600,42 @@ function nextTileHtml(){
     '<p class="nx-meta">KP '+nameOf(kp)+(st?' ・ '+st.name:'')+' ・ '+t.form+
       (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ 同点なら PK':'')+'</p>'+
     (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
-    '<div class="nx-go">› '+go+'</div></section>';
+    formHtml(S)+
+    '<div class="nx-go"><span>'+go+'</span></div></section>';
+}
+/** 試合の結果の印(W/D/L) */
+const wdlOf=a=>{ const d=a.hg-a.ag, w=d>0||(d===0&&a.pso&&a.pso[0]>a.pso[1]), l=d<0||(d===0&&a.pso&&a.pso[0]<a.pso[1]); return w?"W":l?"L":"D"; };
+/** 直近の試合の印(最大5。古い順に左から)。押すとその試合の新聞 */
+function formHtml(S){
+  const P=S.paper||[], n=Math.min(TUNING.paper.recent,P.length); if(!n)return "";
+  let h='<div class="nx-form"><small>直近</small>';
+  for(let i=P.length-n;i<P.length;i++)h+='<button class="wdl '+wdlOf(P[i])+'" data-act="paper" data-i="'+i+'" title="'+P[i].hg+'-'+P[i].ag+'">'+wdlOf(P[i])+'</button>';
+  return h+'</div>';
+}
+/* ---- WEEKLY NEWS(→docs/14 第2弾)。最新号のゴシップから大事な順に1件を、HOME に1行で ---- */
+const NEWS_ORDER=["【速報】","【独占】","【話題】","【分析】","【スポンサー】","【クラブ】","【うわさ】"];
+function newsPick(a){
+  if(!a)return null;
+  for(const t of NEWS_ORDER){ const x=a.side.find(y=>y.indexOf(t)===0); if(x)return x; }
+  return a.head;
+}
+/** 号の見分け(最大30号で古いものから消えるので、数ではなく任期と試合で) */
+const paperKey=a=>a?a.term+":"+a.no:"";
+function newsLineHtml(){
+  const S=CL.S, P=S.paper||[], a=P[P.length-1]; if(!a)return "";
+  const unread=S.paperSeen!==paperKey(a), more=a.side.length-1;
+  return '<button class="tile news'+(unread?' unread':'')+'" data-act="news"><i class="nw-tag">WEEKLY<br>NEWS</i>'+
+    '<span class="nw-line">'+newsPick(a)+'</span>'+(more>0?'<em>+'+more+'</em>':'')+'<b>›</b></button>';
+}
+/** 秘書が HOME に出るのは、伝えることがあるときだけ(定型の一言は出さない) */
+function secNeeded(S){
+  if(CL.alert)return true;
+  if(S.sec&&S.sec.ev!=null)return true;
+  const g=S.g, fx=CL.fx;
+  if(S.sq.slice(0,11).some(id=>g.pl[id]&&g.pl[id].mot===0)&&g.step!=="ready")return true;   // ケガ
+  if(fx&&fx.kind==="friendly"&&(Object.values(g.pl).some(p=>p.q||p.sq)||Object.values(g.links).some(l=>l.gold)))return true;   // 兆し
+  if(fx&&fx.ko&&/決勝/.test(fx.label||""))return true;
+  return S.played===0;                            // 最初のあいさつ
 }
 /** 秘書の一言 */
 function secHtml(){
@@ -673,12 +709,6 @@ function spBoostHtml(){
 /** HOME: 区切りのスポンサーの候補は1行の帯にたたむ(押すと開く) */
 function spRenewBarHtml(){ return '<button class="tile sp-bar" data-act="spopen">📣 スポンサーの契約を更新できます(候補 3社)<b>›</b></button>'; }
 /** HOME: スポンサーは1行(社名・ミッションの達成数・効いている効果)。詳しくは CLUB タブ */
-function spMiniHtml(){
-  const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
-  const done=sp.ms.filter(m=>m.done).length, on=SP_IND.filter(x=>S.biz.boost[x.eff]>0).map(x=>spItem(x,S.biz.boostRank[x.eff]||1)+" 残り"+S.biz.boost[x.eff]);
-  return '<button class="tile sp-mini" data-act="tab" data-v="club"><span class="logo r'+sp.rank+'">'+sp.name+'</span>'+
-    '<small>ミッション '+done+'/'+sp.ms.length+(on.length?' ・ '+on.join(" ・ "):'')+'</small><b>›</b></button>';
-}
 /** CLUB のスポンサーの欄(胸ロゴとミッションの進み) */
 function spTileHtml(){
   const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
@@ -688,14 +718,15 @@ function spTileHtml(){
 function bizClubHtml(){
   const S=CL.S, Z=S.biz; if(!Z)return "";
   const sd=stadOf(S), nx=TUNING.biz.stad[Z.stad];
-  let h='<section class="card stad"><h3>スタジアム <small>Lv'+Z.stad+' ・ '+sd.name+'</small></h3>'+stadiumSvg(Z.stad)+
+  let st='<section class="card stad"><h3>スタジアム <small>Lv'+Z.stad+' ・ '+sd.name+'</small></h3>'+stadiumSvg(Z.stad)+
     '<p>収容 <b>'+(sd.cap/10000).toFixed(1)+'万人</b> ・ ファン <b>'+(Z.fans/10000).toFixed(1)+'万人</b>'+(Z.att?' ・ 前のホーム '+(Z.att/10000).toFixed(1)+'万人':'')+'</p>'+
     '<p class="dim">'+(nx?'次の改修: 「'+nx.name+'」'+nx.cost+'億(資金がたまるか、優勝・昇格のときに秘書が知らせる)':'これ以上の改修はない')+'</p></section>';
-  h+='<section class="card facs"><h3>施設 <small>資金 '+S.money.toFixed(0)+'億 ・ 育成に効く</small></h3>'+FAC_KEYS.map(k=>{
+  // 施設(お金を使う唯一の操作)を先に、スタジアムの絵はそのあと(→docs/14 第2弾)
+  let h='<section class="card facs"><h3>施設 <small>資金 '+S.money.toFixed(0)+'億 ・ 育成に効く</small></h3>'+FAC_KEYS.map(k=>{
     const lv=Z.fac[k], c=facCost(S,k), f=FAC_INFO[k];
     return '<div class="fac"><div><b>'+f.name+' <i>Lv'+lv+'</i></b><small>'+f.eff+(lv?'(いま '+facEffTxt(k,lv)+')':'')+'</small></div>'+
       (c==null?'<span class="dim">最大</span>':'<button class="btn btn-sub" data-act="fac" data-v="'+k+'"'+(S.money<c?' disabled':'')+'>'+c+'億で'+(lv?'上げる':'建てる')+'</button>')+'</div>'; }).join("")+'</section>';
-  return h;
+  return h+st;
 }
 const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"・ケガが治る率 +"+Math.round(TUNING.biz.medHeal[lv]*100)+"%"
   :"経験 ×"+TUNING.biz.facK[lv];
@@ -759,29 +790,19 @@ function secPickHtml(title){
     return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
       '<i>「'+SEC_LINES[x.id].hello+'」</i></button>'; }).join("")+'</section>';
 }
-/** HOME: 直近の試合(最大5)。押すとその試合のクラブ新聞を開く(→docs/07 §7.13) */
-function lastHtml(){
-  const S=CL.S, P=(S.paper||[]).slice(-TUNING.paper.recent).reverse(), L=S.last;
-  if(!P.length&&!L)return "";
-  const res=a=>{ const d=a.hg-a.ag, w=d>0||(d===0&&a.pso&&a.pso[0]>a.pso[1]), l=d<0||(d===0&&a.pso&&a.pso[0]<a.pso[1]); return w?"W":l?"L":"D"; };
-  return '<section class="tile last"><h3>直近の試合 <small>押すとクラブ新聞</small></h3>'+
-    (P.length?'<ul class="recent">'+P.map((a,i)=>'<li><button data-act="paper" data-i="'+(S.paper.length-1-i)+'"><span class="rw"><i class="wdl '+res(a)+'">'+res(a)+'</i>'+
-      '<span class="op">'+COMPS[a.comp].name+' ・ vs '+clubShort(a.opp)+'</span><b>'+a.hg+' - '+a.ag+(a.pso?'<small> PK</small>':'')+'</b></span>'+
-      '<em>'+a.head+'</em></button></li>').join("")+'</ul>'
-      :'<p class="dim">'+myTeam(S).short+' '+L.hg+' - '+L.ag+' '+clubShort(L.opp)+'</p>')+
-    (L&&L.card?'<div class="ls-card">'+cardHtml(L.card,"s")+'<small>この試合のカード</small></div>':'')+'</section>';
-}
 /** クラブ新聞の紙面(ヨーロッパのタブロイド紙風)。i … S.paper の番号 */
 function paperHtml(i){
   const S=CL.S, a=S.paper[i]; if(!a)return "";
   const club=S.club?S.club.name:TEAMS.azr.name, ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
-  return '<div class="paper-wrap" data-act="paperclose"><article class="paper k-'+a.kind+'" data-act="none">'+
+  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+'>‹ 前の号</button>'+
+    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+'>次の号 ›</button></nav>';
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper k-'+a.kind+'" data-act="none">'+
     '<header class="mast"><small>第'+a.term+'任期 ・ 第'+a.no+'試合 ・ ¥150</small><b>'+club+' タイムズ</b><i>THE '+(S.club?S.club.short:"AZR")+' TIMES ・ '+(S.club?S.club.town:"")+'</i></header>'+
     '<p class="kicker">'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</p>'+
     '<h1>'+a.head+'</h1><p class="sub">'+a.sub+'</p>'+
     (img?'<figure><img src="'+img+'" alt=""><figcaption>'+(a.mvp?nameOf(CARDS[a.mvp.id])+' ・ 採点 '+a.mvp.r.toFixed(1):'')+'</figcaption></figure>':'')+
     '<div class="cols"><p>'+a.lead+'</p>'+(a.quote?'<p class="q">'+a.quote+'</p>':'')+'</div>'+
-    (a.side.length?'<aside><b>ゴシップ</b>'+a.side.map(x=>'<p>'+x+'</p>').join("")+'</aside>':'')+
+    (a.side.length?'<aside id="ppGossip"><b>ゴシップ</b>'+a.side.map(x=>'<p>'+x+'</p>').join("")+'</aside>':'')+
     '<footer><button class="btn btn-sub" data-act="paperclose">新聞をたたむ</button></footer></article></div>';
 }
 function homeHtml(){
@@ -794,8 +815,9 @@ function homeHtml(){
   if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+alertBox+secPickHtml("秘書を選ぶ");
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+
-    stadOfferHtml()+secHtml()+spMiniHtml()+lastHtml());
+  // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+newsLineHtml()+
+    (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
 /** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */
@@ -805,23 +827,26 @@ const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングス�
   JT:"この周にチャンピオンズトロフィーで優勝", ICC:"この周にチャンピオンズトロフィーかコンチネンタルカップで優勝、または前の周にチャンピオンズトロフィーで優勝" };
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
-  let h='<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節</small></h3><table class="tbl">'+
+  // 順位表は首位・自分の前後・最下位に畳む(「全部見る」で広げる →docs/14 第2弾)
+  const mi=order.indexOf("me"), keep=i=>CL.fullTable||i===0||i===order.length-1||Math.abs(i-mi)<=2;
+  let gap=false;
+  let h='<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節 ・ '+(mi+1)+'位</small></h3><table class="tbl">'+
     '<tr><th></th><th></th><th>試</th><th>勝</th><th>分</th><th>敗</th><th>得失</th><th>点</th></tr>'+
     order.map((id,i)=>{ const r=L.table[id];
+      if(!keep(i)){ if(gap)return ""; gap=true; return '<tr class="gap"><td colspan="8">…</td></tr>'; }
+      gap=false;
       return '<tr'+(id==="me"?' class="me"':'')+'><td>'+(i+1)+'</td><td class="nm2">'+clubName(id)+'</td><td>'+r.p+
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
-    '</table></section>';
+    '</table><button class="lnk more" data-act="fulltable">'+(CL.fullTable?'畳む':'全部見る')+'</button></section>';
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
-  // S の大会への道(→docs/09 第4弾): S の大会に出る条件と、いま満たしているか
-  const sIds=CUP_IDS.filter(id=>COMPS[id].grade==="S");
-  h+='<section class="card road"><h3>S の大会への道 <small>'+S.cyc+'周目</small></h3>'+sIds.map(id=>{ const c=S.cups[id], ok=c.st!=="wait"||entryOk(S,id);
-    return '<p class="'+(ok?'ok':'')+'">'+gradeTag("S")+'<b>'+COMPS[id].name+'</b><span>'+(c.st==="won"?"優勝":c.st==="in"?"出場中":ok?"出場できる":"条件: "+ENTRY_NEED[id])+'</span></p>'; }).join("")+'</section>';
+  // 「S の大会への道」は大会表と同じ中身なので、大会表にまとめた(条件は名前の下の行。→docs/14 第2弾)
   // 大会は日程の順に。次の試合の大会に印
   const firstSlot=id=>SCHED.findIndex(x=>x[0]===id), nextComp=SCHED[S.slot]?SCHED[S.slot][0]:null;
-  h+='<section class="card"><h3>大会 <small>日程の順 ・ ▶ = 次の試合</small></h3><table class="tbl cups">'+
-    CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot;
-      const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件: "+(ENTRY_NEED[id]||"—")):stTxt[c.st];
-      return '<tr class="st-'+c.st+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+COMPS[id].name+'</td><td>'+txt+'</td></tr>'; }).join("")+
+  h+='<section class="card"><h3>大会 <small>日程の順 ・ '+S.cyc+'周目 ・ ▶ = 次の試合</small></h3><table class="tbl cups">'+
+    CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot, ok=entryOk(S,id);
+      const txt=c.st==="wait"?(past?"出場なし":ok?"出場できる":"条件待ち"):stTxt[c.st];
+      const cond=c.st==="wait"&&!past&&!ok&&ENTRY_NEED[id]?'<small class="cond">'+ENTRY_NEED[id]+'</small>':'';
+      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+COMPS[id].name+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
 }
@@ -831,7 +856,8 @@ function clubTabHtml(){
   return '<section class="card"><h3>この任期 <small>第'+S.term+'任期</small></h3>'+
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
-    '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p></section>'+
+    '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p>'+
+    '<p class="dim">リーグの格 '+S.grade+' ・ 監督ランク '+S.fac+(S.tset?' ・ セットした称号「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
     spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
@@ -892,8 +918,11 @@ function onClubClick(e){
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
   if(act==="chatgo"){ CL.chat=null; startFixture(); return; }   // 最後の1回の結果を見てから試合へ
-  if(act==="paper"){ CL.paperI=+b.dataset.i; showClub(); return; }
+  if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
+  if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
+    const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
+  if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }
   if(act==="none")return;
   if(act==="htset"){ if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
@@ -930,7 +959,7 @@ function onClubClick(e){
   else if(act==="int"){ CL.int=+b.dataset.i; if(CL.int===-1)CL.trSel=null; showClub(true); }
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
-  else if(act==="cs"){ CL.cs=b.dataset.v; showClub(true); }
+  else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ CL.sel=CL.sel===b.dataset.id?null:b.dataset.id; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
