@@ -718,6 +718,10 @@ function stepMatch(M){
   // 奪ってから何手目か・どこで奪ったか(カウンターが見る)
   if(M.poss.side===B.side)M.poss.n++; else{ M.poss={ side:B.side, n:0, h0:h }; otherOf(M,T).shootOrder=0; }   // 奪われたら「撃て」は消える
   const fast=A.fastN!=null&&M.poss.n<A.fastN&&(A.fastZone==="own"?M.poss.h0<0.5:M.poss.h0>=0.5);
+  if(B.cross&&!c.gk&&rng()<TUNING.shot.xcP){       // 流れの中のクロスに頭で合わせる
+    shoot(M,rng,push,T,D,c,h,x,"hdr",B.assist,B.xk||1);
+    return M.events.slice(from);
+  }
   if(!c.gk&&((T.shootOrder>0&&h>=TUNING.shot.forceH)||shotUrge(rng,h,x,c,A.urgeK))){
     const ordered=T.shootOrder>0&&h>=TUNING.shot.forceH; T.shootOrder=0;
     if(ordered)push({ side:T.side, type:"shootCall" });   // 指示で撃った(画面に「SHOOT!」)
@@ -745,7 +749,7 @@ function stepMatch(M){
   }
   const mk=matchupDefender(rng,cp.h,cp.x,D,h);
   tire(c);
-  let ok=true, ask, dsk;
+  let ok=true, ask, dsk, flankK=1;
   if(mk){
     tire(mk.p);
     const m=mk.p, high=h<0.5;                   // ボールがいまどちらの陣にあるかで見る
@@ -758,6 +762,10 @@ function stepMatch(M){
     if(strayOf(c,h,x)<Y.zoneNear)tA*=c.fx.zone;
     if(!high)tA*=1+T.lineOff*I.lineAtk;         // ラインが高いほど敵陣に人数が掛かる
     if(ctr)tA*=I.counterK*(1+(T.mab.counter||0));   // カウンター: 守備が整う前に攻め切る(監督能力で上積み)
+    if(T.ins.side&&(x-50)*T.ins.side>I.flankX){     // サイド攻撃: そのサイドの相手の守備が薄いほど通る(→docs/02 §2.15)
+      const n=outfield(D).filter(q=>q.h<I.flankH&&(50-q.x)*T.ins.side>I.flankX).length;
+      flankK=clamp(1+I.flankK*(I.flankN-n),I.flankMin,I.flankMax); tA*=flankK;
+    }
     if(rc){
       const lv=linkLv(T,c.id,rc.p.id);
       tA*=lv?1+TUNING.link.pass*lv*(A.linkK||1):(A.noLinkK||1);
@@ -793,7 +801,9 @@ function stepMatch(M){
     mvBy:ok&&/^mv/.test(ch.id)?c.id:!ok&&mk&&mk.p.mv==="sliding"&&ch.kind==="carry"?mk.p.id:undefined,
     out:(!ok&&!fouled&&ch.kind==="pass"&&(end.x<8||end.x>92))||undefined,
     from:[r2(h),r2(x)], dest:[r2(end.h),r2(end.x)] });
-  if(ok)M.ball={ side:T.side, h:dest.h, x:dest.x, holder:rc?rc.p:c, assist:rc?c:B.assist };
+  if(ok)M.ball={ side:T.side, h:dest.h, x:dest.x, holder:rc?rc.p:c, assist:rc?c:B.assist,
+    // サイドからゴール前へのクロスが通った(次の手で頭で合わせる。→docs/02 §2.15)
+    cross:!!rc&&!!T.ins.side&&ch.lane==="box"&&Math.abs(x-50)>=TUNING.shot.xcWide&&dest.h>=TUNING.shot.xcDeep, xk:flankK };   // xk … 崩したサイドの度合い(頭で合わせる質に効く)
   else if(fouled)giveFoul(M,rng,push,T,D,mk.p,rc?rc.p:c,cp.h,cp.x,false);
   else if(cp.h>=TUNING.rule.ckH&&rng()<TUNING.rule.ckDuel){   // 深い位置で止めて、外へ逃げる
     M.events[M.events.length-1].ck=true;
@@ -927,7 +937,7 @@ function gkPosK(gk,h,x){
  * assist は直前にボールを渡した選手(チャンスメイクが見る)。
  * どれも同じ経路(ブロック → 枠 → GK → こぼれ球)を通る。
  */
-function shoot(M,rng,push,T,D,p,h,x,sp,assist){
+function shoot(M,rng,push,T,D,p,h,x,sp,assist,xk){
   const S=TUNING.shot, O=TUNING.rule, gk=gkOf(D);
   const near=sp==="pk"?1:nearOf(h), ang=sp==="pk"?1:angleOf(x);
   tire(p); p.st.shots++; T.st.shots++;
@@ -989,7 +999,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
   const as=assist&&assist!==p&&!sp?assist.fx.assist:1;
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
   if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
-  const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as;
+  const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as*(xk||1);   // xk … 薄いサイドを崩したクロス(→docs/02 §2.15)
   const gk1=sp==="pk"?gk.fx.pk:gk.fx.gk;
   const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
   ev.dest=[1.0,r2(gy)];

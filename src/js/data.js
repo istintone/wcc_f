@@ -50,7 +50,9 @@ const TUNING={
          rangePow:1.0, gapPow:0.45, thGoal:1.13,
          rebound:0.25,
          // セットプレーからのシュート。PK は圧縮(gapPow)を掛けず、別の閾値で競る
-         midH:0.80, pkAcc:0.90, thPk:0.66, hdrAcc:0.70, hdrPow:0.85, fkAcc:0.90, fkPow:1.10 },
+         midH:0.80, pkAcc:0.90, thPk:0.66, hdrAcc:0.70, hdrPow:0.85, fkAcc:0.90, fkPow:1.10,
+         // 流れの中のクロス(→docs/02 §2.15)。サイド(中央から xcWide 以上)からゴール前(xcDeep より深く)へ通ったら、受け手が xcP の率でそのまま頭で合わせる
+         xcWide:22, xcDeep:0.82, xcP:0.5 },
   // 反則とセットプレー(→docs/02 §2.10)。**反則の入口は「守備側が競り勝った瞬間」だけ**
   //   foulCarry/foulPass … 止めたのが持ち運び / パスだったときに反則になる率
   //   boxCare            … エリア内では守備者が慎重になる(反則率に掛ける)
@@ -145,6 +147,8 @@ const TUNING={
         center:{ in:1.8, box:1.2, out:0.5, switch:0.5 }, centerCarry:1.3,
         side:{ out:1.4, box:1.15, in:0.75 }, both:{ out:1.7, switch:2.0, in:0.65 },
         counterTo:2.6, counterN:4, counterK:1.15,
+        // サイド攻撃(→docs/02 §2.15)。指示した側で競るとき、相手のそのサイドの守備(自陣にいる人)が flankN 人より少ないほど通りやすい
+        flankX:15, flankH:0.55, flankN:2, flankK:0.14, flankMin:0.8, flankMax:1.3,
         keeperH:0.05, keeperSweep:2.2, keeperLob:1.25, keeperSta:1.3 },
   // スタイルの細かい条件
   //   lateMin … 「終盤」とみなす分 / zoneNear … エリア支配が効く、持ち場からの距離
