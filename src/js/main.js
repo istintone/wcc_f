@@ -19,7 +19,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
   G.ins={}; G.kpMode=false; G.cutDone=false;
-  RV.vis.clear(); RV.ball=[0.5,0.5];
+  RV.vis.clear(); RV.ball=[0.5,0.5]; RV.sb=null; RV.hist=[]; RV_MV.clear();
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
   $("hudH").textContent=M.home.short; $("hudA").textContent=M.away.short;

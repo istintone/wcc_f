@@ -281,7 +281,16 @@ const TUNING={
   // 試合映像の見え方(→docs/07 §7.11)。斜め上の横から見た立体
   //   far … 奥のタッチラインの縮み(手前 = 1)/ farY・nearY … 奥と手前のタッチラインの高さ(モニターの高さに対する割合)/ nearW … 手前の幅
   //   manH … 手前での選手の高さ / goalH … ゴールの高さ / standH … スタジアムの段ごとの奥のスタンドの高さ
-  view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22] },
+  view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22],
+    // ボールを持たない選手の動き(見た目だけ。→docs/07 §7.15)。1人ずつ独立して動く
+    //   driftH/driftX … その場のゆらぎ(高さ・左右)/ runRate … 攻めているとき、1秒あたりに走り込みを始める率(スキルの向きで増減)
+    //   runH/runX … 走り込みの深さ・横の幅 / runMs … 走り込みの長さ / press/pressN … 守るときボールへ寄せる割合と人数
+    //   lag0/lagSpd … 追いつく遅さ(スピードが低いほど遅い)/ evRun … パスが通ったとき、味方の誰かが走り出す率
+    mv:{ driftH:0.012, driftX:2.4, runRate:0.22, runH:[0.06,0.13], runX:7, runMs:[1100,1900], press:0.32, pressN:2,
+         lag0:110, lagSpd:9, evRun:0.85,
+         // 隊列の上下を1人ずつずらす。delay0/delayRnd/delaySpd … ボールへ反応するまでの遅れ(ms)/ amp … 役割ごとの上下の幅(1 = 隊列どおり)
+         // shapeTau … 隊列が追うボールの高さをなめらかにする時間(ms)。パス1本ごとに全員が揺れ戻さないように
+         shapeTau:900, delay0:90, delayRnd:260, delaySpd:14, amp:{ GK:0.5, CB:0.75, SB:0.9, DMF:0.9, CMF:1.05, SMF:1.05, OMF:1.15, WG:1.2, CF:1.2 } } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,

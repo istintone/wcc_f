@@ -107,6 +107,51 @@ function drawGoal(c,u){
   c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(a[0],a[1]-gh*a[2]*RV.h); c.lineTo(b[0],b[1]-gh*b[2]*RV.h); c.lineTo(b[0],b[1]); c.stroke();
 }
 
+/* ---- ボールを持たない選手の動き(見た目だけ。→docs/07 §7.15) ----
+ * 隊列(blockH)だけで置くと全員が同じ上下動になるので、1人ずつ「ゆらぎ・走り込み・寄せ・追いつく速さ」を持たせる。
+ * 試合の結果には触れない(乱数も Math.random。エンジンの乱数は使わない) */
+const RV_MV=new Map();
+/** 走り込みの向き(スキル)。大きいほどよく走る。SB はオーバーラップ系のスキルで駆け上がる */
+const RUN_SKILL={ runner:2.2, sprint:2.2, chase:1.8, hunter:1.5, hunt:1.2, wing:1.6, drib:1.3, fanta:1.2, ace:1.3, over:1.8, allout:1.8, dynamo:1.4,
+  post:0.4, target:0.4, tower:0.5, maker:0.6, passer:0.7, stopper:0.3, leader:0.4, libero:0.8 };
+function mvOf(p){
+  let m=RV_MV.get(p.id);
+  if(!m){ const h=hashStr("mv:"+p.id);
+    m={ ph:(h%628)/100, ph2:((h>>9)%628)/100, f:0.0006+((h>>4)%50)/100000, f2:0.0004+((h>>14)%50)/100000, run:null,
+      delay:TUNING.view.mv.delay0+((h>>6)%100)/100*TUNING.view.mv.delayRnd+(STAT_MAX-p.c.spd)*TUNING.view.mv.delaySpd };
+    RV_MV.set(p.id,m); }
+  return m;
+}
+/** 走り込みを始める。dh … 前への深さ(チームのフレーム)、dx … 横 */
+function startRun(m,now,V,k){
+  const r=()=>Math.random();
+  m.run={ t0:now, dur:V.runMs[0]+r()*(V.runMs[1]-V.runMs[0]), dh:(V.runH[0]+r()*(V.runH[1]-V.runH[0]))*(k||1), dx:(r()*2-1)*V.runX };
+}
+/**
+ * 1人の目標の位置(チームのフレーム h・x)。att … 自チームが攻めている / press … ボールへ寄せる1人 / bhx … ボールの位置(チームのフレーム)
+ */
+function offBallGoal(p,bh,bx,att,press,now,dt){
+  const V=TUNING.view.mv, m=mvOf(p);
+  // ⓪ 隊列の上下は1人ずつ遅れて、役割ごとの幅で(全員が同じ上下動にならないように)
+  const hb=blockH(p,0.5);
+  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
+  // ① その場のゆらぎ(1人ずつ周期が違う)
+  const g=p.gk?0.3:1;
+  h+=V.driftH*g*Math.sin(now*m.f+m.ph); x+=V.driftX*g*Math.sin(now*m.f2+m.ph2);
+  // ② 走り込み(攻めているとき。FW と攻撃的な選手ほど、スキルの向きで増減)
+  if(m.run&&now-m.run.t0>m.run.dur)m.run=null;
+  if(!p.gk&&att&&!m.run){
+    const grp=GROUP_OF[p.role], base=grp==="FW"?1:grp==="MF"?0.45:(p.role==="SB"?0.35:0.05);
+    const tend=base*(RUN_SKILL[p.c.skill]||1);
+    if(Math.random()<dt/1000*V.runRate*tend)startRun(m,now,V,grp==="DF"?0.8:1);
+  }
+  if(m.run){ const s=clamp((now-m.run.t0)/m.run.dur,0,1), a=Math.sin(Math.PI*s);
+    h+=m.run.dh*a; x+=m.run.dx*a; }
+  // ③ 寄せ(守っているとき、ボールに近い人だけ)
+  if(press){ h+=(press[0]-h)*V.press; x+=(press[1]-x)*V.press; }
+  return [clamp(h,0.02,0.98),clamp(x,2,98)];
+}
+
 /** いま映すべき場面を G(main.js の状態)から組み立てて描く */
 function drawFrame(G,dt){
   const c=RV.ctx, M=G.M;
@@ -144,17 +189,39 @@ function drawFrame(G,dt){
     RV.ball=[lerp(RV.ball[0],0.5,k),lerp(RV.ball[1],0.5,k)];
   }
 
-  // ---- 選手の位置(見た目だけ、ゆっくり追う) ----
-  const k=1-Math.exp(-dt/170), seen=new Set(), list=[];
+  // ---- 選手の位置(見た目だけ。1人ずつ独立して動く →docs/07 §7.15) ----
+  const VM=TUNING.view.mv, now=(RV.t=(RV.t||0)+dt), seen=new Set(), list=[];
+  const atkSide=ev&&ev.side?ev.side:M.ball?M.ball.side:null;
+  // パスが通ったら、味方の誰か(FW・MF)が走り出す(イベントで動きを起こす)
+  if(ev&&ev!==RV.lastEv){
+    RV.lastEv=ev;
+    if(ev.type==="pass"&&ev.ok&&Math.random()<VM.evRun){
+      const T=teamOf(M,ev.side), c=T.players.filter(p=>!p.gk&&p.id!==ev.by&&p.id!==ev.to&&GROUP_OF[p.role]!=="DF");
+      const q=c[Math.floor(Math.random()*c.length)]; if(q)startRun(mvOf(q),now,VM,1.2);
+    }
+  }
+  // ボールの位置の履歴(選手ごとに遅れて反応するため)
+  // 隊列はボールのある区域に合わせて動く(なめらかにした位置を履歴に積む)。寄せる人は今のボールを見る
+  const ks=1-Math.exp(-dt/VM.shapeTau); RV.sb=RV.sb||RV.ball.slice();
+  RV.sb[0]=lerp(RV.sb[0],RV.ball[0],ks); RV.sb[1]=lerp(RV.sb[1],RV.ball[1],ks);
+  RV.hist=RV.hist||[]; RV.hist.push([now,RV.sb[0],RV.sb[1]]);
+  while(RV.hist.length>2&&now-RV.hist[0][0]>1500)RV.hist.shift();
+  const ballAt=d=>{ const H=RV.hist; for(let i=H.length-1;i>=0;i--)if(now-H[i][0]>=d)return H[i]; return H[0]; };
   for(const T of [M.home,M.away]){
     const bu=RV.ball[0], bh=T.side==="H"?bu:1-bu;
-    const bx=(T.side==="H"?RV.ball[1]:1-RV.ball[1])*100;
+    const bx=(T.side==="H"?RV.ball[1]:1-RV.ball[1])*100, att=atkSide===T.side;
+    // 守っているときにボールへ寄せる人(ボールに近い順に pressN 人。GK は除く)
+    const pr=att?new Set():new Set(T.players.filter(p=>!p.gk&&!pin.has(p.id))
+      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));
     for(const p of T.players){
       seen.add(p.id);
       let goal=pin.get(p.id);
-      if(!goal)goal=scrOf(T.side,blockH(p,bh),p.gk?p.x:p.x+(bx-p.x)*0.14);
+      if(!goal){ const bd=ballAt(mvOf(p).delay), dh=T.side==="H"?bd[1]:1-bd[1], dx=(T.side==="H"?bd[2]:1-bd[2])*100;
+        const q=offBallGoal(p,dh,dx,att,pr.has(p.id)?[bh,bx]:null,now,dt); goal=scrOf(T.side,q[0],q[1]); }
       let v=RV.vis.get(p.id);
       if(!v){ v=goal.slice(); RV.vis.set(p.id,v); }
+      // 追いつく速さは1人ずつ(スピードが高いほど速い)。ボールに絡む人(pin)は速く
+      const lag=pin.has(p.id)?90:VM.lag0+(STAT_MAX-p.c.spd)*VM.lagSpd, k=1-Math.exp(-dt/lag);
       v[0]=lerp(v[0],goal[0],k); v[1]=lerp(v[1],goal[1],k);
       list.push({ p, T, u:v[0], v:v[1] });
     }
