@@ -104,10 +104,14 @@ function sceneResult(M,last,go){
   const stHtml='<div class="res-st">'+rows.map(([l,k,u])=>{
     const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
     return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
-  const mine=RT.list.filter(x=>x.side==="H").sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
-  const rtHtml='<div class="res-rt">'+mine.map(x=>{ const c=CARDS[x.id];
+  // 採点は両チーム(左に自チーム・右に相手。→docs/14)
+  const side=sd=>RT.list.filter(x=>x.side===sd).sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
+  const rtCol=(sd,T)=>'<div class="col"><h4 style="--tc:'+T.color+'">'+T.short+'</h4>'+side(sd).map(x=>{ const c=CARDS[x.id];
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
+  const rtHtml='<div class="res-rt two">'+rtCol("H",H)+rtCol("A",A)+'</div>';
+  const mv=mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
+      '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'';
   sceneShow("sc-res r-"+res.toLowerCase(),
     '<div class="res-mark">'+logoMarkSvg(300,"wm")+'</div>'+   // ロゴのマークの透かし(→docs/14 第3弾)
     '<div class="res-word">'+res+'</div>'+
@@ -117,9 +121,8 @@ function sceneResult(M,last,go){
       '<div class="rs">'+emblemSvg(A,40)+'<b>'+A.short+'</b></div></div>'+
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
+    mv+                                            // MVP は上の段(得点者の下。→docs/14)
     stHtml+rtHtml+
-    (mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
-      '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'')+
     '<div class="touch sm">TOUCH</div>',
     { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ

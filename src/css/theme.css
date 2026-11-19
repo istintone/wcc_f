@@ -1165,3 +1165,15 @@ body.th-bk{
 .th-bk #flash i{color:#121212}
 .th-bk .vs-kp,.th-bk #scene .vs-kp{color:#121212}
 .th-bk #club .logo{color:#121212;border-color:#121212}
+/* 結果の採点を両チームの2列に(→docs/14) */
+.res-rt.two{grid-template-columns:1fr 1fr;align-items:start}
+.res-rt.two .col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.res-rt.two h4{margin:0 0 2px;font-family:"Oswald",sans-serif;font-size:12px;letter-spacing:.12em;color:#fff;border-bottom:3px solid var(--tc);padding-bottom:1px}
+.res-rt.two span{padding:1px 4px}
+.res-rt.two em{font-size:13px}
+#scene .res-mvp{padding-right:58px}
+#scene .res-mvp .mvp-art{height:54px;bottom:-4px;right:2px}
+.res-rt.two{gap:2px 6px}
+.res-rt.two .col{gap:1px}
+.res-rt.two span{padding:0 4px;min-height:21px;font-size:11.5px}
+.res-rt.two em{font-size:12.5px}
