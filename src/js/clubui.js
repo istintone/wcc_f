@@ -241,7 +241,6 @@ function sqTokenHtml(id,i,on){
   if(on){ const l=S.layout[id], p=sqPos(l[0],l[1]); rl=sqRole(id,i,l[0],l[1]);
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
-  const sign=g&&(g.q||g.sq||spReady(S,id));
   return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
@@ -249,7 +248,7 @@ function sqTokenHtml(id,i,on){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+
+    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
     (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -290,8 +289,7 @@ function sqDetailHtml(){
       (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
-    '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
-    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span><span>キャプテンシー <b>'+CAP_MARK[capApt(c)]+'</b></span></div>'+
+    cardBackHtml(growCard(S,c),{ ss:g.ss })+                    // 能力・適性のマップ・スキルはカードの裏で(→docs/14 §14.14)
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -327,10 +325,11 @@ function squadHtml(){
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   h+=htSetHtml();
-  h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
-    Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
-      return '<div><span>'+AXIS_LABEL[a]+'</span><em><u class="'+(v<0?'neg':'')+'" style="width:'+w+'%;'+(v<0?'right:50%':'left:50%')+'"></u></em><b>'+
-        (v>=0?"+":"")+v.toFixed(2)+'</b></div>'; }).join("")+'</div></section>';
+  // 戦力グラフ: 六角形のレーダー(本家にならう →docs/14 §14.14)。横に練習による上下の値
+  const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
+  h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
+    radarSvg([{ v:ax, color:"#e01f3d" }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
+      return '<li><span>'+AXIS_LABEL[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
   return h;
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
@@ -371,6 +370,9 @@ function sqSwap(a,b){
   if(S.kp===a&&S.sq.indexOf(a)>=11)S.kp=b; else if(S.kp===b&&S.sq.indexOf(b)>=11)S.kp=a;
   fillLayout(S); CL.sqSel=null; persist(S); sndUi&&sndUi("tap");
 }
+/** 動かしている選手の適性を、ピッチに薄く色で出す / 消す */
+function sqAptOn(pitch,id){ sqAptOff(pitch); pitch.insertAdjacentHTML("afterbegin",aptOverlaySvg(growCard(CL.S,CARDS[id]),(h,x)=>{ const p=sqPos(h,x); return [p.l,p.t]; })); }
+function sqAptOff(pitch){ const o=pitch.querySelector(".apt-ov"); if(o)o.remove(); }
 /** 指の下にある、自分以外の選手のカード(ピッチでも控えでも) */
 function sqCardAt(x,y,self){
   for(const n of document.elementsFromPoint(x,y)){ const c=n.closest&&n.closest("#club .sqc"); if(c&&c!==self)return c; }
@@ -390,6 +392,7 @@ function sqBind(pitch){
   pitch.addEventListener("pointermove",e=>{
     if(!d||e.pointerId!==d.pid)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<7)return;
+    if(!d.moved)sqAptOn(pitch,d.id);               // 動かし始めたら適性の色を出す(→docs/14 §14.14)
     d.moved=true; d.el.classList.add("drag");
     const q=at(e), p=sqPos(q.h,q.x); d.q=q;
     d.el.style.left=p.l+"%"; d.el.style.top=p.t+"%";
@@ -403,7 +406,7 @@ function sqBind(pitch){
   });
   const end=e=>{
     if(!d||e.pointerId!==d.pid)return;
-    const dd=d; d=null;
+    const dd=d; d=null; sqAptOff(pitch);
     const tg=dd.moved?sqCardAt(e.clientX,e.clientY,dd.el):null;
     if(tg){ sqSwap(dd.id,tg.dataset.id); showClub(true); }               // 別の選手に重ねたら入れ替え
     else if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; persist(CL.S); showClub(true); }
@@ -423,7 +426,7 @@ function sqBind(pitch){
   bench.addEventListener("pointermove",e=>{
     if(!b||e.pointerId!==b.pid)return;
     if(!b.moved&&Math.hypot(e.clientX-b.x0,e.clientY-b.y0)<10)return;
-    if(!b.moved){ b.moved=true; b.g=b.el.cloneNode(true); b.g.classList.add("sq-ghost"); document.body.appendChild(b.g); b.el.classList.add("dragging"); }
+    if(!b.moved){ sqAptOn(pitch,b.id); b.moved=true; b.g=b.el.cloneNode(true); b.g.classList.add("sq-ghost"); document.body.appendChild(b.g); b.el.classList.add("dragging"); }
     b.g.style.left=e.clientX+"px"; b.g.style.top=(e.clientY-24)+"px";
     const tg=sqCardAt(e.clientX,e.clientY,b.el);
     document.querySelectorAll("#club .sqc.tgt").forEach(x=>{ if(x!==tg)x.classList.remove("tgt"); });
@@ -431,7 +434,7 @@ function sqBind(pitch){
   });
   const bend=e=>{
     if(!b||e.pointerId!==b.pid)return;
-    const bb=b; b=null;
+    const bb=b; b=null; sqAptOff(pitch);
     if(bb.g)bb.g.remove(); bb.el.classList.remove("dragging");
     if(!bb.moved){ if(e.type==="pointerup")sqPick(bb.id); return; }
     const tg=sqCardAt(e.clientX,e.clientY,bb.el);
@@ -515,16 +518,11 @@ function rareRowHtml(S,id){
 /** 選んだカードの詳細と、登録の入れ替え */
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
-  let h='<div class="kdet">'+cardHtml(id,"m")+'<div class="kinfo">'+
-    '<p class="kmeta"><b>'+cardNoOf(c)+'</b> '+RAR_TAG[c.rar||"B"]+' ・ '+clubOfCard(c)+' #'+c.no+' ・ 合計 <b>'+statTotal(c)+'</b></p>'+
-    '<div class="sts">'+STATS.map(k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b><em><u style="width:'+(c[k]/STAT_MAX*100)+'%"></u></em></span>').join("")+'</div>'+
-    '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
-    (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
-      '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
-    rareRowHtml(S,id)+
-    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
-    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p>'+
-    (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'')+'</div></div>';
+  // カードの裏の形で見せる(→docs/14 §14.14)。登録中なら育成を入れた値
+  const g=S.g.pl[id], cc=g?growCard(S,c):c;
+  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0,
+    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
+      (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
   if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
   else{
     h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+

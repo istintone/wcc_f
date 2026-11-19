@@ -1200,3 +1200,49 @@ body.th-bk{
 #scene .tr-photo .row img{height:92px;margin:0 -16px}
 #scene .tr-photo .row.r1{margin-top:-40px}
 #scene .tr-photo .row.r1 img{height:108px;margin:0 -12px}
+
+/* ---- 適性の色・レーダー・カードの裏(→docs/14 §14.14) ---- */
+.apt-ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#club .sq-pitch .apt-ov{z-index:0}
+.radar{display:block;width:100%;height:auto}
+/* SQUAD の戦力グラフ */
+#club .graph-r .gr-wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;gap:8px}
+#club .graph-r .gr-list{list-style:none;margin:0;padding:0;font-size:12px}
+#club .graph-r .gr-list li{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--t-rule)}
+#club .graph-r .gr-list b{font-family:"Oswald",sans-serif} #club .graph-r .gr-list b.pos{color:#2fb26a} #club .graph-r .gr-list b.neg{color:#ff6a7e}
+/* 対戦カード: VS の横に両チームのレーダー */
+#scene .vs-mid{display:flex;align-items:center;justify-content:center;gap:6px}
+#scene .vs-radar{width:150px}
+#scene .vs-radar p{margin:-4px 0 0;text-align:center;font-family:"Oswald",sans-serif;font-size:11px;color:#dfe3ea}
+#scene .vs-radar p i{display:inline-block;width:10px;height:10px;margin:0 3px 0 6px;vertical-align:-1px}
+#scene .vs-radar p i.h{background:#e01f3d} #scene .vs-radar p i.a{background:#4aa3ff}
+/* カードの裏 */
+.cardback{position:relative;padding:10px;border-radius:6px;color:#eef0f4;background:linear-gradient(160deg,#20242e,#13161d);border:1px solid #3a404e;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.04);overflow:hidden}
+.cardback.r-K{border-color:#8a6bd8} .cardback.r-L{border-color:#d4a843}
+.cardback::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.035) 1px,transparent 1.3px) 0 0/6px 6px;pointer-events:none}
+.cb-head{position:relative;display:flex;align-items:center;gap:8px;padding-bottom:6px;border-bottom:2px solid #e01f3d}
+.cb-head .cb-no{font-family:"Oswald",sans-serif;font-size:30px;font-weight:700;font-style:italic;line-height:1;color:#f0cf75}
+.cb-head div{flex:1;min-width:0} .cb-head div b{display:block;font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-head div small{display:block;font-size:10.5px;color:#9aa3b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-pos{padding:2px 8px;font-family:"Oswald",sans-serif;font-size:13px;font-weight:700;color:#fff;border-radius:2px}
+.cb-pos.gk{background:#c48a12} .cb-pos.df{background:#1d5fbf} .cb-pos.mf{background:#1f8a4c} .cb-pos.fw{background:#c8102e}
+.cb-body{position:relative;display:grid;grid-template-columns:92px 1fr;gap:10px;margin-top:8px}
+.cb-map svg{display:block;width:92px;height:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.2)}
+.cb-map small{display:block;margin-top:3px;text-align:center;font-size:10px;color:#9aa3b5}
+.cb-sts{display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cb-st{display:grid;grid-template-columns:30px 1fr 30px;align-items:center;gap:6px}
+.cb-st i{font-style:normal;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.06em;color:#9aa3b5}
+.cb-st em{height:6px;background:#2b303c;border-radius:3px;overflow:hidden} .cb-st em u{display:block;height:100%;background:linear-gradient(90deg,#d4a843,#f0cf75)}
+.cb-st b{font-family:"Oswald",sans-serif;font-size:14px;text-align:right}
+.cb-tot{margin-top:2px;font-size:11px;color:#9aa3b5;text-align:right} .cb-tot b{font-family:"Oswald",sans-serif;font-size:15px;color:#fff}
+.cb-foot{position:relative;margin-top:8px;padding-top:6px;border-top:1px solid #2b303c;font-size:12px;line-height:1.5}
+.cb-foot p{margin:2px 0} .cb-foot .dim{color:#9aa3b5;font-size:11px}
+.cb-foot .cb-rare b{color:#b99bff;letter-spacing:.06em;margin-right:4px}
+.cb-now b.lo{color:#ff6a7e} .cb-now b.md{color:#f0cf75} .cb-now b.hi{color:#2fb26a}
+#club .kdet.back{display:block}
+#scene .vs-mid{gap:0}
+#scene .vs-mid .vs-mark{font-size:88px}
+#scene .vs-radar{width:190px}
+/* 試合中の詳細の枠: カードの裏を載せるので暗く */
+.th-bk #info{background:rgba(8,10,14,.96);border:1px solid #2b303c;color:#eef0f4}

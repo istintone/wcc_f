@@ -128,17 +128,11 @@ function showInfo(id){
   const rank=st?rankOf(axisVal(M.home,st.axis)):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
-  $("infoBody").innerHTML=
-    '<h2><span class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</span>'+c.no+' '+nameOf(c)+
-      (kp?' <span class="kpt">KP</span>':'')+(p&&p.yc?' <span class="yct">警告</span>':'')+
-      (c.is!=null?' <small class="stars">個'+"★".repeat(c.is)+' 特'+"★".repeat(c.ss)+'</small>':'')+'</h2>'+
-    '<div class="roles">'+(c.age?c.age+'歳 ・ ':'')+'得意: '+c.roles.join(" / ")+(p?'　いま: '+p.role+'(適性 '+Math.round(p.apt*100)+'%)'+
-      '　体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'　控え')+'</div>'+
-    '<div class="sts">'+STATS.map(bar).join("")+'</div>'+
-    '<div class="skl">'+(sk?'<b>★'+sk.label+'</b> '+sk.desc+'(常時)':'スキルなし')+'</div>'+
-    (st?'<div class="sty"><b>KP スタイル: '+st.name+'</b> <i>'+(st.scope==="team"?"全体":"個人")+'・'+
-      AXIS_LABEL[st.axis]+'</i> <b class="rk rk'+rank+'">ランク'+rank+'</b><br>'+
-      '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</div>':'');
+  // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に
+  $("infoBody").innerHTML=cardBackHtml(c,{ stars:c.is!=null?[c.is,c.ss]:null, ss:c.ss||0,
+    extra:'<p class="cb-now">'+(kp?'<b class="kpt">KP</b> ':'')+(p&&p.yc?'<b class="yct">警告</b> ':'')+
+      (p?'いま '+p.role+'(適性 '+Math.round(p.apt*100)+'%)・ 体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'控え')+
+      (st?' ・ KP スタイルのランク <b class="rk rk'+rank+'">'+rank+'</b>':'')+'</p>' });
   const b=$("infoKp");
   b.style.display=p?"":"none";
   b.disabled=kp||M.over;

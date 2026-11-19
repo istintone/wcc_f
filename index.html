@@ -1777,6 +1777,52 @@ body.th-bk{
 #scene .tr-photo .row img{height:92px;margin:0 -16px}
 #scene .tr-photo .row.r1{margin-top:-40px}
 #scene .tr-photo .row.r1 img{height:108px;margin:0 -12px}
+
+/* ---- 適性の色・レーダー・カードの裏(→docs/14 §14.14) ---- */
+.apt-ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#club .sq-pitch .apt-ov{z-index:0}
+.radar{display:block;width:100%;height:auto}
+/* SQUAD の戦力グラフ */
+#club .graph-r .gr-wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;gap:8px}
+#club .graph-r .gr-list{list-style:none;margin:0;padding:0;font-size:12px}
+#club .graph-r .gr-list li{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--t-rule)}
+#club .graph-r .gr-list b{font-family:"Oswald",sans-serif} #club .graph-r .gr-list b.pos{color:#2fb26a} #club .graph-r .gr-list b.neg{color:#ff6a7e}
+/* 対戦カード: VS の横に両チームのレーダー */
+#scene .vs-mid{display:flex;align-items:center;justify-content:center;gap:6px}
+#scene .vs-radar{width:150px}
+#scene .vs-radar p{margin:-4px 0 0;text-align:center;font-family:"Oswald",sans-serif;font-size:11px;color:#dfe3ea}
+#scene .vs-radar p i{display:inline-block;width:10px;height:10px;margin:0 3px 0 6px;vertical-align:-1px}
+#scene .vs-radar p i.h{background:#e01f3d} #scene .vs-radar p i.a{background:#4aa3ff}
+/* カードの裏 */
+.cardback{position:relative;padding:10px;border-radius:6px;color:#eef0f4;background:linear-gradient(160deg,#20242e,#13161d);border:1px solid #3a404e;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.04);overflow:hidden}
+.cardback.r-K{border-color:#8a6bd8} .cardback.r-L{border-color:#d4a843}
+.cardback::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.035) 1px,transparent 1.3px) 0 0/6px 6px;pointer-events:none}
+.cb-head{position:relative;display:flex;align-items:center;gap:8px;padding-bottom:6px;border-bottom:2px solid #e01f3d}
+.cb-head .cb-no{font-family:"Oswald",sans-serif;font-size:30px;font-weight:700;font-style:italic;line-height:1;color:#f0cf75}
+.cb-head div{flex:1;min-width:0} .cb-head div b{display:block;font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-head div small{display:block;font-size:10.5px;color:#9aa3b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-pos{padding:2px 8px;font-family:"Oswald",sans-serif;font-size:13px;font-weight:700;color:#fff;border-radius:2px}
+.cb-pos.gk{background:#c48a12} .cb-pos.df{background:#1d5fbf} .cb-pos.mf{background:#1f8a4c} .cb-pos.fw{background:#c8102e}
+.cb-body{position:relative;display:grid;grid-template-columns:92px 1fr;gap:10px;margin-top:8px}
+.cb-map svg{display:block;width:92px;height:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.2)}
+.cb-map small{display:block;margin-top:3px;text-align:center;font-size:10px;color:#9aa3b5}
+.cb-sts{display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cb-st{display:grid;grid-template-columns:30px 1fr 30px;align-items:center;gap:6px}
+.cb-st i{font-style:normal;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:.06em;color:#9aa3b5}
+.cb-st em{height:6px;background:#2b303c;border-radius:3px;overflow:hidden} .cb-st em u{display:block;height:100%;background:linear-gradient(90deg,#d4a843,#f0cf75)}
+.cb-st b{font-family:"Oswald",sans-serif;font-size:14px;text-align:right}
+.cb-tot{margin-top:2px;font-size:11px;color:#9aa3b5;text-align:right} .cb-tot b{font-family:"Oswald",sans-serif;font-size:15px;color:#fff}
+.cb-foot{position:relative;margin-top:8px;padding-top:6px;border-top:1px solid #2b303c;font-size:12px;line-height:1.5}
+.cb-foot p{margin:2px 0} .cb-foot .dim{color:#9aa3b5;font-size:11px}
+.cb-foot .cb-rare b{color:#b99bff;letter-spacing:.06em;margin-right:4px}
+.cb-now b.lo{color:#ff6a7e} .cb-now b.md{color:#f0cf75} .cb-now b.hi{color:#2fb26a}
+#club .kdet.back{display:block}
+#scene .vs-mid{gap:0}
+#scene .vs-mid .vs-mark{font-size:88px}
+#scene .vs-radar{width:190px}
+/* 試合中の詳細の枠: カードの裏を載せるので暗く */
+.th-bk #info{background:rgba(8,10,14,.96);border:1px solid #2b303c;color:#eef0f4}
 </style>
 </head>
 <body>
@@ -6679,6 +6725,98 @@ function logoSvg(anim){
 }
 
 /* =========================================================================
+   wcc_f — 適性のマップ・戦力のレーダー・カードの裏(→docs/14 §14.14)
+   DOM に触らない(HTML / SVG の文字列を返すだけ)。
+     適性のマップ … ピッチを役割の区分(engine.js の roleAt と同じ境目)で塗り分ける。
+                    得意な役割 = 緑・濃く / 同じポジション = 金 / 隣のポジション = 灰・薄く / それ以外は塗らない
+     レーダー     … 戦力グラフの6軸の六角形(本家の戦力グラフにならう)
+     カードの裏   … 番号・名前・得意な役割・ピッチの適性マップ・能力・スキル・KP・キャプテンシー
+   ========================================================================= */
+
+const APT_FILL={ own:["#2fb26a",0.5], group:["#d4a843",0.32], near:["#9aa3b5",0.16] };
+/** 役割の区分(h … 0 = 自ゴール 〜 1、x … 0 〜 100)。roleAt の境目と同じ */
+function aptZones(card){
+  const Z=TUNING.zone, A=TUNING.apt, out=[];
+  const rows=[[0.15,Z.dfH,"CB","SB"],[Z.dfH,Z.dmfH,"DMF","SMF"],[Z.dmfH,Z.omfH,"CMF","SMF"],[Z.omfH,Z.fwH,"OMF","SMF"],[Z.fwH,0.97,"CF","WG"]];
+  const lv=role=>{ const a=aptOf(card,role); return a>=A.own?"own":a>=A.group?"group":a>=A.near?"near":null; };
+  if(card.pos==="GK")out.push({ h0:0.02, h1:0.15, x0:30, x1:70, role:"GK", lv:"own" });
+  else for(const [h0,h1,mid,side] of rows){
+    out.push({ h0, h1, x0:0, x1:Z.wide, role:side, lv:lv(side) });
+    out.push({ h0, h1, x0:Z.wide, x1:100-Z.wide, role:mid, lv:lv(mid) });
+    out.push({ h0, h1, x0:100-Z.wide, x1:100, role:side, lv:lv(side) });
+  }
+  return out;
+}
+/**
+ * 盤面に重ねる適性の色(動かしている間だけ出す)。map(h,x) → [左%, 上%] は、その盤面の座標の変換(SQUAD は sqPos、試合は bdPos)
+ */
+function aptOverlaySvg(card,map){
+  let g='';
+  for(const z of aptZones(card)){ if(!z.lv)continue;
+    const a=map(z.h1,z.x0), b=map(z.h0,z.x1), F=APT_FILL[z.lv];
+    g+='<rect x="'+Math.min(a[0],b[0]).toFixed(2)+'" y="'+Math.min(a[1],b[1]).toFixed(2)+'" width="'+Math.abs(b[0]-a[0]).toFixed(2)+'" height="'+Math.abs(b[1]-a[1]).toFixed(2)+'" fill="'+F[0]+'" fill-opacity="'+F[1]+'"/>'; }
+  return '<svg class="apt-ov" viewBox="0 0 100 100" preserveAspectRatio="none">'+g+'</svg>';
+}
+/** カードの裏の、小さなピッチの適性マップ(縦。自ゴールが下)。区分ごとに役割の名前 */
+function aptMapSvg(card){
+  const W=60, H=84, X=x=>x/100*W, Y=h=>H-h*H;
+  let g='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#1d6a33"/>';
+  for(const z of aptZones(card)){
+    const F=z.lv?APT_FILL[z.lv]:null, x=X(z.x0), y=Y(z.h1), w=X(z.x1)-X(z.x0), h=Y(z.h0)-Y(z.h1);
+    if(F)g+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+F[0]+'" fill-opacity="'+Math.min(1,F[1]*1.8)+'"/>';
+    if(z.lv==="own")g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+2).toFixed(1)+'" text-anchor="middle" font-size="5.5" font-weight="700" fill="#fff">'+z.role+'</text>';
+  }
+  g+='<g fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".6"><rect x="1" y="1" width="'+(W-2)+'" height="'+(H-2)+'"/><line x1="1" y1="'+H/2+'" x2="'+(W-1)+'" y2="'+H/2+'"/>'+
+    '<circle cx="'+W/2+'" cy="'+H/2+'" r="6"/><rect x="'+(W*0.25)+'" y="'+(H-12)+'" width="'+(W*0.5)+'" height="11"/><rect x="'+(W*0.25)+'" y="1" width="'+(W*0.5)+'" height="11"/></g>';
+  return '<svg class="apt-map" viewBox="0 0 '+W+' '+H+'">'+g+'</svg>';
+}
+
+/* ---- 戦力のレーダー(6軸の六角形) ---- */
+const RADAR_AX=["O","R","S","P","C","D"];     // 時計回り(上がオフェンス)
+/**
+ * レーダー。sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか
+ */
+function radarSvg(sets,opts){
+  opts=opts||{};
+  const R=40, cx=50, cy=50, pt=(i,r)=>{ const a=-Math.PI/2+i*Math.PI/3; return [cx+Math.cos(a)*r,cy+Math.sin(a)*r]; };
+  const ring=k=>RADAR_AX.map((_,i)=>pt(i,R*k).map(n=>n.toFixed(1)).join(",")).join(" ");
+  let g='<g fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".6">'+[1,0.75,0.5,0.25].map(k=>'<polygon points="'+ring(k)+'"/>').join("")+
+    RADAR_AX.map((_,i)=>{ const p=pt(i,R); return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>'; }).join("")+'</g>';
+  for(const s of sets){
+    const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
+    g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
+  }
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="#dfe3ea">'+AXIS_LABEL[a].slice(0,opts.short?2:9)+'</text>'; }).join("");
+  return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
+}
+/** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */
+function teamAxes(cards,graph){
+  const v={};
+  for(const a of RADAR_AX){ const f=AXIS_STAT[a], top=cards.map(c=>f(c)).sort((x,y)=>y-x).slice(0,6);
+    const base=top.reduce((s,x)=>s+x,0)/(top.length||1)+(graph&&graph[a]||0);
+    v[a]=(base-8)/9; }                         // 能力の目盛りは実際の幅(8〜17)に合わせる
+  return v;
+}
+
+/* ---- カードの裏(本家のカードの裏の構成にならう。意匠は独自) ---- */
+/** c … カード(育成を入れたものでもよい)。x … { stars:[個,特], extra:'追加の行の HTML' } */
+function cardBackHtml(c,x){
+  x=x||{};
+  const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c), R=typeof rareOfCard==="function"?rareOfCard(c):null;
+  const bar=k=>{ const v=c[k], w=v/STAT_MAX*100; return '<div class="cb-st"><i>'+STAT_LABEL[k]+'</i><em><u style="width:'+w.toFixed(0)+'%"></u></em><b>'+(Math.round(v*10)/10)+'</b></div>'; };
+  return '<div class="cardback r-'+(c.rar||"B")+'">'+
+    '<div class="cb-head"><b class="cb-no">'+c.no+'</b><div><b>'+nameOf(c)+'</b><small>'+(typeof cardNoOf==="function"?cardNoOf(c)+' ・ ':'')+(typeof clubOfCard==="function"?clubOfCard(c):'')+(c.age?' ・ '+c.age+'歳':'')+'</small></div>'+
+      '<span class="cb-pos '+c.pos.toLowerCase()+'">'+c.pos+'</span></div>'+
+    '<div class="cb-body"><div class="cb-map">'+aptMapSvg(c)+'<small>'+c.roles.join(" / ")+'</small></div>'+
+      '<div class="cb-sts">'+STATS.map(bar).join("")+'<div class="cb-tot">合計 <b>'+Math.round(STATS.reduce((s,k)=>s+c[k],0))+'</b>'+
+        (x.stars?' ・ 個★'+x.stars[0]+' 特★'+x.stars[1]:'')+'</div></div></div>'+
+    '<div class="cb-foot">'+(sk?'<p><b>★'+sk.label+'</b> '+sk.desc+'</p>':'')+
+      (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small></p>':'')+
+      (R?'<p class="cb-rare"><b>RARE KP</b> '+((x.ss||0)>=5?R.name:'？？？(特殊能力★5で解放)')+'</p>':'')+
+      '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+(x.extra||'')+'</div></div>';
+}
+
+/* =========================================================================
    wcc_f — 試合映像(上のモニター)。エンジンが解いた結果を読むだけで、何も書き戻さない。
    画面座標は u(0=左のゴール 〜 1=右のゴール) / v(0=奥のタッチライン 〜 1=手前)。ホームは右へ攻める。
    見え方(→docs/07 §7.11): テレビ中継のように**斜め上の横から見た立体**。奥ほど狭く小さい(遠近)。
@@ -7119,7 +7257,7 @@ function bindFieldDrag(el,id,gk){
     if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
     const dist=Math.hypot(e.clientX-d.x0,e.clientY-d.y0);
     if(!d.moved&&dist<DRAG_PX)return;
-    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
+    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); bdAptOn(id); }   // 動かし始めたら適性の色(→docs/14 §14.14)
     const lift=Math.min(LIFT_PX,(dist-DRAG_PX)*1.2);
     const raw=bdInv(e.clientX-d.gx,e.clientY-d.gy-lift), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
@@ -7133,13 +7271,20 @@ function bindFieldDrag(el,id,gk){
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
     clearTimeout(d.timer);
-    el.classList.remove("drag"); BD.drag=null;
+    el.classList.remove("drag"); BD.drag=null; bdAptOff();
     if(!d.moved&&!d.long&&e.type==="pointerup")tapCard(id);
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
 }
 
+/** 動かしている選手の適性を、盤面に薄く色で出す / 消す(→docs/14 §14.14) */
+function bdAptOn(id){
+  bdAptOff();
+  const p=G.M.home.players.find(q=>q.id===id), c=(p&&p.c)||G.M.home.bench.find(b=>b.id===id)||CARDS[id];
+  if(c)BD.board.insertAdjacentHTML("afterbegin",aptOverlaySvg(c,(h,x)=>bdPos(h,x)));
+}
+function bdAptOff(){ const o=BD.board&&BD.board.querySelector(".apt-ov"); if(o)o.remove(); }
 /* ---- 控えを盤面のカードに重ねて交代 ---- */
 function fieldCardAt(cx,cy,except){
   for(const n of document.elementsFromPoint(cx,cy)){
@@ -7167,7 +7312,7 @@ function bindBenchDrag(el,id){
       d.moved=true; clearTimeout(d.timer); hideInfo();
       if(!d.can){ say(G.M.home.subs+BD.pendingIn.size>=TUNING.squad.subMax?"交代はもう使い切った":"この選手は交代できない"); return; }
       // 盤面の上を自由に動けるよう、控えの列の外(画面の一番上)に浮かせる
-      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost);
+      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost); bdAptOn(id);
       el.classList.add("lifted");
       document.getElementById("board").classList.add("subbing");
     }
@@ -7185,7 +7330,7 @@ function bindBenchDrag(el,id){
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
     clearTimeout(d.timer);
-    if(d.ghost)d.ghost.remove();
+    if(d.ghost)d.ghost.remove(); bdAptOff();
     el.classList.remove("lifted");
     document.getElementById("board").classList.remove("subbing");
     BD.drag=null;
@@ -7463,7 +7608,6 @@ function sqTokenHtml(id,i,on){
   if(on){ const l=S.layout[id], p=sqPos(l[0],l[1]); rl=sqRole(id,i,l[0],l[1]);
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
-  const sign=g&&(g.q||g.sq||spReady(S,id));
   return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
@@ -7471,7 +7615,7 @@ function sqTokenHtml(id,i,on){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+
+    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
     (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -7512,8 +7656,7 @@ function sqDetailHtml(){
       (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
-    '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
-    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span><span>キャプテンシー <b>'+CAP_MARK[capApt(c)]+'</b></span></div>'+
+    cardBackHtml(growCard(S,c),{ ss:g.ss })+                    // 能力・適性のマップ・スキルはカードの裏で(→docs/14 §14.14)
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -7549,10 +7692,11 @@ function squadHtml(){
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   h+=htSetHtml();
-  h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
-    Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
-      return '<div><span>'+AXIS_LABEL[a]+'</span><em><u class="'+(v<0?'neg':'')+'" style="width:'+w+'%;'+(v<0?'right:50%':'left:50%')+'"></u></em><b>'+
-        (v>=0?"+":"")+v.toFixed(2)+'</b></div>'; }).join("")+'</div></section>';
+  // 戦力グラフ: 六角形のレーダー(本家にならう →docs/14 §14.14)。横に練習による上下の値
+  const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
+  h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
+    radarSvg([{ v:ax, color:"#e01f3d" }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
+      return '<li><span>'+AXIS_LABEL[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
   return h;
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
@@ -7593,6 +7737,9 @@ function sqSwap(a,b){
   if(S.kp===a&&S.sq.indexOf(a)>=11)S.kp=b; else if(S.kp===b&&S.sq.indexOf(b)>=11)S.kp=a;
   fillLayout(S); CL.sqSel=null; persist(S); sndUi&&sndUi("tap");
 }
+/** 動かしている選手の適性を、ピッチに薄く色で出す / 消す */
+function sqAptOn(pitch,id){ sqAptOff(pitch); pitch.insertAdjacentHTML("afterbegin",aptOverlaySvg(growCard(CL.S,CARDS[id]),(h,x)=>{ const p=sqPos(h,x); return [p.l,p.t]; })); }
+function sqAptOff(pitch){ const o=pitch.querySelector(".apt-ov"); if(o)o.remove(); }
 /** 指の下にある、自分以外の選手のカード(ピッチでも控えでも) */
 function sqCardAt(x,y,self){
   for(const n of document.elementsFromPoint(x,y)){ const c=n.closest&&n.closest("#club .sqc"); if(c&&c!==self)return c; }
@@ -7612,6 +7759,7 @@ function sqBind(pitch){
   pitch.addEventListener("pointermove",e=>{
     if(!d||e.pointerId!==d.pid)return;
     if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<7)return;
+    if(!d.moved)sqAptOn(pitch,d.id);               // 動かし始めたら適性の色を出す(→docs/14 §14.14)
     d.moved=true; d.el.classList.add("drag");
     const q=at(e), p=sqPos(q.h,q.x); d.q=q;
     d.el.style.left=p.l+"%"; d.el.style.top=p.t+"%";
@@ -7625,7 +7773,7 @@ function sqBind(pitch){
   });
   const end=e=>{
     if(!d||e.pointerId!==d.pid)return;
-    const dd=d; d=null;
+    const dd=d; d=null; sqAptOff(pitch);
     const tg=dd.moved?sqCardAt(e.clientX,e.clientY,dd.el):null;
     if(tg){ sqSwap(dd.id,tg.dataset.id); showClub(true); }               // 別の選手に重ねたら入れ替え
     else if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; persist(CL.S); showClub(true); }
@@ -7645,7 +7793,7 @@ function sqBind(pitch){
   bench.addEventListener("pointermove",e=>{
     if(!b||e.pointerId!==b.pid)return;
     if(!b.moved&&Math.hypot(e.clientX-b.x0,e.clientY-b.y0)<10)return;
-    if(!b.moved){ b.moved=true; b.g=b.el.cloneNode(true); b.g.classList.add("sq-ghost"); document.body.appendChild(b.g); b.el.classList.add("dragging"); }
+    if(!b.moved){ sqAptOn(pitch,b.id); b.moved=true; b.g=b.el.cloneNode(true); b.g.classList.add("sq-ghost"); document.body.appendChild(b.g); b.el.classList.add("dragging"); }
     b.g.style.left=e.clientX+"px"; b.g.style.top=(e.clientY-24)+"px";
     const tg=sqCardAt(e.clientX,e.clientY,b.el);
     document.querySelectorAll("#club .sqc.tgt").forEach(x=>{ if(x!==tg)x.classList.remove("tgt"); });
@@ -7653,7 +7801,7 @@ function sqBind(pitch){
   });
   const bend=e=>{
     if(!b||e.pointerId!==b.pid)return;
-    const bb=b; b=null;
+    const bb=b; b=null; sqAptOff(pitch);
     if(bb.g)bb.g.remove(); bb.el.classList.remove("dragging");
     if(!bb.moved){ if(e.type==="pointerup")sqPick(bb.id); return; }
     const tg=sqCardAt(e.clientX,e.clientY,bb.el);
@@ -7737,16 +7885,11 @@ function rareRowHtml(S,id){
 /** 選んだカードの詳細と、登録の入れ替え */
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
-  let h='<div class="kdet">'+cardHtml(id,"m")+'<div class="kinfo">'+
-    '<p class="kmeta"><b>'+cardNoOf(c)+'</b> '+RAR_TAG[c.rar||"B"]+' ・ '+clubOfCard(c)+' #'+c.no+' ・ 合計 <b>'+statTotal(c)+'</b></p>'+
-    '<div class="sts">'+STATS.map(k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b><em><u style="width:'+(c[k]/STAT_MAX*100)+'%"></u></em></span>').join("")+'</div>'+
-    '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
-    (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
-      '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
-    rareRowHtml(S,id)+
-    '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
-    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p>'+
-    (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'')+'</div></div>';
+  // カードの裏の形で見せる(→docs/14 §14.14)。登録中なら育成を入れた値
+  const g=S.g.pl[id], cc=g?growCard(S,c):c;
+  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0,
+    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
+      (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
   if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
   else{
     h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+
@@ -8734,6 +8877,13 @@ function sceneTitle(onStart){
 }
 
 /* ---- 対戦カード ---- */
+/** 対戦カードのレーダーの値。自チームは育成を入れた先発と戦力グラフ、相手はクラブの段の上乗せ */
+function vsAxes(T,mine){
+  const S=CL.S;
+  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
+  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
+  return teamAxes((T.xi||[]).map(id=>CARDS[id]),{ O:t, D:t, R:t, C:t, S:t, P:t });
+}
 function axisBars(T){
   // 戦力グラフ(相手はクラブの段、自分は育成)を6本の短い帯で
   const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
@@ -8753,7 +8903,7 @@ function sideHtml(T,side,kpId){
       (kp?'<div class="vs-kp"><i>KP</i>'+nameOf(kp)+'<em>'+(st?st.name:"")+'</em></div>':'')+
       (side==="away"&&T.id?'<div class="vs-coach">相手監督: '+TUNING.coach.pers[T.pers||persOfClub(T.id)].name+'型</div>':'')+   // 性格(→docs/13 §13.5)
       (side==="home"&&CL.S&&CL.S.biz&&CL.S.biz.sp?'<div class="vs-sp">'+CL.S.biz.sp.name+'</div>':'')+
-      axisBars(T)+'</div></div>';
+      '</div></div>';
 }
 function sceneMatchup(fx,go){
   const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
@@ -8761,7 +8911,9 @@ function sceneMatchup(fx,go){
   sceneShow("sc-vs",
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
-    '<div class="vs-mark">VS</div>'+
+    // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
+    '<div class="vs-mid"><div class="vs-mark">VS</div><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" },{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+
+      '<p><i class="h"></i>'+me.short+' <i class="a"></i>'+opp.short+'</p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',
@@ -9126,17 +9278,11 @@ function showInfo(id){
   const rank=st?rankOf(axisVal(M.home,st.axis)):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
-  $("infoBody").innerHTML=
-    '<h2><span class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</span>'+c.no+' '+nameOf(c)+
-      (kp?' <span class="kpt">KP</span>':'')+(p&&p.yc?' <span class="yct">警告</span>':'')+
-      (c.is!=null?' <small class="stars">個'+"★".repeat(c.is)+' 特'+"★".repeat(c.ss)+'</small>':'')+'</h2>'+
-    '<div class="roles">'+(c.age?c.age+'歳 ・ ':'')+'得意: '+c.roles.join(" / ")+(p?'　いま: '+p.role+'(適性 '+Math.round(p.apt*100)+'%)'+
-      '　体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'　控え')+'</div>'+
-    '<div class="sts">'+STATS.map(bar).join("")+'</div>'+
-    '<div class="skl">'+(sk?'<b>★'+sk.label+'</b> '+sk.desc+'(常時)':'スキルなし')+'</div>'+
-    (st?'<div class="sty"><b>KP スタイル: '+st.name+'</b> <i>'+(st.scope==="team"?"全体":"個人")+'・'+
-      AXIS_LABEL[st.axis]+'</i> <b class="rk rk'+rank+'">ランク'+rank+'</b><br>'+
-      '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</div>':'');
+  // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に
+  $("infoBody").innerHTML=cardBackHtml(c,{ stars:c.is!=null?[c.is,c.ss]:null, ss:c.ss||0,
+    extra:'<p class="cb-now">'+(kp?'<b class="kpt">KP</b> ':'')+(p&&p.yc?'<b class="yct">警告</b> ':'')+
+      (p?'いま '+p.role+'(適性 '+Math.round(p.apt*100)+'%)・ 体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'控え')+
+      (st?' ・ KP スタイルのランク <b class="rk rk'+rank+'">'+rank+'</b>':'')+'</p>' });
   const b=$("infoKp");
   b.style.display=p?"":"none";
   b.disabled=kp||M.over;

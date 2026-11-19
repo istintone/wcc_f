@@ -70,6 +70,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 試合の描画で、ボールを持たない選手の動き(ゆらぎ・走り込み・寄せ・遅れ)を変える | `render.js` の `offBallGoal` / `drawFrame` と `TUNING.view.mv`(見た目だけ。結果に触れない)。正本は docs/07 §7.15 |
 | サイド攻撃・流れの中のクロスを変える | 数値は `TUNING.ins` の `flank*` と `TUNING.shot` の `xc*`、仕組みは `engine.js` の1ステップ(サイドの守備の厚さ・`M.ball.cross` / `xk`)と `shoot` の `xk`。正本は docs/02 §2.15 |
 | ロゴ(スラッシュ・ボール)を変える | `src/js/logo.js` の `ballMarkSvg` / `logoSvg` / `logoMarkSvg`(タイトル・看板・結果の透かし)、アイコンは `build.py` の `_png`。正本は docs/14 §14.8 |
+| レーダー・適性の色・カードの裏を変える | `src/js/cardback.js`(`radarSvg` / `teamAxes` / `aptZones` / `aptOverlaySvg` / `aptMapSvg` / `cardBackHtml`)と theme.css の「適性の色・レーダー・カードの裏」。正本は docs/14 §14.14 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・引っ張って入れ替え)/ `sqSwap`、`pool.js` の `fillLayout` / `setForm` / `moveSquad` / `autoSquad`(最適配置)。正本は docs/07 §7.10・docs/14 §14.12 |
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。**既定は暗い地の `th-bk`**(th-wr の形 + 暗い色の組。白を直に書いた部品は theme.css の末尾で直す)。設計の正本は docs/07 §7.8 |

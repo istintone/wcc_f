@@ -49,6 +49,13 @@ function sceneTitle(onStart){
 }
 
 /* ---- 対戦カード ---- */
+/** 対戦カードのレーダーの値。自チームは育成を入れた先発と戦力グラフ、相手はクラブの段の上乗せ */
+function vsAxes(T,mine){
+  const S=CL.S;
+  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
+  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
+  return teamAxes((T.xi||[]).map(id=>CARDS[id]),{ O:t, D:t, R:t, C:t, S:t, P:t });
+}
 function axisBars(T){
   // 戦力グラフ(相手はクラブの段、自分は育成)を6本の短い帯で
   const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
@@ -68,7 +75,7 @@ function sideHtml(T,side,kpId){
       (kp?'<div class="vs-kp"><i>KP</i>'+nameOf(kp)+'<em>'+(st?st.name:"")+'</em></div>':'')+
       (side==="away"&&T.id?'<div class="vs-coach">相手監督: '+TUNING.coach.pers[T.pers||persOfClub(T.id)].name+'型</div>':'')+   // 性格(→docs/13 §13.5)
       (side==="home"&&CL.S&&CL.S.biz&&CL.S.biz.sp?'<div class="vs-sp">'+CL.S.biz.sp.name+'</div>':'')+
-      axisBars(T)+'</div></div>';
+      '</div></div>';
 }
 function sceneMatchup(fx,go){
   const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
@@ -76,7 +83,9 @@ function sceneMatchup(fx,go){
   sceneShow("sc-vs",
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
-    '<div class="vs-mark">VS</div>'+
+    // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
+    '<div class="vs-mid"><div class="vs-mark">VS</div><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" },{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+
+      '<p><i class="h"></i>'+me.short+' <i class="a"></i>'+opp.short+'</p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',

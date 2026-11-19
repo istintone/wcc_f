@@ -138,7 +138,7 @@ function bindFieldDrag(el,id,gk){
     if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
     const dist=Math.hypot(e.clientX-d.x0,e.clientY-d.y0);
     if(!d.moved&&dist<DRAG_PX)return;
-    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
+    if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); bdAptOn(id); }   // 動かし始めたら適性の色(→docs/14 §14.14)
     const lift=Math.min(LIFT_PX,(dist-DRAG_PX)*1.2);
     const raw=bdInv(e.clientX-d.gx,e.clientY-d.gy-lift), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
@@ -152,13 +152,20 @@ function bindFieldDrag(el,id,gk){
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
     clearTimeout(d.timer);
-    el.classList.remove("drag"); BD.drag=null;
+    el.classList.remove("drag"); BD.drag=null; bdAptOff();
     if(!d.moved&&!d.long&&e.type==="pointerup")tapCard(id);
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
 }
 
+/** 動かしている選手の適性を、盤面に薄く色で出す / 消す(→docs/14 §14.14) */
+function bdAptOn(id){
+  bdAptOff();
+  const p=G.M.home.players.find(q=>q.id===id), c=(p&&p.c)||G.M.home.bench.find(b=>b.id===id)||CARDS[id];
+  if(c)BD.board.insertAdjacentHTML("afterbegin",aptOverlaySvg(c,(h,x)=>bdPos(h,x)));
+}
+function bdAptOff(){ const o=BD.board&&BD.board.querySelector(".apt-ov"); if(o)o.remove(); }
 /* ---- 控えを盤面のカードに重ねて交代 ---- */
 function fieldCardAt(cx,cy,except){
   for(const n of document.elementsFromPoint(cx,cy)){
@@ -186,7 +193,7 @@ function bindBenchDrag(el,id){
       d.moved=true; clearTimeout(d.timer); hideInfo();
       if(!d.can){ say(G.M.home.subs+BD.pendingIn.size>=TUNING.squad.subMax?"交代はもう使い切った":"この選手は交代できない"); return; }
       // 盤面の上を自由に動けるよう、控えの列の外(画面の一番上)に浮かせる
-      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost);
+      d.ghost=el.cloneNode(true); d.ghost.className=el.className+" ghost"; document.body.appendChild(d.ghost); bdAptOn(id);
       el.classList.add("lifted");
       document.getElementById("board").classList.add("subbing");
     }
@@ -204,7 +211,7 @@ function bindBenchDrag(el,id){
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId)return;
     clearTimeout(d.timer);
-    if(d.ghost)d.ghost.remove();
+    if(d.ghost)d.ghost.remove(); bdAptOff();
     el.classList.remove("lifted");
     document.getElementById("board").classList.remove("subbing");
     BD.drag=null;
