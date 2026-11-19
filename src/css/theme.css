@@ -1193,3 +1193,10 @@ body.th-bk{
 #club .sqc.dragging{opacity:.35}
 .sq-ghost{position:fixed!important;z-index:200;width:50px!important;height:50px;transform:translate(-50%,-50%) scale(1.1);pointer-events:none;opacity:.92;box-shadow:0 10px 18px rgba(0,0,0,.5)}
 #club .sq-bench .sqc{touch-action:none;cursor:grab}
+/* 優勝の集合写真は動きのある絵で(→docs/14)。右半分は左右反転して中央を向く */
+#scene .tr-photo .row img{margin:0 -14px}
+#scene .tr-photo .row img.fl{transform:scaleX(-1)}
+#scene .tr-photo{margin-top:4px}
+#scene .tr-photo .row img{height:92px;margin:0 -16px}
+#scene .tr-photo .row.r1{margin-top:-40px}
+#scene .tr-photo .row.r1 img{height:108px;margin:0 -12px}

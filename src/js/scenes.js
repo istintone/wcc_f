@@ -204,8 +204,8 @@ function sceneTrophy(M,last,go){
     '<div class="tr-head"><small>'+titles.join(" ・ ")+'</small><b>CHAMPIONS</b></div>'+
     '<div class="tr-stage">'+TROPHY_SVG+'<div class="tr-team">'+H.players.map(p=>'<span>'+nameOf(p.c)+'</span>').join("")+'</div></div>'+
     // 集合写真: 後ろの列(6人)と前の列(5人)。トロフィーを囲む(→docs/14 第3弾)
-    '<div class="tr-photo">'+[H.players.slice(5),H.players.slice(0,5)].map((row,ri)=>'<div class="row r'+ri+'">'+row.map(p=>{ const a=artSrc(p.c,"stand");
-      return a?'<img src="'+a+'" alt="">':''; }).join("")+'</div>').join("")+'</div>'+
+    '<div class="tr-photo">'+[H.players.slice(5),H.players.slice(0,5)].map((row,ri)=>'<div class="row r'+ri+'">'+row.map((p,k)=>{ const a=artSrc(p.c,"play");   // 動きのある絵で並べる(→docs/14)
+      return a?'<img'+(k>=row.length/2?' class="fl"':'')+' src="'+a+'" alt="">':''; }).join("")+'</div>').join("")+'</div>'+   // 右半分は左右反転して中央を向く
     '<div class="tr-club">'+emblemSvg(H,30)+'<b>'+H.name+'</b></div>'+
     (hi.length?'<ul class="lk-grow">'+hi.map(x=>'<li class="hi">'+x+'</li>').join("")+'</ul>':'')+
     '<div class="flash"></div><div class="touch sm">TOUCH</div>',
