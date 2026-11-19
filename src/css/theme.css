@@ -26,6 +26,19 @@
   --t-on-sub:#201400;
 }
 
+/* ブラック × レッド(既定)。th-wr の形の上に、色の組だけを暗く載せる。
+   試合・結果と同じ黒・赤・金。スマホのサッカーゲームらしく、面は濃淡のある黒、見出しは斜めの赤 */
+body.th-bk{
+  --t-paper:#0c0e13; --t-paper2:#161921; --t-card:#1b1f28; --t-rule:#2b303c;
+  --t-ink:#f1f2f5; --t-ink2:#c6cad3; --t-mute:#8a909c;
+  --t-main:#0c0e13; --t-sub:#e01f3d; --t-sub2:#9c0f24; --t-sub3:#ff5068;
+  --t-gold:#d4a843; --t-gold2:#f0cf75; --t-gold3:#8a6a1e; --t-black:#05060a;
+  --t-on-sub:#ffffff;
+  --bg:#06070a; --surface:var(--t-paper); --panel:var(--t-card); --line:var(--t-rule);
+  --text:var(--t-ink); --dim:var(--t-mute); --accent:var(--t-sub);
+  --good:#2fb26a; --mid:#d4a843; --bad:#e01f3d;
+}
+
 /* ---- 書体 ---- */
 .th-wr #hudScore,.th-wr #hudClock,.th-wr .tn,
 .k-no,.k-pos,.k-rar,.k-st b,
@@ -1018,3 +1031,19 @@
 
 /* 相手監督の性格(→docs/13 §13.5) */
 .vs-coach{display:inline-block;margin-top:3px;padding:1px 8px;font-size:11px;font-weight:900;letter-spacing:.04em;background:rgba(0,0,0,.55);color:#ffe28a;border:1px solid #ffe28a;transform:skewX(-8deg)}
+
+/* ---- ブラック × レッド(既定)で、白を直に書いている部品を暗い面に(→docs/07 §7.8) ----
+   カード(.kc)と試合の盤面の札(.cd)は「印刷物」なので白のまま。新聞とチャットの吹き出しも紙のまま */
+.th-bk #club .tile.next{background:linear-gradient(170deg,#242a37 0 55%,#1b1f28 55%)}
+.th-bk #club .next{background:linear-gradient(180deg,#242a37,#1b1f28)}
+.th-bk #club .tr,.th-bk #club .tab,.th-bk #club .ints .tab{background:var(--t-card);color:var(--t-ink);border-color:var(--t-rule)}
+.th-bk #club .btn-sub{background:var(--t-card);color:var(--t-ink2);border-color:var(--t-rule)}
+.th-bk #club .sq tr.sel td{background:rgba(224,31,61,.18)}
+.th-bk #club .ce,.th-bk #club .lic input,.th-bk #club .contract input{background:#11141b;color:var(--t-ink);border-color:var(--t-rule)}
+.th-bk #club .sqc.r-K{background:linear-gradient(135deg,#2b2a33 0%,#3a3426 45%,#2b2a33 60%,#3a3020 100%)}
+.th-bk #club .sq-rmsg{background:rgba(212,168,67,.14);color:var(--t-ink)}
+.th-bk #club .tile,.th-bk #club .card{box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 16px rgba(0,0,0,.35)}
+/* 監督室の地: 右上から赤い光、細い斜線(スマホのサッカーゲームらしい濃淡) */
+.th-bk #club{background:radial-gradient(120% 45% at 100% 0%,rgba(224,31,61,.16),transparent 62%),
+  radial-gradient(90% 40% at 0% 100%,rgba(212,168,67,.07),transparent 60%),
+  repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 11px),var(--t-paper);background-attachment:fixed}

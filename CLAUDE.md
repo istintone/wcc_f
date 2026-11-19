@@ -69,7 +69,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 相手監督の采配(性格・陣形の変更・スペース・交代)を変える | 数値と性格の表は `TUNING.coach`、仕組みは `engine.js` の `coachStep` / `coachMove` / `setShape` / `coachAim` / `coachTacSub`、性格は `persOfClub`。実況は `main.js` の `shape` → `enginetest.js` の ⑭。正本は docs/13 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・操作)、`pool.js` の `fillLayout` / `setForm` / `moveSquad`(中身)。正本は docs/07 §7.10 |
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
-| テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。設計の正本は docs/07 §7.8 |
+| テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。**既定は暗い地の `th-bk`**(th-wr の形 + 暗い色の組。白を直に書いた部品は theme.css の末尾で直す)。設計の正本は docs/07 §7.8 |
 | カードの見た目を変える | `clubui.js` の `cardHtml`(構成)と `theme.css` の「カード」(意匠) |
 | 音を変える | `src/js/sound.js`(Web Audio で合成。音声ファイルは持たない) |
 | 公開用を作る | `python build.py --dist` → `dist/`(index.html・manifest・sw.js・アイコン)。実名は入らない |
