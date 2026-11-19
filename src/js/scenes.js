@@ -277,3 +277,24 @@ function sceneAct(act,b){
     packStep();
   }
 }
+
+/**
+ * レアKP のカットイン(→docs/11 §11.6)。斜めの帯が横切り、選手の絵・固有名・技を見せる。タッチで飛ばせる。
+ *   c … カード / side … "A" なら相手(帯が逆から来る) / ms … 長さ / fn … 終わったら
+ */
+function cutIn(c,side,ms,fn){
+  const R=rareOfCard(c); if(!R){ if(fn)fn(); return; }
+  const old=document.querySelector(".cutin"); if(old)old.remove();
+  const sk=c.skill?SKILLS[c.skill]:null, mv=R.mv?RARE_MOVES[R.mv]:null, img=typeof artSrc==="function"?artSrc(c,"play"):null;
+  const el=document.createElement("div");
+  el.className="cutin r-"+c.rar+(side==="A"?" opp":"");
+  el.innerHTML='<div class="ci-band"><i class="ci-line"></i>'+(img?'<img src="'+img+'" alt="">':'')+
+    '<div class="ci-tx"><small>'+(side==="A"?"相手の ":"")+'RARE KP ・ ★5</small><b>'+R.name+'</b>'+
+    '<i>'+nameOf(c)+(sk?' ・ '+sk.label+'の極み':'')+'</i>'+(mv?'<em>技: '+mv.label+'</em>':'')+'</div></div>';
+  let done=false;
+  const end=()=>{ if(done)return; done=true; el.classList.add("out"); setTimeout(()=>{ el.remove(); if(fn)fn(); },260); };
+  el.addEventListener("pointerdown",end);
+  document.body.appendChild(el);
+  if(typeof sndShimmer==="function")sndShimmer(c.rar==="L");
+  setTimeout(end,ms||TUNING.rare.cutMs);
+}

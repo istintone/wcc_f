@@ -1529,6 +1529,35 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #club .cr:active{transform:translateY(2px);box-shadow:none}
 #club .cr.ok{min-width:120px;text-align:center;background:#fff}
 #club .cr.ok.ko{min-width:180px;background:linear-gradient(180deg,#ff4a5f,#c8102e);color:#fff;font-size:15px;letter-spacing:.06em}
+
+/* ---- レアKP のカットインと技の名前(→docs/11 §11.6) ---- */
+.cutin{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;pointer-events:auto;background:rgba(0,0,0,.35);animation:ciFade .2s}
+.cutin.out{animation:ciOut .26s forwards}
+@keyframes ciFade{from{opacity:0}} @keyframes ciOut{to{opacity:0}}
+.cutin .ci-band{position:relative;width:130%;height:170px;transform:rotate(-8deg);display:flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;
+  background:linear-gradient(90deg,#3b1d7a,#6a3fd0 45%,#3b1d7a);box-shadow:0 0 0 3px #fff,0 0 0 6px #6a3fd0,0 20px 40px rgba(0,0,0,.6);
+  animation:ciIn .42s cubic-bezier(.2,1.2,.4,1)}
+.cutin.r-L .ci-band{background:linear-gradient(90deg,#6b4a0c,#e2b13c 45%,#6b4a0c);box-shadow:0 0 0 3px #fff,0 0 0 6px #e2b13c,0 20px 40px rgba(0,0,0,.6)}
+.cutin.opp .ci-band{animation-name:ciInR;filter:saturate(.75) brightness(.9)}
+@keyframes ciIn{from{transform:rotate(-8deg) translateX(-110%)}}
+@keyframes ciInR{from{transform:rotate(-8deg) translateX(110%)}}
+.cutin .ci-line{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 40px,rgba(255,255,255,.12) 40px 44px);animation:ciLine .5s linear infinite}
+@keyframes ciLine{to{background-position:-88px 0}}
+.cutin img{position:relative;height:200px;margin:-10px 0 -30px;transform:rotate(8deg);image-rendering:pixelated;filter:drop-shadow(4px 4px 0 rgba(0,0,0,.45));animation:ciImg .5s .1s both cubic-bezier(.2,1.2,.4,1)}
+.cutin.opp img{transform:rotate(8deg) scaleX(-1)}
+@keyframes ciImg{from{opacity:0;translate:-60px 0}}
+.cutin .ci-tx{position:relative;transform:rotate(8deg);display:flex;flex-direction:column;align-items:flex-start;color:#fff;max-width:200px}
+.cutin .ci-tx small{font-size:10px;font-weight:900;letter-spacing:.2em;color:#ffe28a}
+.cutin .ci-tx b{font-size:28px;font-weight:900;line-height:1.1;text-shadow:3px 3px 0 rgba(0,0,0,.55);animation:ciImg .45s .18s both}
+.cutin .ci-tx i{font-style:normal;font-size:12px;font-weight:700;margin-top:3px}
+.cutin .ci-tx em{font-style:normal;font-size:11px;font-weight:900;margin-top:4px;padding:1px 8px;background:#fff;color:#3b1d7a;border-radius:3px}
+.cutin.r-L .ci-tx em{color:#6b4a0c}
+#flash.mv b{font-size:36px;color:#e9d4ff}
+.th-wr #flash.mv b{font-size:38px}
+#flash.mv small{color:#d6b8ff}
+#club .rarekp{padding:6px 8px;border-radius:6px;background:linear-gradient(90deg,rgba(106,63,208,.16),transparent)}
+#club .rarekp b{color:#6a3fd0;font-weight:900;letter-spacing:.06em;margin-right:4px}
+#club .rarekp.lock{color:var(--t-mute)}
 </style>
 </head>
 <body>
@@ -1675,6 +1704,10 @@ const TUNING={
           stepH:0.012, stepX:1.5, gkStep:2.5 },
   // KP(→docs/04)。1クラブに1人。試合中も変えられる。recv = どのスタイルでも KP にボールが少し集まる
   kp:{ recv:1.25 },
+  // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動
+  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / axis … スタイルの軸の上乗せ / oppTier … 相手はこの強さの段以上で発動
+  //   mvW … 技の札の選ばれやすさ / mvHold … 技を使ったときにモニターに名前を出す時間(ms) / cutMs … カットインの長さ(ms)
+  rare:{ buffK:2.0, axis:0.6, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
   // スタイルのランク(→docs/04 §4.5)。軸の値 = その能力の上位 top 人の平均 + 連携の上乗せ
   //   th … B / A / S になる値 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
   //   spStar/spEvo … KP の特殊能力の★1つごと / ★5で、軸の値に乗る量(→docs/05 §5.4)
@@ -2030,6 +2063,22 @@ const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"�
  *   assist … 渡した味方のシュート / urge・range … 撃ちたがり・撃てる距離 / vsKp … 相手の KP を止める
  *   team … 線で繋がる味方の全能力(段ごと)
  */
+/**
+ * レアKP の技(→docs/11 §11.4)。ch … 手札に足す札(roles の役割のときだけ) / fx … 本人に乗る効果(語彙はスキルのバフと同じ)
+ * godsave は 1試合に1回、決まるはずのシュートを止める(engine.js の shoot)
+ */
+const RARE_MOVES={
+  roulette:{ label:"ルーレット", roles:["CMF","OMF","SMF","WG","CF"],
+    ch:{id:"mvRou",    label:"ルーレット",     kind:"carry", stat:"tec", risk:0.96, gain:0.28, lane:"same"} },
+  longshot:{ label:"ロングシュート", fx:{ range:0.08, mid:1.25 } },
+  nolook:  { label:"ノールックパス", roles:["DMF","CMF","OMF","SMF","WG"],
+    ch:{id:"mvNoLook", label:"ノールックパス", kind:"pass",  stat:"tec", risk:0.78, gain:0.50, to:0.88, lane:"box"} },
+  heel:    { label:"ヒールパス", roles:["CF","OMF","WG","SMF"], fx:{ assist:1.15 },
+    ch:{id:"mvHeel",   label:"ヒールパス",     kind:"pass",  stat:"tec", risk:1.00, gain:0.06, lane:"in"} },
+  overhead:{ label:"オーバーヘッド", fx:{ aerial:1.25 } },
+  sliding: { label:"鉄壁のスライディング", fx:{ def:1.3, on:"carry" } },
+  godsave: { label:"神セーブ" }
+};
 const SKILLS={
   hunter:  { label:"ゴールハンター",       style:"K08", desc:"流れの中のシュートが強い", buff:{ shot:1.06 } },
   ace:     { label:"エース",               style:"T08", desc:"流れの中のシュートが強い", buff:{ shot:1.05 } },
@@ -2562,6 +2611,75 @@ const REAL_ROWS=[
   ["dog16",15,14,"M.バヌペー","CF/WG",24,1.4,"o+","runner","GER",2]
 ];
 
+/* 生成物。手で編集しない。 python tools/gen_rarekp.py が tools/rarekp_source.txt から書き出す(→docs/11)。
+   レアKP: WORLD CLASS 以上のカードの固有名と技。★5 で KP にしたときに発動する */
+const RARE_KP={
+  "mcb01":{"name": "不落の城門", "mv": "godsave"},
+  "mcb03":{"name": "統べる盾", "mv": "sliding"},
+  "mcb04":{"name": "前へ出る砦"},
+  "mcb06":{"name": "中盤の羅針盤", "mv": "nolook"},
+  "mcb08":{"name": "幻惑のステップ", "mv": "roulette"},
+  "mcb10":{"name": "黄金のストライカー", "mv": "overhead"},
+  "mcr09":{"name": "老練の指揮棒", "mv": "nolook"},
+  "nld01":{"name": "一蹴の司令塔"},
+  "nld03":{"name": "若き城壁", "mv": "sliding"},
+  "nld04":{"name": "空の支配者"},
+  "nld06":{"name": "静かなる心臓"},
+  "nld07":{"name": "赤き闘将", "mv": "sliding"},
+  "nld08":{"name": "見えない糸", "mv": "nolook"},
+  "nld09":{"name": "左翼の疾風", "mv": "roulette"},
+  "nld10":{"name": "北の大砲", "mv": "longshot"},
+  "msd01":{"name": "最後の番人", "mv": "godsave"},
+  "msd03":{"name": "鉄の副官"},
+  "msd06":{"name": "若き舵取り"},
+  "msd07":{"name": "時を刻む足"},
+  "msd08":{"name": "夜明けの稲妻", "mv": "longshot"},
+  "msd09":{"name": "魔術師の左足", "mv": "roulette"},
+  "msd11":{"name": "裏街道の狼"},
+  "msd14":{"name": "遠雷の一撃", "mv": "longshot"},
+  "ldb06":{"name": "刈り取る鎌", "mv": "sliding"},
+  "ldb07":{"name": "一閃の針", "mv": "nolook"},
+  "ldb09":{"name": "弧を描く魔弾"},
+  "cat02":{"name": "永遠の右翼"},
+  "cat06":{"name": "白き指揮者", "mv": "nolook"},
+  "cat07":{"name": "千手の司令塔", "mv": "nolook"},
+  "cat09":{"name": "若き天才", "mv": "roulette"},
+  "cat10":{"name": "不惑の点取り屋", "mv": "heel"},
+  "cat11":{"name": "夜空の流星", "mv": "roulette"},
+  "mdb01":{"name": "白壁の守護者", "mv": "godsave"},
+  "mdb06":{"name": "蒼き番犬", "mv": "sliding"},
+  "mdb07":{"name": "疲れ知らずの機関"},
+  "mdb08":{"name": "王冠の若獅子", "mv": "longshot"},
+  "mdb10":{"name": "嵐を呼ぶ脚"},
+  "mdb11":{"name": "光速の翼", "mv": "roulette"},
+  "mdr01":{"name": "赤き城壁"},
+  "mdr10":{"name": "獲物を追う牙"},
+  "mdr11":{"name": "優雅なる刃", "mv": "heel"},
+  "mir01":{"name": "前に出る守護神"},
+  "mir10":{"name": "一撃の豹", "mv": "longshot"},
+  "mir11":{"name": "踊る足元", "mv": "roulette"},
+  "mib04":{"name": "鉄格子", "mv": "sliding"},
+  "mib05":{"name": "精密な弾道"},
+  "mib06":{"name": "走り続ける鼓動"},
+  "mib09":{"name": "正確な弧"},
+  "mib10":{"name": "闘牛の角", "mv": "overhead"},
+  "toz10":{"name": "新星の閃き", "mv": "roulette"},
+  "par02":{"name": "疾走する鉄人"},
+  "par05":{"name": "駆け上がる風"},
+  "par06":{"name": "青の頭脳", "mv": "nolook"},
+  "par07":{"name": "若き刈り手"},
+  "par09":{"name": "跳ねる小鹿", "mv": "roulette"},
+  "par10":{"name": "稲妻の豹", "mv": "longshot"},
+  "par11":{"name": "奔放な魔術師", "mv": "roulette"},
+  "mur06":{"name": "黒き錨"},
+  "mur08":{"name": "右翼の閃光"},
+  "mur09":{"name": "王の左足", "mv": "longshot"},
+  "mur10":{"name": "港町の快足"},
+  "mur11":{"name": "海を渡る大砲", "mv": "overhead"},
+  "dog01":{"name": "鋼の手のひら", "mv": "godsave"},
+  "dog10":{"name": "赤い弾丸", "mv": "heel"}
+};
+
 /* =========================================================================
    wcc_f — 試合エンジン(DOM非依存。Node でそのまま回せる)
    柱(→docs/02 §2.1):
@@ -2670,6 +2788,7 @@ function makeTeamDef(teamId,cpu){
   return { id:t.id, name:t.name, short:t.short, color:t.color, cpu:!!cpu,
     kp:t.kp||null, links:t.links||[],
     graph:tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg }:null, setplay:0,
+    rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
     bench:t.bench.map(id=>CARDS[id]) };
 }
@@ -2677,7 +2796,7 @@ function buildTeam(def,side){
   const T={ side, id:def.id, name:def.name, short:def.short, color:def.color, cpu:!!def.cpu,
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
-    kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
+    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null, graph:def.graph||null, setplay:def.setplay||0,
     ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
@@ -2693,6 +2812,13 @@ const playerOf=(T,id)=>T.players.find(p=>p.id===id)||null;
 
 const skOf=p=>p&&p.c.skill?SKILLS[p.c.skill]:null;
 const styleOfCard=c=>{ const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[s.style]||null:null; };
+/** レアKP の表の行(カードが WORLD CLASS 以上で表にあるとき)。発動するかは rareOf */
+const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&&RARE_KP[c.id]||null;
+/** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
+function rareOf(p,T){
+  const R=p&&p.kp?rareOfCard(p.c):null;
+  return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
+}
 function setKp(T,id){
   if(!T.players.some(p=>p.id===id))return false;
   for(const p of T.players)p.kp=p.id===id;
@@ -2759,7 +2885,8 @@ function refreshFx(M,min){
     T.style=st?SKILLS[kp.c.skill].style:null;
     // KP の特殊能力の★が、その選手のスタイルを押し上げる(★5で極まる)
     const ss=kp&&kp.c.ss||0;
-    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0):0;
+    T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
+    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0)+(T.rare?TUNING.rare.axis:0):0;
     T.rank=st?rankOf(T.axis):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
@@ -2776,7 +2903,10 @@ function refreshFx(M,min){
     const kp=T.players.find(p=>p.kp)||null;
     for(const p of T.players){
       const fx=FX0(), sk=skOf(p);
-      addFx(fx,sk&&sk.buff,p.c.buffK||1);          // 特殊能力の★でバフが強まる
+      const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
+      addFx(fx,sk&&sk.buff,(p.c.buffK||1)*(rare?TUNING.rare.buffK:1));   // 特殊能力の★でバフが強まる。レアKP はさらに
+      if(mv&&mv.fx)addFx(fx,mv.fx,1);
+      p.mv=mv?rare.mv:null;
       if(T.setplay){ fx.fk*=1+T.setplay; fx.ck*=1+T.setplay; fx.pkK*=1+T.setplay; }
       if(p.kp){ fx.recv*=TUNING.kp.recv; if(solo)addFx(fx,st.fx,T.rk); }
       if(solo&&st.fx.team&&kp&&p!==kp){        // フォアザチーム: KP と線で繋がる味方
@@ -2808,7 +2938,7 @@ function refreshFx(M,min){
       }
       p.fx=fx; p.lo=lineOff;
       p.stayK=T.fx.fwStay!=null&&GROUP_OF[p.role]==="FW"?T.fx.fwStay:1;
-      p.fxName=p.kp&&solo?st.name:sk?sk.label:undefined;
+      p.fxName=p.kp&&T.rare?T.rare.name:p.kp&&solo?st.name:sk?sk.label:undefined;
     }
   }
 }
@@ -2889,8 +3019,9 @@ function strayOf(p,h,x){
 
 function pickChannel(rng,p,h,x,T,fast,ctr){
   const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{};
-  return pickW(rng,CHANNELS[p.role],ch=>{
-    let w=eff(p,ch.stat)*chW(p,ch);
+  const mv=p.mv&&RARE_MOVES[p.mv], hand=mv&&mv.ch&&mv.roles.includes(p.role)?CHANNELS[p.role].concat([mv.ch]):CHANNELS[p.role];
+  return pickW(rng,hand,ch=>{
+    let w=eff(p,ch.stat)*chW(p,ch)*(ch===(mv&&mv.ch)?TUNING.rare.mvW:1);
     if(A.lane)w*=A.lane[ch.lane]||1;
     w*=L[ch.lane]||1;                          // 監督の指示(中央突破・サイド攻撃)
     if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
@@ -2993,7 +3124,8 @@ function doSub(M,T,outId,inId,t){
 }
 function changeKp(M,T,id,t){
   if(id===T.kp||!setKp(T,id))return false;
-  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"kp", id });
+  const R=rareOf(playerOf(T,id),T);
+  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"kp", id, rare:R?R.name:undefined });
   return true;
 }
 function setIns(M,T,o,t){
@@ -3261,6 +3393,8 @@ function stepMatch(M){
   push({ side:T.side, type:ch.kind, by:c.id, to:rc?rc.p.id:null, vs:mk?mk.p.id:null,
     ch:ch.id, label:ch.label, ok, role:c.role, foul:fouled||undefined,
     sk:ok?ask:undefined, dsk:ok?undefined:dsk, fast:(fast&&ok)||undefined,
+    mv:ok&&/^mv/.test(ch.id)?ch.label:!ok&&mk&&mk.p.mv==="sliding"&&ch.kind==="carry"?RARE_MOVES.sliding.label:undefined,
+    mvBy:ok&&/^mv/.test(ch.id)?c.id:!ok&&mk&&mk.p.mv==="sliding"&&ch.kind==="carry"?mk.p.id:undefined,
     out:(!ok&&!fouled&&ch.kind==="pass"&&(end.x<8||end.x>92))||undefined,
     from:[r2(h),r2(x)], dest:[r2(end.h),r2(end.x)] });
   if(ok)M.ball={ side:T.side, h:dest.h, x:dest.x, holder:rc?rc.p:c, assist:rc?c:B.assist };
@@ -3456,12 +3590,14 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
     :p.fx.shot*(far?p.fx.mid:1);
   const as=assist&&assist!==p&&!sp?assist.fx.assist:1;
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
+  if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
   const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as;
   const gk1=sp==="pk"?gk.fx.pk:gk.fx.gk;
   const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
   ev.dest=[1.0,r2(gy)];
   const a=rr(rng), b=rr(rng);
-  const goal=sp==="pk"?sSc*a>gSc*b*S.thPk:Math.pow(sSc/gSc,S.gapPow)*a>S.thGoal*b;
+  let goal=sp==="pk"?sSc*a>gSc*b*S.thPk:Math.pow(sSc/gSc,S.gapPow)*a>S.thGoal*b;
+  if(goal&&sp!=="pk"&&gk.mv==="godsave"&&!gk.mvUsed){ goal=false; gk.mvUsed=true; ev.mv=RARE_MOVES.godsave.label; ev.mvBy=gk.id; }   // 1試合に1回
   if(goal){
     T.score++; p.st.goals++;
     ev.res="goal"; ev.hg=M.home.score; ev.ag=M.away.score;
@@ -6980,6 +7116,15 @@ function cardHtml(id,size,extra){
     '<i class="k-foil"></i>'+(n>1?'<i class="kcnt">×'+n+'</i>':'')+
     '</div>';
 }
+/** その選手のレアKP が、いま KP にすれば発動するか(★5) */
+const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5;
+/** カードの詳細に出すレアKP の行。★4以下のあいだは伏せる */
+function rareRowHtml(S,id){
+  const R=rareOfCard(CARDS[id]); if(!R)return "";
+  const mv=R.mv?RARE_MOVES[R.mv]:null, g=S.g.pl[id], ss=g?g.ss:0;
+  if(ss<5)return '<p class="rarekp lock"><b>RARE KP</b> ？？？ <small>特殊能力 ★5 で解放(いま ★'+ss+')</small></p>';
+  return '<p class="rarekp"><b>RARE KP</b> '+R.name+(mv?' <small>技: '+mv.label+'</small>':'')+'<br><span class="get">KP にすると発動。スキルとスタイルが強まる</span></p>';
+}
 /** 選んだカードの詳細と、登録の入れ替え */
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
@@ -6989,6 +7134,7 @@ function cardDetailHtml(id){
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
       '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
+    rareRowHtml(S,id)+
     '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
     '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p>'+
     (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'')+'</div></div>';
@@ -7444,7 +7590,9 @@ function onClubClick(e){
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
-  else if(act==="sqkp"){ S.kp=b.dataset.id; save(); showClub(true); }
+  else if(act==="sqkp"){ const id=b.dataset.id; S.kp=id; save(); showClub(true);
+    if(rareOn(S,id))cutIn(CARDS[id],"H");   // レアKP が発動する選手を KP にした(→docs/11)
+  }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
     const id=CL.pick[0], r=doIndTrain(S,id); chatResult("ind",[id],b.textContent,r,reactOf(S,id,"ind",r.res===1?1:0));
@@ -8058,6 +8206,27 @@ function sceneAct(act,b){
   }
 }
 
+/**
+ * レアKP のカットイン(→docs/11 §11.6)。斜めの帯が横切り、選手の絵・固有名・技を見せる。タッチで飛ばせる。
+ *   c … カード / side … "A" なら相手(帯が逆から来る) / ms … 長さ / fn … 終わったら
+ */
+function cutIn(c,side,ms,fn){
+  const R=rareOfCard(c); if(!R){ if(fn)fn(); return; }
+  const old=document.querySelector(".cutin"); if(old)old.remove();
+  const sk=c.skill?SKILLS[c.skill]:null, mv=R.mv?RARE_MOVES[R.mv]:null, img=typeof artSrc==="function"?artSrc(c,"play"):null;
+  const el=document.createElement("div");
+  el.className="cutin r-"+c.rar+(side==="A"?" opp":"");
+  el.innerHTML='<div class="ci-band"><i class="ci-line"></i>'+(img?'<img src="'+img+'" alt="">':'')+
+    '<div class="ci-tx"><small>'+(side==="A"?"相手の ":"")+'RARE KP ・ ★5</small><b>'+R.name+'</b>'+
+    '<i>'+nameOf(c)+(sk?' ・ '+sk.label+'の極み':'')+'</i>'+(mv?'<em>技: '+mv.label+'</em>':'')+'</div></div>';
+  let done=false;
+  const end=()=>{ if(done)return; done=true; el.classList.add("out"); setTimeout(()=>{ el.remove(); if(fn)fn(); },260); };
+  el.addEventListener("pointerdown",end);
+  document.body.appendChild(el);
+  if(typeof sndShimmer==="function")sndShimmer(c.rar==="L");
+  setTimeout(end,ms||TUNING.rare.cutMs);
+}
+
 /* =========================================================================
    wcc_f — 進行。エンジンを1ステップずつ解き、解けたイベントを順に再生する。
    再生速度を変えても、止めても、結果は変わらない(描画は読むだけ)。
@@ -8078,7 +8247,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
-  G.ins={}; G.kpMode=false;
+  G.ins={}; G.kpMode=false; G.cutDone=false;
   RV.vis.clear(); RV.ball=[0.5,0.5];
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
@@ -8269,8 +8438,9 @@ function startEvent(ev){
   }
   if(ev.type==="kp"){
     const st=styleOfCard(CARDS[ev.id]);
-    say(tag(ev)+"KP "+nm(ev.id)+(st?" ▶ "+st.name:""),true);
+    say(tag(ev)+"KP "+nm(ev.id)+(ev.rare?" ▶ ★"+ev.rare:st?" ▶ "+st.name:""),true);
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
+    if(ev.rare){ const p=playerOf(teamOf(G.M,ev.side),ev.id); G.hold=TUNING.rare.cutMs; cutIn(p?p.c:CARDS[ev.id],ev.side); }   // レアKP(→docs/11)
     return;
   }
   if(ev.type==="shootCall"){
@@ -8334,6 +8504,14 @@ function startEvent(ev){
   }
   if(!ev.from)return;                        // 知らない種類のイベントは読み飛ばす
   if(ev.type==="kickoff")sndWhistle(1);
+  // 試合の初めのキックオフ: レアKP が発動しているチームはカットイン(→docs/11 §11.6)
+  if(ev.type==="kickoff"&&ev.min===0&&!G.cutDone){
+    G.cutDone=true;
+    const q=[G.M.home,G.M.away].filter(T=>T.rare).map(T=>({ T, p:T.players.find(x=>x.kp) })).filter(o=>o.p);
+    if(q.length){ G.hold=TUNING.rare.cutMs*q.length;
+      const nx=i=>{ if(i<q.length)cutIn(q[i].p.c,q[i].T.side,TUNING.rare.cutMs-60,()=>nx(i+1)); }; nx(0); }
+  }
+  if(ev.type==="shot"&&ev.mv&&ev.mv!==RARE_MOVES.godsave.label)mvFlash(ev);      // ロングシュート・オーバーヘッドは撃つ前に
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
   const lr=G.rec[G.rec.length-1];
@@ -8346,8 +8524,9 @@ function startEvent(ev){
 function endEvent(ev){
   const P=TUNING.play;
   if(ev.type==="offside"){ G.hold=P.foulHold; return; }
-  if(ev.type!=="shot")return;
+  if(ev.type!=="shot"){ if(ev.mv)mvFlash(ev); return; }
   sayShotEnd(ev);
+  if(ev.res==="save"&&ev.mv===RARE_MOVES.godsave.label){ mvFlash(ev); return; }   // 神セーブ
   if(ev.res==="goal"){
     setHud(ev.hg,ev.ag,ev.min+(ev.at?"+":"'"));
     const f=$("flash"); f.innerHTML='<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+'</small>';
@@ -8357,6 +8536,13 @@ function endEvent(ev){
     if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない
     G.rec=[];
   }else{ G.hold=P.shotHold; if(ev.res==="save"||ev.res==="miss")sndAww(); }
+}
+/** 技の名前をモニターに大きく出す(→docs/11 §11.6) */
+function mvFlash(ev){
+  const f=$("flash"), T=teamOf(G.M,ev.side), mine=(ev.mvBy&&playerOf(G.M.home,ev.mvBy))?" mine":"";
+  f.innerHTML='<b>'+ev.mv+'！</b><i>'+nm(ev.mvBy)+'</i><small>RARE KP</small>';
+  f.className="on mv"+mine; G.flash=true; G.hold=Math.max(G.hold||0,TUNING.rare.mvHold);
+  if(typeof sndShimmer==="function")sndShimmer(false);
 }
 function advance(dt){
   if(G.hold>0){

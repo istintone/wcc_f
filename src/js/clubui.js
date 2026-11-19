@@ -427,6 +427,15 @@ function cardHtml(id,size,extra){
     '<i class="k-foil"></i>'+(n>1?'<i class="kcnt">×'+n+'</i>':'')+
     '</div>';
 }
+/** その選手のレアKP が、いま KP にすれば発動するか(★5) */
+const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5;
+/** カードの詳細に出すレアKP の行。★4以下のあいだは伏せる */
+function rareRowHtml(S,id){
+  const R=rareOfCard(CARDS[id]); if(!R)return "";
+  const mv=R.mv?RARE_MOVES[R.mv]:null, g=S.g.pl[id], ss=g?g.ss:0;
+  if(ss<5)return '<p class="rarekp lock"><b>RARE KP</b> ？？？ <small>特殊能力 ★5 で解放(いま ★'+ss+')</small></p>';
+  return '<p class="rarekp"><b>RARE KP</b> '+R.name+(mv?' <small>技: '+mv.label+'</small>':'')+'<br><span class="get">KP にすると発動。スキルとスタイルが強まる</span></p>';
+}
 /** 選んだカードの詳細と、登録の入れ替え */
 function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
@@ -436,6 +445,7 @@ function cardDetailHtml(id){
     '<p><b>★'+(sk?sk.label:"")+'</b> '+(sk?sk.desc:"")+'</p>'+
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
       '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
+    rareRowHtml(S,id)+
     '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
     '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p>'+
     (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'')+'</div></div>';
@@ -891,7 +901,9 @@ function onClubClick(e){
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
-  else if(act==="sqkp"){ S.kp=b.dataset.id; save(); showClub(true); }
+  else if(act==="sqkp"){ const id=b.dataset.id; S.kp=id; save(); showClub(true);
+    if(rareOn(S,id))cutIn(CARDS[id],"H");   // レアKP が発動する選手を KP にした(→docs/11)
+  }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
     const id=CL.pick[0], r=doIndTrain(S,id); chatResult("ind",[id],b.textContent,r,reactOf(S,id,"ind",r.res===1?1:0));

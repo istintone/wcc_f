@@ -18,7 +18,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
-  G.ins={}; G.kpMode=false;
+  G.ins={}; G.kpMode=false; G.cutDone=false;
   RV.vis.clear(); RV.ball=[0.5,0.5];
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
@@ -209,8 +209,9 @@ function startEvent(ev){
   }
   if(ev.type==="kp"){
     const st=styleOfCard(CARDS[ev.id]);
-    say(tag(ev)+"KP "+nm(ev.id)+(st?" ▶ "+st.name:""),true);
+    say(tag(ev)+"KP "+nm(ev.id)+(ev.rare?" ▶ ★"+ev.rare:st?" ▶ "+st.name:""),true);
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
+    if(ev.rare){ const p=playerOf(teamOf(G.M,ev.side),ev.id); G.hold=TUNING.rare.cutMs; cutIn(p?p.c:CARDS[ev.id],ev.side); }   // レアKP(→docs/11)
     return;
   }
   if(ev.type==="shootCall"){
@@ -274,6 +275,14 @@ function startEvent(ev){
   }
   if(!ev.from)return;                        // 知らない種類のイベントは読み飛ばす
   if(ev.type==="kickoff")sndWhistle(1);
+  // 試合の初めのキックオフ: レアKP が発動しているチームはカットイン(→docs/11 §11.6)
+  if(ev.type==="kickoff"&&ev.min===0&&!G.cutDone){
+    G.cutDone=true;
+    const q=[G.M.home,G.M.away].filter(T=>T.rare).map(T=>({ T, p:T.players.find(x=>x.kp) })).filter(o=>o.p);
+    if(q.length){ G.hold=TUNING.rare.cutMs*q.length;
+      const nx=i=>{ if(i<q.length)cutIn(q[i].p.c,q[i].T.side,TUNING.rare.cutMs-60,()=>nx(i+1)); }; nx(0); }
+  }
+  if(ev.type==="shot"&&ev.mv&&ev.mv!==RARE_MOVES.godsave.label)mvFlash(ev);      // ロングシュート・オーバーヘッドは撃つ前に
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
   const lr=G.rec[G.rec.length-1];
@@ -286,8 +295,9 @@ function startEvent(ev){
 function endEvent(ev){
   const P=TUNING.play;
   if(ev.type==="offside"){ G.hold=P.foulHold; return; }
-  if(ev.type!=="shot")return;
+  if(ev.type!=="shot"){ if(ev.mv)mvFlash(ev); return; }
   sayShotEnd(ev);
+  if(ev.res==="save"&&ev.mv===RARE_MOVES.godsave.label){ mvFlash(ev); return; }   // 神セーブ
   if(ev.res==="goal"){
     setHud(ev.hg,ev.ag,ev.min+(ev.at?"+":"'"));
     const f=$("flash"); f.innerHTML='<b>GOAL!</b><i>'+nm(ev.by)+'</i><small>'+teamOf(G.M,ev.side).short+'</small>';
@@ -297,6 +307,13 @@ function endEvent(ev){
     if(G.speed===1&&G.rec.length)G.replay={ list:G.rec.slice(), i:0 };   // 倍速のときは流さない
     G.rec=[];
   }else{ G.hold=P.shotHold; if(ev.res==="save"||ev.res==="miss")sndAww(); }
+}
+/** 技の名前をモニターに大きく出す(→docs/11 §11.6) */
+function mvFlash(ev){
+  const f=$("flash"), T=teamOf(G.M,ev.side), mine=(ev.mvBy&&playerOf(G.M.home,ev.mvBy))?" mine":"";
+  f.innerHTML='<b>'+ev.mv+'！</b><i>'+nm(ev.mvBy)+'</i><small>RARE KP</small>';
+  f.className="on mv"+mine; G.flash=true; G.hold=Math.max(G.hold||0,TUNING.rare.mvHold);
+  if(typeof sndShimmer==="function")sndShimmer(false);
 }
 function advance(dt){
   if(G.hold>0){

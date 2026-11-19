@@ -106,6 +106,7 @@ function makeTeamDef(teamId,cpu){
   return { id:t.id, name:t.name, short:t.short, color:t.color, cpu:!!cpu,
     kp:t.kp||null, links:t.links||[],
     graph:tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg }:null, setplay:0,
+    rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
     bench:t.bench.map(id=>CARDS[id]) };
 }
@@ -113,7 +114,7 @@ function buildTeam(def,side){
   const T={ side, id:def.id, name:def.name, short:def.short, color:def.color, cpu:!!def.cpu,
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
-    kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
+    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null, graph:def.graph||null, setplay:def.setplay||0,
     ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
@@ -129,6 +130,13 @@ const playerOf=(T,id)=>T.players.find(p=>p.id===id)||null;
 
 const skOf=p=>p&&p.c.skill?SKILLS[p.c.skill]:null;
 const styleOfCard=c=>{ const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[s.style]||null:null; };
+/** レアKP の表の行(カードが WORLD CLASS 以上で表にあるとき)。発動するかは rareOf */
+const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&&RARE_KP[c.id]||null;
+/** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
+function rareOf(p,T){
+  const R=p&&p.kp?rareOfCard(p.c):null;
+  return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
+}
 function setKp(T,id){
   if(!T.players.some(p=>p.id===id))return false;
   for(const p of T.players)p.kp=p.id===id;
@@ -195,7 +203,8 @@ function refreshFx(M,min){
     T.style=st?SKILLS[kp.c.skill].style:null;
     // KP の特殊能力の★が、その選手のスタイルを押し上げる(★5で極まる)
     const ss=kp&&kp.c.ss||0;
-    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0):0;
+    T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
+    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0)+(T.rare?TUNING.rare.axis:0):0;
     T.rank=st?rankOf(T.axis):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
@@ -212,7 +221,10 @@ function refreshFx(M,min){
     const kp=T.players.find(p=>p.kp)||null;
     for(const p of T.players){
       const fx=FX0(), sk=skOf(p);
-      addFx(fx,sk&&sk.buff,p.c.buffK||1);          // 特殊能力の★でバフが強まる
+      const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
+      addFx(fx,sk&&sk.buff,(p.c.buffK||1)*(rare?TUNING.rare.buffK:1));   // 特殊能力の★でバフが強まる。レアKP はさらに
+      if(mv&&mv.fx)addFx(fx,mv.fx,1);
+      p.mv=mv?rare.mv:null;
       if(T.setplay){ fx.fk*=1+T.setplay; fx.ck*=1+T.setplay; fx.pkK*=1+T.setplay; }
       if(p.kp){ fx.recv*=TUNING.kp.recv; if(solo)addFx(fx,st.fx,T.rk); }
       if(solo&&st.fx.team&&kp&&p!==kp){        // フォアザチーム: KP と線で繋がる味方
@@ -244,7 +256,7 @@ function refreshFx(M,min){
       }
       p.fx=fx; p.lo=lineOff;
       p.stayK=T.fx.fwStay!=null&&GROUP_OF[p.role]==="FW"?T.fx.fwStay:1;
-      p.fxName=p.kp&&solo?st.name:sk?sk.label:undefined;
+      p.fxName=p.kp&&T.rare?T.rare.name:p.kp&&solo?st.name:sk?sk.label:undefined;
     }
   }
 }
@@ -325,8 +337,9 @@ function strayOf(p,h,x){
 
 function pickChannel(rng,p,h,x,T,fast,ctr){
   const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{};
-  return pickW(rng,CHANNELS[p.role],ch=>{
-    let w=eff(p,ch.stat)*chW(p,ch);
+  const mv=p.mv&&RARE_MOVES[p.mv], hand=mv&&mv.ch&&mv.roles.includes(p.role)?CHANNELS[p.role].concat([mv.ch]):CHANNELS[p.role];
+  return pickW(rng,hand,ch=>{
+    let w=eff(p,ch.stat)*chW(p,ch)*(ch===(mv&&mv.ch)?TUNING.rare.mvW:1);
     if(A.lane)w*=A.lane[ch.lane]||1;
     w*=L[ch.lane]||1;                          // 監督の指示(中央突破・サイド攻撃)
     if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
@@ -429,7 +442,8 @@ function doSub(M,T,outId,inId,t){
 }
 function changeKp(M,T,id,t){
   if(id===T.kp||!setKp(T,id))return false;
-  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"kp", id });
+  const R=rareOf(playerOf(T,id),T);
+  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"kp", id, rare:R?R.name:undefined });
   return true;
 }
 function setIns(M,T,o,t){
@@ -697,6 +711,8 @@ function stepMatch(M){
   push({ side:T.side, type:ch.kind, by:c.id, to:rc?rc.p.id:null, vs:mk?mk.p.id:null,
     ch:ch.id, label:ch.label, ok, role:c.role, foul:fouled||undefined,
     sk:ok?ask:undefined, dsk:ok?undefined:dsk, fast:(fast&&ok)||undefined,
+    mv:ok&&/^mv/.test(ch.id)?ch.label:!ok&&mk&&mk.p.mv==="sliding"&&ch.kind==="carry"?RARE_MOVES.sliding.label:undefined,
+    mvBy:ok&&/^mv/.test(ch.id)?c.id:!ok&&mk&&mk.p.mv==="sliding"&&ch.kind==="carry"?mk.p.id:undefined,
     out:(!ok&&!fouled&&ch.kind==="pass"&&(end.x<8||end.x>92))||undefined,
     from:[r2(h),r2(x)], dest:[r2(end.h),r2(end.x)] });
   if(ok)M.ball={ side:T.side, h:dest.h, x:dest.x, holder:rc?rc.p:c, assist:rc?c:B.assist };
@@ -892,12 +908,14 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
     :p.fx.shot*(far?p.fx.mid:1);
   const as=assist&&assist!==p&&!sp?assist.fx.assist:1;
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
+  if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
   const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as;
   const gk1=sp==="pk"?gk.fx.pk:gk.fx.gk;
   const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
   ev.dest=[1.0,r2(gy)];
   const a=rr(rng), b=rr(rng);
-  const goal=sp==="pk"?sSc*a>gSc*b*S.thPk:Math.pow(sSc/gSc,S.gapPow)*a>S.thGoal*b;
+  let goal=sp==="pk"?sSc*a>gSc*b*S.thPk:Math.pow(sSc/gSc,S.gapPow)*a>S.thGoal*b;
+  if(goal&&sp!=="pk"&&gk.mv==="godsave"&&!gk.mvUsed){ goal=false; gk.mvUsed=true; ev.mv=RARE_MOVES.godsave.label; ev.mvBy=gk.id; }   // 1試合に1回
   if(goal){
     T.score++; p.st.goals++;
     ev.res="goal"; ev.hg=M.home.score; ev.ag=M.away.score;

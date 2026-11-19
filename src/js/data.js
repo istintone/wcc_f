@@ -96,6 +96,10 @@ const TUNING={
           stepH:0.012, stepX:1.5, gkStep:2.5 },
   // KP(→docs/04)。1クラブに1人。試合中も変えられる。recv = どのスタイルでも KP にボールが少し集まる
   kp:{ recv:1.25 },
+  // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動
+  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / axis … スタイルの軸の上乗せ / oppTier … 相手はこの強さの段以上で発動
+  //   mvW … 技の札の選ばれやすさ / mvHold … 技を使ったときにモニターに名前を出す時間(ms) / cutMs … カットインの長さ(ms)
+  rare:{ buffK:2.0, axis:0.6, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
   // スタイルのランク(→docs/04 §4.5)。軸の値 = その能力の上位 top 人の平均 + 連携の上乗せ
   //   th … B / A / S になる値 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
   //   spStar/spEvo … KP の特殊能力の★1つごと / ★5で、軸の値に乗る量(→docs/05 §5.4)
@@ -451,6 +455,22 @@ const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"�
  *   assist … 渡した味方のシュート / urge・range … 撃ちたがり・撃てる距離 / vsKp … 相手の KP を止める
  *   team … 線で繋がる味方の全能力(段ごと)
  */
+/**
+ * レアKP の技(→docs/11 §11.4)。ch … 手札に足す札(roles の役割のときだけ) / fx … 本人に乗る効果(語彙はスキルのバフと同じ)
+ * godsave は 1試合に1回、決まるはずのシュートを止める(engine.js の shoot)
+ */
+const RARE_MOVES={
+  roulette:{ label:"ルーレット", roles:["CMF","OMF","SMF","WG","CF"],
+    ch:{id:"mvRou",    label:"ルーレット",     kind:"carry", stat:"tec", risk:0.96, gain:0.28, lane:"same"} },
+  longshot:{ label:"ロングシュート", fx:{ range:0.08, mid:1.25 } },
+  nolook:  { label:"ノールックパス", roles:["DMF","CMF","OMF","SMF","WG"],
+    ch:{id:"mvNoLook", label:"ノールックパス", kind:"pass",  stat:"tec", risk:0.78, gain:0.50, to:0.88, lane:"box"} },
+  heel:    { label:"ヒールパス", roles:["CF","OMF","WG","SMF"], fx:{ assist:1.15 },
+    ch:{id:"mvHeel",   label:"ヒールパス",     kind:"pass",  stat:"tec", risk:1.00, gain:0.06, lane:"in"} },
+  overhead:{ label:"オーバーヘッド", fx:{ aerial:1.25 } },
+  sliding: { label:"鉄壁のスライディング", fx:{ def:1.3, on:"carry" } },
+  godsave: { label:"神セーブ" }
+};
 const SKILLS={
   hunter:  { label:"ゴールハンター",       style:"K08", desc:"流れの中のシュートが強い", buff:{ shot:1.06 } },
   ace:     { label:"エース",               style:"T08", desc:"流れの中のシュートが強い", buff:{ shot:1.05 } },

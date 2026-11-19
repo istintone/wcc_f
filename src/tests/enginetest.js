@@ -465,5 +465,21 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   console.log("    なし "+f2(b)+" ・ 相手の裏をかけ "+f2(a)+" ・ ゴール前に鍵をかけろ "+f2(c));
   check("ハーフタイムの指示の上積みは小さい(±0.25 以内)",Math.abs(a-b)<0.25&&Math.abs(c-b)<0.25);
 }
+// ⑫ レアKP(→docs/11)。★5 の汎用 KP と比べて、上位互換だが上積みは小さい。技が試合で出る
+{
+  console.log("\n⑫ レアKP");
+  const clubs=Object.values(E.TEAMS).filter(t=>t.real&&E.rareOfCard(E.CARDS[t.kp]));
+  const B=E.TUNING.grow.sp.buff, mvN={};
+  const run=rare=>{ let gd=0, n=0;
+    for(let i=0;i<N;i++){ const t=clubs[i%clubs.length], d=E.makeTeamDef(t.id,true); d.rareOpp=false;
+      d.xi=d.xi.map(s=>s.card.id===t.kp?Object.assign({},s,{ card:Object.assign({},s.card,{ ss:5, buffK:1+B*5, rar:rare?s.card.rar:"B" }) }):s);
+      const m=E.simulateMatch(d,E.makeTeamDef("ros",true),81000+i); gd+=m.home.score-m.away.score;
+      if(rare)for(const ev of m.events)if(ev.mv&&ev.side==="H"){ mvN[ev.mv]=(mvN[ev.mv]||0)+1; n++; } }
+    return { gd:gd/N, n }; };
+  const g=run(false), r=run(true);
+  console.log("    ★5 汎用 "+f2(g.gd)+" → レアKP "+f2(r.gd)+"  ("+clubs.length+"クラブ) 技 "+f2(r.n/N)+"回/試合 "+JSON.stringify(mvN));
+  check("レアKP は上位互換で上積みは小さい(得失点差 0〜+0.3)",r.gd-g.gd>-0.05&&r.gd-g.gd<0.3,"+"+f2(r.gd-g.gd));
+  check("技が試合で出る",r.n>0);
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

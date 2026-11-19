@@ -64,6 +64,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | HOME の直近の試合・クラブ新聞(見出し・ゴシップ)を変える | 文の型と記事は `paper.js`、数は `TUNING.paper`、紙面は `clubui.js` の `lastHtml` / `paperHtml`。正本は docs/07 §7.13 |
 | コミュニケーションのチャット(吹き出し)を変える | `clubui.js` の `commChatHtml` / `chatResult` と `theme.css` の「チャット」。正本は docs/07 §7.14 |
 | 【仮】選手の絵を作り直す | `python tools/gen_player_art.py` → `src/js/art-players.js`(生成物)。使う所は `clubui.js` の `artSrc`、試合は `render.js` の `drawMan`。正本は docs/10 §10.9 |
+| レアKP(固有名・技・効き目・カットイン)を変える・技を足す | 名前と技の割り当ては `tools/rarekp_source.txt` → `python tools/gen_rarekp.py` → `src/js/rarekp.js`(生成物)。技は `data.js` の `RARE_MOVES`、数値は `TUNING.rare`、発動は `engine.js` の `rareOf`、カットインは `scenes.js` の `cutIn` → `enginetest.js` の ⑫。正本は docs/11 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・操作)、`pool.js` の `fillLayout` / `setForm` / `moveSquad`(中身)。正本は docs/07 §7.10 |
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。設計の正本は docs/07 §7.8 |
