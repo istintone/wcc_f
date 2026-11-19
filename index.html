@@ -8769,11 +8769,12 @@ try{ BGM.on=localStorage.getItem(BGM_KEY)!=="off"; }catch(e){}
 const mtof=n=>440*Math.pow(2,(n-69)/12);
 /** 曲。prog は小節ごとの和音(MIDI の音の高さ)、bass は小節ごとの根音 */
 const BGM_TRACKS={
-  // アップテンポのスポーツゲーム風(→docs/14 §14.15)。16分のシェイカー・8分のハイハット・2拍4拍のスネア・裏拍の和音のスタブ
-  club:{ bpm:116, vol:0.10, prog:[[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]], bass:[36,33,29,31],
-    arp:[0,2,1,3,2,1,3,2], kick:[0,3,4], hat:[0,1,2,3,4,5,6,7], snare:[2,6], bassPat:[0,2,3,4,6,7], oct:[3,7], stab:[1,3,5,7], shaker:true },
-  match:{ bpm:138, vol:0.075, prog:[[62,65,69,72],[58,62,65,69],[53,57,60,64],[60,64,67,70]], bass:[38,34,41,36],
-    arp:[0,1,2,3,2,1,0,2], kick:[0,2,4,6], hat:[0,1,2,3,4,5,6,7], snare:[2,6], bassPat:[0,1,2,3,4,5,6,7], oct:[1,3,5,7], stab:[1,4,7], shaker:true }
+  // ロック(→docs/14 §14.15)。歪ませたエレキギターのパワーコード(頭は伸ばし、あとは8分のブリッジミュート)・リードのリフ・ベース・ロックのドラム
+  //   root … 小節ごとのパワーコードの根音 / mute … ミュートで刻む8分の位置 / acc … 強く弾く位置 / lead … リードのリフ(根音からの半音)。null は休み
+  club:{ bpm:128, vol:0.09, root:[40,36,38,35], mute:[1,2,3,5,6,7], acc:[0,3,6],
+    kick:[0,3,4,6], snare:[2,6], lead:[12,null,15,17,null,19,17,15] },
+  match:{ bpm:150, vol:0.07, root:[38,34,36,33], mute:[1,2,3,4,5,6,7], acc:[0,3,6],
+    kick:[0,2,4,6], snare:[2,6], lead:[12,15,17,null,19,null,17,19] }
 };
 function bgmVoice(type,freq,t,dur,peak,cut){
   const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
@@ -8794,16 +8795,25 @@ function bgmKick(t,peak){
   env(g,t,0.004,peak,0.02,0.14); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.25);
 }
 /** 8分音符1つぶんを予約する */
+/** 歪ませたギター(のこぎり波2本を少しずらし、波形の歪み → ローパスの順。音の出口は BGM.gtr) */
+function bgmGuitar(freq,t,dur,peak,cut){
+  [1,1.006].forEach(dt=>{ const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
+    o.type="sawtooth"; o.frequency.setValueAtTime(freq*dt,t); f.type="lowpass"; f.frequency.value=cut||2600;
+    env(g,t,0.004,peak,dur*0.5,dur*0.5); o.connect(f); f.connect(g); g.connect(BGM.gtr); o.start(t); o.stop(t+dur+0.1); });
+}
+/** パワーコード(根音・5度・オクターブ) */
+function bgmPower(root,t,dur,peak,cut){ [0,7,12].forEach(n=>bgmGuitar(mtof(root+n),t,dur,peak,cut)); }
+/** 8分音符1つぶんを予約する */
 function bgmStep(T,i,t){
-  const e=60/T.bpm/2, pos=i%8, bar=Math.floor(i/8)%T.prog.length, ch=T.prog[bar];
-  if(pos===0)ch.forEach(n=>{ bgmVoice("triangle",mtof(n),t,e*7.6,0.03,1600); bgmVoice("sawtooth",mtof(n)*1.004,t,e*7.6,0.008,1100); });   // パッド(薄く)
-  if(T.stab&&T.stab.includes(pos))ch.forEach(n=>bgmVoice("square",mtof(n+12),t,e*0.35,0.012,3200));                                // 裏拍の和音のスタブ
-  if(T.bassPat.includes(pos))bgmVoice("sawtooth",mtof(T.bass[bar]+(T.oct&&T.oct.includes(pos)?12:0)),t,e*0.8,0.09,700);          // ベース(オクターブ跳び)
-  bgmVoice("triangle",mtof(ch[T.arp[pos]]+24),t,e*0.6,0.022,4200);                                                            // アルペジオ
-  if(T.kick.includes(pos))bgmKick(t,0.26);
-  if(T.hat.includes(pos))bgmNoise(t,0.035,pos%2?0.03:0.045,"highpass",8000);                                                 // ハイハット
-  if(T.shaker){ bgmNoise(t+e/2,0.03,0.022,"bandpass",9000); if(pos%2)bgmNoise(t+e/4,0.02,0.012,"bandpass",10000); }          // 16分のシェイカー
-  if(T.snare.includes(pos)){ bgmNoise(t,0.14,0.08,"bandpass",1900); bgmNoise(t+0.012,0.08,0.04,"highpass",5000); }          // スネア + クラップ
+  const e=60/T.bpm/2, pos=i%8, barN=Math.floor(i/8), bar=barN%T.root.length, r=T.root[bar]+12;
+  if(pos===0)bgmPower(r,t,e*1.8,0.06,3400);                                                        // 頭は伸ばす
+  else if(T.mute.includes(pos))bgmPower(r,t,e*0.45,T.acc.includes(pos)?0.05:0.032,1300);        // ブリッジミュートの刻み
+  bgmVoice("sawtooth",mtof(T.bass?T.bass[bar]:T.root[bar]),t,e*0.85,0.1,500);                     // ベース
+  if(barN%2===1&&T.lead[pos]!=null)bgmGuitar(mtof(T.root[bar]+24+T.lead[pos]),t,e*0.9,0.03,4200);   // リードのリフ(2小節に1回)
+  if(T.kick.includes(pos))bgmKick(t,0.3);
+  if(T.snare.includes(pos)){ bgmNoise(t,0.16,0.1,"bandpass",1800); bgmNoise(t,0.09,0.05,"highpass",4500); }
+  bgmNoise(t,0.03,pos%2?0.025:0.04,"highpass",8500); bgmNoise(t+e/2,0.025,0.018,"highpass",9500);   // ハイハット(16分)
+  if(pos===0&&barN%4===0)bgmNoise(t,1.1,0.06,"highpass",5500);                                    // クラッシュ(4小節ごと)
 }
 /** 曲を鳴らす(同じ曲なら何もしない)。音が出せない・切ってあるときは何もしない */
 function bgmPlay(name){
@@ -8814,6 +8824,11 @@ function bgmPlay(name){
   const T=BGM_TRACKS[name];
   BGM.gain=SND.ctx.createGain(); BGM.gain.gain.setValueAtTime(0.0001,now()); BGM.gain.gain.exponentialRampToValueAtTime(T.vol,now()+1.2);
   BGM.gain.connect(SND.master);
+  // ギターの歪み: 入力を強めて波形を丸く潰す → 箱鳴りの山(ピーキング)→ 高すぎる成分を落とす
+  const pre=SND.ctx.createGain(), ws=SND.ctx.createWaveShaper(), pk=SND.ctx.createBiquadFilter(), lp=SND.ctx.createBiquadFilter();
+  pre.gain.value=6; const n=1024, cv=new Float32Array(n); for(let k=0;k<n;k++){ const x=k/(n-1)*2-1; cv[k]=Math.tanh(x*3); } ws.curve=cv; ws.oversample="2x";
+  pk.type="peaking"; pk.frequency.value=900; pk.gain.value=4; lp.type="lowpass"; lp.frequency.value=4800;
+  pre.connect(ws); ws.connect(pk); pk.connect(lp); lp.connect(BGM.gain); BGM.gtr=pre;
   BGM.step=0; BGM.next=now()+0.1;
   BGM.timer=setInterval(()=>{
     if(!SND.ctx||SND.ctx.state!=="running")return;
