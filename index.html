@@ -571,6 +571,9 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #cap .htb{padding:5px 4px;font-size:11.5px;font-weight:800;color:#201400;background:linear-gradient(180deg,#ffe58a,#f2b822);border:0;border-radius:4px;cursor:pointer;line-height:1.2}
 #cap .htb i{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:#5a3d00}
 #cap .htb.none{background:#3a3f4c;color:#fff}
+/* 字幕の残り時間(→docs/14) */
+#cap .cap-bar{display:block;width:70%;height:3px;margin-top:6px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
+#cap .cap-bar u{display:block;height:100%;width:100%;background:#f0cf75}
 
 /* =========================================================================
    wcc_f — テーマ(→docs/07 §7.8)
@@ -1621,6 +1624,24 @@ body.th-bk{
 .th-bk #club{background:radial-gradient(120% 45% at 100% 0%,rgba(224,31,61,.16),transparent 62%),
   radial-gradient(90% 40% at 0% 100%,rgba(212,168,67,.07),transparent 60%),
   repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 11px),var(--t-paper);background-attachment:fixed}
+
+/* 第2回ブラッシュアップ 第1弾(→docs/14): 暗いテーマでも、試合の盤面の札は白い印刷物なので文字は濃い色 */
+.th-bk .cd{--t-ink:#121212;--t-ink2:#3a3a3a;--t-mute:#6d675e;color:#121212}
+/* 点灯中は全ボタン共通で「白い縁 + 右上のランプ」(中央のプレスは普段から赤なので、色だけでは区別できない →docs/14) */
+#pad .tac.on,.btn-keeper.on{outline:2px solid #fff;outline-offset:1px}
+#pad .tac{position:relative}
+#pad .tac.on::before,.btn-keeper.on::before{content:"";position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;
+  background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.8)}
+.btn-keeper{position:relative}
+.btn-keeper.on::after{content:"ON";position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);font-size:9px;font-weight:900;letter-spacing:.1em;color:#f0cf75}
+/* TOUCH は白く大きく点滅。押しても進まない間は薄く止める(→docs/14) */
+#scene .touch,.th-wr #scene .touch{color:#fff;font-size:15px;text-shadow:0 0 8px rgba(255,255,255,.55),0 2px 0 rgba(0,0,0,.6)}
+#scene .touch.sm,.th-wr #scene .touch.sm{font-size:14px}
+#scene.lk .touch{opacity:.2;animation:none}
+/* 新聞の見出し: 長音や小さい仮名を行頭に置かない */
+#club .paper{line-break:strict}
+/* 選んだ練習(決定の前)。赤い縁と左の帯 */
+#club .tr.on,.th-wr #club .tr.on,.th-bk #club .tr.on{border-color:var(--t-sub);background:linear-gradient(90deg,rgba(224,31,61,.28),rgba(224,31,61,.08));box-shadow:inset 4px 0 0 var(--t-sub)}
 </style>
 </head>
 <body>
@@ -6746,7 +6767,8 @@ function drawBall(c,unit,lift){
 const BD={ cards:null, bench:null, board:null, map:new Map(), drag:null, pendingIn:new Set(), kp:null };
 const TAP_PX=7;                              // これ未満の動きはタップとみなす
 const LONG_MS=420;                           // これだけ動かさずに押していたら長押し
-const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量
+const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量(動いた量に合わせて徐々に)
+const DRAG_PX=12;                            // 盤面のカードは、これ以上動かしたらドラッグ(指ブレで位置が変わらないように →docs/14)
 
 // 盤面の % 座標 [左, 上]。端のカードが切れないよう内側に寄せる(SQUAD の盤面と同じ考え方 →clubui.js sqPos)
 const bdPos=(h,x)=>[9+x*0.82, 93-h*86];
@@ -6863,16 +6885,20 @@ function bindFieldDrag(el,id,gk){
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
-    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false, long:false };
+    const r=el.getBoundingClientRect();
+    // 掴んだ点とカードの中心のずれ(カードが指の下へ跳ばないように)
+    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, gx:e.clientX-(r.left+r.width/2), gy:e.clientY-(r.top+r.height/2), moved:false, long:false };
     d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; el.classList.remove("drag"); showInfo(id); } },LONG_MS);
     el.classList.add("drag");
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
-    if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
+    const dist=Math.hypot(e.clientX-d.x0,e.clientY-d.y0);
+    if(!d.moved&&dist<DRAG_PX)return;
     if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
-    const raw=bdInv(e.clientX,e.clientY-LIFT_PX), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
+    const lift=Math.min(LIFT_PX,(dist-DRAG_PX)*1.2);
+    const raw=bdInv(e.clientX-d.gx,e.clientY-d.gy-lift), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
     el.style.left=l+"%"; el.style.top=t+"%";
     const role=gk?"GK":roleAt(h,x);
@@ -7103,7 +7129,7 @@ function trainStepHtml(){
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
-      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
+      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
 }
 /** ② コミュニケーション */
@@ -7183,8 +7209,11 @@ function prepHtml(){
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
     '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+mabHtml()+'</div>'+
     '<footer class="prep-bot">'+
-      (st==="train"?'<span class="dim">練習を1つ選ぶと次へ進む</span>'
-        :(commLeft(CL.S)?'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>':'<button class="btn btn-main" data-act="play">試合へ</button>'))+
+      (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
+          ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
+          :'<span class="dim">練習と強さを選んで決定する</span>')
+        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="play">残り '+commLeft(CL.S)+' 回を使わずに試合へ(もう一度押す)</button>'
+            :'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="play">試合へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>';
   return h;
@@ -7853,6 +7882,7 @@ function onClubClick(e){
   if(!b||b.disabled)return;
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
+  if(act!=="play")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
@@ -7884,15 +7914,19 @@ function onClubClick(e){
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }
-  if(act==="play")startFixture();
+  if(act==="play"){
+    if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
+    CL.armPlay=false; startFixture();
+  }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
-  else if(act==="train"){
-    const o=trainOptions(S)[+b.dataset.i];
-    CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,+b.dataset.i,CL.int));
+  else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)
+  else if(act==="trgo"&&CL.trSel!=null){
+    const i=CL.trSel, o=trainOptions(S)[i]; CL.trSel=null;
+    CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,i,CL.int));
     CL.comm=null; CL.pick=[]; save(); showClub();
   }
-  else if(act==="int"){ CL.int=+b.dataset.i; showClub(true); }
+  else if(act==="int"){ CL.int=+b.dataset.i; if(CL.int===-1)CL.trSel=null; showClub(true); }
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ CL.cs=b.dataset.v; showClub(true); }
@@ -8270,7 +8304,8 @@ function sceneShow(cls,html,opt){
   SC.el.innerHTML='<div class="wipe"></div><div class="dots"></div><div class="slab s1"></div><div class="slab s2"></div>'+html;
   SC.next=opt.next||null;
   SC.busy=!!opt.lock;
-  if(opt.lock)setTimeout(()=>{ SC.busy=false; },opt.lock);
+  // 押しても進まない間は TOUCH を薄く(→docs/14)
+  if(opt.lock){ SC.el.classList.add("lk"); setTimeout(()=>{ SC.busy=false; SC.el.classList.remove("lk"); },opt.lock); }
   if(opt.auto&&opt.next)SC.timer=setTimeout(()=>{ if(SC.next){ const f=SC.next; SC.next=null; f(); } },opt.auto);
 }
 function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; SC.el.innerHTML=""; }
@@ -8326,7 +8361,7 @@ function sceneMatchup(fx,go){
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',
-    { next:go, auto:4200, lock:700 });
+    { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
 }
 /** 対戦カードの「どっ」 */
@@ -8482,10 +8517,10 @@ function sceneCard(id,isNew,go){
   };
   // 引く・破るは、なぞっても押しても進む(なぞる向き: 引く = 下、破る = 横)
   const pack=SC.el.querySelector(".pk-pack"); let p0=null;
-  pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; });
+  pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; SC.packMoved=false; });   // 前のなぞりの印は押すたびに消す(→docs/14)
   pack.addEventListener("pointermove",e=>{
     if(!p0)return; const dx=e.clientX-p0.x, dy=e.clientY-p0.y, st=SC.card&&SC.card.stage;
-    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ p0=null; SC.packMoved=true; packStep(); }
+    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ if(SC.busy)return; p0=null; SC.packMoved=true; packStep(); }   // 待ちの間のなぞりは、明けてから効く
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
   sndUi("tap");
@@ -8632,8 +8667,9 @@ function wakeLock(on){
  */
 function overlay(title,body,ms,fn){
   const c=$("cap");
-  c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'');
-  c.className="on"; G.onOv=fn; G.capT=ms;
+  // ms>0 の字幕には残り時間のバー(ハーフタイムの指示を読んでいる間に時間が切れても分かるように →docs/14)
+  c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'')+(ms>0?'<i class="cap-bar"><u></u></i>':'');
+  c.className="on"; G.onOv=fn; G.capT=ms; G.capT0=ms;
 }
 const capOn=()=>$("cap").classList.contains("on");
 /** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
@@ -8914,7 +8950,7 @@ function endReplay(){
 function skipReplay(){ if(!G.replay)return; endReplay(); G.hold=200; sndUi("tap"); }
 function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
-  if(G.capT>0){ G.capT-=dt; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
+  if(G.capT>0){ G.capT-=dt; const u=$("cap").querySelector(".cap-bar u"); if(u)u.style.width=Math.max(0,G.capT/G.capT0*100)+"%"; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
   if(G.playing&&!capOn())advance(dt*G.speed);
   // 監督室や場面に隠れている間は描かない(電池)。試合の画面が見えている間だけ
   const hidden=document.getElementById("club").classList.contains("on")||document.getElementById("scene").classList.contains("on");

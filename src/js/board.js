@@ -9,7 +9,8 @@
 const BD={ cards:null, bench:null, board:null, map:new Map(), drag:null, pendingIn:new Set(), kp:null };
 const TAP_PX=7;                              // これ未満の動きはタップとみなす
 const LONG_MS=420;                           // これだけ動かさずに押していたら長押し
-const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量
+const LIFT_PX=34;                            // ドラッグ中、カードを指より上に出す量(動いた量に合わせて徐々に)
+const DRAG_PX=12;                            // 盤面のカードは、これ以上動かしたらドラッグ(指ブレで位置が変わらないように →docs/14)
 
 // 盤面の % 座標 [左, 上]。端のカードが切れないよう内側に寄せる(SQUAD の盤面と同じ考え方 →clubui.js sqPos)
 const bdPos=(h,x)=>[9+x*0.82, 93-h*86];
@@ -126,16 +127,20 @@ function bindFieldDrag(el,id,gk){
     if(BD.drag)return;
     e.preventDefault();
     try{ el.setPointerCapture(e.pointerId); }catch(_){}
-    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, moved:false, long:false };
+    const r=el.getBoundingClientRect();
+    // 掴んだ点とカードの中心のずれ(カードが指の下へ跳ばないように)
+    const d=BD.drag={ id, el, pid:e.pointerId, x0:e.clientX, y0:e.clientY, gx:e.clientX-(r.left+r.width/2), gy:e.clientY-(r.top+r.height/2), moved:false, long:false };
     d.timer=setTimeout(()=>{ if(BD.drag===d&&!d.moved){ d.long=true; el.classList.remove("drag"); showInfo(id); } },LONG_MS);
     el.classList.add("drag");
   });
   el.addEventListener("pointermove",e=>{
     const d=BD.drag;
     if(!d||d.id!==id||d.pid!==e.pointerId||d.bench||d.long)return;
-    if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<TAP_PX)return;
+    const dist=Math.hypot(e.clientX-d.x0,e.clientY-d.y0);
+    if(!d.moved&&dist<DRAG_PX)return;
     if(!d.moved){ d.moved=true; clearTimeout(d.timer); hideInfo(); }
-    const raw=bdInv(e.clientX,e.clientY-LIFT_PX), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
+    const lift=Math.min(LIFT_PX,(dist-DRAG_PX)*1.2);
+    const raw=bdInv(e.clientX-d.gx,e.clientY-d.gy-lift), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
     el.style.left=l+"%"; el.style.top=t+"%";
     const role=gk?"GK":roleAt(h,x);

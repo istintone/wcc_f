@@ -82,8 +82,9 @@ function wakeLock(on){
  */
 function overlay(title,body,ms,fn){
   const c=$("cap");
-  c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'');
-  c.className="on"; G.onOv=fn; G.capT=ms;
+  // ms>0 の字幕には残り時間のバー(ハーフタイムの指示を読んでいる間に時間が切れても分かるように →docs/14)
+  c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'')+(ms>0?'<i class="cap-bar"><u></u></i>':'');
+  c.className="on"; G.onOv=fn; G.capT=ms; G.capT0=ms;
 }
 const capOn=()=>$("cap").classList.contains("on");
 /** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
@@ -364,7 +365,7 @@ function endReplay(){
 function skipReplay(){ if(!G.replay)return; endReplay(); G.hold=200; sndUi("tap"); }
 function frame(ts){
   const dt=Math.min(100,ts-(G.last||ts)); G.last=ts;
-  if(G.capT>0){ G.capT-=dt; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
+  if(G.capT>0){ G.capT-=dt; const u=$("cap").querySelector(".cap-bar u"); if(u)u.style.width=Math.max(0,G.capT/G.capT0*100)+"%"; if(G.capT<=0)closeOverlay(); }   // 字幕は実時間で数える(倍速に関わらず数秒)
   if(G.playing&&!capOn())advance(dt*G.speed);
   // 監督室や場面に隠れている間は描かない(電池)。試合の画面が見えている間だけ
   const hidden=document.getElementById("club").classList.contains("on")||document.getElementById("scene").classList.contains("on");

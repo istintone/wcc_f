@@ -1047,3 +1047,21 @@ body.th-bk{
 .th-bk #club{background:radial-gradient(120% 45% at 100% 0%,rgba(224,31,61,.16),transparent 62%),
   radial-gradient(90% 40% at 0% 100%,rgba(212,168,67,.07),transparent 60%),
   repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 11px),var(--t-paper);background-attachment:fixed}
+
+/* 第2回ブラッシュアップ 第1弾(→docs/14): 暗いテーマでも、試合の盤面の札は白い印刷物なので文字は濃い色 */
+.th-bk .cd{--t-ink:#121212;--t-ink2:#3a3a3a;--t-mute:#6d675e;color:#121212}
+/* 点灯中は全ボタン共通で「白い縁 + 右上のランプ」(中央のプレスは普段から赤なので、色だけでは区別できない →docs/14) */
+#pad .tac.on,.btn-keeper.on{outline:2px solid #fff;outline-offset:1px}
+#pad .tac{position:relative}
+#pad .tac.on::before,.btn-keeper.on::before{content:"";position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;
+  background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.8)}
+.btn-keeper{position:relative}
+.btn-keeper.on::after{content:"ON";position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);font-size:9px;font-weight:900;letter-spacing:.1em;color:#f0cf75}
+/* TOUCH は白く大きく点滅。押しても進まない間は薄く止める(→docs/14) */
+#scene .touch,.th-wr #scene .touch{color:#fff;font-size:15px;text-shadow:0 0 8px rgba(255,255,255,.55),0 2px 0 rgba(0,0,0,.6)}
+#scene .touch.sm,.th-wr #scene .touch.sm{font-size:14px}
+#scene.lk .touch{opacity:.2;animation:none}
+/* 新聞の見出し: 長音や小さい仮名を行頭に置かない */
+#club .paper{line-break:strict}
+/* 選んだ練習(決定の前)。赤い縁と左の帯 */
+#club .tr.on,.th-wr #club .tr.on,.th-bk #club .tr.on{border-color:var(--t-sub);background:linear-gradient(90deg,rgba(224,31,61,.28),rgba(224,31,61,.08));box-shadow:inset 4px 0 0 var(--t-sub)}

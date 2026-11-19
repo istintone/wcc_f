@@ -22,7 +22,8 @@ function sceneShow(cls,html,opt){
   SC.el.innerHTML='<div class="wipe"></div><div class="dots"></div><div class="slab s1"></div><div class="slab s2"></div>'+html;
   SC.next=opt.next||null;
   SC.busy=!!opt.lock;
-  if(opt.lock)setTimeout(()=>{ SC.busy=false; },opt.lock);
+  // 押しても進まない間は TOUCH を薄く(→docs/14)
+  if(opt.lock){ SC.el.classList.add("lk"); setTimeout(()=>{ SC.busy=false; SC.el.classList.remove("lk"); },opt.lock); }
   if(opt.auto&&opt.next)SC.timer=setTimeout(()=>{ if(SC.next){ const f=SC.next; SC.next=null; f(); } },opt.auto);
 }
 function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; SC.el.innerHTML=""; }
@@ -78,7 +79,7 @@ function sceneMatchup(fx,go){
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',
-    { next:go, auto:4200, lock:700 });
+    { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
 }
 /** 対戦カードの「どっ」 */
@@ -234,10 +235,10 @@ function sceneCard(id,isNew,go){
   };
   // 引く・破るは、なぞっても押しても進む(なぞる向き: 引く = 下、破る = 横)
   const pack=SC.el.querySelector(".pk-pack"); let p0=null;
-  pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; });
+  pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; SC.packMoved=false; });   // 前のなぞりの印は押すたびに消す(→docs/14)
   pack.addEventListener("pointermove",e=>{
     if(!p0)return; const dx=e.clientX-p0.x, dy=e.clientY-p0.y, st=SC.card&&SC.card.stage;
-    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ p0=null; SC.packMoved=true; packStep(); }
+    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ if(SC.busy)return; p0=null; SC.packMoved=true; packStep(); }   // 待ちの間のなぞりは、明けてから効く
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
   sndUi("tap");

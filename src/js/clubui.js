@@ -130,7 +130,7 @@ function trainStepHtml(){
     '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
-      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+'" data-act="train" data-i="'+i+'">'+
+      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
 }
 /** ② コミュニケーション */
@@ -210,8 +210,11 @@ function prepHtml(){
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
     '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+mabHtml()+'</div>'+
     '<footer class="prep-bot">'+
-      (st==="train"?'<span class="dim">練習を1つ選ぶと次へ進む</span>'
-        :(commLeft(CL.S)?'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>':'<button class="btn btn-main" data-act="play">試合へ</button>'))+
+      (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
+          ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
+          :'<span class="dim">練習と強さを選んで決定する</span>')
+        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="play">残り '+commLeft(CL.S)+' 回を使わずに試合へ(もう一度押す)</button>'
+            :'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="play">試合へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>';
   return h;
@@ -880,6 +883,7 @@ function onClubClick(e){
   if(!b||b.disabled)return;
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
+  if(act!=="play")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
@@ -911,15 +915,19 @@ function onClubClick(e){
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }
-  if(act==="play")startFixture();
+  if(act==="play"){
+    if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
+    CL.armPlay=false; startFixture();
+  }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
-  else if(act==="train"){
-    const o=trainOptions(S)[+b.dataset.i];
-    CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,+b.dataset.i,CL.int));
+  else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)
+  else if(act==="trgo"&&CL.trSel!=null){
+    const i=CL.trSel, o=trainOptions(S)[i]; CL.trSel=null;
+    CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,i,CL.int));
     CL.comm=null; CL.pick=[]; save(); showClub();
   }
-  else if(act==="int"){ CL.int=+b.dataset.i; showClub(true); }
+  else if(act==="int"){ CL.int=+b.dataset.i; if(CL.int===-1)CL.trSel=null; showClub(true); }
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ CL.cs=b.dataset.v; showClub(true); }
