@@ -44,6 +44,7 @@ function say(text,goal){
   const t=$("ticker"); t.textContent=text; t.classList.toggle("goal",!!goal);
 }
 function updateCtl(){
+  if(G.M&&$("btnShoot"))$("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
   $("btnSpeed").textContent="×"+G.speed;
   $("subInfo").textContent="交代 "+(G.M.home.subs+BD.pendingIn.size)+"/"+TUNING.squad.subMax;
   $("btnKp").classList.toggle("on",G.kpMode);
@@ -209,6 +210,10 @@ function startEvent(ev){
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
     return;
   }
+  if(ev.type==="shootCall"){
+    if(ev.side==="H"){ const f=$("flash"); f.innerHTML='<b>SHOOT!</b>'; f.className="on mine sh"; G.flash=true; G.hold=420; }
+    return;
+  }
   if(ev.type==="injury"){
     say(tag(ev)+nm(ev.by)+"が負傷(このまま出ると能力が落ちる)"+(ev.side==="H"?" ・ 控えと交代できる":""),ev.side==="H");
     sndAww(); syncBoard(G.M); G.hold=ev.side==="H"?1100:500;
@@ -303,6 +308,7 @@ function advance(dt){
     if(G.M.over)return;
     if(G.stopAt&&matchMin(G.M)>=G.stopAt){ G.stopAt=0; setPlaying(false); return; }
     G.queue=stepMatch(G.M);
+    $("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
     BD.kp=null;                              // KP の指定はエンジンに渡った
     updateStyleBar();
     syncBoard(G.M);
@@ -347,10 +353,12 @@ function boot(){
     G.speed=SPEEDS[(SPEEDS.indexOf(G.speed)+1)%SPEEDS.length]; updateCtl();
     if(G.speed>1&&G.replay){ endReplay(); G.hold=200; }   // 倍速にしたらリプレイは飛ばす
   });
+  // SHOOT(→docs/08 §8.12): 押すと「撃て」が残り、光っている間にもう一度押すと取り消し
   $("btnShoot").addEventListener("click",()=>{
-    orderMatch(G.M,"H",{ type:"shoot" });
-    const b=$("btnShoot"); b.classList.add("armed");
-    setTimeout(()=>b.classList.remove("armed"),700);
+    const armed=G.M.home.shootOrder>0||$("btnShoot").classList.contains("armed");
+    orderMatch(G.M,"H",{ type:armed?"shootCancel":"shoot" });
+    $("btnShoot").classList.toggle("armed",!armed);
+    say(armed?"シュートの指示を取り消した":"シュートを狙え(敵陣の深い所で撃つ)");
   });
   $("btnKp").addEventListener("click",()=>{
     if(G.M.over)return;
@@ -389,7 +397,14 @@ function boot(){
   document.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
   // iPhone は電話・通知・裏に回ったあと音が止まる(interrupted)。触ったら戻す
   document.addEventListener("pointerdown",()=>{ if(SND.ctx&&SND.ctx.state!=="running")sndUnlock(); },true);
-  document.getElementById("club").addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
+  // 監督ライセンス・監督契約の入力欄は、打つたびに下書き(CL.draft)へ。日付・決定のときは画面を作り直してプレビューを更新
+  document.getElementById("club").addEventListener("input",e=>{
+    const f=e.target.dataset&&e.target.dataset.f; if(!f)return;
+    const d=CL.draft||(CL.draft={}), v=e.target.value;
+    if(f==="mname"||f==="birth")d[f]=v; else if(d.c){ if(f==="cname")d.c.name=v; else if(f==="cshort")d.c.short=v; }
+  });
+  document.getElementById("club").addEventListener("change",e=>{
+    const f=e.target.dataset&&e.target.dataset.f; if(f==="birth"||f==="cname"){ showClub(true); return; } if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
   loadStoredPack();                           // 端末に保存した実名パック(→settings.js)
   // ホーム画面に追加した版(http/https で配ったとき)はオフラインでも動くようにする。file:// では何もしない
   if(/^https?:$/.test(location.protocol)&&"serviceWorker" in navigator)

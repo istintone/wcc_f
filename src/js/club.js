@@ -148,7 +148,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz() };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} } };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -275,6 +275,8 @@ function playerDef(S){
   def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
+  if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
+  def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
   return def;
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
@@ -374,6 +376,9 @@ function applyResult(S,W,fx,res){
     if(S.sec.ev==null&&mulberry32((S.seed^hashStr("sev:"+S.term+":"+S.played))>>>0)()<TUNING.sec.eventP)
       S.sec.ev=hashStr("sevk:"+S.term+":"+S.played)%SEC_EVENTS.length;
   }
+  // 監督能力の熟練度: セットして試合をした能力に +1(ランクが上がったら知らせる)
+  if(S.mab)for(const k of S.mab.set){ const r0=mabRank(S,k); S.mab.xp[k]=(S.mab.xp[k]||0)+1; const r1=mabRank(S,k);
+    if(r1>r0)out.push("🎖 監督能力「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));
@@ -415,10 +420,14 @@ function newTerm(S,W){
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
-  S.ts=newTermStats(); S.money0=S.money;
+  // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
+  // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
+  S.money=0; S.ts=newTermStats(); S.money0=0;
   S.league=newLeague(S,W); S.cups=newCups();
   if(S.sec){ S.sec.chosen=false; S.sec.ev=null; }   // 任期の始めに秘書を選び直す(親密度は残る)
-  if(S.biz){ S.biz.earn=0; S.biz.offer=null; spRenew(S); }   // スタジアム・施設・ファンはクラブに残る。スポンサーは選び直す
+  if(S.biz){ S.biz=newBiz(); spRenew(S); }      // クラブの持ち物は元に戻す。スポンサーは選び直す
+  S.tsetChosen=false;                           // 任期の始めに称号をセットし直す(→docs/10 §10.2 B)
+  S.club=null;                                  // 新しい任期は新しいクラブ。監督契約で決め直す(→docs/10 §10.2 A)
 }
 
 /* ---------- 保存 ---------- */
@@ -486,6 +495,10 @@ function migrate(S){
   if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
+  if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
+  if(!S.mab)S.mab={ set:[], xp:{} };
+  if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
+  if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
   if(!S.biz){ S.biz=newBiz(); S.biz.earn=Math.max(0,S.money-(S.money0||0)); }   // それまでの賞金は稼いだ額に数える
   if(!S.biz.boostRank||(S.biz.sp&&!S.biz.sp.ind)){ S.biz.boost={}; S.biz.boostRank={}; S.biz.sp=null; S.biz.offers=null; }   // 前の形のスポンサーは選び直す
   if(!S.biz.sp&&!S.biz.offers&&!S.termOver)spRenew(S);
@@ -686,4 +699,46 @@ function spAfterMatch(S,fx,r,out){
     }else if((m.t==="win"||m.t==="goals")&&m.st>=m.m){ m.fail=true; out.push("ミッション「"+missionTxt(m)+"」は期限切れ"); }
   }
   return pay;
+}
+
+/* ---------- 監督ライセンスと監督契約(→docs/10 §10.2 A) ----------
+ * 監督ライセンス S.mgr = { name, birth:"YYYY-MM-DD" | null, ani:動物 | null }。初回だけ登録し、**あとから変えられない**(本家と同じ)
+ * 監督契約 S.club = { name, short, town, color, emblem:{ shape, field, crest, orn, lay, text, home, away } | null }。初回と新しい任期の始めに決める */
+const TOWNS=["ミナト市","ホクト市","アオバ市","カザミ市","セト市","ソラノ市","アカネ市","シラユキ市","ハヤテ市","ミドリ市","コガネ市","ツバサ市"];
+/** 監督契約の前の、今までのクラブ(古いセーブ・途中の任期) */
+function defaultClub(){ return { name:"アズーロFC", short:"AZR", town:TOWNS[0], color:TEAMS.azr.color, emblem:null }; }
+/** 監督ライセンスを登録する。名前は必須、生年月日は任意。登録したら変えられない */
+function registerManager(S,name,birth){
+  const nm=String(name||"").trim().slice(0,12);
+  if(!nm||S.mgr)return false;
+  let ani=null;
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(birth||"");
+  if(m)ani=aniOfDate(+m[1],+m[2],+m[3]);
+  S.mgr={ name:nm, birth:m?birth:null, ani };
+  return true;
+}
+/** 監督契約を結ぶ。クラブ名は必須。略称は英字3字(無ければクラブ名から作る) */
+function signClub(S,o){
+  const name=String(o.name||"").trim().slice(0,10);
+  if(!name)return false;
+  const short=(String(o.short||"").toUpperCase().replace(/[^A-Z]/g,"")||clubAbbr(name)).slice(0,3).padEnd(3,"X");
+  S.club={ name, short, town:TOWNS.includes(o.town)?o.town:TOWNS[0], color:/^#[0-9a-fA-F]{6}$/.test(o.color||"")?o.color:TEAMS.azr.color,
+    emblem:o.emblem||null };
+  return true;
+}
+/** 自分のクラブ(試合以外の画面で使う)。監督契約の前はアズーロFC */
+const myTeam=S=>Object.assign({},TEAMS.azr,S&&S.club?{ name:S.club.name, short:S.club.short, color:S.club.color }:{});
+
+/* ---------- 監督能力(→docs/10 §10.2 C) ----------
+ * S.mab = { set:[セットした能力の id(最大3)], xp:{ id: 使った試合数 } }。監督のデータなので任期をまたいで残る */
+function mabRank(S,k){ const t=TUNING.mab.rankAt, x=(S.mab&&S.mab.xp[k])||0; let r=0; while(r+1<t.length&&x>=t[r+1])r++; return r; }
+const mabVal=(S,k)=>TUNING.mab.base[k]*TUNING.mab.rankK[mabRank(S,k)];
+/** 試合に渡す効き目 { id: 値 } */
+function mabOf(S){ const o={}; for(const k of (S.mab&&S.mab.set)||[])if(TUNING.mab.base[k]!=null)o[k]=mabVal(S,k); return o; }
+/** セットを入れ替える(最大 max まで。もう一度押すと外す) */
+function toggleMab(S,k){
+  const set=S.mab.set, i=set.indexOf(k);
+  if(i>=0){ set.splice(i,1); return true; }
+  if(!MAB.some(x=>x.id===k)||set.length>=TUNING.mab.max)return false;
+  set.push(k); return true;
 }

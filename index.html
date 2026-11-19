@@ -1354,6 +1354,42 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 /* 準備の盤面は少し低く(GK と控えまで画面に収める) */
 #club .cm-pitch{aspect-ratio:100/96}
 #club .cm-pitch .cmt{padding-bottom:2px}
+
+/* 重なったカードの効き目(→docs/08 §8.12) */
+#club .kdet .dup{margin:4px 0 0;font-size:11.5px;font-weight:700;color:#1d5fbf}
+
+/* ---- 第4弾(→docs/09) ---- */
+#club .road p{display:flex;align-items:center;gap:6px;margin:5px 0;font-size:12px}
+#club .road p b{flex:none} #club .road p span{flex:1;min-width:0;font-size:10.5px;color:var(--t-mute);text-align:right}
+#club .road p.ok span{color:#1f8a4c;font-weight:700}
+/* SHOOT: 指示が生きている間は光る */
+.th-wr .btn-shoot.armed,.btn-shoot.armed{box-shadow:0 0 0 3px #fff,0 0 22px 6px rgba(255,90,70,.95);animation:shootGlow .6s ease-in-out infinite alternate}
+@keyframes shootGlow{to{box-shadow:0 0 0 3px #ffe28a,0 0 30px 10px rgba(255,140,60,.95)}}
+#flash.sh b{font-size:30px}
+
+/* ---- 監督ライセンス・監督契約(→docs/10 §10.2 A) ---- */
+#club .lic label,#club .contract label{display:block;margin:8px 0;font-size:12px;font-weight:700;color:var(--t-ink2)}
+#club .lic input,#club .contract input{display:block;width:100%;margin-top:3px;padding:8px 10px;font-size:15px;border:1px solid var(--t-rule);border-radius:4px;background:#fff;color:var(--t-ink)}
+#club .ce-prev{display:flex;align-items:center;gap:12px;padding:8px;background:var(--t-paper2);border-radius:6px}
+#club .ce-prev b{display:block;font-size:17px} #club .ce-prev small{display:block;font-size:11px;color:var(--t-mute)}
+#club .ce-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:6px 0}
+#club .ce-row i{flex:0 0 100%;font-style:normal;font-size:11px;font-weight:700;color:var(--t-mute)}
+#club .ce{padding:4px 8px;font-size:11.5px;border:1px solid var(--t-rule);border-radius:3px;background:#fff;color:var(--t-ink);cursor:pointer}
+#club .ce.on{background:var(--t-sub);border-color:var(--t-sub);color:#fff}
+#club .ce.sw{width:26px;height:26px;padding:0;background:var(--sw);border-radius:50%}
+#club .ce.sw.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--t-sub)}
+#club .contract h4{margin:12px 0 2px;font-size:13px}
+#club .ce-acts{display:flex;gap:8px;margin-top:10px} #club .ce-acts .btn{flex:1}
+
+/* 称号のセット(→docs/10 §10.2 B) */
+#club .tset .sp{display:block;width:100%;text-align:left;margin:6px 0;padding:9px 12px;background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule);border-left:4px solid var(--t-gold);cursor:pointer}
+#club .tset .sp b{font-size:14px} #club .tset .sp i{display:block;margin-top:2px;font-style:normal;font-size:11.5px;color:var(--t-ink2)}
+
+/* 監督能力(→docs/10 §10.2 C) */
+#club .mabs .mab{display:grid;grid-template-columns:1fr auto;gap:0 6px;width:100%;text-align:left;margin:4px 0;padding:7px 10px;background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule);border-radius:4px;cursor:pointer}
+#club .mabs .mab b{font-size:13px} #club .mabs .mab i{font-style:normal;font-family:"Oswald",sans-serif;font-size:12px;color:var(--t-gold)}
+#club .mabs .mab small{grid-column:1/3;font-size:10.5px;color:var(--t-mute)}
+#club .mabs .mab.on{border-color:var(--t-sub);box-shadow:inset 4px 0 0 var(--t-sub)}
 </style>
 </head>
 <body>
@@ -1448,7 +1484,7 @@ const TUNING={
           strayFloor:0.15, strayFull:0.42, strayPass:1.6, deepCarry:0.35,
           spread:{ same:8, in:8, out:6, switch:8, box:9, any:0 } },
   // シュート(→docs/02 §2.6)
-  shot:{ minH:0.62, forceH:0.55, base:0.03, depth:0.74, wideCut:0.6,
+  shot:{ orderN:5, minH:0.62, forceH:0.55, base:0.03, depth:0.74, wideCut:0.6,
          dead:0.50, minRange:0.12, angle:0.45,
          thBlock:1.25, accBase:0.50, accTec:0.40, accRange:0.55,
          rangePow:1.0, gapPow:0.45, thGoal:1.13,
@@ -1569,6 +1605,9 @@ const TUNING={
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
+         // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
+         //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
+         dup:{ indK:0.1, max:5, awakeP:[0.7,0.25,0.05], awakeStep:[-0.08,0.03,0.05] },
          sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
               // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
               //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
@@ -1629,7 +1668,19 @@ const TUNING={
              eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
                    loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
                    noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
-        chanceK:0.8, cool:8, facCost:[20,50,100], facK:[1,1.1,1.2,1.3], medFat:[1,0.9,0.8,0.7], medHeal:[0,0.1,0.2,0.3] },
+        chanceK:0.8, cool:8, facCost:[20,50,100,160,240], facK:[1,1.1,1.2,1.3,1.4,1.5], medFat:[1,0.9,0.8,0.7,0.6,0.5], medHeal:[0,0.1,0.2,0.3,0.4,0.5] },
+  // 称号のセット(→docs/10 §10.2 B)。favorW … 系統に合う特殊練習の重み / 称号ごとの効き目:
+  //   spK 特殊練習が出る率の倍率 / cupKeep 大会で負けたときにやる気が下がる率の倍率 / qOk ★突破の成功率に足す / indK 個人練習の経験の倍率
+  //   meetK ミーティングの経験の倍率 / loungeOk ラウンジの大成功に足す / giant 格上に勝ったとき出た選手のやる気が上がる率 / setK セットプレイの伸びの倍率
+  //   youngK 21歳以下の伸びやすさの倍率 / benchK 控えのやる気が下がる率の倍率 / winUpK 勝ってやる気が上がる率の倍率
+  tset:{ favorW:4, legend:{ spK:1.5 }, emperor:{ cupKeep:0.5 }, master:{ qOk:0.07 }, factory:{ indK:1.1 }, magic:{ meetK:1.1 },
+    heir:{ loungeOk:0.08 }, assassin:{ giant:0.5 }, tactician:{ setK:1.2 }, native:{ youngK:1.1 }, fickle:{ benchK:0.5 }, fighter:{ winUpK:1.3 } },
+  // 監督能力(→docs/10 §10.2 C)。max … 1試合にセットできる数 / rankAt … ランク(I・II・III・マスター)に要る使った試合数 / rankK … ランクごとの効き目の倍率
+  //   base … ランク I の効き目(MAB の説明を参照)
+  mab:{ max:3, rankAt:[0,10,30,60], rankK:[1,1.25,1.5,2],
+    // 全員・グループの力に掛かるもの(center・side・dfc・morale・spurt)は、ほんの少しでも勝敗に大きく響くので小さくしてある
+    base:{ center:0.005, side:0.008, counter:0.08, post:0.05, duel:0.05, hotline:0.017, leader:0.05, half:0.01, dfc:0.007,
+           stamina:0.017, morale:0.002, setpiece:0.05, saving:0.014, spurt:0.01 } },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
   sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
@@ -1949,6 +2000,25 @@ const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"ア
   UZB:"ウズベキスタン", KOR:"韓国", JPN:"日本" };
 /** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
 const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
+
+/** 監督能力(→docs/10 §10.2 C)。名前は FOOTISTA 2021 にあったもの(調べて分かった10種 + 士気向上)と、wcc_f で足した3種 */
+const MAB=[
+  { id:"center",   name:"センターアタック強化", desc:"中央の選手(前線・中盤)の力が少し上がる" },
+  { id:"side",     name:"サイドアタック強化",   desc:"サイドの選手の力が少し上がる" },
+  { id:"counter",  name:"カウンターアタック強化", desc:"奪ってすぐの速い攻めが通りやすい" },
+  { id:"post",     name:"ポストプレイ強化",     desc:"FW がボールを受けやすく、空中戦に強い" },
+  { id:"duel",     name:"デュエル強化",         desc:"シュートを防ぐ・ボールを追う力が上がる" },
+  { id:"hotline",  name:"クラブホットライン強化", desc:"チャンスメイクのパスが効く" },
+  { id:"leader",   name:"リーダーシップ",       desc:"KP のスタイルの効き目が上がる" },
+  { id:"half",     name:"ハーフタイムケア",     desc:"ハーフタイムにスタミナが少し多く戻る" },
+  { id:"dfc",      name:"DFコーチング",         desc:"DF の力が少し上がる" },
+  { id:"stamina",  name:"スタミナコントロール", desc:"スタミナが減りにくい" },
+  { id:"morale",   name:"士気向上",             desc:"全員の力がほんの少し上がる" },
+  { id:"setpiece", name:"セットプレイ強化",     desc:"FK・CK・PK が決まりやすい" },
+  { id:"saving",   name:"セービング強化",       desc:"GK のセーブが上がる" },
+  { id:"spurt",    name:"ラストスパート",       desc:"75分以降、全員の力が上がる" }
+];
+const MAB_RANK=["I","II","III","マスター"];
 
 const CARDS={};
 CARD_ROWS.forEach(r=>{
@@ -2441,7 +2511,7 @@ function buildTeam(def,side){
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
     kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
-    ins:insOf({}), injK:def.injK!=null?def.injK:1,
+    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -2530,6 +2600,7 @@ function refreshFx(M,min){
     const D=otherOf(M,T), st=T.style?STYLES[T.style]:null, ds=D.style?STYLES[D.style]:null;
     // 相手のアンチキープレイヤーは、こちらのスタイルの効きを落とす
     T.rk=T.rk0*(ds&&ds.scope==="team"&&ds.gain.antiRank!=null?Math.max(0,1+(ds.gain.antiRank-1)*D.rk0):1);
+    if(T.mab.leader)T.rk*=1+T.mab.leader;          // 監督能力: リーダーシップ
     T.fx=teamFx(st,T.rk);
     const lineOff=T.lineOff=T.ins.line*TUNING.ins.line+(T.fx.push||0);   // カウンターは隊列を下げる
     T.lane=insLane(T.ins);
@@ -2546,6 +2617,19 @@ function refreshFx(M,min){
         if(lv)fx.all*=1+st.fx.team*lv*T.rk;
       }
       fx.all*=late;
+      // 監督能力(→docs/10 §10.2 C)。軽い上積みだけ
+      const B=T.mab, g=GROUP_OF[p.role], mid=p.x>=30&&p.x<=70;
+      if(B.center&&mid&&(g==="FW"||g==="MF"))fx.all*=1+B.center;
+      if(B.side&&!mid&&!p.gk)fx.all*=1+B.side;
+      if(B.post&&g==="FW"){ fx.recv*=1+B.post; fx.aerial*=1+B.post; }
+      if(B.duel){ fx.blk*=1+B.duel; fx.chase*=1+B.duel; }
+      if(B.hotline)fx.assist*=1+B.hotline;
+      if(B.dfc&&g==="DF")fx.all*=1+B.dfc;
+      if(B.stamina)fx.sta*=1-B.stamina;
+      if(B.morale)fx.all*=1+B.morale;
+      if(B.setpiece){ fx.fk*=1+B.setpiece; fx.ck*=1+B.setpiece; fx.pkK*=1+B.setpiece; }
+      if(B.saving&&p.gk)fx.gk*=1+B.saving;
+      if(B.spurt&&min>=75)fx.all*=1+B.spurt;
       if(p.gk){                                 // キーパーの指示: 高い位置で裏を処理する。ループに弱く、疲れる
         const I=TUNING.ins; p.up=T.ins.keeper?I.keeperH:0;
         if(T.ins.keeper){ fx.sweep*=I.keeperSweep; fx.lob*=I.keeperLob; fx.sta*=I.keeperSta; }
@@ -2754,7 +2838,8 @@ function applyOrders(M,t){
     for(const o of q){
       if(o.type==="move"){ const p=playerOf(T,o.id); if(p)placePlayer(p,o.h,o.x); }
       else if(o.type==="sub")doSub(M,T,o.out,o.in,t);
-      else if(o.type==="shoot")T.shootOrder=3;
+      else if(o.type==="shoot")T.shootOrder=TUNING.shot.orderN;      // 自分たちが持っている間、最大 orderN 手(→docs/08 §8.12)
+      else if(o.type==="shootCancel")T.shootOrder=0;
       else if(o.type==="ins")setIns(M,T,o,t);
       else if(o.type==="kp")changeKp(M,T,o.id,t);
     }
@@ -2889,7 +2974,7 @@ function stepMatch(M){
   if(M.ix===M.len1&&!M.ht){
     M.ht=true; M.phase="kickoff"; M.koSide="A"; M.set=null;
     for(const T of [M.home,M.away])for(const p of T.players){    // ハーフタイムで少し戻る
-      p.fat=Math.max(0,p.fat-TUNING.stam.htRest);
+      p.fat=Math.max(0,p.fat-TUNING.stam.htRest-(T.mab.half||0));   // 監督能力: ハーフタイムケア
       p.stam=clamp(1-p.fat,TUNING.stam.min,1);
     }
     M.events.push({ ix:M.ix, min:45, half:1, type:"halftime", hg:M.home.score, ag:M.away.score });
@@ -2928,10 +3013,11 @@ function stepMatch(M){
   const A=T.fx, Dt=D.fx, I=TUNING.ins, Y=TUNING.style;
   T.st.steps++;
   // 奪ってから何手目か・どこで奪ったか(カウンターが見る)
-  if(M.poss.side===B.side)M.poss.n++; else M.poss={ side:B.side, n:0, h0:h };
+  if(M.poss.side===B.side)M.poss.n++; else{ M.poss={ side:B.side, n:0, h0:h }; otherOf(M,T).shootOrder=0; }   // 奪われたら「撃て」は消える
   const fast=A.fastN!=null&&M.poss.n<A.fastN&&(A.fastZone==="own"?M.poss.h0<0.5:M.poss.h0>=0.5);
   if(!c.gk&&((T.shootOrder>0&&h>=TUNING.shot.forceH)||shotUrge(rng,h,x,c,A.urgeK))){
-    T.shootOrder=0;
+    const ordered=T.shootOrder>0&&h>=TUNING.shot.forceH; T.shootOrder=0;
+    if(ordered)push({ side:T.side, type:"shootCall" });   // 指示で撃った(画面に「SHOOT!」)
     shoot(M,rng,push,T,D,c,h,x,null,B.assist);
     return M.events.slice(from);
   }
@@ -2968,7 +3054,7 @@ function stepMatch(M){
     if(c.kp)tA*=(A.kpS||1)*(Dt.antiDuel!=null?Dt.antiDuel:1);
     if(strayOf(c,h,x)<Y.zoneNear)tA*=c.fx.zone;
     if(!high)tA*=1+T.lineOff*I.lineAtk;         // ラインが高いほど敵陣に人数が掛かる
-    if(ctr)tA*=I.counterK;                     // カウンター: 守備が整う前に攻め切る
+    if(ctr)tA*=I.counterK*(1+(T.mab.counter||0));   // カウンター: 守備が整う前に攻め切る(監督能力で上積み)
     if(rc){
       const lv=linkLv(T,c.id,rc.p.id);
       tA*=lv?1+TUNING.link.pass*lv*(A.linkK||1):(A.noLinkK||1);
@@ -3472,7 +3558,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz() };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} } };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -3599,6 +3685,8 @@ function playerDef(S){
   def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
+  if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
+  def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
   return def;
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
@@ -3698,6 +3786,9 @@ function applyResult(S,W,fx,res){
     if(S.sec.ev==null&&mulberry32((S.seed^hashStr("sev:"+S.term+":"+S.played))>>>0)()<TUNING.sec.eventP)
       S.sec.ev=hashStr("sevk:"+S.term+":"+S.played)%SEC_EVENTS.length;
   }
+  // 監督能力の熟練度: セットして試合をした能力に +1(ランクが上がったら知らせる)
+  if(S.mab)for(const k of S.mab.set){ const r0=mabRank(S,k); S.mab.xp[k]=(S.mab.xp[k]||0)+1; const r1=mabRank(S,k);
+    if(r1>r0)out.push("🎖 監督能力「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));
@@ -3739,10 +3830,14 @@ function newTerm(S,W){
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
-  S.ts=newTermStats(); S.money0=S.money;
+  // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
+  // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
+  S.money=0; S.ts=newTermStats(); S.money0=0;
   S.league=newLeague(S,W); S.cups=newCups();
   if(S.sec){ S.sec.chosen=false; S.sec.ev=null; }   // 任期の始めに秘書を選び直す(親密度は残る)
-  if(S.biz){ S.biz.earn=0; S.biz.offer=null; spRenew(S); }   // スタジアム・施設・ファンはクラブに残る。スポンサーは選び直す
+  if(S.biz){ S.biz=newBiz(); spRenew(S); }      // クラブの持ち物は元に戻す。スポンサーは選び直す
+  S.tsetChosen=false;                           // 任期の始めに称号をセットし直す(→docs/10 §10.2 B)
+  S.club=null;                                  // 新しい任期は新しいクラブ。監督契約で決め直す(→docs/10 §10.2 A)
 }
 
 /* ---------- 保存 ---------- */
@@ -3810,6 +3905,10 @@ function migrate(S){
   if(!FORMS[S.form])S.form=TEAMS.azr.form;
   if(!S.history)S.history=[];
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
+  if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
+  if(!S.mab)S.mab={ set:[], xp:{} };
+  if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
+  if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
   if(!S.biz){ S.biz=newBiz(); S.biz.earn=Math.max(0,S.money-(S.money0||0)); }   // それまでの賞金は稼いだ額に数える
   if(!S.biz.boostRank||(S.biz.sp&&!S.biz.sp.ind)){ S.biz.boost={}; S.biz.boostRank={}; S.biz.sp=null; S.biz.offers=null; }   // 前の形のスポンサーは選び直す
   if(!S.biz.sp&&!S.biz.offers&&!S.termOver)spRenew(S);
@@ -4012,6 +4111,48 @@ function spAfterMatch(S,fx,r,out){
   return pay;
 }
 
+/* ---------- 監督ライセンスと監督契約(→docs/10 §10.2 A) ----------
+ * 監督ライセンス S.mgr = { name, birth:"YYYY-MM-DD" | null, ani:動物 | null }。初回だけ登録し、**あとから変えられない**(本家と同じ)
+ * 監督契約 S.club = { name, short, town, color, emblem:{ shape, field, crest, orn, lay, text, home, away } | null }。初回と新しい任期の始めに決める */
+const TOWNS=["ミナト市","ホクト市","アオバ市","カザミ市","セト市","ソラノ市","アカネ市","シラユキ市","ハヤテ市","ミドリ市","コガネ市","ツバサ市"];
+/** 監督契約の前の、今までのクラブ(古いセーブ・途中の任期) */
+function defaultClub(){ return { name:"アズーロFC", short:"AZR", town:TOWNS[0], color:TEAMS.azr.color, emblem:null }; }
+/** 監督ライセンスを登録する。名前は必須、生年月日は任意。登録したら変えられない */
+function registerManager(S,name,birth){
+  const nm=String(name||"").trim().slice(0,12);
+  if(!nm||S.mgr)return false;
+  let ani=null;
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(birth||"");
+  if(m)ani=aniOfDate(+m[1],+m[2],+m[3]);
+  S.mgr={ name:nm, birth:m?birth:null, ani };
+  return true;
+}
+/** 監督契約を結ぶ。クラブ名は必須。略称は英字3字(無ければクラブ名から作る) */
+function signClub(S,o){
+  const name=String(o.name||"").trim().slice(0,10);
+  if(!name)return false;
+  const short=(String(o.short||"").toUpperCase().replace(/[^A-Z]/g,"")||clubAbbr(name)).slice(0,3).padEnd(3,"X");
+  S.club={ name, short, town:TOWNS.includes(o.town)?o.town:TOWNS[0], color:/^#[0-9a-fA-F]{6}$/.test(o.color||"")?o.color:TEAMS.azr.color,
+    emblem:o.emblem||null };
+  return true;
+}
+/** 自分のクラブ(試合以外の画面で使う)。監督契約の前はアズーロFC */
+const myTeam=S=>Object.assign({},TEAMS.azr,S&&S.club?{ name:S.club.name, short:S.club.short, color:S.club.color }:{});
+
+/* ---------- 監督能力(→docs/10 §10.2 C) ----------
+ * S.mab = { set:[セットした能力の id(最大3)], xp:{ id: 使った試合数 } }。監督のデータなので任期をまたいで残る */
+function mabRank(S,k){ const t=TUNING.mab.rankAt, x=(S.mab&&S.mab.xp[k])||0; let r=0; while(r+1<t.length&&x>=t[r+1])r++; return r; }
+const mabVal=(S,k)=>TUNING.mab.base[k]*TUNING.mab.rankK[mabRank(S,k)];
+/** 試合に渡す効き目 { id: 値 } */
+function mabOf(S){ const o={}; for(const k of (S.mab&&S.mab.set)||[])if(TUNING.mab.base[k]!=null)o[k]=mabVal(S,k); return o; }
+/** セットを入れ替える(最大 max まで。もう一度押すと外す) */
+function toggleMab(S,k){
+  const set=S.mab.set, i=set.indexOf(k);
+  if(i>=0){ set.splice(i,1); return true; }
+  if(!MAB.some(x=>x.id===k)||set.length>=TUNING.mab.max)return false;
+  set.push(k); return true;
+}
+
 /* =========================================================================
    wcc_f — カード(DOM非依存)→docs/06
    ・カードの一覧(POOL)は実在の16クラブ × 16人(realcards.js。**名前は偽名**。実名はパックで上書き →docs/01 §1.4)
@@ -4182,10 +4323,10 @@ const ageBand=id=>{ const a=CARDS[id].age||26, b=TUNING.grow.age.band; let i=0; 
  * 伸びやすさ = 年齢 × 能力。若いほど・能力が低いほど育ちやすい(→docs/05 §5.4)。
  * 全員が同じ時期に★4へ揃わないのは、これと「選んだ練習」「個人練習で呼んだ回数」の差による
  */
-function growK(id){
-  const G0=TUNING.grow, c=CARDS[id], A=G0.abil;
+function growK(id,S){
+  const G0=TUNING.grow, c=CARDS[id], A=G0.abil, yk=S&&c.age<=21?(tsetOf(S,"youngK")||1):1;   // 生え抜き: 若手が伸びやすい
   const top=STATS.map(k=>c[k]).sort((a,b)=>b-a), best=(top[0]+top[1])/2;
-  return G0.age.grow[ageBand(id)]*clamp(1-(best-A.ref)*A.k,A.lo,A.hi);
+  return G0.age.grow[ageBand(id)]*clamp(1-(best-A.ref)*A.k,A.lo,A.hi)*yk;
 }
 /** やる気の上下の起きやすさ。若いほどむらがある */
 const motSwing=id=>TUNING.grow.age.swing[ageBand(id)];
@@ -4269,9 +4410,11 @@ function trainOptions(S){
   if(S.g.opts)return S.g.opts;
   const G0=TUNING.grow, rng=mulberry32((S.seed^hashStr("tr:"+S.term+":"+S.played))>>>0);
   S.g.opts=STATS.map(param=>{
-    if(rng()<G0.spChance*(S.fac||1)){             // 施設レベル(累計の年俸で上がる →term.js)
+    if(rng()<G0.spChance*(S.fac||1)*(tsetOf(S,"spK")||1)){   // 監督ランク(累計の年俸 →term.js)と、セットした称号(レジェンド)
       const pool=TRAIN_SP.map((t,i)=>i).filter(i=>TRAIN_SP[i].slot===param||TRAIN_SP[i].slot==="any");
-      if(pool.length)return { param, sp:pool[Math.floor(rng()*pool.length)] };
+      // セットした称号の系統に合う特殊練習ほど出やすい(→docs/10 §10.2 B)
+      const w=pool.map(i=>trainWeight(S,TRAIN_SP[i])), tot=w.reduce((a,b)=>a+b,0);
+      if(pool.length){ let r=rng()*tot; for(let j=0;j<pool.length;j++){ if(r<w[j])return { param, sp:pool[j] }; r-=w[j]; } return { param, sp:pool[pool.length-1] }; }
     }
     return { param, sp:-1 };
   });
@@ -4347,7 +4490,7 @@ function doTraining(S,i,intensity){
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
-      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id)*facK(S,"train");
+      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
     graphAdd(S,PARAM_AXIS[o.param],R.basic*k);
@@ -4355,7 +4498,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id)*facK(S,"train");
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
       if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
@@ -4365,7 +4508,7 @@ function doTraining(S,i,intensity){
       for(let a=0;a<xi.length;a++)for(let b=a+1;b<xi.length;b++)
         linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
-    if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k);
+    if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
   }
@@ -4472,14 +4615,15 @@ const canComm=S=>S.g.step==="comm"&&S.g.cn<TUNING.grow.comm.max;
 function doIndTrain(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
-  g.ie+=C.ind*growK(id)*facK(S,"train")*(spBoost(S,"indExp")||1);
+  // 重なったカード1枚ごとに +10%(→docs/08 §8.12)
+  g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1);
   g.bond++;
   out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
   // スポンサーの効果: 秘書がもう1人の先発にも経験の半分を入れる
   const si=spBoost(S,"indSec");
   if(si&&mulberry32((S.seed^hashStr("isec:"+S.term+":"+S.played+":"+S.g.cn))>>>0)()<si){
     const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].is<5).sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is)[0];
-    if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
+    if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o,S)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
   }
   useComm(S,"ind");
   return { res:1, lines:out };
@@ -4524,7 +4668,7 @@ function doLounge(S,a,b,choice){
   const L=TUNING.grow.link, out=[];
   if(!canComm(S)||a===b||!S.g.pl[a]||!S.g.pl[b])return { res:-1, lines:out };
   const c=compatOf(a,b), best=LOUNGE_BEST[c];
-  const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=spBoost(S,"loungeOk")||0;
+  const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=(spBoost(S,"loungeOk")||0)+(tsetOf(S,"loungeOk")||0);
   const p=[p0[0]+ok,p0[1],Math.max(0,p0[2]-ok)];   // スポンサーの効果: 失敗のぶんが大成功に回る
   const r=mulberry32((S.seed^hashStr("lg:"+S.term+":"+S.played+":"+S.g.cn+":"+lkey(a,b)+":"+choice))>>>0)();
   const res=r<p[0]?0:r<p[0]+p[1]?1:2, l=linkSet(S,a,b);
@@ -4567,7 +4711,7 @@ function doMeeting(S,id,choice){
   const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
-    const p=choice===persOf(id)?P.qOk:P.qNg;
+    const p=(choice===persOf(id)?P.qOk:P.qNg)+(tsetOf(S,"qOk")||0);   // 名将: ★突破が成功しやすい
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
@@ -4578,7 +4722,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
-    g.se+=P.meet*facK(S,"tact");
+    g.se+=P.meet*facK(S,"tact")*(tsetOf(S,"meetK")||1);
     out.push(nameOf(CARDS[id])+" と戦術の話をした(特殊能力の経験 +"+P.meet+")");
   }
   g.bond+=2;
@@ -4614,17 +4758,26 @@ function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||(g.mot<=1&&S.s
 
 /* ---------- ③ 試合のあと ---------- */
 
-/** 覚醒。能力が最大3項目、各+1(どれが上がるかは不定。1つは必ず上がる) */
+/** 重なったカードの枚数(持っている枚数 − 1。数えるのは dup.max まで) */
+const dupOf=(S,id)=>Math.min(TUNING.grow.dup.max,Math.max(0,((S.coll&&S.coll[id])||1)-1));
+/** 覚醒で1項目に上がる値(1〜3 = 無地 / ＋ / ＋＋)。重なりが多いほど大きい値が出やすい */
+function awakeGain(S,id,rng){
+  const D=TUNING.grow.dup, n=dupOf(S,id), p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
+  let r=rng()*t; for(let i=0;i<3;i++){ if(r<p[i])return i+1; r-=p[i]; } return 1;
+}
+const GAIN_MARK=["","","＋","＋＋"];
+/** 覚醒。能力が最大3項目、各+1〜3(どれが上がるか・いくつ上がるかは不定。1つは必ず上がる。重なりで大きくなりやすい) */
 function awaken(S,id,rng,out){
   const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], got=[];
   const pool=STATS.filter(k=>card[k]+(g.up[k]||0)<STAT_MAX&&card[k]>TUNING.grow.startKeep);
   for(let n=0;n<3&&pool.length;n++){
     if(n>0&&rng()>=I.awakeUp[n])break;
     const k=pool.splice(Math.floor(rng()*pool.length),1)[0];
-    g.up[k]=(g.up[k]||0)+1; got.push(STAT_LABEL[k]);
+    const v=Math.min(awakeGain(S,id,rng),STAT_MAX-card[k]-(g.up[k]||0));
+    g.up[k]=(g.up[k]||0)+v; got.push(STAT_LABEL[k]+" +"+v+GAIN_MARK[v]);
   }
   g.is=5; g.q=false; g.ie=0;
-  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")");
   if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
@@ -4642,7 +4795,7 @@ function afterMatchGrowth(S,fx,res){
   GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
-  for(const id of played)S.g.pl[id].ie+=I.match*growK(id)*facK(S,"train");
+  for(const id of played)S.g.pl[id].ie+=I.match*growK(id,S)*facK(S,"train");
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
     linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
@@ -4679,6 +4832,7 @@ function afterMatchGrowth(S,fx,res){
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
     }
   }
+  const giant=tsetOf(S,"giant")&&fx.opp&&TEAMS[fx.opp]&&tierOf(fx.opp)>=S.grade+2?tsetOf(S,"giant"):0;   // 刺客(格上 = 強さの段がリーグの格より2つ以上上)
   // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
   // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
@@ -4687,12 +4841,13 @@ function afterMatchGrowth(S,fx,res){
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
-      if(res.win&&rng()<Mo.winUp*sw)g.mot=Math.min(4,g.mot+1);
-      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1))g.mot=Math.max(1,g.mot-1);
+      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1))g.mot=Math.min(4,g.mot+1);
+      else if(res.win&&giant&&rng()<giant)g.mot=Math.min(4,g.mot+1);   // 刺客: 格上に勝つと上がりやすい
+      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1))g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
     }else{
       g.bench=(g.bench||0)+1;
-      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1))g.mot=Math.max(1,g.mot-1);
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1))g.mot=Math.max(1,g.mot-1);
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
@@ -4923,7 +5078,7 @@ function endTerm(S){
   S.fac=facLevel(S.salary);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
     grade:title.grade, follow:followers(S), facts:x };
-  S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary });
+  S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }
 /**
@@ -4951,6 +5106,616 @@ function startNextTerm(S,W){
   S.tend=null;
 }
 const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
+
+/* ---------- 称号のセット(監督能力の継承。→docs/10 §10.2 B) ----------
+ * 任期の始めに、これまでに獲った称号から1つを選んでセットする。その任期のあいだ:
+ *   favor … 出やすくなる特殊練習(eff = 伸びるもの / axis = 上がる戦力グラフの軸)。spK … 特殊練習が出る率の倍率
+ *   ほかは小さな効き目(数値は TUNING.tset)
+ * S.tset = 称号の id | null、S.tsetChosen = その任期に選んだか */
+const TITLE_FX={
+  legend:   { favor:null,              desc:"特殊練習がどの系統も出やすい" },
+  emperor:  { favor:{ axis:"ORDCSP" }, desc:"戦力グラフを伸ばす特殊練習 ・ 大会の試合で負けてもやる気が下がりにくい" },
+  master:   { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの★突破が成功しやすい" },
+  factory:  { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 個人練習の経験 +10%" },
+  magic:    { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの経験 +10%" },
+  heir:     { favor:{ eff:"link" },    desc:"連携の特殊練習 ・ ラウンジが大成功しやすい" },
+  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 格上に勝つとやる気が上がりやすい" },
+  tactician:{ favor:{ eff:"set" },     desc:"セットプレイの特殊練習 ・ セットプレイの伸び +20%" },
+  native:   { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 21歳以下の伸びやすさ +10%" },
+  fickle:   { favor:{ axis:"S" },      desc:"スピードの特殊練習 ・ 控えのやる気が下がりにくい" },
+  fighter:  { favor:{ axis:"O" },      desc:"攻撃の特殊練習 ・ 勝つとやる気が上がりやすい" }
+};
+/** これまでに獲った称号のうち、セットできるもの(効き目のあるもの。新しい順) */
+function earnedTitles(S){ const out=[]; for(let i=S.career.length-1;i>=0;i--){ const id=S.career[i].title; if(TITLE_FX[id]&&!out.includes(id))out.push(id); } return out; }
+/** いまセットしている称号の数値(TUNING.tset)。セットしていなければ null */
+const tsetOf=(S,k)=>S&&S.tset&&TUNING.tset[S.tset]&&TUNING.tset[S.tset][k]!=null?TUNING.tset[S.tset][k]:null;
+function setTitle(S,id){ if(id&&!earnedTitles(S).includes(id))return false; S.tset=id||null; S.tsetChosen=true; return true; }
+/** 特殊練習の重み。セットした称号の系統に合うものは favorW 倍 */
+function trainWeight(S,t){
+  const f=S&&S.tset&&TITLE_FX[S.tset]&&TITLE_FX[S.tset].favor; if(!f)return 1;
+  const hit=(f.eff&&t.eff[f.eff])||(f.axis&&t.up&&f.axis.split("").some(a=>t.up.includes(a)));
+  return hit?TUNING.tset.favorW:1;
+}
+
+// ================= 紋章の意匠(pftb docs/10 §3.54b)=================
+// pftb から取り込んだもの(wcc_f docs/10 §10.2 A)。元は pftb の tools/slice_emblem.py が書き出す
+// **tools/slice_emblem.py が書き出す。手で編集しない。**
+//
+// src/assets/art/emblem/ の白いシルエットを輪郭追跡してパスにしたもの。
+// **ベクターのまま持つ**ので、クラブの2色(ink/edge)がそのまま乗り、
+// どの大きさでも輪郭が出る(→docs/10 §3.54)。
+// 穴は輪郭を並べて `fill-rule="evenodd"` に任せてある。
+const EMB_ART={
+  horse:"M66.8 15.7L67.6 15.7L67.8 17.4L69.1 16.5L68.8 19.2L71.1 21.1L72.6 23.8L76.1 27.3L76.1 30L74.4 31.3L72.8 31.3L70.1 29L68.2 29L66.2 27.9L65.7 28.1L66 31.5L70.7 39.7L70.7 41.2L71.7 41.8L76.7 38.7L78.2 38.7L79.4 39.5L80.7 41.6L84.6 45.5L85 52.8L82.3 51.3L82.7 48.2L80.7 45.1L78.2 42.6L77.1 42.6L75.7 43.5L73.4 46.6L77.5 46.8L79.2 48.2L79.2 50.9L78.4 52.8L78 56.3L76.5 59L72.8 62.3L71.9 61.7L71.9 59L72.8 57.6L74.6 57.4L76.5 52.4L76.5 50.5L75.9 49.9L68.6 52.2L65.9 52.2L63.9 54.5L59.3 57.3L54.3 58.8L50.8 59.2L49.8 63.6L47.5 67.5L45.6 69.4L45.2 71.8L46.3 74.1L52.9 80.6L53.7 81.8L53.5 82.8L50 82.8L49 80.6L46.7 78.7L44.4 75.2L40.5 71.8L41.7 68.7L41.5 67.7L39.2 69.6L37.8 71L38.2 75.2L39.8 77.9L44.4 83L44.6 84.3L40.7 84.3L39.8 83.4L39.8 82.2L37.8 80.3L36.7 76.8L32.8 71L36.3 66L36.3 64.4L33.6 60.2L33.4 54.5L32.2 54.5L30.1 57.4L29.7 66.3L28.5 68.7L26.4 70.8L26.4 68.5L24.9 70.4L22.5 71.6L19.1 71.6L16.7 70.4L15 68.3L17.1 68.9L19.1 68.5L20.4 67.5L20.2 66.5L19.4 66.9L18.1 66.3L19.8 65.8L21.6 64L22.3 62.5L22.3 59.8L23.1 56.7L24.7 54.4L23.1 54.4L25.6 51.5L29.1 50.3L34.5 51.5L38 48.4L41.1 46.8L47.7 44.9L51.4 41.6L52.1 40.4L52.5 38.1L50 39.8L49.4 39.7L49.4 38.9L51.7 34.2L51.2 34L48.8 35.6L47.5 35.4L49 33.1L49.8 28.4L53.1 25.9L53.3 25L49.4 25.3L53.1 21.7L57.9 19.9L57.7 19.4L56.6 19.4L55.4 18.6L59.3 17L62.4 17L64.7 17.8L66.6 15.9Z",
+  lion:"M51.2 15.2L56.9 15L58.9 15.8L59.7 15L61.9 16.8L62.5 19L65.2 19.7L67.2 21.7L71.8 23.1L71.4 25.9L69.6 28.4L69 28.2L68.4 26.9L66.8 26.5L64.6 28.6L64.6 30.6L65.2 31.2L66.8 31.6L69 31L68.6 34.2L67.2 35.6L66.4 35.6L66 34.4L62.9 33.2L61.9 33.4L61.9 34.6L65.8 38.1L67.2 41.5L69.6 40.3L72.9 37.3L74.1 35.4L74.7 32.4L76.7 31.2L79.1 31.2L80.1 31.8L79.5 32.8L78.5 33L79.1 34L80.3 34L81.6 35.8L79.9 36L78.9 36.9L78.9 37.7L80.1 38.9L80.1 40.1L77.9 39.9L75.9 41.1L72.9 44.5L72.5 46.4L71.2 46.6L69.8 48.4L69.2 50.2L67.6 50.2L64.4 48.6L63.8 48.8L65.2 51L70.8 54.5L74.7 54.2L77.1 54.5L78.5 56.3L78.5 57.5L76.9 57.1L77.7 59.5L77.3 61.1L75.5 60.1L74.9 61.5L73.1 62.9L73.3 61.9L71.9 60.5L69.2 60.1L67.6 58.5L64.8 57.3L62.9 56.9L59.3 57.3L58.7 55.5L55.7 53.8L55.5 54.4L57.1 55.9L56.9 56.9L52.6 59.3L46.6 60.5L43.5 62.1L41.7 64.6L39.7 70.2L36.4 72.7L31.6 74.3L29.8 76.1L29 77.7L29 80.1L29.6 80.6L30.8 80.3L32.4 80.6L33.8 82L33.8 82.8L33.6 85L32.4 84.2L31.6 85L25.7 85L24.3 84L23.9 78.1L22.3 78.1L24.3 74.1L23.5 72.9L24.5 71.6L28.1 70.4L29.4 69L29.8 61.9L28.8 61.7L27.3 62.5L22.9 62.5L20.5 61.3L18.4 58.3L18.4 54L19.9 51.2L22.5 49L32.8 45.1L34.6 43.3L35.4 40.5L34 38.3L30.4 37.9L26.5 42.7L25.3 42.7L24.9 41.9L22.5 42.7L20.5 42.3L18.8 40.9L21.3 39.9L23.5 37.7L23.1 36.9L25.3 36L28.1 36.4L33.2 36L35.2 36.8L37.3 39.7L37.3 42.1L35.6 45.5L31.2 48.2L24.5 50.6L22.3 52.4L21.1 56.3L21.5 57.5L23.7 59.3L25.7 59.7L29.6 58.1L35.2 52.6L40.3 50.2L42.5 48L44.5 44.1L44.3 42.7L43.9 43.1L41.3 42.9L42.5 40.9L42.1 36.9L42.5 31.8L40.5 32.2L41.3 27.1L42.9 24.3L45.3 21.9L45.1 21.3L43.7 21.1L46.6 18.2L49.4 17L51.8 17L52.4 16.4L51.2 15.6ZM62.1 21.7L62.9 22.9L64.2 22.7L64.6 22.3L64 21.7L62.5 21.7ZM48 61.5L52.2 61.3L54.7 64.6L54.7 67L51.6 71.8L51.6 73.3L54.5 75.5L59.7 75.1L61.9 76.9L62.1 80.3L61.3 79.9L57.7 80.3L51.8 80.3L48.6 77.1L47 77.9L44.5 75.3L44.1 73.3L45.6 71.8L46 69.8L45.1 68.4L42.5 67.4L42.5 65.8L43.9 63.2L45.8 62.1L47.8 61.7Z",
+  eagle:"M15.9 24L21.6 28.9L26.3 31.8L39.6 38L40.9 39.3L41.2 40.5L40.6 42L40.6 44L41.9 45.7L43.1 46.2L45.1 46.2L45.6 45.8L45.3 45.2L47.4 43.5L47.6 42.6L47.6 41.7L46.9 41.2L45.1 41.2L44.6 41.8L44.1 41.4L44.9 39.5L46.6 38.9L48.1 37.7L53.1 37.7L53.4 37.4L53.8 37.9L52.9 39L52.9 40.5L53.8 44L54.7 44.9L54.1 45.5L54.9 46.2L57.5 46L59.1 44.6L59.4 42.6L58.8 39.9L60.4 38L75.1 31L78.7 28.6L84 24.2L83.8 26.7L82.4 29.6L77.5 33.9L70.7 37.1L70.6 37.6L76.6 35.7L81.3 33.3L84.9 30.7L85 31.7L83.8 34.3L80.7 37.1L75.7 39.5L70 41.4L71.6 41.5L77.5 40.4L81 39.2L83.1 38L83.2 38.8L82.4 40.2L80.4 41.8L78.1 43L68.8 45.2L75.4 45.4L79 44.5L79.1 44.9L77.5 46.5L74.9 47.7L67.1 48.5L69 49.2L74.4 49.9L72.5 51.2L66.9 51.5L65.4 51L64.4 51.1L68.1 53.3L69 53.3L69.3 53.9L67.8 54.5L64.9 54.5L61.9 53.3L61.8 53.8L64.1 55.8L61.9 56L59 54.2L59.6 56.2L58.7 56.2L56.3 54.5L55.6 54.6L55.3 56.1L59.1 59.9L58.5 60.8L59.9 62.1L61 62.7L64 60.4L65.6 61.1L65.4 61.5L64.6 61.5L63.2 62.6L65.4 62.4L66.5 63.5L66.3 64.2L63.2 64L64.7 64.6L65 65.2L64.7 66.7L64.3 66.8L61.6 64.2L59.1 66.1L59 67.1L58.2 66.4L58.2 65.2L59.7 63.8L57.5 62.1L56.9 62.1L56 63L55.6 62L53.7 60.7L53.2 61.4L54.7 64.9L56.5 67.3L59.7 70.2L56.9 70.4L54.3 68.9L54.1 69.3L55.3 71.4L55.9 73.5L54 73L51.6 70.7L51.5 72.9L50.1 76L49.4 75.5L48.8 74.3L48.4 70.7L47.2 72.1L45.4 73.3L43.8 73.5L45.9 69L45.7 68.6L43.1 70.4L40.3 70.2L43.5 67.3L45.6 64.3L46.5 62L46.3 60.7L45.1 61.2L43.7 63.3L42.5 62.1L40.3 63.5L41.5 64.9L41.5 66.4L41 66.8L40.9 66.1L38.7 64.2L36.3 65.7L35.7 67.1L35.1 66.8L35 64.9L36.8 64L34.3 63.9L33.7 64.5L33.5 63.5L34.6 62.4L36.8 62.6L35.1 61.5L34.1 61.4L35.7 60.4L39 62.7L41.2 61.1L40.6 60.2L44.1 56.7L44.4 54.9L43.7 54.5L41 56.2L40.3 56.1L40.7 54.5L38.1 56L36 56L38.1 53.3L34.9 54.5L32.2 54.5L30.6 53.8L35.1 51.5L35.1 51L33.4 51.5L28.7 51.5L25.6 50.2L25.7 49.8L27.8 49.8L32.6 48.5L26.3 48L22.5 46.5L20.7 44.5L24.6 45.4L30.9 45.2L30.4 44.8L25.7 44.2L21 42.7L18.4 41L17.4 39.9L16.5 38.2L25.1 41L28.1 41.5L30 41.4L23.4 39.2L18.7 36.8L15.9 34L15 31.1L15.4 31L17.5 32.7L23.4 35.7L29 37.7L29.7 37.6L22.5 33.9L18.7 31L16.2 27.3L15.9 24.3ZM48.1 39.2L48.1 39.8L48.7 40.1L49 39.8L49.4 39.3L48.4 39.2Z",
+  helm:"M47 15L52.8 15.2L57.6 16.4L59 17.4L58.8 20.4L60.8 18.4L62 18.4L65.6 20.4L67.7 22.6L64.4 24L62.6 25.8L60.8 29.2L55.2 26.8L49.2 26.4L44.4 27.6L39.2 30.4L35 34.9L32.6 40.5L32.3 47.3L33 52.1L32.3 54.5L29.7 57.5L26.9 58.7L21.9 58.5L24.3 56.1L25.1 54.1L25.1 49.3L24.3 46.9L24.3 44.1L25.9 42.1L25.3 41.9L24.5 42.7L23.5 42.5L23.5 36.5L25.1 30.2L26.5 28L30.3 27.4L30.1 26.8L27.7 26.4L27.5 25.8L28.7 23.8L33.6 19.2L38 16.8L42 15.6L44.4 17.6L44.2 15.8L44.8 15.2L46.8 15.2ZM50.2 28.2L54.8 28.4L57.2 29.2L63 32.5L59.6 35.9L56 38.3L48.8 41.9L46.4 41.9L44.4 42.7L42.6 44.5L41.8 46.1L41.8 49.3L42.6 50.9L45.4 52.9L46.2 60.1L45 64.9L41.8 70L43.2 70.2L44.6 68.8L47 64.5L47.8 60.9L47.4 54.5L48 54.3L66.2 68L64.8 68.6L62 68.6L61.4 69.2L61.4 72L67 79.2L68.9 84L68.7 85L62.8 84.2L57.6 82.2L42.4 72.6L38 71.4L32.1 71.4L30.1 72.2L29.1 72L32.5 68.2L35.8 65.7L38.2 61.3L38.2 57.7L35.8 53.7L34.2 48.9L33.8 44.1L35.4 37.7L37 34.9L41.6 30.8L47.2 28.4L50 28.4ZM65 32.5L65.6 32.4L68.1 34.9L72.5 44.5L75.3 48.9L67.2 48.7L62.4 47.9L53.6 45.5L51.6 44.3L50.6 42.9L58.4 38.7L65 32.9ZM47 43.7L49.6 44.3L52 46.7L58.4 48.7L68.7 50.3L77.5 50.3L78.1 50.9L70.9 63.3L67.9 67.1L58 60.3L48 52.3L45.2 51.1L43.4 48.9L43.4 46.1L44.4 44.7L46.8 43.9ZM65.2 43.9L61.6 44.3L61.4 45.3L63.6 46.7L67.9 46.7L71.3 46.9L69.5 43.9L65.6 43.9ZM46.4 45.9L45.4 46.9L45.4 48.1L46 49.1L47.8 49.3L48.6 48.9L49 47.3L48 45.9L46.8 45.9ZM62 52.3L59.4 56.5L60 57.9L61 57.7L63.8 52.5L62.4 52.3ZM66.4 52.7L63 58.9L63.6 60.3L64.6 60.1L68.1 53.7L67.9 52.7L66.8 52.7ZM71.5 53.1L66.6 61.3L66.6 62.1L67.9 62.7L72.9 54.1L72.9 53.3L71.9 53.1Z",
+  dragon:"M51.4 15L51.8 15L51.4 17.3L52.2 19.2L55 21.2L56.7 22.9L56.9 23.9L57.5 23.3L57.1 21.8L58.8 21.6L59.2 22L60.1 21.4L60.5 20.3L60.1 18.4L58.2 15.8L59.9 15.9L62.4 18.4L63.1 19.9L62.7 23.7L63.9 25.2L63.9 26.7L65.4 27.8L66.1 29.3L64.4 31.4L61.8 30.3L59.7 31.2L59.7 32.7L60.3 33.3L61.8 34.1L62.9 33.7L63.5 34.2L63.1 36.9L62.5 37.1L59.9 34.8L58.4 34.8L56.1 33.7L55 31L54.4 31.2L54.4 33.1L56.1 35.2L57.6 35.6L63.9 41L65 43.7L65 45.9L62.9 43.9L62.7 44.4L65.2 48.8L69 51.4L71.6 52.5L76.5 51.4L78.2 53.1L78 53.7L76.5 53.3L75.6 53.9L77.5 55.8L77.5 57.6L76.1 56.7L74.2 56.3L74.4 58.4L73.1 59.7L72.9 58.8L70.8 56.3L65.6 54.1L61.8 54.1L60.8 52L58.4 49.5L56.5 48.8L59 51.6L59.3 53.1L52.4 58.2L52 56.7L51.4 57.6L51 62.2L51.8 64.1L51.8 69L51 70.5L49.7 72.2L48.6 70.7L43.5 73.9L43.5 77.3L44.2 79.2L45.2 79.7L47.5 79.3L49.9 81.8L49.7 83.1L47.8 82L46.9 82.2L47.3 82.5L47.1 85L44.8 83.1L41 82.7L40.8 80.3L40.1 78.8L39.5 78.2L38.2 78.8L38.2 77.6L39 76.5L39 72.4L38.2 72L38.2 71.2L38.8 70.7L42.2 69.9L43.9 67.5L42.5 62.4L40.1 65.2L36.9 67.3L32.4 67.3L30.8 66.5L29.2 64.4L28.8 60.3L32.5 53.9L32.5 52.4L31.2 50.7L27.5 50.3L26.5 50.8L28 52.4L27.5 52.9L24.4 52.9L22.2 53.7L21.2 53.5L21.6 52L23.5 49L25.6 46.9L25.9 49.5L28.2 48.4L30.1 48.4L32.7 49.5L34.1 51.2L34.4 53.9L33.7 56.1L31 60.3L31 62.9L32 64.2L33.5 65L35.4 65L37.6 63.9L39.7 61.8L42.7 56.5L48 51.2L49.2 48.6L48.8 47.5L46.7 46.1L43.7 46.1L42.2 46.9L39.5 49.5L38.2 46.7L35.8 44.2L34.2 43.5L30.5 43.5L28.2 45L27.6 39.5L25.2 37.1L21 36.7L18 37.8L17.8 37.3L24.4 30.3L28.2 27.6L36.1 24.2L42.2 23.1L42.7 22.5L42.2 20.5L44.4 21.6L45.4 22.9L45.4 23.7L43.5 26.3L43.1 28.2L43.5 34.2L45.4 37.6L46.7 39L49 40.5L50.1 40.5L49.9 37.3L48.4 37.6L48.4 35.4L49.5 32.7L49.5 32L48.6 31.8L48.4 31.2L50.5 28.4L53.7 28.6L51.2 27.6L49.5 25.9L48.8 23.7L50.5 23.9L53.5 25.4L54.4 25.2L51 22.2L49.9 19.9L49.9 16.9L51.2 15.2ZM77.1 15L77.8 15.8L79 21L79.2 32.9L77.5 32.7L77.8 32.4L77.5 24.1L77.3 23.5L76.7 27.1L76.7 32.7L75.4 32.9L75.2 23.7L76.3 16.9L77.1 15.4ZM58.8 25.4L58.6 25.9L59.5 27.3L60.3 27.6L61.4 27.3L62 27.1L61.8 26.5L59.2 25.4ZM38 28.8L32.2 35.4L29.9 39.9L30.3 40.7L33.7 35L38.6 29.3L38.4 28.8ZM40.7 31L39.7 32.7L38.6 38.4L39 44.4L39.3 44.4L39.7 42.2L39.7 37.6L40.8 31.2ZM68.8 31.2L69.2 31.2L68.8 33.1L67.5 34.1L65.2 34.1L62.2 32.5L61.2 32L62.2 31.8L65.9 32.9L67.5 32.5L68.6 31.4ZM72.2 33.5L74.2 34.1L80.3 34.1L82.2 33.3L82 35L81.4 35.6L77.6 35.9L76.5 35.2L73.1 35.6L72.2 34.6L72.2 33.9ZM75.2 36.1L75.8 35.9L77.5 37.3L77.3 38.2L75.8 38.2L75.2 38.8L75.2 42.5L72.4 44.2L69 48L68.4 47.8L66.5 47.1L66.5 44.4L65.8 42.2L68.6 42L71.2 40.8L73.3 39.2L73.7 37.3L75 36.3ZM78.2 36.9L80.1 36.9L80.5 39.9L79.7 40.7L80.1 41.8L79.2 42.7L78 42.7L76.7 42.2L77.8 41L76.7 39.9L78.6 38.4L78.2 37.3ZM75.9 43.7L78 43.9L79 44.8L78.4 46.1L76.5 46.5L75.6 45.6L75.9 44.1ZM55.2 57.6L59.5 57.8L62.2 59L63.1 59.9L63.9 61.4L63.9 64.1L62.4 65.6L61.2 68.6L64.4 70.3L65.6 70.3L67.8 69.2L69.7 69.2L72.2 71.6L69.3 71.4L70.3 73.1L70.1 74.8L68.2 73.7L64.8 73.7L62.5 74.8L60.7 72.5L55.4 71L55.2 70.5L57.1 67.8L57.1 65.2L55 63.5L53.1 63.5L52.5 62.2L52.5 59.9L55 57.8Z",
+  crown:"M47.7 22.5L52.2 22.4L50.9 24.7L51.1 25.6L54.1 24.3L54.1 28.6L51.8 27.4L50.9 27.9L51.3 29.7L53.8 31.9L54.5 33.3L54.1 35.5L53.1 37.3L53.6 38.5L54.3 38.9L55.2 38L54.8 36.2L55.4 35.6L56.8 35.3L57.7 36.2L57.7 37.3L59 37.4L59.5 36.9L59.2 35.5L60.1 34.6L61.1 34.6L62 35.5L61.7 36.9L62.2 37.4L63.3 37.4L63.5 36.2L64.4 35.3L65.4 35.3L66.3 36.2L66.3 37.6L65.6 38.3L66.9 38.9L68.5 37.6L68.1 35.5L68.7 34.6L70.1 34.6L71 35.5L70.6 36.9L71.2 37.4L72.3 37.4L72.8 36.9L72.8 35.1L74.4 34.6L75.7 35.5L75.7 36.5L74.9 37.6L75.8 38.2L76.6 38.2L77.1 36.9L78 36.4L79.4 36.7L80 38L78.9 40.1L79.8 40.7L80.9 39.6L82.3 39.6L83.2 40.5L83.2 41.6L81.1 43L81.4 43.7L81.9 44.3L84.1 43.9L85 44.8L84.5 46.8L82.1 46.9L82.1 48.4L84.5 48.9L85 50.2L83.4 51.8L81.4 51.3L81.1 53.1L83.4 53.6L83.6 54.1L81.1 57L80 59.2L80 60.2L77.1 64.9L76.7 67.1L77.5 69.6L75.7 71.4L75.7 72.8L75.1 73.3L71.5 71.9L67.9 71.2L51.8 70.1L34.6 70.8L28.5 71.9L24.5 73.3L24.3 71.4L22.2 69.2L22.9 67.8L22.9 65.6L22.2 63.5L20 60.2L20 59.2L18.9 57L16.4 54.1L16.6 53.6L18.9 53.1L18.6 51.3L16.3 51.8L15 50.2L15.5 48.9L17.9 48.7L17.9 46.9L16.6 47.1L15 45.9L15 44.8L15.9 43.9L18.1 44.3L18.6 43.7L18.6 43L16.8 41.6L16.8 40.5L18.8 39.6L19.8 40.7L20.6 40.7L21.1 39.4L20 37.6L20.9 36.4L22.4 36.4L23.4 38.5L24.5 38.2L25.1 37.6L24.3 36.5L24.3 35.5L25.2 34.6L26.3 34.6L27.2 35.5L27.2 36.9L27.7 37.4L29.2 37.4L29 35.5L29.9 34.6L31 34.6L32.2 35.8L31.5 37.6L33.1 38.9L34.4 38.3L33.7 37.3L33.7 36.2L34.6 35.3L36 35.6L36.7 37.4L37.8 37.4L38.3 36.9L38 35.5L38.9 34.6L39.9 34.6L40.8 35.5L40.5 36.9L41 37.4L42.1 37.4L42.3 36.2L43.2 35.3L43.9 35.3L45.2 36.5L44.8 38L46.1 38.5L46.9 37.3L45.9 35.8L45.5 33.3L46.6 31.2L48.7 29.7L49.1 27.9L48.6 27.4L46.1 28.8L45.5 24.3L46.1 24.2L48.9 25.6L48.7 24L47.8 22.7ZM49.3 38.9L48.7 40.5L49.6 41.4L50.5 41.2L51.3 40.8L51.3 39.4L50.7 38.9L49.6 38.9ZM27 39.9L23.8 41.4L21.5 43.7L20.7 45.5L20.4 46.9L20.7 50.2L21.5 52L22.5 53.1L21.8 55.2L21.8 57.7L24.9 54.7L27.2 61.3L23.8 60.8L23.6 61.7L25.6 63.3L27.7 64L29.2 64L31.5 63.1L33.3 61.3L33.3 58.8L31.7 57.9L30.8 59.2L30.6 60.4L28.3 57.7L28.6 55.6L29.5 54.7L31.3 54.7L31.9 54.1L31.5 50.5L30.3 51.4L28.3 50.5L28.3 49.1L29.2 48.2L30.6 48.2L30.8 46.6L30.3 46.1L28.5 46.1L27.6 44.8L27.9 43.7L28.8 43.2L30.6 43.5L31.5 41.9L29.5 39.9L27.4 39.9ZM37.8 39.9L35.6 41L33.3 44.1L33.3 47.3L35.8 52L35.8 53.4L38.9 53.2L40.1 54.5L39.8 58.4L39.2 58.6L38.2 57.2L37.1 57.2L36.5 57.7L36.5 59.2L38.2 61.1L40.7 62.2L43.2 62.2L46.4 60.8L48 58.8L48.4 57.7L47.8 57.2L44.6 59L44.1 58.8L44.1 52L44.6 51.8L47.5 53.9L48 53.8L45.2 49.5L46.2 49.5L45.9 41.6L43.2 40.3L38.2 39.9ZM58.6 39.9L54.1 41.6L54.1 45.9L53.4 49.5L54.8 49.5L52 53.4L52.2 53.9L52.9 53.9L55 52.2L55.9 52L55.9 58.8L55.4 59L52.9 57.2L52 57.4L52 58.8L53.6 60.8L56.6 62L60.4 61.8L63.1 59.9L63.5 57.7L62.9 57.2L61.8 57.2L60.2 58.8L59.9 54.5L61.1 53.2L63.6 53.9L64.2 53.4L64.5 50.9L66.7 47.3L66.3 43.4L64 40.7L62.2 39.9L59 39.9ZM70.5 39.9L69.2 41.2L68.8 42.6L69.4 43.5L71.5 43.2L72.4 44.4L71.5 46.1L69.7 46.1L69.2 46.6L69.2 48L70.8 48.2L71.7 49.1L71.7 50.2L70.1 51.4L69 50.7L68.5 50.9L68.1 54.5L70.8 55L71.7 56.3L71.7 57.7L69.4 60.4L68.7 58.3L67.6 57.9L66.7 58.8L66.7 60.9L67.4 62.4L70.1 63.6L74.4 63.3L76.4 61.3L76.2 60.8L73 61.1L72.8 60.6L75.1 54.7L77.6 57.5L78.2 57.4L77.5 53.1L79.6 48.7L79.3 45.2L77.8 42.6L75.1 40.7L70.8 39.9ZM49.3 42.5L48.7 43L48.7 44.1L49.6 45L50.4 44.6L51.3 44.1L51.3 43L50.7 42.5L49.6 42.5ZM49.3 46.1L48.7 46.6L48.7 47.7L49.6 48.6L50.5 48.4L51.3 46.9L50.7 46.1L49.6 46.1ZM50 63.6L46.6 66L50 67.9L53.4 66.3L52.5 65.1L50.4 63.6ZM36 64.7L33.8 66.2L33.3 67.4L35.6 68.7L36.7 68.7L38.5 67.6L39.4 66.3L36.4 64.7ZM63.6 64.7L60.6 66.3L61.5 67.6L63.6 68.7L66.7 67.4L64 64.7ZM24.2 67.2L23.6 69.2L24.9 70.5L25.4 69.9L26.5 68.8L26.5 68.1L24.5 67.2ZM75.5 67.2L73.5 68.5L74.6 70.3L75.1 70.5L76.4 69.2L75.7 67.4ZM41.9 72.1L62.6 72.3L71.9 73.7L74.9 74.9L74.1 75.8L71.2 76.6L58.3 77.6L39.2 77.6L29.2 76.6L25.1 75.3L25.6 74.4L29.5 73.3L37.4 72.3L41.7 72.3Z",
+  fleur:"M49.8 15L50.6 15L56.2 23.1L58.3 27.4L59.6 31.7L59.6 37.7L58.3 42.4L53.6 54L52.4 61.2L54.1 61.2L54.5 57L55.8 53.1L59.2 47.1L62 44.3L66.3 41.8L69.3 40.9L75.7 41.3L78.3 42.6L80.6 45L82.3 48.4L82.3 54.8L81.5 56.5L78.3 60.2L75.7 61.5L73.3 61.7L73.8 60.8L73.3 57L71 54.2L69.3 53.3L64.1 53.7L60.1 56.5L58.3 59.1L57.9 61.2L59.8 61.5L60.9 62.5L60.9 64.7L59.4 65.7L58.1 65.7L57.9 67.2L59.8 69.6L62.8 70L64.8 67.7L64.3 64.7L66.3 64.4L68 65.3L69.9 67.7L70.3 69.8L69.9 72.4L68 74.7L66.3 75.6L64.6 76L59.8 75.6L56.2 72.4L54.9 69.8L54.1 65.9L52.6 65.7L52.4 66.8L53.6 71.5L55.4 74.9L58.8 79.2L56.9 79.4L53.9 78.6L52.4 82.2L50.4 85L48.5 83.1L46.6 79L41.7 79.2L45.1 74.9L46.8 71.5L48.1 67.2L47.9 65.7L47 65.3L46.4 65.9L45.9 68.5L44.2 72.4L40.6 75.6L35.4 76L32.4 74.7L30.5 72.4L30.1 70.7L30.5 67.7L33.3 64.9L36.1 64.7L35.7 68.1L37.6 70L40.2 70L42.1 68.1L42.9 65.9L41 65.7L39.5 64.7L39.5 62.5L40.6 61.5L42.5 61.2L42.1 59.1L40.4 56.5L38 54.6L35 53.3L30.3 53.7L27.5 56.1L26.7 58.7L27.1 61.7L25.6 61.9L22.6 60.6L19.4 57.4L17.7 52.2L19 46.3L21.7 43L26.9 40.9L33.3 41.3L38.4 44.3L42.5 48.8L45.5 55.7L46.4 60.8L47 61.5L48.1 61.2L46.4 52.2L43.4 45.8L40.8 38.1L40.8 31.3L43.8 24L49.6 15.2Z",
+  tower:"M49.4 15L54.3 15.2L54.5 20.1L55.1 20.7L59.8 21.2L60.2 15.6L65.7 16.5L67.2 17.6L66.8 20.1L67.2 20.5L66.8 23.5L67.2 27.3L66.8 28.6L63 32.4L63 35.9L64.3 47.3L64.7 61L69.4 65.6L71.1 84.8L55.5 85L55.3 75L54 72.4L51.7 71L50.9 70.5L48.3 71L46.8 72L45.5 74.1L45.5 84.4L44.9 85L28.9 84.8L31.1 65.2L35.3 61.8L36.6 40.5L37.4 35L37.4 32L33.6 28.2L33.2 17.6L35.1 16.5L40.2 15.6L40.4 20.5L41.1 21.2L45.7 20.7L46 15.4L49.1 15.2ZM50 37.8L48.7 38.2L47.2 40.1L47.2 47.3L50.4 47.6L53 47.6L53.6 46.9L53.2 39.7L50.4 37.8Z",
+  cannon:"M81.8 30.8L82.8 30.7L83.6 31.4L85 38L85 39.2L84.3 40.2L83.4 40.2L82.6 39.6L80.2 39.6L79.1 40.5L77.1 40.2L68.1 42.2L65.6 39.6L62.1 37L59.1 35.7L59.8 35.3L76.2 33L77.4 32.1L80 32.4L81.7 31ZM51 36.9L56.9 36.7L60.1 37.6L63.3 39.3L66 41.8L67.7 44.1L69.2 47L70.3 51.6L70.3 54.5L69.7 57.3L68.6 60.5L66.9 63.1L63.8 66.1L62.1 67.3L59.8 68.4L56.9 69L55.8 69.3L50.6 69L48.6 68.4L44.8 66.4L41.5 63.4L40.1 61.4L38 56.2L37.8 53.9L38 49.6L38.9 47L41.2 42.9L44.2 39.9L46 38.8L48.8 37.3L50.9 37ZM42.7 38L44.4 38L41.9 39.9L40.1 42.1L37.5 46.7L36.7 49.1L34.4 49.7L33.9 50.6L33 50.9L31 49.7L28.7 47.4L28.4 47.1L27.5 48L26.1 48L25.1 47L24.8 45.5L26.1 44.2L28 44.4L28.8 42.1L30.7 39.3L33.6 39.6L35.3 39.1L42.5 38.2ZM51.7 39.9L48.1 41.2L51.4 46.8L52.6 48.6L53.3 48.1L53.3 40.1L52 39.9ZM55.2 39.9L55.2 48.6L55.9 48.1L57.2 46L59.9 41.2L56.6 39.9L55.5 39.9ZM46.5 42.2L43.2 45.5L48.7 49L50.3 50L51 49.9L46.8 42.2ZM61.2 42.2L57.1 49.6L57.8 50L59.5 48.8L64.8 45.8L64.3 44.7L61.5 42.2ZM42.2 47.4L41.2 50.7L41.4 52.3L47.7 52L49.4 52L49.6 51.6L43.1 47.4L42.5 47.4ZM65.3 47.4L58.5 51.6L58.6 52L60.9 52.3L61.8 52L62.4 52.3L66.4 52L66.7 52.3L67.1 51.9L66 47.6L65.6 47.4ZM53.5 51.2L52.4 51.9L52.2 53.6L52.9 54.6L54.6 54.9L55.9 53.9L55.9 52.4L54.9 51.2L53.7 51.2ZM36 52.4L36.3 52.4L36.9 57.3L37.8 59.7L36.7 60.9L25.2 68.7L16.9 68.7L16 68.4L15 67.1L15 65.4L16 64.1L16.6 63.8L23.5 63.8L35.9 52.6ZM41.4 53.7L41.5 56.8L42.5 58.9L47.1 56L48.8 55.2L49.6 54.2L49.1 53.7L48.6 54L48.3 53.7L47.4 54L47.1 53.7L41.6 53.7ZM58.9 53.7L58.5 54.5L60.7 56L65 58.6L66 58.2L66.9 55.6L66.9 54.2L66.4 53.7L59.2 53.7ZM50 56.3L43.5 60.2L43.5 60.8L45.5 62.8L46.5 63.8L47 63.7L51 56.8L50.9 56.3L50.3 56.3ZM57.2 56.3L57.1 56.8L59.7 60.8L60.8 63.4L61.5 63.8L63 62.4L64 61.7L64.5 60.2L59.8 57.2L57.5 56.3ZM52.6 57.5L48.4 64.3L48.6 65L50 65.3L52.9 66.1L53.3 65.7L53.3 57.9L52.9 57.5ZM55.2 57.5L54.8 57.9L55 59.4L54.8 59.7L55 59.9L54.8 60.2L55 62.5L54.8 62.8L55 63.7L54.8 65.7L55.2 66.1L57.2 65.8L59.5 65L59.7 64.3L55.5 57.5Z",
+  griffin:"M19.9 23.2L28.1 27.2L38.5 29.5L39.6 29.3L39 27.4L39.5 27.2L42.7 29.2L46.9 30.2L50.2 31.4L52.3 33.2L53.2 35.5L52.9 38.4L52.3 40L52.6 42.6L55.3 45.4L56.5 45.2L54.2 43.3L55.8 41.7L56.8 39.7L55.2 39.7L56.8 36.8L56.8 36.1L56 36L55.8 35.5L59.1 31.6L57.5 29.3L57.6 27.6L60.9 29.2L64.1 28.9L69.3 29.2L70.9 31.1L73.2 31.4L74.6 32.9L74.5 36L73.2 35L71.2 35L69 36L68.1 36.8L68.5 39.7L71.1 42.3L70.4 43.3L71.4 43.9L73 46.5L72.8 47L72 47.2L72.7 48.5L73 52L72.5 53.5L71.9 52.5L71.4 53L70.7 56.2L67.7 60.6L66.9 59.8L66.9 58.5L66.2 58.5L65.9 62.7L66.9 66L66.9 66.9L66.2 67.6L68.8 72.1L70.6 73.6L72.2 72.9L74.1 72.9L75.4 73.6L76.2 75.7L75.8 76.2L75.1 75.2L74.3 75.4L74.3 76.3L73.8 76.8L72.8 75.8L71.6 76.2L68.6 75.2L66 75.8L63.1 75.5L62.2 76.2L62.3 74.7L63.4 73.6L66.2 73.4L63.6 69.2L62.5 68.4L61.2 69.4L60.5 67.7L59.6 68.7L58.8 65.3L57.5 65.3L57.8 63.7L57.3 63.2L54.1 62.9L45.3 59.3L41.1 59.6L39.3 61.1L37.2 65.5L34.6 67.1L30.4 68.1L28.6 69.5L28 73.4L31 73.6L31.9 74.4L32 76.5L24.9 76.5L24.1 75.7L24.2 70.3L23.4 70.8L24.4 68.2L24.4 67.6L23.9 67.7L23.7 67.3L25.5 65.5L29.3 63.7L30.6 60.8L30.6 58.2L31.2 56.6L30.7 56.4L27.5 59.6L24.2 61.3L20.7 60.9L18.2 58.8L17.9 55.6L19.2 53L21.3 51.2L25.9 48.9L28 46.5L28 44.9L25.9 43.4L24.9 43.4L23.1 44.6L22.1 47.2L21.3 48L20.8 47.8L21 47L19.1 48.3L15.2 48L15 47.5L16.1 47L18.2 44.6L18.4 43.1L22.3 42.8L23.6 42.1L26.8 42.1L27.8 42.5L29.6 44.6L29.6 47.2L28.6 48.8L21.3 53.5L19.9 55.6L20.2 57.9L22.6 59.3L25.5 58.3L32.3 51.9L35.6 49.9L38.2 49.3L46.6 48.9L46.8 48.5L44 48L44 46.7L41.1 47L39.3 46.2L39.8 45.7L41.7 45.4L42.1 44.7L35.9 44.4L34 43.8L31.9 42L39.1 41.8L40.4 41.5L40.1 40.8L31.7 40.2L27.5 38.3L26 36.8L25.9 36L30.7 37.3L39.3 37.8L38.2 37L32.7 36.3L27.5 35L24.9 33.7L22.5 31.3L21.8 30.3L22 29.8L28.8 32.4L35.6 33.4L38.8 34.4L39 33.9L35.6 32.4L30.1 31.4L24.6 29.2L21.2 26.1L19.9 23.5ZM66.4 31.1L67 32.1L68.5 31.9L68.6 31.1L66.7 31.1ZM80.1 49.1L83.2 49.3L83.4 49.8L81.9 50.2L81.1 51.4L82.9 51.2L85 52.7L84.5 53.2L83.2 52.8L82.9 53.5L81.3 54.1L80.1 55.3L79.5 56.9L79.8 58.8L79.5 59.8L80.8 60.8L80.3 61.3L79.7 61.6L78.7 61.3L77.5 59.8L77.5 57.9L76.4 58L74.3 59.5L73.3 61.1L72.4 61.7L72.2 62.9L68.1 61.7L70.4 59.2L72.2 55.8L74.5 56.1L76.7 55.1L77.9 54L78.5 52.3L78.5 50.7L80 49.3ZM41.2 60.8L45.9 60.6L48.7 62.1L49 62.7L48.7 65L45.8 67.9L45.8 69.2L48.9 72.3L53.4 72.6L54.2 73.7L54.4 75.5L54.1 75.8L46.3 75.5L40 68.9L40.3 67.9L41.6 66.6L41.6 65L39.6 63L40.3 61.4L41.1 60.9Z",
+  wyvern:"M41.6 27.2L42.2 27.5L41.9 28.9L42.5 29.5L40.6 30.7L39.9 31.7L40.9 33.3L43.1 34.6L42.9 35L41.2 35L41.1 35.4L43.3 37.4L43.3 38.5L42.9 38.7L41.5 37.8L40.8 38.5L40.8 39.4L43.1 41.4L43.3 42.2L41.8 41.8L40.4 41.8L39.9 42.2L42.5 44.8L42.3 45.2L40.9 45.2L40.2 45.9L40.9 47.2L44.3 46.6L46.5 45.3L47 43.3L47 39.4L47.6 38.2L50 35.8L55.1 32.1L63.6 27L63.2 31.2L64.2 32.1L66.2 32.1L76.2 28.3L73.4 30.9L71.7 33.4L72 35.1L73.7 36.3L69.8 38.7L67.7 41.6L67.7 43.9L68.6 45.9L66.4 46L65 46.6L63.5 48.2L63.6 48.6L66.7 48.6L72.1 49.7L75.5 49.4L76.6 48.9L77.1 48.2L73.5 48L72.4 47.4L71.1 45.3L71.4 43.3L72.7 42.1L75.2 41.2L78.9 42.1L79.9 39.9L76.6 40.1L76.5 39.7L81.6 34.6L83 32.6L83.7 31.9L84.1 32L83.9 36.3L84.1 36.5L84.1 39.7L85 42.5L84.6 42.6L82 40.4L81 42.8L81.3 47.9L79.9 50.4L78.3 52L75.2 53.7L71.5 54.3L71.1 54.7L76.6 57.7L79 60.1L78.6 60.8L76.4 59.6L75.9 59.8L76.5 61.5L76.5 63.5L75.4 67.4L75.4 69.1L76.1 69.8L78.3 70.7L79.3 72L76.6 72.1L74.4 71L72.7 71.5L69.6 71.3L68.1 72.1L65.6 72.4L64.7 73L64.9 71.7L66.3 70.5L64.7 70.1L62.9 70.3L63.6 69L65.2 68.3L65 67.6L63.5 67.4L64.5 66.4L66.2 66.2L68.4 68.1L70.7 68.4L72 67.1L72 66.3L72.5 65.4L72.2 61.2L70.4 59.9L64.5 59.4L62.2 58.5L60.8 57.4L59.4 57.4L57.8 58.9L57.5 59.8L59.1 61.6L62.2 62.5L63.5 63.7L63.5 64.6L62.8 64.7L61.9 64.2L60.8 64.5L57.9 67.6L54.8 69.3L53.8 69.7L54.3 70.1L55.7 70.1L57.1 70.7L57.8 72L57.4 72.1L56.5 71.5L54.5 72.1L52.3 71L51.1 71.3L48.9 71L46.3 71.5L45.5 72.1L43.8 71.5L42.9 72.4L42.5 72L43.3 70.5L42.1 69.6L41.1 70L41.8 68.7L44.6 68.4L45.5 69L47 68.8L46.9 68.4L45.2 67.6L44.3 67.6L43.8 66.7L42.6 67L43.5 65.9L44.9 65.6L48.3 67.9L49.4 67.9L52 67L53.5 65.4L53.1 64.7L51.4 64.5L49.1 62.8L48.2 61.8L47.9 61.2L48.2 60.3L47.7 59.9L46 59.9L44.3 61.3L42.3 61.6L40.6 62.5L39.2 65.6L37.5 62.2L32.9 67.7L32.3 69.4L35.8 70.4L36.5 71.1L36.4 72.1L35.8 71.5L34.7 72.1L33.3 72.1L30.7 71L29.3 71.5L27 71.5L25.6 72.4L22.5 72.1L21.4 72.7L21.5 71.7L22.7 70.8L21.4 70.1L20.2 70.7L19.8 70.3L20.8 69L22.5 68.7L22.9 68.3L22.2 67.6L21.2 67.4L21.9 66.7L24.5 67L26.8 68.1L28.7 67.9L30.3 66.3L31.7 63.5L32.6 60.6L32.1 60.2L31.3 60.2L29 60.8L28 62.9L27 63.9L25.8 59.8L21 54.4L19.4 51.4L18.7 51.6L18.1 53.3L17.4 54L15 54.1L16.4 53L16.1 52.1L18.1 49.3L18.1 46.5L16.7 44.8L16.1 42.2L16.4 41.9L15.3 41.4L15.7 40.9L17.4 41.2L18.4 42.2L18.8 43.5L19.3 43.1L19.5 40.8L18.8 39.2L20 39.2L20.7 39.9L21.2 41.1L21.4 42.9L22.4 41.9L22.8 40.6L23.5 42.2L23.2 43.9L21.8 45.6L21.8 46.7L22.7 48.4L22.7 50.1L24.5 52.3L26.2 53.4L28.2 53.7L28.9 52.7L28.3 51.6L28.3 49L28.9 48.4L28.9 47L30 45L30 43.9L33.1 38L32.1 37.5L30.2 39.5L29.3 39.2L28.5 40.9L28 40.5L27.5 37.4L27 37L21.7 37L21.8 38L21.4 38.1L17.8 35.1L16.7 32.6L17.1 32.4L20.5 34.1L22.5 34.4L21.7 35.5L31.6 35.3L32.6 34.8L31.6 33.6L30.7 33.6L29 34.7L27.3 34.7L25.6 33L21.8 33.1L23.9 31.6L28.5 30.7L30.2 29.3L31.9 29L32.1 29.3L36.7 29.3L41.5 27.3ZM31 31L30.6 31.4L31 31.9L31.6 32.1L32.4 31.9L33.1 31.4L31.3 31ZM74.7 44L73.9 44.8L73.9 45.3L74.9 46L76.4 45.7L76.9 45.7L77.3 45L76.4 44L74.9 44Z",
+  athena:"M49.6 15L50.7 16.1L51.6 19.2L56.2 19.4L52.6 22.3L53.7 25.6L53.5 26.5L50.4 24.1L46.5 26.5L46.3 26L47.8 22.3L44.2 19.4L48.4 19.2L49.6 15.4ZM56.9 21.2L57.9 21L60.6 21.9L57.3 23.4L55.3 24.3L54.4 23L56 21.4L56.8 21.4ZM40.5 21.6L41.6 21.6L39 26.7L36.7 28.3L35.7 28.5L37.6 23.4L39.6 21.8L40.3 21.8ZM43.4 21.6L44 21.4L45.2 22.7L45.2 23.4L42.1 26.1L40.5 26.3L41.6 23.8L43.2 21.8ZM61.3 23L62.6 22.9L65.7 24.5L61.1 25.8L58.2 26.1L56.9 25.6L58.2 24.3L61.1 23.2ZM35.4 23.8L35.9 23.6L36.1 24.1L35 26.3L34.6 28.9L32.5 31.4L31.7 31.4L32.5 26.3L33.7 24.7L35.2 24ZM64.6 26L67.7 25.8L70.5 27.8L67.4 28L63.7 28.3L61.7 27.4L62.6 26.5L64.4 26.1ZM30.6 27.1L31 27.1L30.6 32.5L28.6 35.3L28.1 35.1L28.1 29.6L30.4 27.2ZM49.3 28.9L50.5 28.7L52.9 30.4L51.8 32.2L51.1 35.5L53.8 36.7L55.8 39.1L56.9 42.4L56.9 43.9L56 43.7L55.8 44.2L57.3 46.4L54.9 46.6L52 47.7L51.1 47.5L51.8 42.8L54.6 43L55.1 42.4L52.4 40.4L50.7 41.3L50.7 44.2L50.2 44.8L49.6 44.6L49.3 41.3L48.4 40.4L47.6 40.4L45.2 42.4L45.8 43L48.2 42.8L48.9 47.5L42.7 46.4L44.2 44.2L44 43.7L43.1 43.5L43.1 42.8L44.5 38.8L47.6 36L48.4 36.7L48.9 36.6L48.9 34.4L47.4 30L49.1 29.1ZM68.3 29.3L72.5 29.4L74.5 31.8L72.5 31.6L68.5 31.6L65.7 29.6L68.1 29.4ZM26.2 31.1L26.6 31.1L27 33.3L27 38L26.2 39.5L25.5 39.9L24.4 33.6L26.1 31.3ZM69.4 32.9L75 33.5L77 35.1L77.8 36.6L71.7 35.3L69.6 33.1ZM40.1 33.3L41.6 33.3L40.5 35.5L35 39.9L32.8 45L32.6 47L34.8 44.4L36.7 43.7L37.9 43.9L37.6 45L35.6 47L32.6 47.7L32.1 48.6L32.1 51.6L32.6 53.2L33.6 50.5L34.8 49.2L36.8 48.6L35.7 51.9L32.8 54.1L33.2 56.3L34.5 59L35.4 54.8L37.6 53L37.9 53.7L37.6 56.7L35 59.6L36.1 61.8L35.9 62.7L35.2 62.7L34.3 61.4L31.7 55.2L31.4 47.5L32.1 44.6L33.9 41L36.5 37.7L37.6 35.1L39.9 33.5ZM58.8 33.3L60.1 33.1L62.4 34.7L63.9 38L67.2 42.4L67.9 45.7L68.6 46.8L69 49.7L68.6 53.7L68.1 54.3L64.3 51.6L63.2 48.6L64.8 48.8L66.8 50.8L67.2 53L67.7 53.2L67.9 48.6L67.5 47.9L64.4 47L62.4 44.6L62.6 43.7L64.4 44.1L67.4 47L67.5 45.7L66.8 43.5L63.9 38.4L60.4 36.4L58.8 33.6ZM33.6 34.4L34.1 34.2L34.6 35.1L34.6 38.4L33.4 40.8L33 41.1L32.5 39.9L32.5 36.2L33.4 34.6ZM66.1 34.4L66.8 34.4L67.9 36.6L67.9 38.8L67.2 41L66.4 40.6L65.4 37.7L65.9 34.6ZM23 35.8L23.3 35.8L23.7 38.4L24.8 41L24.4 43.9L23.7 44.2L21.5 39.5L21.9 37.3L22.8 36ZM72.7 36.9L78 38.2L79.2 39.5L80 41.7L79.4 41.9L75 40L72.7 37.3ZM37.6 39.5L40.9 39.5L38.9 41.5L37.8 41.9L35.6 42.2L34.6 41.7L36.3 40L37.4 39.7ZM59.5 39.5L63.3 39.7L65 41L65.4 42L62.2 41.9L59.5 39.9ZM29.2 39.9L29.7 39.7L30.3 40.2L31.4 42.4L31 46.4L30.3 46.1L28.8 43.1L29.2 40.2ZM70.5 39.9L71.2 40.6L71.2 43.5L69.6 46.3L69 46.1L68.6 45L68.6 43.1L69.4 41L70.3 40ZM20.4 41.3L21.1 41.7L23.3 46.4L23.3 48.6L22.8 49.5L19.7 45L19.7 42.4L20.2 41.5ZM75.2 41.7L76.9 41.9L80.2 43.7L81.4 46.1L81.4 47.5L80.9 47.7L79.4 46.3L77.2 45.2L76 43.9L75.2 42ZM76.7 46.4L77.2 46.3L81.1 49.4L81.8 50.5L81.8 53.4L77.4 49.4L76.7 46.8ZM18.9 46.8L19.7 47.2L22.6 51.6L23 52.7L23 54.5L22.6 54.5L18.6 50.5L18.2 49L18.7 47ZM27 46.8L27.9 47L29.9 49L30.6 52.3L29.7 52.1L27.3 49.7L27 47.2ZM72.7 46.8L73.4 46.8L73 49.4L70.1 52.3L69.4 52.3L69.7 49.7L72.5 47ZM42.7 47.9L43.4 48.3L43.4 51.9L45.2 55.6L45.2 58.9L44.3 60.1L43.2 60.1L42.5 61.6L41.4 61.6L40.5 60.7L42 60L41.6 58.5L43.8 55.9L42.3 53.7L42.7 48.3ZM44.5 47.9L45.8 48.1L45.2 49L46.5 49.9L48.7 49.5L48.9 52.3L49.5 52.8L50.7 52.7L50.9 49.5L53.5 49.9L54.8 49L54.6 48.1L55.5 48.3L55.5 50.8L55.1 53L53.3 55.9L51.6 57.2L50.2 57.6L48 56.9L46 54.8L44.5 51.2L44.5 48.3ZM56.6 47.9L57.3 47.9L58 53.4L56.6 55.2L58 57.4L56.8 58.3L55.3 59.4L54.8 58.1L54.8 55.9L56.6 51.9L56.6 48.3ZM77.4 51.2L81.4 55.6L81.1 58.9L80.9 59.4L77.8 54.8L77.4 51.6ZM18.2 52.7L18.7 52.5L23 56.7L23.7 58.1L23.7 59.6L20.2 57.6L18.6 55.9L18.2 53ZM49.8 53.6L48.4 53.9L48.2 54.5L50.2 54.7L51.8 54.5L50 53.7ZM27 54.5L28.3 54.3L30.4 55.4L32.1 58.1L31.2 58.3L29.3 57.6L28.1 56.7L27 54.8ZM49.1 55.4L49.8 56.1L50.5 55.8L51.1 55.6L49.5 55.4ZM64.6 56.3L71 56.5L73.6 57.6L74.1 58.1L74.1 59.2L73.6 60.1L69.6 58.3L64.8 58.3L61.1 59.8L56.9 64L55.8 66.5L55.5 69.8L55.8 73.5L57.3 76.4L57.1 77L56 77.3L54.8 76.4L53.3 72L53.3 68L54 65.1L55.8 61.8L59 58.7L62.2 56.9L64.4 56.5ZM77 56.3L78.1 57L80.3 61.1L80.3 62.5L79.6 64L79.4 64.5L78.9 64.3L78.1 61.8L76.7 59.6L77 56.7ZM46.3 57.8L46.9 57.6L49.1 58.7L51.3 58.7L53.5 57.6L54.4 61.4L52.9 63.6L51.6 64.2L48 64.2L45.4 63.4L44.2 61.8L46 60.3L46.3 58.1ZM18.9 58.5L19.5 58.3L23.1 60.5L25.1 62.9L25.5 64.3L20.9 62.7L19.7 61.4L18.9 58.9ZM65 60L70.3 60.1L72.5 61.2L73 62.5L71.2 66.2L68.5 68.2L68.3 64L67.4 62L66.1 64L66.3 68.2L64.1 66.4L60.8 65.3L61 66.9L64.1 69.3L65 69.8L64.8 70.4L63.3 70.4L61.1 71.5L59.9 73.1L62.6 73.3L64.8 72.2L65.4 72.4L63 74.4L60.1 75.9L59 75.9L56.9 71.7L57.3 66.9L58.8 64L61.1 61.6L63 60.5L64.8 60.1ZM37.9 61.4L38.9 61.2L39.8 62.2L39.4 62.5L38.1 62.7L37.6 62.2L37.8 61.6ZM76 61.4L78.1 65.4L78.1 67.6L77 69.5L76.9 70L76.3 69.8L76.3 68.4L75.2 65.8L75.2 62.9L75.8 61.6ZM40.9 63.3L42.9 63.1L43.8 64L42.5 65.6L40.3 65.6L39.4 64.7L40.7 63.4ZM20.4 64L20.9 63.8L26.1 66L28.1 68.7L24.6 68.2L22 67.1L20.4 64.3ZM36.8 64L37.4 63.8L38.3 64.7L38.7 67.6L37.6 71.3L37.6 73.5L37 74L35.6 72.9L32.5 70.2L32.5 69.1L33.6 65.8L34.5 64.9L36.7 64.2ZM44.9 64.7L45.8 64.5L47.6 65.3L52.4 65.3L51.8 67.3L51.6 68.2L50.5 68.2L48 67.1L45.1 64.9ZM44.2 66.2L48 68.6L50.2 68.9L51.8 69.8L51.8 73.5L53.7 77.5L52.7 78.1L45.4 77.7L43.8 75.3L42.7 71.3L42 68.7L42.1 67.1L43.1 67.3L43.8 69.1L47.3 72.9L50.9 75.1L51.5 74.9L46 69.8L44 66.4ZM73.8 66.2L74.5 66.2L75.2 71.7L74.5 73.5L73.4 74.6L72.7 74.6L73 73.1L72.3 69.1L73.6 66.4ZM40.1 67.3L40.9 67.6L41.2 71.7L43.1 76.4L42.1 76.6L39 75.3L39.4 69.8L40.1 67.6ZM23 69.1L28.3 70L31.4 72.4L26.8 72.6L25.7 72.2L23.3 70.2L23.1 69.3ZM70.8 70.6L71.6 72L71.6 75.3L70.8 77.1L69.4 78.2L68.6 78.2L69 73.5L70.7 70.7ZM26.6 73.9L32.6 74L35 75.7L33 76.2L29 76.2L27.5 75.5L26.6 74.2ZM67.5 73.9L67.9 73.9L67.9 75.3L67.2 79L65.5 81L63.9 81.5L63.5 81.5L64.6 79L65 76.4L67.4 74ZM63.5 76.8L63.9 77.1L61.7 82.3L59 83.5L58.4 83L60.2 79.3L61.1 78.1L63.3 77ZM34.3 77.1L37.4 77L39.8 78.2L35.9 79.5L33.7 79.9L30.6 77.9L34.1 77.3ZM58.4 79L59 78.8L59.1 79.3L57.7 82.3L55.7 84.3L53.5 84.6L52.6 84.5L55.1 80.8L56.8 79.5L58.2 79.2ZM40.1 79.3L42.9 79.2L44 79.5L44.2 80.1L39.6 82.1L38.1 82.4L35.7 81.2L39.9 79.5ZM53.7 80.1L54.4 80.1L50.9 84.3L49.5 85L47.6 85L46.7 84.5L50.9 80.6L53.5 80.2ZM46 80.4L49.1 80.2L49.3 80.8L45.8 83.5L44.3 83.9L41.8 83.9L40.9 83.4L45.8 80.6Z",
+};
+
+// ================= クラブのエンブレム(→wcc_f docs/10 §10.2 A)=================
+// pftb のエンブレムメーカー(pftb docs/10 §3.54)を取り込んだもの。wcc_f 向けに直した所:
+//   ・自分のクラブの組み替えは opts.design で渡す(pftb の S.club は持たない)
+//   ・実在クラブの色(#rrggbb)を地の色にそのまま使える(opts.color)
+//   ・★(ワールドクラブカップの数)は出さない / クラブの一覧に頼らない / 文字のエスケープは embEsc
+// 以下の注記の §番号は pftb の docs/10 を指す
+// **絵を1枚も持たずに描く**。クラブは 144 + カップの架空名 40 の 184 個あり、
+// 汎用のパターン画像を数枚用意しても「15クラブが同じ絵柄」になって個性が減る。
+// 形 × 地の柄 × 紋章 × 色相 の組み合わせなら、全部に別の顔を配れて index.html も太らない。
+//
+// **クラブIDから決まる**(世界のたねと同じ流儀)。クラブを足せばエンブレムも生える。
+// 自分のクラブだけは CLUB 画面で好きに組み替えられる(→S.club.emblem)。
+
+const EMB_SHAPES=["shield","round","oval","pointed","banner"];
+const EMB_FIELDS=["solid","stripe","half","quarter","sash","hoop","chevron","cross","saltire"];
+// 紋章。**文字の代わりに置ける**(→docs/10 §3.54)。どれも 100x100 の中で完結させる。
+// 中身は**描いた意匠を輪郭追跡してパスにしたもの**(→§3.54b / EMB_ART)。
+// 星だけは直線と角度で決まるので手で持っている。
+//
+// 剣・稲妻・塔・ボールは**外した**(→§3.54c)。幾何で組んだ形は、輪郭で語る意匠と
+// 並ぶと絵の密度が違いすぎて浮く。星は単純すぎるので逆に浮かない。
+const EMB_CRESTS=["none","star","crown","eagle","lion","horse","helm",
+                  "dragon","fleur","cannon","griffin","wyvern","athena"];
+// 文字の並べ方(→§3.54c)。**2文字をどう置くか**で、紋章を持たないクラブにも個性が出る
+const EMB_LAYS=["row","col","diag"];
+
+/**
+ * 選べる色(→docs/10 §3.54)。**色相だけ持つ**ので、明るさと彩度は
+ * 既にある決まり(→docs/06 §6.13)がそのまま効く。
+ * ホーム=地の色 / アウェイ=柄の色。
+ */
+const EMB_HUES=[
+  // --- サッカーで実際によく使われる色 ---
+  { id:"red",     hex:"#E11B22", name:"レッド" },
+  { id:"crimson", hex:"#A5122B", name:"クリムゾン" },
+  { id:"maroon",  hex:"#6B1F2E", name:"マルーン" },
+  { id:"orange",  hex:"#F2751A", name:"オレンジ" },
+  { id:"gold",    hex:"#F2B713", name:"ゴールド" },
+  { id:"green",   hex:"#128A3E", name:"グリーン" },
+  { id:"forest",  hex:"#0B5027", name:"フォレスト" },
+  { id:"sky",     hex:"#4FB3E8", name:"スカイ" },
+  { id:"royal",   hex:"#1B4FD8", name:"ロイヤル" },
+  { id:"navy",    hex:"#172B54", name:"ネイビー" },
+  { id:"purple",  hex:"#6B2FA0", name:"パープル" },
+  { id:"black",   hex:"#1A1A1E", name:"ブラック" },
+  { id:"white",   hex:"#F2F2EF", name:"ホワイト" },
+  // --- インクカラー(いただいた見本そのまま) ---
+  // **推測で作らない**。指定された hex をそのまま置く
+  { id:"ink-violet",  hex:"#761AFF", name:"インクバイオレット" },
+  { id:"ink-indigo",  hex:"#6E1BFF", name:"インクインディゴ" },
+  { id:"ink-purple",  hex:"#AA1BFF", name:"インクパープル" },
+  { id:"ink-blue",    hex:"#4422FF", name:"インクブルー" },
+  { id:"ink-cyan",    hex:"#1BFAFF", name:"インクシアン" },
+  { id:"ink-mint",    hex:"#23FFB5", name:"インクミント" },
+  { id:"ink-green",   hex:"#23FF17", name:"インクグリーン" },
+  { id:"ink-lemon",   hex:"#F8FF26", name:"インクレモン" },
+  { id:"ink-yellow",  hex:"#FFF021", name:"インクイエロー" },
+  { id:"ink-orange",  hex:"#FFB530", name:"インクオレンジ" },
+  { id:"ink-magenta", hex:"#F215FF", name:"インクマゼンタ" },
+  { id:"ink-pink",    hex:"#FF21B2", name:"インクピンク" },
+  { id:"ink-rose",    hex:"#FF1F91", name:"インクローズ" },
+];
+/**
+ * その色の明るさ(0..1)。**字を白にするか黒にするか**を決めるのに使う。
+ * インクカラーはレモンのように非常に明るいものがあり、白字だと消える。
+ */
+function embLum(hex){
+  const v=String(hex||"").replace("#","");
+  if(v.length<6)return 0.5;
+  const r=parseInt(v.slice(0,2),16)/255, g=parseInt(v.slice(2,4),16)/255,
+        b=parseInt(v.slice(4,6),16)/255;
+  return 0.2126*r+0.7152*g+0.0722*b;      // sRGB の相対輝度(ざっくり)
+}
+/** 少し暗くした色(縁や字の縁取りに使う)。 */
+function embShade(hex,k){
+  const v=String(hex||"").replace("#","");
+  if(v.length<6)return hex;
+  const f=x=>Math.max(0,Math.min(255,Math.round(parseInt(x,16)*k)));
+  const h=n=>n.toString(16).padStart(2,"0");
+  return "#"+h(f(v.slice(0,2)))+h(f(v.slice(2,4)))+h(f(v.slice(4,6)));
+}
+const embHueById=id=>EMB_HUES.find(x=>x.id===id)||(/^#[0-9a-fA-F]{6}$/.test(String(id||""))?{ id, hex:id }:null);   // #rrggbb もそのまま使う
+const embEsc=s=>String(s).replace(/[&<>"]/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+// 盾の輪郭。clip と縁取りで同じパスを使う
+const EMB_PATH={
+  shield: "M50 4 L92 18 V52 Q92 84 50 96 Q8 84 8 52 V18 Z",
+  round:  "M50 4 A46 46 0 1 1 49.9 4 Z",
+  // 縦長の楕円。丸より紋章が縦に伸びるので、鳥や兜が収まりやすい
+  oval:   "M50 2 A31 48 0 1 1 49.9 2 Z",
+  pointed:"M50 3 L93 20 V50 Q93 82 50 97 Q7 82 7 50 V20 Z",
+  banner: "M12 6 H88 V70 Q88 84 50 96 Q12 84 12 70 Z",
+};
+
+/**
+ * クラブ名から読み取る顔(→docs/10 §3.54d)。**名前が既に答えを持っている。**
+ *
+ * クラブ名は実在クラブの愛称をもとにしていて、**色と生き物の語が入っている**。
+ * 「ミラノ・ロッソネーリ」は赤と黒、「レシフェ・レオン」は獅子、
+ * 「ロンドン・ガナーズ」は大砲。ここに乱数を当てる理由がない。
+ *
+ *   [語, ホーム, アウェイ, 紋章]  … アウェイと紋章は省略可
+ *
+ * 紋章の欄は3通り。**意匠名**なら出す、**空文字**なら何も出さない(その語は
+ * 紋章に無い生き物を名乗っている)、**省略**ならハッシュに任せる。
+ *
+ * **上から順に見て、最初に当たったものを使う。** 複合語を先に置くこと
+ * (`ロッソネーリ` を `ロッソ` より先に見ないと、黒が落ちる)。
+ */
+const EMB_WORDS=[
+  // --- 2色を名乗るもの。**まとめて言い切っている**ので最優先 ---
+  ["ビアンコネーリ","white","black"],   ["ロッソネーリ","red","black"],
+  ["ネラッズーリ","royal","black"],     ["ジャッロロッシ","crimson","gold"],
+  ["ジャッロブル","gold","royal"],      ["ロッソブル","red","royal"],
+  ["ロザネロ","ink-pink","black"],      ["アランチョネロ","orange","black"],
+  ["シュヴァルツゲルプ","gold","black"],["グリューンヴァイス","green","white"],
+  ["ルージュブラン","red","white"],     ["ルージュノワール","red","black"],
+  ["マリーヌエブラン","navy","white"],  ["シエルエマリーヌ","sky","navy"],
+  ["ブランキビオレタ","white","purple"],["ロヒブランコス","red","white"],
+  ["フランヒベルデス","white","green"], ["ブラウグラナ","maroon","royal"],
+  ["ルブロネグロ","red","black"],       ["フーブロネグロ","red","black"],
+  ["スカイブルーズ","sky","white"],     ["ブラックキャッツ","black","red",""],
+  // --- 生き物・意匠を名乗るもの。**紋章はここで決まる** ---
+  ["ガナーズ","red","white","cannon"],
+  ["グリフォーニ","red","navy","griffin"],
+  ["アドラー","black","red","eagle"],       ["エーグロン","red","black","eagle"],
+  ["ライオンズ","crimson","white","lion"],  ["レオネス","red","white","lion"],
+  ["レーヴェン","gold","royal","lion"],     ["レオン","red","black","lion"],
+  ["カヴァルッチ","white","black","horse"], ["フォーレン","white","green","horse"],
+  ["リコルヌ","white","royal","horse"],
+  ["ローテトイフェル","red","white","dragon"],
+  ["オリンピアン","sky","white","athena"],  ["オリンピスタ","white","black","athena"],
+  ["レアレス","royal","white","crown"],     ["ヴィオラ","purple","white","fleur"],
+  // --- 色の語。**綴りの長いほうを先に** ---
+  ["ブランコス","white","royal"],  ["ブランキ","white","royal"],
+  ["ホワイツ","white","royal"],    ["ヴァイス","white","red"],
+  ["ブラン","white","royal"],
+  ["マグパイズ","black","white",""],  ["シュヴァルツ","black","gold"],
+  ["ノワール","black","white"],    ["ネグロ","black","white"],
+  ["チマォン","black","white"],    ["カルボネーロ","black","gold"],
+  ["ガロ","black","white",""],        ["スコイスト","black","white"],
+  ["レッズ","red","white"],        ["ローテン","red","white"],
+  ["ローテ","red","white"],        ["ルージュ","red","white"],
+  ["ロヒ","red","white"],          ["コロラド","red","white"],
+  ["ベルメジョネス","red","black"],["ロッソ","red","white"],
+  ["コップ","red","white"],        ["ブレイズ","red","white"],
+  ["セインツ","red","white"],      ["ポッターズ","red","white",""],
+  ["グラナータ","maroon","white"], ["グルナ","maroon","white"],
+  ["ヴィランズ","maroon","sky"],
+  ["ジャッロ","gold","royal"],     ["アマリージョス","gold","royal"],
+  ["カナリーズ","gold","green",""],   ["カナリーニ","gold","royal",""],
+  ["カナリ","gold","green",""],       ["スブマリノ","gold","royal",""],
+  ["アティグレス","gold","black",""], ["ボンボネーラ","royal","gold"],
+  ["カナージャ","royal","gold"],
+  ["タイガース","orange","black",""], ["メルル","orange","black",""],
+  ["ヴェルダン","green","white"],  ["ヴェール","green","white"],
+  ["ベルデ","green","white"],      ["ベティコス","green","white"],
+  ["エスメラウジーノ","green","white"], ["アスカレロス","green","white"],
+  ["フッゲライ","green","white"],  ["ラシンギスタス","white","green"],
+  ["カリファレス","white","green"],
+  ["フォレスターズ","forest","white"],  ["パイルグリムズ","forest","white"],
+  ["スカイ","sky","white"],        ["セレステス","sky","white"],
+  ["チェレスティ","sky","white"],  ["パルテノペイ","sky","white"],
+  ["シーガルズ","sky","white",""],
+  ["マリーヌ","navy","white"],     ["キャピタル","navy","red"],
+  ["スパーズ","white","navy"],     ["ドーグ","red","navy",""],
+  ["ヴィオレ","purple","white"],
+  ["ブルーズ","royal","white"],    ["アッズッリ","royal","white"],
+  ["ブル","royal","white"],
+  // --- 色を名乗ってはいないが、由来のはっきりするもの ---
+  ["コルチョネロス","red","white"],  ["ネルビオン","white","red"],
+  ["ナサリエス","red","white"],      ["ピメントネロス","red","white"],
+  ["チェ","white","orange"],         ["マニョス","white","royal"],
+  ["マンチェゴス","white","royal"],  ["チチャレロス","royal","white"],
+  ["アスレホス","royal","white"],    ["カルバジョネス","royal","white"],
+  ["フォクシーズ","royal","white",""],  ["ホーネッツ","gold","black",""],
+  ["ローヴァーズ","royal","white"],  ["トラクターズ","royal","white",""],
+  ["オロビチ","royal","black"],      ["フリウラーニ","white","black"],
+  ["イゾラーニ","crimson","royal"],  ["ガッレッティ","white","red"],
+  ["デルフィーニ","royal","white",""],  ["クロチャーティ","white","royal"],
+  ["ロンディネッレ","royal","white",""],
+  ["ヴェルクセルフ","red","black"],  ["クナッペン","royal","white"],
+  ["ガイスボック","white","red",""],    ["ハウプトシュテッター","royal","white"],
+  ["アルトマイスター","crimson","white"], ["ウンアプシュタイクバー","royal","white"],
+  ["ライン","red","white"],          ["エルプフローレンツ","gold","black"],
+  ["オストゼー","royal","white"],    ["アルミネン","royal","white"],
+  ["ルールポット","red","white"],
+  ["ゴーヌ","white","royal"],        ["サンエオール","red","white"],
+  ["アルザシアン","royal","white"],  ["パイヨラン","royal","orange"],
+  ["アイジェオワ","white","royal"],  ["ピラート","red","white",""],
+  ["ムタルディエ","red","white",""],    ["ドーファン","royal","white",""],
+  ["ミジョナリオス","white","red"],  ["ペイシェ","white","black",""],
+  ["トリコロール","red","royal"],    ["コエーリョ","royal","white",""],
+  ["レプロ","red","black"],          ["エスカラーダ","royal","red"],
+  ["ヴォゾン","royal","red"],        ["アルボレータ","white","royal"],
+  ["クレマ","white","crimson"],
+];
+/** 名前に入っている語。**最初に当たったもの**を返す(無ければ null)。 */
+const embWordOf=name=>EMB_WORDS.find(w=>String(name||"").includes(w[0]))||null;
+/**
+ * 語を持たないクラブの色(→§3.54d)。**サッカーで実際に使う13色から引く**。
+ * インクカラーまで混ぜると、CPUのクラブが蛍光色だらけになってサッカーに見えない。
+ */
+const EMB_CLASSIC=["red","crimson","maroon","orange","gold","green","forest",
+                   "sky","royal","navy","purple","black","white"];
+/** 地の色に対して**読める相方**。明るい地には暗い柄、暗い地には白を返す。 */
+const embMate=id=>{
+  const H=embHueById(id);
+  if(!H)return "white";
+  return embLum(H.hex)>=0.55?"navy":"white";
+};
+
+/**
+ * カタカナ → ラテン文字(→docs/10 §3.54)。**頭の1音だけ**を引く。
+ * クラブ名は日本語なので、そのまま盾に入れるとカタカナが窮屈に収まる。
+ * 実在クラブの紋章にならって、**2文字のモノグラム**にする。
+ */
+const EMB_ROMA={
+  ア:"A",イ:"I",ウ:"U",エ:"E",オ:"O",
+  カ:"K",キ:"K",ク:"K",ケ:"K",コ:"K",ガ:"G",ギ:"G",グ:"G",ゲ:"G",ゴ:"G",
+  サ:"S",シ:"S",ス:"S",セ:"S",ソ:"S",ザ:"Z",ジ:"J",ズ:"Z",ゼ:"Z",ゾ:"Z",
+  タ:"T",チ:"C",ツ:"T",テ:"T",ト:"T",ダ:"D",ヂ:"D",ヅ:"D",デ:"D",ド:"D",
+  ナ:"N",ニ:"N",ヌ:"N",ネ:"N",ノ:"N",
+  ハ:"H",ヒ:"H",フ:"F",ヘ:"H",ホ:"H",バ:"B",ビ:"B",ブ:"B",ベ:"B",ボ:"B",
+  パ:"P",ピ:"P",プ:"P",ペ:"P",ポ:"P",
+  マ:"M",ミ:"M",ム:"M",メ:"M",モ:"M",
+  ヤ:"Y",ユ:"Y",ヨ:"Y",
+  ラ:"R",リ:"R",ル:"R",レ:"R",ロ:"R",
+  ワ:"W",ヲ:"O",ン:"N",ヴ:"V",
+};
+/** 1文字ぶんのラテン。引けない字(長音・小書きなど)は null。 */
+const embLetter=ch=>EMB_ROMA[ch]||null;
+/**
+ * 音節ぶんのローマ字(→docs/10 §3.54e)。EMB_ROMA は1文字＝1子音なので
+ * 「バルサローナ」が BRS になり読めない。**綴りとして読める略号**を出すには
+ * 音節ごとのローマ字が要る(ba+ru+sa → barusa → BAR)。
+ */
+const EMB_SYL={
+  ア:"a",イ:"i",ウ:"u",エ:"e",オ:"o",
+  カ:"ka",キ:"ki",ク:"ku",ケ:"ke",コ:"ko",ガ:"ga",ギ:"gi",グ:"gu",ゲ:"ge",ゴ:"go",
+  サ:"sa",シ:"shi",ス:"su",セ:"se",ソ:"so",ザ:"za",ジ:"ji",ズ:"zu",ゼ:"ze",ゾ:"zo",
+  タ:"ta",チ:"chi",ツ:"tsu",テ:"te",ト:"to",ダ:"da",ヂ:"ji",ヅ:"zu",デ:"de",ド:"do",
+  ナ:"na",ニ:"ni",ヌ:"nu",ネ:"ne",ノ:"no",
+  ハ:"ha",ヒ:"hi",フ:"fu",ヘ:"he",ホ:"ho",バ:"ba",ビ:"bi",ブ:"bu",ベ:"be",ボ:"bo",
+  パ:"pa",ピ:"pi",プ:"pu",ペ:"pe",ポ:"po",
+  マ:"ma",ミ:"mi",ム:"mu",メ:"me",モ:"mo",
+  ヤ:"ya",ユ:"yu",ヨ:"yo",
+  ラ:"ra",リ:"ri",ル:"ru",レ:"re",ロ:"ro",
+  ワ:"wa",ヲ:"o",ン:"n",ヴ:"v",
+};
+// 小書き。**直前の音節の母音を差し替える**(キ+ャ → kya)
+const EMB_SMALL={ ャ:"ya",ュ:"yu",ョ:"yo",ァ:"a",ィ:"i",ゥ:"u",ェ:"e",ォ:"o" };
+/** カタカナの語を綴りに開く。長音(ー)と促音(ッ)は落とす。 */
+function embRomaji(word){
+  let out="";
+  for(const ch of String(word||"")){
+    const sm=EMB_SMALL[ch];
+    if(sm){                                          // 拗音・外来音は前の音とくっつける
+      out=out.replace(/[aiueo]$/,"")+sm;
+      continue;
+    }
+    const sy=EMB_SYL[ch];
+    if(sy){ out+=sy; continue; }
+    if(/[A-Za-z]/.test(ch))out+=ch.toLowerCase();    // ラテン名がそのまま来た場合
+    // ー(長音)・ッ(促音)・その他は落とす
+  }
+  return out;
+}
+/**
+ * クラブの**3文字の略号**(→docs/10 §3.54e)。頭の語を綴りに開いて頭3文字を採る。
+ * 「バルサローナ・ブラウグラナ」→ BAR ／「マドリード・ブランコス」→ MAD。
+ *
+ * ヘッダーの左は紋章＋この略号だけにする。正式名称(最大120px)を置くと
+ * **画面の見出しが右へ押し出されて中央に来ない**(→docs/06)。
+ * 同じ都市のクラブは同じ略号になりうるが、ヘッダーに出るのは自分のクラブだけなので
+ * ここでは重ならないことより**読めること**を採る。
+ */
+function clubAbbr(name){
+  const head=String(name||"").split(/[・\s]+/).filter(Boolean)[0]||"";
+  const r=embRomaji(head).toUpperCase();
+  if(r.length>=3)return r.slice(0,3);
+  // 3文字に満たない短い語は、次の語から足す(「シティ・…」など)
+  const all=embRomaji(String(name||"").replace(/[・\s]+/g,"")).toUpperCase();
+  return (all.slice(0,3)||embMonogram(name)).padEnd(3,"C").slice(0,3);
+}
+/**
+ * クラブ名のモノグラム。**「・」で区切られた語の頭**を1文字ずつ拾う。
+ * 「マンチェスター・レッズ」→ MR。語が1つなら頭の2音から2文字取る。
+ */
+function embMonogram(name){
+  const parts=String(name||"").split(/[・\s]+/).filter(Boolean);
+  const out=[];
+  for(const w of parts){
+    for(const ch of w){ const c=embLetter(ch); if(c){ out.push(c); break; } }
+    if(out.length>=2)break;
+  }
+  if(out.length<2&&parts.length){
+    // 語が1つしかない。頭の2音から取る(「ロドリ」→ RD)
+    for(const ch of parts[0]){ const c=embLetter(ch); if(c&&out.length<2)out.push(c); }
+  }
+  if(!out.length){                                   // ラテン名がそのまま来た場合
+    const s=String(name||"").replace(/[^A-Za-z]/g,"");
+    return (s.slice(0,2)||"FC").toUpperCase();
+  }
+  return out.slice(0,2).join("");
+}
+
+/**
+ * 紋章(→docs/10 §3.54)。**紋章学の意匠に寄せる**。
+ *
+ * 丸みのある塊で描くと、どうしても可愛らしく子供っぽくなる。実在の紋章は
+ *   ・輪郭が**角ばっていて、切り込みが深い**(羽・鬣・王冠の刻み)
+ *   ・**内側の抜き**で立体を出す(目・口・面の割り)
+ *   ・盾いっぱいに大きく置く
+ * の3点で「本物らしさ」が決まる。曲線を減らし、直線と鋭角で組み直してある。
+ */
+/**
+ * モノグラムの並べ方(→docs/10 §3.54c)。**横・縦・斜めの3通り**。
+ * 紋章を持たないクラブは3分の2あるので、文字の置き方だけで顔が変わると効きが大きい。
+ *
+ * 縦と斜めは**1文字ずつ置く**。`<text>` に改行は無く、`textLength` で潰すと字が歪む。
+ */
+function embTextPath(lay,text,ink,edge){
+  const t=String(text||"");
+  const font=' font-family="Georgia,&apos;Times New Roman&apos;,serif" font-weight="700"'
+    +' text-anchor="middle" fill="'+ink+'" stroke="'+edge+'"'
+    +' stroke-width="5" paint-order="stroke"';
+  const one=(ch,x,y,sz,rot)=>'<text x="'+x+'" y="'+y+'" font-size="'+sz+'"'
+    +(rot?' transform="rotate('+rot+' '+x+' '+y+')"':"")+font+'>'+embEsc(ch)+'</text>';
+  if(lay==="col")
+    // 縦積み。**字を少し小さく**しないと、盾のすぼまりに肩が当たる
+    return one(t[0]||"",50,45,34)+one(t[1]||"",50,81,34);
+  if(lay==="diag")
+    // 斜め。**たすき(sash)と同じ向き**に流すので、地の柄と喧嘩しない
+    return one(t[0]||"",34,44,34,-30)+one(t[1]||"",66,74,34,-30);
+  return '<text x="50" y="65" font-size="40" letter-spacing="-2"'+font+'>'+embEsc(t)+'</text>';
+}
+function embCrestPath(kind,ink,edge){
+  const st=' fill="'+ink+'" stroke="'+edge+'" stroke-width="2.2" paint-order="stroke"';
+  const cut=' fill="'+edge+'"';
+  // **描いた意匠が先**(→docs/10 §3.54b)。生き物や兜のように輪郭で語る形は、
+  // 手で座標を置くと必ずどこか可愛くなる。輪郭追跡したパスをそのまま使う。
+  // ベクターなので**クラブの2色がそのまま乗る**。穴は evenodd に任せる
+  const art=(typeof EMB_ART!=="undefined")&&EMB_ART[kind];
+  if(art)return '<path fill-rule="evenodd" d="'+art+'"'+st+'/>';
+  // ここから下は**幾何で組んだほうが綺麗なもの**。星や剣は直線と角度で決まるので、
+  // 描いた絵を追跡するとかえって辺が揺れる
+  switch(kind){
+    // 星(マレット)。**5つの尖りを細長く**。太いと漫画の星になる
+    case "star":  return '<path d="M50 16 L57.5 41 L84 41 L62.5 56.5 L70.5 82 L50 66.5'
+                        +' L29.5 82 L37.5 56.5 L16 41 L42.5 41 Z"'+st+'/>';
+    default:      return "";
+  }
+}
+/**
+ * 外装(→docs/10 §3.54)。**盾の外**に付ける。
+ * 盾の中の紋章とは役割が違い、こちらは「格」を語る飾り。
+ * 盾を縮めず、viewBox を外へ広げて描くので、付けても中身は小さくならない。
+ */
+const EMB_ORNS=["none","crown","laurel","ribbon","wreath"];
+/** その外装がはみ出す量(上・下)。viewBox を広げるのに使う。 */
+function embOrnPad(kind){
+  switch(kind){
+    case "crown":  return { t:58, b:0,  x:4 };
+    case "ribbon": return { t:0,  b:30, x:12 };
+    case "wreath": return { t:52, b:30, x:27 };
+    default:       return { t:0,  b:0,  x:0 };
+  }
+}
+function embOrnPath(kind,gold,dark){
+  const st=' fill="'+gold+'" stroke="'+dark+'" stroke-width="2.2" paint-order="stroke"';
+  const crown='<g transform="translate(15,-62) scale(0.7)">'
+    +'<path fill-rule="evenodd" d="'+EMB_ART.crown+'" fill="'+gold+'"'
+    +' stroke="'+dark+'" stroke-width="3.2" paint-order="stroke"/></g>';
+  // 月桂樹。**葉を1枚ずつ置く**(束で描くと草の塊になる)
+  const leaf=(cx,cy,rot,sc)=>'<path transform="translate('+cx+','+cy+') rotate('+rot+') scale('+sc+')"'
+    +' d="M0 0 C6 -5 14 -4 17 2 C12 8 4 7 0 0 Z"'+st+'/>';
+  /**
+   * 月桂樹の枝。**中心(50,52)・半径44の円弧を素直になぞる**。
+   * 以前は「縦線を中央でくぼませる」式で置いていたが、それは真ん中が一番内側に
+   * 入る砂時計の形で、円のラインにならなかった。
+   *
+   * 葉の向きは**接線と外向き法線の中間**。φ を上からの角度とすると
+   * 接線 = φ-180、法線 = φ-90 なので、葉 = φ-135 で出る。
+   */
+  const bough=side=>{
+    const CX=50, CY=52, R=44, A0=32, A1=166, N=10;
+    const rad=d=>d*Math.PI/180;
+    const P=phi=>[CX+side*R*Math.sin(rad(phi)), CY-R*Math.cos(rad(phi))];
+    let stem="M";
+    for(let i=0;i<=16;i++){
+      const q=P(A0+(A1-A0)*i/16);
+      stem+=(i?" L":"")+q[0].toFixed(1)+" "+q[1].toFixed(1);
+    }
+    let g='<path d="'+stem+'" fill="none" stroke="'+gold+'" stroke-width="4.4"'
+         +' stroke-linecap="round"/>'
+         +'<path d="'+stem+'" fill="none" stroke="'+dark+'" stroke-width="1.4"'
+         +' stroke-linecap="round"/>';
+    for(let i=0;i<N;i++){
+      const t=i/(N-1), phi=A0+(A1-A0)*t, q=P(phi);
+      const sc=0.94-Math.abs(t-0.5)*0.42;
+      const r0=phi-135;                       // 外側(大きい葉)
+      // 左側は鏡像。葉のもとの形が +x を向いているので 180 から引く
+      g+=leaf(q[0],q[1], side>0?r0:(180-r0), sc);
+      g+=leaf(q[0],q[1], side>0?(r0-30):(210-r0), sc*0.7);
+    }
+    return g;
+  };
+  switch(kind){
+    // **盾の中と同じ意匠を縮めて載せる**(→docs/10 §3.54b)。
+    // 別に描くと、紋章の王冠と外装の王冠が食い違う
+    case "crown": return '<g transform="translate(10,-70) scale(0.8)">'
+                        +'<path fill-rule="evenodd" d="'+EMB_ART.crown+'" fill="'+gold+'"'
+                        +' stroke="'+dark+'" stroke-width="3" paint-order="stroke"/></g>';
+    case "laurel": return bough(-1)+bough(1);
+    case "ribbon": return ""
+      // 折り返した端(奥に回る面)。**先に暗い面を敷く**と紙が巻いて見える
+      +'<path d="M4 96 L22 100 L22 116 L12 122 L16 112 L2 110 Z" fill="'+dark+'"/>'
+      +'<path d="M96 96 L78 100 L78 116 L88 122 L84 112 L98 110 Z" fill="'+dark+'"/>'
+      // 本体。中央がたわむ帯
+      +'<path d="M22 98 Q50 112 78 98 L78 116 Q50 130 22 116 Z"'+st+'/>'
+      +'<path d="M22 98 V116" stroke="'+dark+'" stroke-width="2" fill="none"/>'
+      +'<path d="M78 98 V116" stroke="'+dark+'" stroke-width="2" fill="none"/>';
+    case "wreath": return bough(-1)+bough(1)+crown
+      +'<path d="M10 98 L26 102 L26 116 L16 122 L20 112 L8 110 Z" fill="'+dark+'"/>'
+      +'<path d="M90 98 L74 102 L74 116 L84 122 L80 112 L92 110 Z" fill="'+dark+'"/>'
+      +'<path d="M26 100 Q50 112 74 100 L74 116 Q50 128 26 116 Z"'+st+'/>';
+    default:       return "";
+  }
+}
+/** 地の柄。2色目(b)で描く。 */
+function embFieldPath(kind,b){
+  switch(kind){
+    case "stripe": return [22,44,66].map(x=>'<rect x="'+x+'" y="0" width="11" height="100" fill="'+b+'"/>').join("");
+    case "half":   return '<rect x="50" y="0" width="50" height="100" fill="'+b+'"/>';
+    case "quarter":return '<rect x="50" y="0" width="50" height="50" fill="'+b+'"/>'
+                         +'<rect x="0" y="50" width="50" height="50" fill="'+b+'"/>';
+    case "sash":   return '<path d="M0 78 L78 0 H100 L0 100 Z" fill="'+b+'"/>';
+    case "hoop":   return '<rect x="0" y="30" width="100" height="16" fill="'+b+'"/>'
+                         +'<rect x="0" y="60" width="100" height="16" fill="'+b+'"/>';
+    case "chevron":return '<path d="M0 42 L50 14 L100 42 V62 L50 34 L0 62 Z" fill="'+b+'"/>';
+    // 十字。**縦を少し細く**しないと、盾の中で横棒だけが目立つ
+    case "cross":  return '<rect x="39" y="0" width="22" height="100" fill="'+b+'"/>'
+                         +'<rect x="0" y="36" width="100" height="22" fill="'+b+'"/>';
+    // ななめ十字(セント・アンドリュー)。盾の外まで伸ばして端で断つ
+    case "saltire":return '<path d="M-10 6 L6 -10 L110 94 L94 110 Z" fill="'+b+'"/>'
+                         +'<path d="M94 -10 L110 6 L6 110 L-10 94 Z" fill="'+b+'"/>';
+    default:       return "";
+  }
+}
+
+/**
+ * そのクラブの意匠(→docs/10 §3.54)。**IDから決まる**ので毎回同じ顔になる。
+ * 自分のクラブに `S.club.emblem` があればそれを優先する(CLUB画面で組み替えた形)。
+ */
+function embDesign(clubId,name,mine,color){
+  // mine … 自分で組み替えた形(無ければ id と名前から決める)/ color … クラブの色(#rrggbb。名前が色を名乗っていなければ地の色にする)
+  // **符号なしでずらす**。hashStr は 32bit いっぱいを返すので、`>>` だと
+  // 負になって配列の外(undefined)を引く。実際に地の柄が消えた
+  const h=hashStr("emb:"+clubId);
+  const w=embWordOf(name);                           // 名前が名乗っている顔(→§3.54d)
+  const d={
+    shape:EMB_SHAPES[h%EMB_SHAPES.length],
+    field:EMB_FIELDS[(h>>>5)%EMB_FIELDS.length],
+    // **既定は文字**。紋章は3回に1回くらい出る(全部が紋章だと名前が読めない)。
+    // ただし**名前が紋章を名乗っていれば必ずそれを出す**(→§3.54d)
+    // 紋章は3段階(→§3.54d)。
+    //   語が意匠を名乗る    → それを出す(レオン → 獅子)
+    //   語が別の生き物を名乗る → **何も出さない**("" 印。カナリーズに獅子は付けない)
+    //   どちらでもない      → 3回に1回くらいハッシュで出す
+    crest:(w&&w[3])?w[3]
+      :(w&&w[3]==="")?"none"
+      :((h>>>9)%3===0)?EMB_CRESTS[1+((h>>>11)%(EMB_CRESTS.length-1))]:"none",
+    // 外装も3回に1回くらい。**全部に王冠を載せると格が語れなくなる**
+    orn:((h>>>15)%3===0)?EMB_ORNS[1+((h>>>17)%(EMB_ORNS.length-1))]:"none",
+    // 文字の並べ方(→§3.54c)。横・縦・斜めの3通り
+    lay:EMB_LAYS[(h>>>21)%EMB_LAYS.length],
+    text:embMonogram(name),
+    // **色も名前から引く**(→§3.54d)。名乗っていなければサッカーで使う13色から、
+    // クラブIDで決まる1色を当てる(並び順ではないので、クラブを足してもずれない)
+    home:(w&&w[1])||color||EMB_CLASSIC[(h>>>25)%EMB_CLASSIC.length],
+  };
+  d.away=(w&&w[2])||embMate(d.home);
+  const out=mine?{ ...d, ...mine, text:mine.text||d.text }:d;
+  // **一覧から消えた指定は既定へ戻す**(→§3.54c)。紋章を廃止したとき、
+  // 昔の保存が指したままだと、紋章も文字も出ない空の盾になる
+  if(!EMB_CRESTS.includes(out.crest))out.crest=d.crest;
+  if(!EMB_ORNS.includes(out.orn))out.orn=d.orn;
+  if(!EMB_LAYS.includes(out.lay))out.lay=d.lay;
+  return out;
+}
+
+/**
+ * ★(→docs/10 §3.54)。**ワールドクラブチャンピオンカップを獲った数**。
+ * 3つで打ち止め。エンブレムの上に載る。
+ */
+function embStars(){ return 0; }                    // wcc_f では★を出さない
+
+/**
+ * エンブレムのSVG。**画像を持たない**ので、どの大きさでも輪郭が出る。
+ *   size … 一辺のピクセル
+ *   opts.stars … ★を出すか(既定は出す)
+ * 色は clubHue と同じ色相から取る(→docs/06 §6.13 の色の決まりに合わせる)。
+ */
+function embSvg(clubId,name,size,opts){
+  const o=opts||{};
+  const d=embDesign(clubId,name,o.design||null,o.color||null);
+  const i=-1;
+  const h2=hashStr("emb2:"+clubId);
+  // **選んだ色があればそれを使う**(ホーム=地 / アウェイ=柄 →docs/10 §3.54)
+  const ph=embHueById(d.home), pa=embHueById(d.away);
+  const hue=ph&&ph.h!=null?ph.h:(i>=0?((i*137.5+20)%360):(hashStr("hue:"+clubId)%360));
+  const hue2=pa&&pa.h!=null?pa.h:(hue+((h2%2)?150:40))%360;
+  // 選んだ色は hex をそのまま使い、選んでいなければ色相から作る
+  const a=ph?ph.hex:"oklch(0.72 0.22 "+hue.toFixed(1)+")";
+  const b=pa?pa.hex:"oklch(0.38 0.14 "+hue2.toFixed(1)+")";
+  // **地が明るいときは字を暗く**。レモンや白の上に白字を置くと消える
+  const la=ph?embLum(ph.hex):0.62;
+  const ink=la>=0.62?"#1A1A1E":"#FFFFFF";
+  const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
+  const path=EMB_PATH[d.shape]||EMB_PATH.shield;
+  // **idはクラブごとに変える**。同じ画面に2つ出したとき clipPath がぶつかる
+  const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"");
+  const stars=o.stars===false?0:embStars(clubId);
+  // ★も外装も**盾の外へ足す**。盾を縮めないので、付いた瞬間に中身が小さくならない
+  const orn=(d.orn&&d.orn!=="none")?d.orn:null;
+  const op=embOrnPad(orn);
+  const top=(stars?18:0)+op.t, bot=op.b, side=op.x;
+  const vb=(-side)+" "+(-top)+" "+(100+side*2)+" "+(100+top+bot);
+  const gold="oklch(0.82 0.14 88)", dark="oklch(0.34 0.08 78)";
+  const starRow=!stars?"":'<g>'+Array.from({length:stars},(_,k)=>{
+      const x=50+(k-(stars-1)/2)*20;
+      return '<path class="emb-star" transform="translate('+x+',-9) scale(0.34)" '
+        +'d="M0 -22 L6.5 -7 L23 -7 L10 3 L15 19 L0 9 L-15 19 L-10 3 L-23 -7 L-6.5 -7 Z" '
+        +'fill="oklch(0.88 0.16 92)" stroke="oklch(0.42 0.10 80)" stroke-width="4" '
+        +'paint-order="stroke"/>';
+    }).join("")+'</g>';
+  return '<svg class="emb-svg" viewBox="'+vb+'" width="'+size+'" height="'+size+'" '
+    +'role="img" aria-label="'+embEsc(name||"")+'">'
+    +'<defs><clipPath id="'+cid+'"><path d="'+path+'"/></clipPath></defs>'
+    // 月桂冠は**盾の後ろ**に回す(前に出すと盾の柄が隠れる)
+    +(orn==="laurel"||orn==="wreath"?embOrnPath(orn==="wreath"?"laurel":"laurel",gold,dark):"")
+    +'<g clip-path="url(#'+cid+')"><rect x="0" y="0" width="100" height="100" fill="'+a+'"/>'
+    +embFieldPath(d.field,b)+'</g>'
+    +'<path d="'+path+'" fill="none" stroke="'+rim+'" stroke-width="4"/>'
+    +(d.crest&&d.crest!=="none"
+      ? embCrestPath(d.crest,ink,b)
+      : embTextPath(d.lay,d.text,ink,b))
+    // 王冠とリボンは**盾の前**(重なっても手前に出す)
+    +(orn==="crown"?embOrnPath("crown",gold,dark)
+      :orn==="ribbon"?embOrnPath("ribbon",gold,dark)
+      :orn==="wreath"?embOrnPath("crown",gold,dark)
+        +embOrnPath("ribbon",gold,dark):"")
+    +starRow
+  +'</svg>';
+}
 
 /* =========================================================================
    wcc_f — 試合映像(上のモニター)。エンジンが解いた結果を読むだけで、何も書き戻さない。
@@ -5452,8 +6217,8 @@ function showClub(keepScroll){
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); }
 
-const clubName=id=>id==="me"?teamNameOf(TEAMS.azr):teamNameOf(TEAMS[id]);
-const clubShort=id=>id==="me"?TEAMS.azr.short:TEAMS[id].short;
+const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
+const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
@@ -5572,7 +6337,7 @@ function prepHtml(){
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+'</div>'+
+    '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+mabHtml()+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?'<span class="dim">練習を1つ選ぶと次へ進む</span>'
         :(commLeft(CL.S)?'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>':'<button class="btn btn-main" data-act="play">試合へ</button>'))+
@@ -5788,7 +6553,8 @@ function cardDetailHtml(id){
     (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small><br>'+
       '<span class="get">○ '+st.get+'</span>'+(st.lose?'<br><span class="lose">× '+st.lose+'</span>':'')+'</p>':'')+
     '<p class="dim">得意: '+c.roles.join(" / ")+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+
-    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p></div></div>';
+    '<p class="dim">国籍: '+natTxt(c)+' ・ 動物: '+aniTxt(c)+'</p>'+
+    (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'')+'</div></div>';
   if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
   else{
     h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+
@@ -5841,10 +6607,11 @@ function termEndHtml(){
 function careerHtml(){
   const S=CL.S;
   if(!S.career.length)return "";
-  return '<section class="card"><h3>歴代 <small>累計年俸 '+S.salary+'億</small></h3><table class="tbl">'+
-    '<tr><th></th><th></th><th>勝</th><th>分</th><th>敗</th><th>冠</th><th>年俸</th></tr>'+
-    S.career.map(c=>'<tr><td>第'+c.term+'任期</td><td class="nm2">'+titleOf(c.title).name+'</td><td>'+c.w+'</td><td>'+c.d+
-      '</td><td>'+c.l+'</td><td>'+c.titles+'</td><td>'+c.salary+'</td></tr>').join("")+'</table></section>';
+  const best=Math.max(...S.career.map(c=>c.money||0));
+  return '<section class="card"><h3>歴代 <small>累計年俸 '+S.salary+'億 ・ 稼いだ資金の最高 '+best+'億</small></h3><table class="tbl">'+
+    '<tr><th></th><th></th><th>勝</th><th>分</th><th>敗</th><th>冠</th><th>資金</th><th>年俸</th></tr>'+
+    S.career.map(c=>'<tr'+(c.money&&c.money===best?' class="me"':'')+'><td>第'+c.term+'任期</td><td class="nm2">'+titleOf(c.title).name+'</td><td>'+c.w+'</td><td>'+c.d+
+      '</td><td>'+c.l+'</td><td>'+c.titles+'</td><td>'+(c.money!=null?c.money:"—")+'</td><td>'+c.salary+'</td></tr>').join("")+'</table></section>';
 }
 /* ---- 監督室(→docs/07 §7.9)。HOME をハブにして、下のタブで行き来する ---- */
 
@@ -5884,7 +6651,7 @@ const powDelta=S=>{ const d=teamPower(S)-(S.ts.pow0||teamPower(S)); return d>=0.
 function homeHeadHtml(){
   if(CL.S.ts&&CL.S.ts.pow0==null)CL.S.ts.pow0=teamPower(CL.S);   // 任期の始め(または初めて見たとき)のチーム力
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
-  return '<header class="chd">'+emblemSvg(TEAMS.azr,30)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>第'+S.term+'任期 ・ 格 '+S.grade+
+  return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>'+(S.mgr?'監督 '+S.mgr.name+(S.mgr.ani!=null?ANI_ICON[S.mgr.ani]:'')+' ・ ':'')+(S.tset?'「'+titleOf(S.tset).name+'」 ・ ':'')+'第'+S.term+'任期 ・ 格 '+S.grade+
     ' ・ ランク '+S.fac+(last?' ・ 「'+last+'」':'')+'</small></div>'+
     '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>チーム力</small></div>'+
     '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
@@ -5898,7 +6665,7 @@ function nextTileHtml(){
   return '<section class="tile next" data-act="go">'+
     '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b><em>'+(fx.label||"")+'</em><i>第'+fx.no+'試合</i></div>'+
     '<p class="nx-hype">'+hypeOf(S,fx)+'</p>'+
-    '<div class="nx-vs"><div class="me">'+emblemSvg(TEAMS.azr,46)+'<b>'+TEAMS.azr.short+'</b></div>'+
+    '<div class="nx-vs"><div class="me">'+emblemSvg(myTeam(CL.S),46)+'<b>'+myTeam(CL.S).short+'</b></div>'+
       '<span class="vs">VS</span>'+
       '<div class="op">'+emblemSvg(t,46)+'<b>'+t.short+'</b></div></div>'+
     '<p class="nx-opp">'+teamNameOf(t)+' <span>'+"★".repeat(tierOf(fx.opp))+'</span></p>'+
@@ -6005,6 +6772,58 @@ function bizClubHtml(){
 }
 const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"・ケガが治る率 +"+Math.round(TUNING.biz.medHeal[lv]*100)+"%"
   :"経験 ×"+TUNING.biz.facK[lv];
+/* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
+function mabHtml(){
+  const S=CL.S, set=S.mab.set, M=TUNING.mab;
+  const chip=k=>{ const a=MAB.find(x=>x.id===k), r=mabRank(S,k), on=set.includes(k), xp=S.mab.xp[k]||0, nx=M.rankAt[r+1];
+    return '<button class="mab'+(on?' on':'')+'" data-act="mab" data-v="'+k+'"><b>'+a.name+'</b><i>'+MAB_RANK[r]+'</i>'+
+      '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
+  return '<section class="card mabs"><h3>監督能力 <small>試合に軽く効く ・ '+set.length+'/'+M.max+' ・ 使うほどランクが上がる</small></h3>'+
+    (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div><button class="lnk" data-act="mabopen">閉じる</button>'
+      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">監督能力を選ぶ</button>')+'</section>';
+}
+/* ---- 称号のセット(→docs/10 §10.2 B) ---- */
+function titleSetHtml(){
+  const S=CL.S, ids=earnedTitles(S);
+  return '<section class="card tset"><h3>称号をセットする <small>この任期のあいだ効く ・ 獲った称号から1つ</small></h3>'+
+    ids.map(id=>'<button class="sp" data-act="tset" data-v="'+id+'"><b>'+titleOf(id).name+'</b><i>'+TITLE_FX[id].desc+'</i></button>').join("")+
+    '<button class="sp" data-act="tset" data-v=""><b>セットしない</b></button></section>';
+}
+/* ---- 監督ライセンスと監督契約(→docs/10 §10.2 A) ---- */
+/** 監督ライセンス(初回だけ。あとから変えられない) */
+function licenseHtml(){
+  const d=CL.draft||(CL.draft={});
+  const ani=(()=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.birth||""); return m?aniOfDate(+m[1],+m[2],+m[3]):null; })();
+  return '<section class="card lic"><h3>監督ライセンス <small>初回だけ。あとから変えられない</small></h3>'+
+    '<label>監督名<input data-f="mname" maxlength="12" value="'+embEsc(d.mname||"")+'" placeholder="例: 山田 太郎"></label>'+
+    '<label>生年月日(任意)<input type="date" data-f="birth" value="'+embEsc(d.birth||"")+'"></label>'+
+    (ani!=null?'<p class="dim">監督の動物: '+ANI_ICON[ani]+ANIMALS[ani].name+'('+ANI_GROUP[ANIMALS[ani].g]+')。同じ群れの選手と相性が良い</p>':'<p class="dim">生年月日を入れると、監督の動物(動物占い)が分かる</p>')+
+    '<button class="btn btn-main" data-act="license">登録する</button></section>';
+}
+/** 監督契約(初回と新しい任期の始め): クラブ名・略称・ホームタウン・色・エンブレム */
+function contractHtml(){
+  const S=CL.S, d=CL.draft||(CL.draft={});
+  if(!d.c){ const nm=S.term>1?"":"アズーロFC";
+    d.c={ name:nm, short:"", town:TOWNS[(S.term-1)%TOWNS.length], color:"#1B4FD8", emb:{} }; }
+  const c=d.c, name=c.name||"(クラブ名)", e=embDesign("azr",name,c.emb,c.color);
+  const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
+  const hues=EMB_CLASSIC.map(id=>embHueById(id));
+  return '<section class="card contract"><h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>'+
+    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+embEsc(c.town)+' ・ '+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
+      (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
+    '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
+    '<label>略称(英字3字・スコアに出る)<input data-f="cshort" maxlength="3" value="'+embEsc(c.short)+'" placeholder="'+clubAbbr(name)+'"></label>'+
+    '<div class="ce-row"><i>ホームタウン</i>'+TOWNS.map(t=>'<button class="ce'+(c.town===t?' on':'')+'" data-act="ctown" data-v="'+t+'">'+t+'</button>').join("")+'</div>'+
+    '<div class="ce-row"><i>クラブの色</i>'+hues.map(h=>'<button class="ce sw'+(c.color===h.hex?' on':'')+'" data-act="ccolor" data-v="'+h.hex+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
+    '<h4>エンブレム</h4>'+
+    row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
+    '<div class="ce-row"><i>柄の色</i>'+hues.map(h=>'<button class="ce sw'+(e.away===h.id?' on':'')+'" data-act="emb" data-k="away" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
+    '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button><button class="btn btn-main" data-act="contract">この内容で契約する</button></div></section>';
+}
+const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾", banner:"旗",
+  solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
+  none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
+  laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
 /** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
 function secPickHtml(title){
   const S=CL.S;
@@ -6019,7 +6838,7 @@ function lastHtml(){
   if(!L)return "";
   const lines=L.lines.filter(x=>!/^カード:/.test(x)).slice(0,3);
   return '<section class="tile last"><h3>前の試合 <small>'+COMPS[L.comp].name+' '+(L.label||"")+'</small></h3>'+
-    '<div class="ls"><div class="ls-sc">'+TEAMS.azr.short+' <b>'+L.hg+' - '+L.ag+'</b> '+clubShort(L.opp)+
+    '<div class="ls"><div class="ls-sc">'+myTeam(S).short+' <b>'+L.hg+' - '+L.ag+'</b> '+clubShort(L.opp)+
       (L.pso?'<small>PK '+L.pso[0]+'-'+L.pso[1]+'</small>':'')+'</div>'+
       (L.card?'<div class="ls-card">'+cardHtml(L.card,"s")+'</div>':'')+'</div>'+
     (lines.length?'<ul>'+lines.map(x=>'<li>'+x+'</li>').join("")+'</ul>':'')+'</section>';
@@ -6028,6 +6847,9 @@ function homeHtml(){
   const S=CL.S;
   // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
   const alertBox=CL.alert?'<section class="sec"><i class="sec-ic">SEC</i><div><p>'+CL.alert+'</p></div></section>':"";
+  if(!S.mgr&&!S.termOver)return alertBox+licenseHtml();
+  if(!S.club&&!S.termOver)return alertBox+contractHtml();
+  if(!S.tsetChosen&&!S.termOver){ if(earnedTitles(S).length)return homeHeadHtml()+alertBox+titleSetHtml(); S.tsetChosen=true; }
   if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+alertBox+secPickHtml("秘書を選ぶ");
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
@@ -6049,10 +6871,16 @@ function seasonHtml(){
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
     '</table></section>';
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
-  h+='<section class="card"><h3>大会 <small>'+S.cyc+'周目</small></h3><table class="tbl cups">'+
-    CUP_IDS.map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot;
+  // S の大会への道(→docs/09 第4弾): S の大会に出る条件と、いま満たしているか
+  const sIds=CUP_IDS.filter(id=>COMPS[id].grade==="S");
+  h+='<section class="card road"><h3>S の大会への道 <small>'+S.cyc+'周目</small></h3>'+sIds.map(id=>{ const c=S.cups[id], ok=c.st!=="wait"||entryOk(S,id);
+    return '<p class="'+(ok?'ok':'')+'">'+gradeTag("S")+'<b>'+COMPS[id].name+'</b><span>'+(c.st==="won"?"優勝":c.st==="in"?"出場中":ok?"出場できる":"条件: "+ENTRY_NEED[id])+'</span></p>'; }).join("")+'</section>';
+  // 大会は日程の順に。次の試合の大会に印
+  const firstSlot=id=>SCHED.findIndex(x=>x[0]===id), nextComp=SCHED[S.slot]?SCHED[S.slot][0]:null;
+  h+='<section class="card"><h3>大会 <small>日程の順 ・ ▶ = 次の試合</small></h3><table class="tbl cups">'+
+    CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot;
       const txt=c.st==="wait"?(past?"出場なし":entryOk(S,id)?"出場できる":"条件: "+(ENTRY_NEED[id]||"—")):stTxt[c.st];
-      return '<tr class="st-'+c.st+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+COMPS[id].name+'</td><td>'+txt+'</td></tr>'; }).join("")+
+      return '<tr class="st-'+c.st+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+COMPS[id].name+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
 }
@@ -6116,6 +6944,17 @@ function onClubClick(e){
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
+  if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
+  if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
+  if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
+  if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)
+  if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }
+  if(act==="embauto"){ const c=CL.draft.c; c.emb={}; showClub(true); return; }
+  if(act==="contract"){ const c=CL.draft&&CL.draft.c;
+    if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
+      emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
+    else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
   if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
@@ -6509,15 +7348,10 @@ function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; 
 
 /* ---- エンブレム(クラブの色と略称から描く盾。独自の意匠) ---- */
 function emblemSvg(team,size){
-  const c=team.color||"#2f7fe0", s=size||40, txt=(team.short||"").slice(0,3);
-  const dark="rgba(0,0,0,.28)";
-  return '<svg class="emb" width="'+s+'" height="'+Math.round(s*1.15)+'" viewBox="0 0 40 46">'+
-    '<path d="M20 1 L38 6 L38 22 C38 34 29 41 20 45 C11 41 2 34 2 22 L2 6 Z" fill="'+c+'" stroke="#f2c14e" stroke-width="1.6"/>'+
-    '<path d="M20 1 L38 6 L38 22 C38 34 29 41 20 45 Z" fill="'+dark+'"/>'+
-    '<rect x="6" y="15" width="28" height="11" rx="1.5" fill="rgba(10,14,24,.78)"/>'+
-    '<text x="20" y="23.6" text-anchor="middle" font-size="8.4" font-weight="900" font-style="italic" fill="#fff" '+
-      'font-family="system-ui,sans-serif" letter-spacing=".5">'+txt+'</text>'+
-    '<circle cx="20" cy="34" r="3.2" fill="#fff" opacity=".85"/></svg>';
+  // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
+  const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
+  const c=own?CL.S.club:null;
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null });
 }
 
 /* ---- タイトル ---- */
@@ -6526,7 +7360,7 @@ function sceneTitle(onStart){
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
     '<div class="logo"><b>wcc<span>_</span>f</b><small>CLUB CARD FOOTBALL</small></div>'+
-    '<div class="club">'+emblemSvg(TEAMS.azr,46)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>'+sub+'</small></div></div>'+
+    '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
     { next:()=>{ sndUnlock(); sndUi("ok"); onStart(); } });
@@ -6553,7 +7387,7 @@ function sideHtml(T,side,kpId){
       axisBars(T)+'</div></div>';
 }
 function sceneMatchup(fx,go){
-  const comp=COMPS[fx.comp], S=CL.S, me=Object.assign({},TEAMS.azr,{ xi:(S.sq||startSquad()).slice(0,11) });
+  const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
   const opp=TEAMS[fx.opp];
   sceneShow("sc-vs",
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
@@ -6784,6 +7618,7 @@ function say(text,goal){
   const t=$("ticker"); t.textContent=text; t.classList.toggle("goal",!!goal);
 }
 function updateCtl(){
+  if(G.M&&$("btnShoot"))$("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
   $("btnSpeed").textContent="×"+G.speed;
   $("subInfo").textContent="交代 "+(G.M.home.subs+BD.pendingIn.size)+"/"+TUNING.squad.subMax;
   $("btnKp").classList.toggle("on",G.kpMode);
@@ -6949,6 +7784,10 @@ function startEvent(ev){
     syncBoard(G.M); updateStyleBar(); G.hold=ev.side==="H"?500:900;
     return;
   }
+  if(ev.type==="shootCall"){
+    if(ev.side==="H"){ const f=$("flash"); f.innerHTML='<b>SHOOT!</b>'; f.className="on mine sh"; G.flash=true; G.hold=420; }
+    return;
+  }
   if(ev.type==="injury"){
     say(tag(ev)+nm(ev.by)+"が負傷(このまま出ると能力が落ちる)"+(ev.side==="H"?" ・ 控えと交代できる":""),ev.side==="H");
     sndAww(); syncBoard(G.M); G.hold=ev.side==="H"?1100:500;
@@ -7043,6 +7882,7 @@ function advance(dt){
     if(G.M.over)return;
     if(G.stopAt&&matchMin(G.M)>=G.stopAt){ G.stopAt=0; setPlaying(false); return; }
     G.queue=stepMatch(G.M);
+    $("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
     BD.kp=null;                              // KP の指定はエンジンに渡った
     updateStyleBar();
     syncBoard(G.M);
@@ -7087,10 +7927,12 @@ function boot(){
     G.speed=SPEEDS[(SPEEDS.indexOf(G.speed)+1)%SPEEDS.length]; updateCtl();
     if(G.speed>1&&G.replay){ endReplay(); G.hold=200; }   // 倍速にしたらリプレイは飛ばす
   });
+  // SHOOT(→docs/08 §8.12): 押すと「撃て」が残り、光っている間にもう一度押すと取り消し
   $("btnShoot").addEventListener("click",()=>{
-    orderMatch(G.M,"H",{ type:"shoot" });
-    const b=$("btnShoot"); b.classList.add("armed");
-    setTimeout(()=>b.classList.remove("armed"),700);
+    const armed=G.M.home.shootOrder>0||$("btnShoot").classList.contains("armed");
+    orderMatch(G.M,"H",{ type:armed?"shootCancel":"shoot" });
+    $("btnShoot").classList.toggle("armed",!armed);
+    say(armed?"シュートの指示を取り消した":"シュートを狙え(敵陣の深い所で撃つ)");
   });
   $("btnKp").addEventListener("click",()=>{
     if(G.M.over)return;
@@ -7129,7 +7971,14 @@ function boot(){
   document.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
   // iPhone は電話・通知・裏に回ったあと音が止まる(interrupted)。触ったら戻す
   document.addEventListener("pointerdown",()=>{ if(SND.ctx&&SND.ctx.state!=="running")sndUnlock(); },true);
-  document.getElementById("club").addEventListener("change",e=>{ if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
+  // 監督ライセンス・監督契約の入力欄は、打つたびに下書き(CL.draft)へ。日付・決定のときは画面を作り直してプレビューを更新
+  document.getElementById("club").addEventListener("input",e=>{
+    const f=e.target.dataset&&e.target.dataset.f; if(!f)return;
+    const d=CL.draft||(CL.draft={}), v=e.target.value;
+    if(f==="mname"||f==="birth")d[f]=v; else if(d.c){ if(f==="cname")d.c.name=v; else if(f==="cshort")d.c.short=v; }
+  });
+  document.getElementById("club").addEventListener("change",e=>{
+    const f=e.target.dataset&&e.target.dataset.f; if(f==="birth"||f==="cname"){ showClub(true); return; } if(e.target.dataset&&e.target.dataset.file)onSettingsFile(e.target); });
   loadStoredPack();                           // 端末に保存した実名パック(→settings.js)
   // ホーム画面に追加した版(http/https で配ったとき)はオフラインでも動くようにする。file:// では何もしない
   if(/^https?:$/.test(location.protocol)&&"serviceWorker" in navigator)

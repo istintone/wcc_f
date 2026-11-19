@@ -44,7 +44,7 @@ const TUNING={
           strayFloor:0.15, strayFull:0.42, strayPass:1.6, deepCarry:0.35,
           spread:{ same:8, in:8, out:6, switch:8, box:9, any:0 } },
   // シュート(→docs/02 §2.6)
-  shot:{ minH:0.62, forceH:0.55, base:0.03, depth:0.74, wideCut:0.6,
+  shot:{ orderN:5, minH:0.62, forceH:0.55, base:0.03, depth:0.74, wideCut:0.6,
          dead:0.50, minRange:0.12, angle:0.45,
          thBlock:1.25, accBase:0.50, accTec:0.40, accRange:0.55,
          rangePow:1.0, gapPow:0.45, thGoal:1.13,
@@ -165,6 +165,9 @@ const TUNING={
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
   grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
+         // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
+         //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
+         dup:{ indK:0.1, max:5, awakeP:[0.7,0.25,0.05], awakeStep:[-0.08,0.03,0.05] },
          sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
               // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
               //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
@@ -225,7 +228,19 @@ const TUNING={
              eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
                    loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
                    noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
-        chanceK:0.8, cool:8, facCost:[20,50,100], facK:[1,1.1,1.2,1.3], medFat:[1,0.9,0.8,0.7], medHeal:[0,0.1,0.2,0.3] },
+        chanceK:0.8, cool:8, facCost:[20,50,100,160,240], facK:[1,1.1,1.2,1.3,1.4,1.5], medFat:[1,0.9,0.8,0.7,0.6,0.5], medHeal:[0,0.1,0.2,0.3,0.4,0.5] },
+  // 称号のセット(→docs/10 §10.2 B)。favorW … 系統に合う特殊練習の重み / 称号ごとの効き目:
+  //   spK 特殊練習が出る率の倍率 / cupKeep 大会で負けたときにやる気が下がる率の倍率 / qOk ★突破の成功率に足す / indK 個人練習の経験の倍率
+  //   meetK ミーティングの経験の倍率 / loungeOk ラウンジの大成功に足す / giant 格上に勝ったとき出た選手のやる気が上がる率 / setK セットプレイの伸びの倍率
+  //   youngK 21歳以下の伸びやすさの倍率 / benchK 控えのやる気が下がる率の倍率 / winUpK 勝ってやる気が上がる率の倍率
+  tset:{ favorW:4, legend:{ spK:1.5 }, emperor:{ cupKeep:0.5 }, master:{ qOk:0.07 }, factory:{ indK:1.1 }, magic:{ meetK:1.1 },
+    heir:{ loungeOk:0.08 }, assassin:{ giant:0.5 }, tactician:{ setK:1.2 }, native:{ youngK:1.1 }, fickle:{ benchK:0.5 }, fighter:{ winUpK:1.3 } },
+  // 監督能力(→docs/10 §10.2 C)。max … 1試合にセットできる数 / rankAt … ランク(I・II・III・マスター)に要る使った試合数 / rankK … ランクごとの効き目の倍率
+  //   base … ランク I の効き目(MAB の説明を参照)
+  mab:{ max:3, rankAt:[0,10,30,60], rankK:[1,1.25,1.5,2],
+    // 全員・グループの力に掛かるもの(center・side・dfc・morale・spurt)は、ほんの少しでも勝敗に大きく響くので小さくしてある
+    base:{ center:0.005, side:0.008, counter:0.08, post:0.05, duel:0.05, hotline:0.017, leader:0.05, half:0.01, dfc:0.007,
+           stamina:0.017, morale:0.002, setpiece:0.05, saving:0.014, spurt:0.01 } },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
   sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
@@ -545,6 +560,25 @@ const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"ア
   UZB:"ウズベキスタン", KOR:"韓国", JPN:"日本" };
 /** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
 const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
+
+/** 監督能力(→docs/10 §10.2 C)。名前は FOOTISTA 2021 にあったもの(調べて分かった10種 + 士気向上)と、wcc_f で足した3種 */
+const MAB=[
+  { id:"center",   name:"センターアタック強化", desc:"中央の選手(前線・中盤)の力が少し上がる" },
+  { id:"side",     name:"サイドアタック強化",   desc:"サイドの選手の力が少し上がる" },
+  { id:"counter",  name:"カウンターアタック強化", desc:"奪ってすぐの速い攻めが通りやすい" },
+  { id:"post",     name:"ポストプレイ強化",     desc:"FW がボールを受けやすく、空中戦に強い" },
+  { id:"duel",     name:"デュエル強化",         desc:"シュートを防ぐ・ボールを追う力が上がる" },
+  { id:"hotline",  name:"クラブホットライン強化", desc:"チャンスメイクのパスが効く" },
+  { id:"leader",   name:"リーダーシップ",       desc:"KP のスタイルの効き目が上がる" },
+  { id:"half",     name:"ハーフタイムケア",     desc:"ハーフタイムにスタミナが少し多く戻る" },
+  { id:"dfc",      name:"DFコーチング",         desc:"DF の力が少し上がる" },
+  { id:"stamina",  name:"スタミナコントロール", desc:"スタミナが減りにくい" },
+  { id:"morale",   name:"士気向上",             desc:"全員の力がほんの少し上がる" },
+  { id:"setpiece", name:"セットプレイ強化",     desc:"FK・CK・PK が決まりやすい" },
+  { id:"saving",   name:"セービング強化",       desc:"GK のセーブが上がる" },
+  { id:"spurt",    name:"ラストスパート",       desc:"75分以降、全員の力が上がる" }
+];
+const MAB_RANK=["I","II","III","マスター"];
 
 const CARDS={};
 CARD_ROWS.forEach(r=>{

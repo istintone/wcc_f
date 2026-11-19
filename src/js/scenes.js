@@ -29,15 +29,10 @@ function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; 
 
 /* ---- エンブレム(クラブの色と略称から描く盾。独自の意匠) ---- */
 function emblemSvg(team,size){
-  const c=team.color||"#2f7fe0", s=size||40, txt=(team.short||"").slice(0,3);
-  const dark="rgba(0,0,0,.28)";
-  return '<svg class="emb" width="'+s+'" height="'+Math.round(s*1.15)+'" viewBox="0 0 40 46">'+
-    '<path d="M20 1 L38 6 L38 22 C38 34 29 41 20 45 C11 41 2 34 2 22 L2 6 Z" fill="'+c+'" stroke="#f2c14e" stroke-width="1.6"/>'+
-    '<path d="M20 1 L38 6 L38 22 C38 34 29 41 20 45 Z" fill="'+dark+'"/>'+
-    '<rect x="6" y="15" width="28" height="11" rx="1.5" fill="rgba(10,14,24,.78)"/>'+
-    '<text x="20" y="23.6" text-anchor="middle" font-size="8.4" font-weight="900" font-style="italic" fill="#fff" '+
-      'font-family="system-ui,sans-serif" letter-spacing=".5">'+txt+'</text>'+
-    '<circle cx="20" cy="34" r="3.2" fill="#fff" opacity=".85"/></svg>';
+  // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
+  const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
+  const c=own?CL.S.club:null;
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null });
 }
 
 /* ---- タイトル ---- */
@@ -46,7 +41,7 @@ function sceneTitle(onStart){
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
     '<div class="logo"><b>wcc<span>_</span>f</b><small>CLUB CARD FOOTBALL</small></div>'+
-    '<div class="club">'+emblemSvg(TEAMS.azr,46)+'<div><b>'+teamNameOf(TEAMS.azr)+'</b><small>'+sub+'</small></div></div>'+
+    '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
     { next:()=>{ sndUnlock(); sndUi("ok"); onStart(); } });
@@ -73,7 +68,7 @@ function sideHtml(T,side,kpId){
       axisBars(T)+'</div></div>';
 }
 function sceneMatchup(fx,go){
-  const comp=COMPS[fx.comp], S=CL.S, me=Object.assign({},TEAMS.azr,{ xi:(S.sq||startSquad()).slice(0,11) });
+  const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
   const opp=TEAMS[fx.opp];
   sceneShow("sc-vs",
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+

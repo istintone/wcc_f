@@ -114,7 +114,7 @@ function buildTeam(def,side){
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
     kp:null, kp0:def.kp||null, links:def.links||[], graph:def.graph||null, setplay:def.setplay||0,
-    ins:insOf({}), injK:def.injK!=null?def.injK:1,
+    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -203,6 +203,7 @@ function refreshFx(M,min){
     const D=otherOf(M,T), st=T.style?STYLES[T.style]:null, ds=D.style?STYLES[D.style]:null;
     // 相手のアンチキープレイヤーは、こちらのスタイルの効きを落とす
     T.rk=T.rk0*(ds&&ds.scope==="team"&&ds.gain.antiRank!=null?Math.max(0,1+(ds.gain.antiRank-1)*D.rk0):1);
+    if(T.mab.leader)T.rk*=1+T.mab.leader;          // 監督能力: リーダーシップ
     T.fx=teamFx(st,T.rk);
     const lineOff=T.lineOff=T.ins.line*TUNING.ins.line+(T.fx.push||0);   // カウンターは隊列を下げる
     T.lane=insLane(T.ins);
@@ -219,6 +220,19 @@ function refreshFx(M,min){
         if(lv)fx.all*=1+st.fx.team*lv*T.rk;
       }
       fx.all*=late;
+      // 監督能力(→docs/10 §10.2 C)。軽い上積みだけ
+      const B=T.mab, g=GROUP_OF[p.role], mid=p.x>=30&&p.x<=70;
+      if(B.center&&mid&&(g==="FW"||g==="MF"))fx.all*=1+B.center;
+      if(B.side&&!mid&&!p.gk)fx.all*=1+B.side;
+      if(B.post&&g==="FW"){ fx.recv*=1+B.post; fx.aerial*=1+B.post; }
+      if(B.duel){ fx.blk*=1+B.duel; fx.chase*=1+B.duel; }
+      if(B.hotline)fx.assist*=1+B.hotline;
+      if(B.dfc&&g==="DF")fx.all*=1+B.dfc;
+      if(B.stamina)fx.sta*=1-B.stamina;
+      if(B.morale)fx.all*=1+B.morale;
+      if(B.setpiece){ fx.fk*=1+B.setpiece; fx.ck*=1+B.setpiece; fx.pkK*=1+B.setpiece; }
+      if(B.saving&&p.gk)fx.gk*=1+B.saving;
+      if(B.spurt&&min>=75)fx.all*=1+B.spurt;
       if(p.gk){                                 // キーパーの指示: 高い位置で裏を処理する。ループに弱く、疲れる
         const I=TUNING.ins; p.up=T.ins.keeper?I.keeperH:0;
         if(T.ins.keeper){ fx.sweep*=I.keeperSweep; fx.lob*=I.keeperLob; fx.sta*=I.keeperSta; }
@@ -427,7 +441,8 @@ function applyOrders(M,t){
     for(const o of q){
       if(o.type==="move"){ const p=playerOf(T,o.id); if(p)placePlayer(p,o.h,o.x); }
       else if(o.type==="sub")doSub(M,T,o.out,o.in,t);
-      else if(o.type==="shoot")T.shootOrder=3;
+      else if(o.type==="shoot")T.shootOrder=TUNING.shot.orderN;      // 自分たちが持っている間、最大 orderN 手(→docs/08 §8.12)
+      else if(o.type==="shootCancel")T.shootOrder=0;
       else if(o.type==="ins")setIns(M,T,o,t);
       else if(o.type==="kp")changeKp(M,T,o.id,t);
     }
@@ -562,7 +577,7 @@ function stepMatch(M){
   if(M.ix===M.len1&&!M.ht){
     M.ht=true; M.phase="kickoff"; M.koSide="A"; M.set=null;
     for(const T of [M.home,M.away])for(const p of T.players){    // ハーフタイムで少し戻る
-      p.fat=Math.max(0,p.fat-TUNING.stam.htRest);
+      p.fat=Math.max(0,p.fat-TUNING.stam.htRest-(T.mab.half||0));   // 監督能力: ハーフタイムケア
       p.stam=clamp(1-p.fat,TUNING.stam.min,1);
     }
     M.events.push({ ix:M.ix, min:45, half:1, type:"halftime", hg:M.home.score, ag:M.away.score });
@@ -601,10 +616,11 @@ function stepMatch(M){
   const A=T.fx, Dt=D.fx, I=TUNING.ins, Y=TUNING.style;
   T.st.steps++;
   // 奪ってから何手目か・どこで奪ったか(カウンターが見る)
-  if(M.poss.side===B.side)M.poss.n++; else M.poss={ side:B.side, n:0, h0:h };
+  if(M.poss.side===B.side)M.poss.n++; else{ M.poss={ side:B.side, n:0, h0:h }; otherOf(M,T).shootOrder=0; }   // 奪われたら「撃て」は消える
   const fast=A.fastN!=null&&M.poss.n<A.fastN&&(A.fastZone==="own"?M.poss.h0<0.5:M.poss.h0>=0.5);
   if(!c.gk&&((T.shootOrder>0&&h>=TUNING.shot.forceH)||shotUrge(rng,h,x,c,A.urgeK))){
-    T.shootOrder=0;
+    const ordered=T.shootOrder>0&&h>=TUNING.shot.forceH; T.shootOrder=0;
+    if(ordered)push({ side:T.side, type:"shootCall" });   // 指示で撃った(画面に「SHOOT!」)
     shoot(M,rng,push,T,D,c,h,x,null,B.assist);
     return M.events.slice(from);
   }
@@ -641,7 +657,7 @@ function stepMatch(M){
     if(c.kp)tA*=(A.kpS||1)*(Dt.antiDuel!=null?Dt.antiDuel:1);
     if(strayOf(c,h,x)<Y.zoneNear)tA*=c.fx.zone;
     if(!high)tA*=1+T.lineOff*I.lineAtk;         // ラインが高いほど敵陣に人数が掛かる
-    if(ctr)tA*=I.counterK;                     // カウンター: 守備が整う前に攻め切る
+    if(ctr)tA*=I.counterK*(1+(T.mab.counter||0));   // カウンター: 守備が整う前に攻め切る(監督能力で上積み)
     if(rc){
       const lv=linkLv(T,c.id,rc.p.id);
       tA*=lv?1+TUNING.link.pass*lv*(A.linkK||1):(A.noLinkK||1);

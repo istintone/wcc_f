@@ -445,5 +445,15 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   check("支配率は両チームで100%",Math.abs(poss/200-100)<=1,f2(poss/200));
 }
 
+// ⑩ 監督能力(→docs/10 §10.2 C)。最高ランクで3つ付けても、軽い上積みにとどまる
+{
+  console.log("\n⑩ 監督能力");
+  const M=E.TUNING.mab, run=mab=>{ let gd=0; for(let i=0;i<N;i++){ const d=E.makeTeamDef("azr",false); d.cpu=true; d.mab=mab;
+    const m=E.simulateMatch(d,E.makeTeamDef("ros",true),61000+i); gd+=m.home.score-m.away.score; } return gd/N; };
+  const o={}; ["dfc","center","half"].forEach(k=>o[k]=M.base[k]*M.rankK[3]);
+  const b=run({}), t=run(o);
+  console.log("    なし "+f2(b)+" → マスター3つ "+f2(t));
+  check("監督能力は3つ・最高ランクでも上積みが小さい(得失点差 +0.35 未満)",t-b<0.35&&t-b>-0.1,"+"+f2(t-b));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

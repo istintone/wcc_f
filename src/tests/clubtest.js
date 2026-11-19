@@ -189,7 +189,9 @@ function playOne(S,W,decline,opt){
     f2(kinds.friendly/TERMS)+"試合/任期");
   check("格の高い大会にも出られる(B 以上に1つは出ている)",["W4","CONTI","CT","ICC","CSC","JT"].some(c=>cupsSeen.has(c)),
     [...cupsSeen].join(" "));
-  check("タイトルと賞金が積み上がる",S.titles.length>0&&S.money>0,S.titles.length+"個 / "+S.money.toFixed(0)+"億");
+  // 資金は任期ごとに元に戻る(本家と同じく別のクラブへ移る。→docs/08 §8.12)。稼いだ額は歴代の記録に残る
+  const earned=S.career.map(c=>c.money||0);
+  check("タイトルが積み上がり、稼いだ資金は任期ごとに歴代へ残る",S.titles.length>0&&earned.length>0&&earned.every(v=>v>0),S.titles.length+"個 / 任期ごと "+earned.join("・")+"億");
   const wr=tot.w/(tot.w+tot.d+tot.l);
   check("監督まかせの勝率が 35〜75%(簡単すぎず、勝てなさすぎない)",wr>=0.35&&wr<=0.75,pc(wr));
 }
@@ -327,6 +329,46 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
     const A=E.newCareer(72), B=E.newCareer(72); B.biz.fac.train=3; A.g.step=B.g.step="comm";
     E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
     check("練習場 Lv3 は個人能力の経験を ×1.3",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.3)<1e-9,f2(A.g.pl.h10.ie)+" → "+f2(B.g.pl.h10.ie));
+  }
+  { // 監督能力(→docs/10 §10.2 C)
+    const T=E.newCareer(99), TW=E.worldOf(T), on=T.sq.slice(0,11);
+    check("監督能力は3つまでセットでき、もう一度押すと外れる",E.toggleMab(T,"center")&&E.toggleMab(T,"half")&&E.toggleMab(T,"dfc")&&!E.toggleMab(T,"duel")&&E.toggleMab(T,"half")&&T.mab.set.join()==="center,dfc");
+    for(let i=0;i<10;i++)E.applyResult(T,TW,E.nextFixture(T,TW),{ hg:1, ag:0, played:on, onPitch:on, starters:on });
+    check("セットして10試合でランク II、試合に効き目が渡る",E.mabRank(T,"center")===1&&E.playerDef(T).mab.center>E.TUNING.mab.base.center,JSON.stringify(E.playerDef(T).mab));
+    E.toggleMab(T,"center"); T.played=100; T.termOver=true; E.endTerm(T); E.startNextTerm(T,TW);
+    check("熟練度は任期をまたいで残る(監督のデータ)",T.mab.xp.center===10);
+  }
+  { // 称号のセット(→docs/10 §10.2 B)
+    const T=E.newCareer(97); T.career=[{ term:1, title:"factory" },{ term:2, title:"rookie" }];
+    check("獲った称号(効き目のあるもの)だけセットできる",!E.setTitle(T,"heir")&&E.setTitle(T,"factory")&&E.earnedTitles(T).join()==="factory");
+    // 特殊練習の出方: 覚醒工場は個人能力の特殊練習が出やすい
+    const share=tset=>{ let hit=0, n=0;
+      for(let i=0;i<400;i++){ const U=E.newCareer(4000+i); U.fac=5; U.tset=tset;
+        for(const o of E.trainOptions(U))if(o.sp>=0){ n++; if(E.TRAIN_SP[o.sp].eff.ind)hit++; } }
+      return hit/n; };
+    const s0=share(null), s1=share("factory");
+    check("覚醒工場をセットすると、個人能力の特殊練習が出やすい",s1>s0+0.08,(s0*100).toFixed(0)+"% → "+(s1*100).toFixed(0)+"%");
+    const A=E.newCareer(98), B=E.newCareer(98); B.tset="factory"; A.g.step=B.g.step="comm";
+    E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
+    check("覚醒工場: 個人練習の経験 ×1.1",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.1)<1e-9);
+    const TW=E.worldOf(T); T.played=100; T.termOver=true; E.endTerm(T); E.startNextTerm(T,TW);
+    check("新しい任期では称号を選び直す",T.tsetChosen===false);
+  }
+  { // 監督ライセンスと監督契約(→docs/10 §10.2 A)
+    const T=E.newCareer(95), TW=E.worldOf(T);
+    check("監督名は一度だけ登録でき、あとから変えられない",E.registerManager(T,"山田 太郎","1990-04-01")&&!E.registerManager(T,"別人",null)&&T.mgr.name==="山田 太郎"&&T.mgr.ani!=null);
+    check("監督契約で決めたクラブ名・略称・色で試合に出る",E.signClub(T,{ name:"ミナト・ブルーズ", color:"#128A3E" })&&E.playerDef(T).name==="ミナト・ブルーズ"&&E.playerDef(T).short==="MIN"&&E.playerDef(T).color==="#128A3E");
+    T.played=100; T.termOver=true; E.endTerm(T); E.startNextTerm(T,TW);
+    check("新しい任期ではクラブを決め直し、監督は引き継ぐ",T.club===null&&T.mgr.name==="山田 太郎");
+  }
+  { // 重なったカード(→docs/08 §8.12): 個別指導 +10%/枚(最大5枚)、覚醒の上がり幅 1〜3 が大きくなりやすい
+    const A=E.newCareer(91), B=E.newCareer(91); B.coll.h10=4; A.g.step=B.g.step="comm";
+    E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
+    check("重なり3枚で個別指導の経験 ×1.3、数えるのは5枚まで",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.3)<1e-9&&(()=>{ const C=E.newCareer(1); C.coll.h10=20; return E.dupOf(C,"h10")===5; })());
+    const avg=n=>{ const T=E.newCareer(92); T.coll.h10=1+n; let s=0; const r=(()=>{ let a=12345; return ()=>{ a=(a*1103515245+12345)%2147483648; return a/2147483648; }; })();
+      for(let i=0;i<4000;i++)s+=E.awakeGain(T,"h10",r); return s/4000; };
+    const a0=avg(0), a5=avg(5);
+    check("覚醒の上がり幅は、重なりなしで平均1.35前後、5枚で2前後",Math.abs(a0-1.35)<0.06&&Math.abs(a5-2.0)<0.08,a0.toFixed(2)+" → "+a5.toFixed(2));
   }
   { // スポンサーとミッション(→docs/05 §5.14・docs/08 §8.9): マスタ = 業種 × ☆1〜5
     check("マスタは11業種 × ☆5(報酬の名前が5つずつ)",E.SP_IND.length===11&&E.SP_IND.every(x=>x.items.length===5));

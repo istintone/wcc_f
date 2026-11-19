@@ -1,7 +1,7 @@
 // エンジンを Node に読み込む。DOM に触るファイル(render/board/main)は入れない。
 // 並びは build.py の JS_FILES のうち DOM に触らない8つと同じにする。
 const fs=require("fs"), path=require("path");
-const ENGINE_FILES=["data.js","trainings.js","realcards.js","engine.js","club.js","pool.js","grow.js","term.js"];
+const ENGINE_FILES=["data.js","trainings.js","realcards.js","engine.js","club.js","pool.js","grow.js","term.js","emblem-art.js","emblem.js"];
 const EXPORTS=["TUNING","CARDS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","SKILLS","AXIS_LABEL",
   "createMatch","stepMatch","orderMatch","finishMatch","simulateMatch",
   "makeTeamDef","roleAt","aptOf","matchMin","teamOf",
@@ -11,7 +11,7 @@ const EXPORTS=["TUNING","CARDS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","
   "commLeft","teamFatigue","INT_LABEL",
   "POOL","RARITY","RAR_ORDER","REAL_IDS","PACK","drawCard","payout","swapSquad","moveSquad","startSquad",
   "TITLES","titleOf","termFacts","followers","facLevel","endTerm","startNextTerm",
-  "compatOf","linkBonusOf","linkBonusK","linkCap","ANIMALS","aniOfDate","aniCompat","NAT_NAME","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm","doRest","indProgress","linkProgress","voiceOf","trustLv","matchStats","matchRatings","meetNear","teamPower","SECS","secOf","secLv","secSay","secGain","chooseSec","answerSecEvent","secFollow","SEC_EVENTS","migrate","newBiz","buildFac","answerStadium","facK","stadOf","bizAfterMatch","spOffers","spRenew","signSponsor","spRankMax","missionTxt","SP_IND","spBoost","spDur","spIndOf"];
+  "compatOf","linkBonusOf","linkBonusK","linkCap","ANIMALS","aniOfDate","aniCompat","NAT_NAME","persOf","spReady","hasSign","growCard","growLinks","squadXi","linkOf","sortTable","leagueRound","tierOf","entryOk","saveCareer","loadCareer","clearCareer","SAVE_KEY","SAVE_BAD_KEY","rawSave","backupSave","memStore","fillLayout","setForm","doRest","indProgress","linkProgress","voiceOf","trustLv","matchStats","matchRatings","meetNear","teamPower","dupOf","awakeGain","registerManager","signClub","setTitle","earnedTitles","tsetOf","TITLE_FX","MAB","mabOf","mabRank","toggleMab","myTeam","defaultClub","TOWNS","embSvg","clubAbbr","SECS","secOf","secLv","secSay","secGain","chooseSec","answerSecEvent","secFollow","SEC_EVENTS","migrate","newBiz","buildFac","answerStadium","facK","stadOf","bizAfterMatch","spOffers","spRenew","signSponsor","spRankMax","missionTxt","SP_IND","spBoost","spDur","spIndOf"];
 
 function load(){
   const src=ENGINE_FILES

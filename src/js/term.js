@@ -82,7 +82,7 @@ function endTerm(S){
   S.fac=facLevel(S.salary);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
     grade:title.grade, follow:followers(S), facts:x };
-  S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary });
+  S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }
 /**
@@ -110,3 +110,33 @@ function startNextTerm(S,W){
   S.tend=null;
 }
 const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
+
+/* ---------- 称号のセット(監督能力の継承。→docs/10 §10.2 B) ----------
+ * 任期の始めに、これまでに獲った称号から1つを選んでセットする。その任期のあいだ:
+ *   favor … 出やすくなる特殊練習(eff = 伸びるもの / axis = 上がる戦力グラフの軸)。spK … 特殊練習が出る率の倍率
+ *   ほかは小さな効き目(数値は TUNING.tset)
+ * S.tset = 称号の id | null、S.tsetChosen = その任期に選んだか */
+const TITLE_FX={
+  legend:   { favor:null,              desc:"特殊練習がどの系統も出やすい" },
+  emperor:  { favor:{ axis:"ORDCSP" }, desc:"戦力グラフを伸ばす特殊練習 ・ 大会の試合で負けてもやる気が下がりにくい" },
+  master:   { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの★突破が成功しやすい" },
+  factory:  { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 個人練習の経験 +10%" },
+  magic:    { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの経験 +10%" },
+  heir:     { favor:{ eff:"link" },    desc:"連携の特殊練習 ・ ラウンジが大成功しやすい" },
+  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 格上に勝つとやる気が上がりやすい" },
+  tactician:{ favor:{ eff:"set" },     desc:"セットプレイの特殊練習 ・ セットプレイの伸び +20%" },
+  native:   { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 21歳以下の伸びやすさ +10%" },
+  fickle:   { favor:{ axis:"S" },      desc:"スピードの特殊練習 ・ 控えのやる気が下がりにくい" },
+  fighter:  { favor:{ axis:"O" },      desc:"攻撃の特殊練習 ・ 勝つとやる気が上がりやすい" }
+};
+/** これまでに獲った称号のうち、セットできるもの(効き目のあるもの。新しい順) */
+function earnedTitles(S){ const out=[]; for(let i=S.career.length-1;i>=0;i--){ const id=S.career[i].title; if(TITLE_FX[id]&&!out.includes(id))out.push(id); } return out; }
+/** いまセットしている称号の数値(TUNING.tset)。セットしていなければ null */
+const tsetOf=(S,k)=>S&&S.tset&&TUNING.tset[S.tset]&&TUNING.tset[S.tset][k]!=null?TUNING.tset[S.tset][k]:null;
+function setTitle(S,id){ if(id&&!earnedTitles(S).includes(id))return false; S.tset=id||null; S.tsetChosen=true; return true; }
+/** 特殊練習の重み。セットした称号の系統に合うものは favorW 倍 */
+function trainWeight(S,t){
+  const f=S&&S.tset&&TITLE_FX[S.tset]&&TITLE_FX[S.tset].favor; if(!f)return 1;
+  const hit=(f.eff&&t.eff[f.eff])||(f.axis&&t.up&&f.axis.split("").some(a=>t.up.includes(a)));
+  return hit?TUNING.tset.favorW:1;
+}

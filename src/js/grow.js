@@ -32,10 +32,10 @@ const ageBand=id=>{ const a=CARDS[id].age||26, b=TUNING.grow.age.band; let i=0; 
  * 伸びやすさ = 年齢 × 能力。若いほど・能力が低いほど育ちやすい(→docs/05 §5.4)。
  * 全員が同じ時期に★4へ揃わないのは、これと「選んだ練習」「個人練習で呼んだ回数」の差による
  */
-function growK(id){
-  const G0=TUNING.grow, c=CARDS[id], A=G0.abil;
+function growK(id,S){
+  const G0=TUNING.grow, c=CARDS[id], A=G0.abil, yk=S&&c.age<=21?(tsetOf(S,"youngK")||1):1;   // 生え抜き: 若手が伸びやすい
   const top=STATS.map(k=>c[k]).sort((a,b)=>b-a), best=(top[0]+top[1])/2;
-  return G0.age.grow[ageBand(id)]*clamp(1-(best-A.ref)*A.k,A.lo,A.hi);
+  return G0.age.grow[ageBand(id)]*clamp(1-(best-A.ref)*A.k,A.lo,A.hi)*yk;
 }
 /** やる気の上下の起きやすさ。若いほどむらがある */
 const motSwing=id=>TUNING.grow.age.swing[ageBand(id)];
@@ -119,9 +119,11 @@ function trainOptions(S){
   if(S.g.opts)return S.g.opts;
   const G0=TUNING.grow, rng=mulberry32((S.seed^hashStr("tr:"+S.term+":"+S.played))>>>0);
   S.g.opts=STATS.map(param=>{
-    if(rng()<G0.spChance*(S.fac||1)){             // 施設レベル(累計の年俸で上がる →term.js)
+    if(rng()<G0.spChance*(S.fac||1)*(tsetOf(S,"spK")||1)){   // 監督ランク(累計の年俸 →term.js)と、セットした称号(レジェンド)
       const pool=TRAIN_SP.map((t,i)=>i).filter(i=>TRAIN_SP[i].slot===param||TRAIN_SP[i].slot==="any");
-      if(pool.length)return { param, sp:pool[Math.floor(rng()*pool.length)] };
+      // セットした称号の系統に合う特殊練習ほど出やすい(→docs/10 §10.2 B)
+      const w=pool.map(i=>trainWeight(S,TRAIN_SP[i])), tot=w.reduce((a,b)=>a+b,0);
+      if(pool.length){ let r=rng()*tot; for(let j=0;j<pool.length;j++){ if(r<w[j])return { param, sp:pool[j] }; r-=w[j]; } return { param, sp:pool[pool.length-1] }; }
     }
     return { param, sp:-1 };
   });
@@ -197,7 +199,7 @@ function doTraining(S,i,intensity){
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
-      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id)*facK(S,"train");
+      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
     graphAdd(S,PARAM_AXIS[o.param],R.basic*k);
@@ -205,7 +207,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id)*facK(S,"train");
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
       if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
@@ -215,7 +217,7 @@ function doTraining(S,i,intensity){
       for(let a=0;a<xi.length;a++)for(let b=a+1;b<xi.length;b++)
         linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
-    if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k);
+    if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
   }
@@ -322,14 +324,15 @@ const canComm=S=>S.g.step==="comm"&&S.g.cn<TUNING.grow.comm.max;
 function doIndTrain(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
-  g.ie+=C.ind*growK(id)*facK(S,"train")*(spBoost(S,"indExp")||1);
+  // 重なったカード1枚ごとに +10%(→docs/08 §8.12)
+  g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1);
   g.bond++;
   out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
   // スポンサーの効果: 秘書がもう1人の先発にも経験の半分を入れる
   const si=spBoost(S,"indSec");
   if(si&&mulberry32((S.seed^hashStr("isec:"+S.term+":"+S.played+":"+S.g.cn))>>>0)()<si){
     const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].is<5).sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is)[0];
-    if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
+    if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o,S)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
   }
   useComm(S,"ind");
   return { res:1, lines:out };
@@ -374,7 +377,7 @@ function doLounge(S,a,b,choice){
   const L=TUNING.grow.link, out=[];
   if(!canComm(S)||a===b||!S.g.pl[a]||!S.g.pl[b])return { res:-1, lines:out };
   const c=compatOf(a,b), best=LOUNGE_BEST[c];
-  const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=spBoost(S,"loungeOk")||0;
+  const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=(spBoost(S,"loungeOk")||0)+(tsetOf(S,"loungeOk")||0);
   const p=[p0[0]+ok,p0[1],Math.max(0,p0[2]-ok)];   // スポンサーの効果: 失敗のぶんが大成功に回る
   const r=mulberry32((S.seed^hashStr("lg:"+S.term+":"+S.played+":"+S.g.cn+":"+lkey(a,b)+":"+choice))>>>0)();
   const res=r<p[0]?0:r<p[0]+p[1]?1:2, l=linkSet(S,a,b);
@@ -417,7 +420,7 @@ function doMeeting(S,id,choice){
   const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
-    const p=choice===persOf(id)?P.qOk:P.qNg;
+    const p=(choice===persOf(id)?P.qOk:P.qNg)+(tsetOf(S,"qOk")||0);   // 名将: ★突破が成功しやすい
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
@@ -428,7 +431,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
-    g.se+=P.meet*facK(S,"tact");
+    g.se+=P.meet*facK(S,"tact")*(tsetOf(S,"meetK")||1);
     out.push(nameOf(CARDS[id])+" と戦術の話をした(特殊能力の経験 +"+P.meet+")");
   }
   g.bond+=2;
@@ -464,17 +467,26 @@ function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||(g.mot<=1&&S.s
 
 /* ---------- ③ 試合のあと ---------- */
 
-/** 覚醒。能力が最大3項目、各+1(どれが上がるかは不定。1つは必ず上がる) */
+/** 重なったカードの枚数(持っている枚数 − 1。数えるのは dup.max まで) */
+const dupOf=(S,id)=>Math.min(TUNING.grow.dup.max,Math.max(0,((S.coll&&S.coll[id])||1)-1));
+/** 覚醒で1項目に上がる値(1〜3 = 無地 / ＋ / ＋＋)。重なりが多いほど大きい値が出やすい */
+function awakeGain(S,id,rng){
+  const D=TUNING.grow.dup, n=dupOf(S,id), p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
+  let r=rng()*t; for(let i=0;i<3;i++){ if(r<p[i])return i+1; r-=p[i]; } return 1;
+}
+const GAIN_MARK=["","","＋","＋＋"];
+/** 覚醒。能力が最大3項目、各+1〜3(どれが上がるか・いくつ上がるかは不定。1つは必ず上がる。重なりで大きくなりやすい) */
 function awaken(S,id,rng,out){
   const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], got=[];
   const pool=STATS.filter(k=>card[k]+(g.up[k]||0)<STAT_MAX&&card[k]>TUNING.grow.startKeep);
   for(let n=0;n<3&&pool.length;n++){
     if(n>0&&rng()>=I.awakeUp[n])break;
     const k=pool.splice(Math.floor(rng()*pool.length),1)[0];
-    g.up[k]=(g.up[k]||0)+1; got.push(STAT_LABEL[k]);
+    const v=Math.min(awakeGain(S,id,rng),STAT_MAX-card[k]-(g.up[k]||0));
+    g.up[k]=(g.up[k]||0)+v; got.push(STAT_LABEL[k]+" +"+v+GAIN_MARK[v]);
   }
   g.is=5; g.q=false; g.ie=0;
-  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+" +1)");
+  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")");
   if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
@@ -492,7 +504,7 @@ function afterMatchGrowth(S,fx,res){
   GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
-  for(const id of played)S.g.pl[id].ie+=I.match*growK(id)*facK(S,"train");
+  for(const id of played)S.g.pl[id].ie+=I.match*growK(id,S)*facK(S,"train");
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
     linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
@@ -529,6 +541,7 @@ function afterMatchGrowth(S,fx,res){
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
     }
   }
+  const giant=tsetOf(S,"giant")&&fx.opp&&TEAMS[fx.opp]&&tierOf(fx.opp)>=S.grade+2?tsetOf(S,"giant"):0;   // 刺客(格上 = 強さの段がリーグの格より2つ以上上)
   // モチベーション(→docs/08 §8.4): 出て勝てば上がり、負ければ下がる。
   // 控えは出番の無い試合が続くと下がり始めるが、ゆるやか。勝てば控えも少し上がる。何も起きなければ普通へ戻る
   for(const id in S.g.pl){
@@ -537,12 +550,13 @@ function afterMatchGrowth(S,fx,res){
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
-      if(res.win&&rng()<Mo.winUp*sw)g.mot=Math.min(4,g.mot+1);
-      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1))g.mot=Math.max(1,g.mot-1);
+      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1))g.mot=Math.min(4,g.mot+1);
+      else if(res.win&&giant&&rng()<giant)g.mot=Math.min(4,g.mot+1);   // 刺客: 格上に勝つと上がりやすい
+      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1))g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
     }else{
       g.bench=(g.bench||0)+1;
-      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1))g.mot=Math.max(1,g.mot-1);
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1))g.mot=Math.max(1,g.mot-1);
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
