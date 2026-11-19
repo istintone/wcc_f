@@ -114,12 +114,15 @@ function buildTeam(def,side){
   const T={ side, id:def.id, name:def.name, short:def.short, color:def.color, cpu:!!def.cpu,
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
-    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null, graph:def.graph||null, setplay:def.setplay||0,
+    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null,
+    roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}), graph:def.graph||null, setplay:def.setplay||0,
     ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
   if(def.kp)setKp(T,def.kp);
+  // 相手はいちばん適性の高い選手を自動でキャプテンにする(プレイヤーは任命したときだけ)
+  if(def.cpu&&!T.roles.cap){ const b=T.players.slice().sort((a,b)=>capApt(b.c)-capApt(a.c)||b.c.age-a.c.age)[0]; if(b)T.roles.cap=b.id; }
   return T;
 }
 const outfield=T=>T.players.filter(p=>!p.gk);
@@ -137,6 +140,12 @@ function rareOf(p,T){
   const R=p&&p.kp?rareOfCard(p.c):null;
   return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
 }
+/** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
+const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
+const capApt=c=>c?Math.min(3,(CAP_SKILL[c.skill]||0)+(c.age>=30?1:0)):0;
+const CAP_MARK=["C","B","A","S"];
+/** 任命: 指名した選手がピッチにいればその人。キャプテンは相手(CPU)だけ自動で決める */
+function rolePlayer(T,kind){ const id=T.roles&&T.roles[kind]; return id?playerOf(T,id):null; }
 function setKp(T,id){
   if(!T.players.some(p=>p.id===id))return false;
   for(const p of T.players)p.kp=p.id===id;
@@ -219,6 +228,7 @@ function refreshFx(M,min){
     const late=T.fx.late&&(min>=Y.lateMin||T.score<D.score)?T.fx.late:1;
     const solo=st&&st.scope==="solo";
     const kp=T.players.find(p=>p.kp)||null;
+    const cp=rolePlayer(T,"cap"), ca=cp?capApt(cp.c):0, CP=TUNING.cap, behind=T.score<D.score;   // キャプテン(→docs/12)
     for(const p of T.players){
       const fx=FX0(), sk=skOf(p);
       const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
@@ -232,6 +242,7 @@ function refreshFx(M,min){
         if(lv)fx.all*=1+st.fx.team*lv*T.rk;
       }
       fx.all*=late;
+      if(cp){ fx.sta*=1-CP.sta[ca]; if(behind)fx.all*=1+CP.back[ca]; }
       // 監督能力(→docs/10 §10.2 C)。軽い上積みだけ
       const B=T.mab, g=GROUP_OF[p.role], mid=p.x>=30&&p.x<=70;
       if(B.center&&mid&&(g==="FW"||g==="MF"))fx.all*=1+B.center;
@@ -737,6 +748,7 @@ function lastLine(D,ballH){
   return 1-m;
 }
 function spKicker(T,kind){
+  const nm=rolePlayer(T,kind); if(nm)return nm;      // 指名したキッカーがピッチにいれば(→docs/12 §12.3)
   const sc=kind==="pk"?p=>(eff(p,"off")*1.2+eff(p,"tec"))*p.fx.pkK
     :kind==="fk"?p=>(eff(p,"tec")*1.2+eff(p,"off")*0.8)*p.fx.fk
     :p=>(eff(p,"tec")+eff(p,"pow")*0.6)*p.fx.ck;
@@ -852,7 +864,8 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
   const S=TUNING.shot, O=TUNING.rule, gk=gkOf(D);
   const near=sp==="pk"?1:nearOf(h), ang=sp==="pk"?1:angleOf(x);
   tire(p); p.st.shots++; T.st.shots++;
-  const ev={ side:T.side, type:"shot", by:p.id, gk:gk.id, from:[r2(h),r2(x)], vs:null, sp:sp||undefined };
+  const ev={ side:T.side, type:"shot", by:p.id, gk:gk.id, from:[r2(h),r2(x)], vs:null, sp:sp||undefined,
+    nk:(sp==="fk"||sp==="pk")&&T.roles&&T.roles[sp]===p.id||undefined };
   // ① ブロック(PKとヘディングには無い。FKは壁)
   if(sp==="fk"){
     if(rng()<O.wall){

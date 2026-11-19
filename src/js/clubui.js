@@ -243,7 +243,8 @@ function sqTokenHtml(id,i,on){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+'</div>';
+    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+
+    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
 function sqLinksSvg(){
@@ -284,7 +285,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
-    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span></div>'+
+    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span><span>キャプテンシー <b>'+CAP_MARK[capApt(c)]+'</b></span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -303,11 +304,14 @@ function squadHtml(){
   const on=S.sq.slice(0,11), bench=S.sq.slice(11);
   let h='<section class="sq-head"><h3>SQUAD <small>この並びと KP で毎試合はじまる</small></h3>'+
     '<div class="sq-forms">'+SQ_FORMS.map(f=>'<button class="'+(S.form===f?'on':'')+'" data-act="sqform" data-v="'+f+'">'+f+'</button>').join("")+'</div></section>';
-  h+='<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+  // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
+  h+='<div class="sq-3col">'+sqRolesHtml()+
+    '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+sqLinksSvg()+
-    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>';
-  h+='<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>';
-  h+=sqDetailHtml();
+    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
+    '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>';
+  if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
+  h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
   // 連携の数・戦力グラフ
   const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
   h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
@@ -320,9 +324,35 @@ function squadHtml(){
         (v>=0?"+":"")+v.toFixed(2)+'</b></div>'; }).join("")+'</div></section>';
   return h;
 }
-/** 選手を選ぶ。2人目で入れ替え(→pool.js moveSquad) */
+/* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
+const ROLE_KINDS=["cap","pk","fk","ck"], ROLE_LABEL={ cap:"CAP", pk:"PK", fk:"FK", ck:"CK" };
+const ROLE_SUB={ cap:"キャプテン", pk:"PKキッカー", fk:"FKキッカー", ck:"CKキッカー" };
+/** キッカーの向き不向き: 先発の中の順位(1位 S・2〜3位 A・4〜6位 B・ほか C)。式はエンジンの spKicker と同じ */
+function kickMark(S,id,kind){
+  const on=S.sq.slice(1,11);
+  if(!on.includes(id))return "-";
+  const sc=x=>{ const c=growCard(S,CARDS[x]), b=(c.skill&&SKILLS[c.skill].buff)||{}, k=1+((b[kind==="pk"?"pkK":kind]||1)-1)*(c.buffK||1);
+    return (kind==="pk"?c.off*1.2+c.tec:kind==="fk"?c.tec*1.2+c.off*0.8:c.tec+c.pow*0.6)*k; };
+  const r=on.slice().sort((a,b)=>sc(b)-sc(a)).indexOf(id);
+  return r===0?"S":r<=2?"A":r<=5?"B":"C";
+}
+function sqRolesHtml(){
+  const S=CL.S, R=S.roles||{};
+  return '<div class="sq-roles"><span class="lbl">任命</span>'+ROLE_KINDS.map(k=>{
+    const id=R[k], c=id&&CARDS[id], on=id&&S.sq.slice(0,11).includes(id);
+    const mk=!c?"":k==="cap"?CAP_MARK[capApt(c)]:kickMark(S,id,k);
+    return '<button class="rs'+(CL.roleSel===k?' sel':'')+(c?' set':'')+(c&&!on?' off':'')+'" data-act="sqrole" data-v="'+k+'">'+
+      '<b>'+ROLE_LABEL[k]+'</b>'+(c?'<i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span><em class="mk m'+mk+'">'+mk+'</em>'
+        :'<span class="nm auto">'+(k==="cap"?'未任命':'自動')+'</span>')+
+      (c&&!on?'<small>控え</small>':'')+'</button>'; }).join("")+'</div>';
+}
+/** 選手を選ぶ。2人目で入れ替え(→pool.js moveSquad)。任命の枠を選んでいるときは、その役に任命する */
 function sqPick(id){
   const S=CL.S;
+  if(CL.roleSel){
+    if(S.sq.indexOf(id)<11){ CL.roleMsg=setRole(S,CL.roleSel,id); CL.roleSel=null; persist(S); }
+    showClub(true); return;
+  }
   if(!CL.sqSel)CL.sqSel=id;
   else if(CL.sqSel===id)CL.sqSel=null;
   else{
@@ -901,6 +931,10 @@ function onClubClick(e){
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
+  else if(act==="sqrole"){ const k=b.dataset.v; CL.sqSel=null; CL.roleMsg=null;
+    if(CL.roleSel===k){ if(S.roles[k])CL.roleMsg=setRole(S,k,null); CL.roleSel=null; save(); }   // もう一度押すと解く
+    else CL.roleSel=k;
+    showClub(true); }
   else if(act==="sqkp"){ const id=b.dataset.id; S.kp=id; save(); showClub(true);
     if(rareOn(S,id))cutIn(CARDS[id],"H");   // レアKP が発動する選手を KP にした(→docs/11)
   }

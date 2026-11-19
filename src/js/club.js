@@ -148,7 +148,8 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[] };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[] };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -274,6 +275,7 @@ function playerDef(S){
   def.bench=def.bench.map(c=>growCard(S,c));
   def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
+  def.roles=Object.assign({},S.roles||{});      // キャプテンとキッカーの任命(→docs/12)
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
@@ -419,6 +421,7 @@ function newTerm(S,W){
   S.term++; S.played=0; S.slot=0; S.cyc=1; S.prev=null; S.termOver=false;
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
+  S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
   // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
@@ -498,6 +501,8 @@ function migrate(S){
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
+  if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
+  if(!S.capHist)S.capHist=[];
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま

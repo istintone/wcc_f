@@ -1558,6 +1558,37 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #club .rarekp{padding:6px 8px;border-radius:6px;background:linear-gradient(90deg,rgba(106,63,208,.16),transparent)}
 #club .rarekp b{color:#6a3fd0;font-weight:900;letter-spacing:.06em;margin-right:4px}
 #club .rarekp.lock{color:var(--t-mute)}
+
+/* ---- SQUAD の3列と任命(→docs/12 §12.2) ---- */
+#club .sq-3col{display:grid;grid-template-columns:54px minmax(0,1fr) 54px;gap:4px;align-items:start}
+#club .sq-3col .sq-pitch{aspect-ratio:100/150}
+#club .sq-3col .sq-pitch .sqc{width:50px}
+#club .sq-3col .sq-pitch .sqc .nm{font-size:8.5px}
+#club .sq-3col .sq-bench{flex-direction:column;align-items:stretch;gap:6px;padding:6px 2px;overflow:visible}
+#club .sq-3col .sq-bench .lbl,#club .sq-roles .lbl{writing-mode:horizontal-tb;text-align:center;font-size:9px;font-weight:900;letter-spacing:.1em;color:var(--t-mute)}
+#club .sq-3col .sq-bench .sqc{flex:0 0 auto;width:100%;height:50px}
+#club .sq-roles{display:flex;flex-direction:column;gap:6px;padding:6px 2px;background:var(--t-paper2);border-radius:2px}
+#club .sq-roles .rs{position:relative;display:grid;grid-template-columns:1fr auto;grid-template-rows:14px 16px 13px;align-items:center;padding:0 0 2px;height:50px;border:1.5px dashed var(--t-rule);
+  border-radius:3px;background:var(--t-card,#fff);color:var(--t-ink);cursor:pointer;overflow:hidden;text-align:left}
+#club .sq-roles .rs b{grid-column:1/3;display:block;background:#16130e;color:#fff;font-family:"Oswald",sans-serif;font-size:10px;letter-spacing:.08em;text-align:center;line-height:14px}
+#club .sq-roles .rs.set{border-style:solid;border-color:#16130e}
+#club .sq-roles .rs .no{grid-row:2;grid-column:1;padding-left:4px;font-style:normal;font-family:"Oswald",sans-serif;font-size:14px;font-weight:700}
+#club .sq-roles .rs .mk{grid-row:2;grid-column:2;margin-right:3px;padding:0 3px;font-style:normal;font-family:"Oswald",sans-serif;font-size:10px;font-weight:700;color:#fff;background:#8a8a8a;border-radius:2px}
+#club .sq-roles .rs .mk.mS{background:#c8102e} #club .sq-roles .rs .mk.mA{background:#b8892c} #club .sq-roles .rs .mk.mB{background:#1d5fbf}
+#club .sq-roles .rs .nm{grid-row:3;grid-column:1/3;padding:0 3px;font-size:8.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sq-roles .rs .nm.auto{grid-row:2/4;align-self:center;text-align:center;color:var(--t-mute);font-size:10px}
+#club .sq-roles .rs.sel{outline:3px solid var(--t-sub);outline-offset:1px;animation:rsPulse 1s infinite alternate}
+@keyframes rsPulse{to{outline-color:transparent}}
+#club .sq-roles .rs.off{opacity:.55}
+#club .sq-roles .rs small{position:absolute;right:2px;top:15px;font-size:8px;color:var(--t-sub);font-weight:900}
+#club .sq-roles .rs[data-v="cap"] b{background:#b8892c}
+#club .sqc .capb{position:absolute;left:-6px;top:-7px;width:16px;height:16px;border-radius:3px;background:#b8892c;color:#fff;font-style:normal;font-family:"Oswald",sans-serif;
+  font-size:11px;font-weight:700;line-height:16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+#club .sq-hint.on{color:var(--t-sub);font-weight:800}
+#club .sq-rmsg{margin:6px 0 0;padding:6px 10px;font-size:12px;font-weight:700;background:#fff6c2;border-left:3px solid #b8892c}
+/* 試合の盤面: キャプテンの腕章 */
+.cd.iscap::after{content:"C";position:absolute;left:-5px;bottom:-5px;width:14px;height:14px;border-radius:3px;background:#b8892c;color:#fff;
+  font-family:"Oswald",sans-serif;font-size:10px;font-weight:700;line-height:14px;text-align:center;z-index:3}
 </style>
 </head>
 <body>
@@ -1707,6 +1738,10 @@ const TUNING={
   // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動
   //   buffK … スキルのバフの上乗せ分に掛ける倍率 / axis … スタイルの軸の上乗せ / oppTier … 相手はこの強さの段以上で発動
   //   mvW … 技の札の選ばれやすさ / mvHold … 技を使ったときにモニターに名前を出す時間(ms) / cutMs … カットインの長さ(ms)
+  // キャプテン(→docs/12 §12.4)。並びは CP適性 C / B / A / S
+  //   sta … チーム全体のスタミナの減りを減らす割合 / back … 負けているときの全能力の上積み
+  //   up … 任命したとき本人のやる気が上がる率(任期に1回まで)/ down … 任命したとき重荷で下がる率 / drop … 外された前のキャプテンのやる気が下がる率
+  cap:{ sta:[0,0.02,0.04,0.06], back:[0,0.01,0.02,0.03], up:[0,0,0.45,0.7], down:[0.4,0,0,0], drop:0.5 },
   rare:{ buffK:2.0, axis:0.6, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
   // スタイルのランク(→docs/04 §4.5)。軸の値 = その能力の上位 top 人の平均 + 連携の上乗せ
   //   th … B / A / S になる値 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
@@ -2796,12 +2831,15 @@ function buildTeam(def,side){
   const T={ side, id:def.id, name:def.name, short:def.short, color:def.color, cpu:!!def.cpu,
     players:def.xi.map((s,i)=>mkPlayer(s.card,s.h,s.x,i===0)),
     bench:def.bench.slice(), subs:0, score:0, shootOrder:0, posture:"normal",
-    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null, graph:def.graph||null, setplay:def.setplay||0,
+    kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null,
+    roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}), graph:def.graph||null, setplay:def.setplay||0,
     ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
   if(def.kp)setKp(T,def.kp);
+  // 相手はいちばん適性の高い選手を自動でキャプテンにする(プレイヤーは任命したときだけ)
+  if(def.cpu&&!T.roles.cap){ const b=T.players.slice().sort((a,b)=>capApt(b.c)-capApt(a.c)||b.c.age-a.c.age)[0]; if(b)T.roles.cap=b.id; }
   return T;
 }
 const outfield=T=>T.players.filter(p=>!p.gk);
@@ -2819,6 +2857,12 @@ function rareOf(p,T){
   const R=p&&p.kp?rareOfCard(p.c):null;
   return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
 }
+/** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
+const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
+const capApt=c=>c?Math.min(3,(CAP_SKILL[c.skill]||0)+(c.age>=30?1:0)):0;
+const CAP_MARK=["C","B","A","S"];
+/** 任命: 指名した選手がピッチにいればその人。キャプテンは相手(CPU)だけ自動で決める */
+function rolePlayer(T,kind){ const id=T.roles&&T.roles[kind]; return id?playerOf(T,id):null; }
 function setKp(T,id){
   if(!T.players.some(p=>p.id===id))return false;
   for(const p of T.players)p.kp=p.id===id;
@@ -2901,6 +2945,7 @@ function refreshFx(M,min){
     const late=T.fx.late&&(min>=Y.lateMin||T.score<D.score)?T.fx.late:1;
     const solo=st&&st.scope==="solo";
     const kp=T.players.find(p=>p.kp)||null;
+    const cp=rolePlayer(T,"cap"), ca=cp?capApt(cp.c):0, CP=TUNING.cap, behind=T.score<D.score;   // キャプテン(→docs/12)
     for(const p of T.players){
       const fx=FX0(), sk=skOf(p);
       const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
@@ -2914,6 +2959,7 @@ function refreshFx(M,min){
         if(lv)fx.all*=1+st.fx.team*lv*T.rk;
       }
       fx.all*=late;
+      if(cp){ fx.sta*=1-CP.sta[ca]; if(behind)fx.all*=1+CP.back[ca]; }
       // 監督能力(→docs/10 §10.2 C)。軽い上積みだけ
       const B=T.mab, g=GROUP_OF[p.role], mid=p.x>=30&&p.x<=70;
       if(B.center&&mid&&(g==="FW"||g==="MF"))fx.all*=1+B.center;
@@ -3419,6 +3465,7 @@ function lastLine(D,ballH){
   return 1-m;
 }
 function spKicker(T,kind){
+  const nm=rolePlayer(T,kind); if(nm)return nm;      // 指名したキッカーがピッチにいれば(→docs/12 §12.3)
   const sc=kind==="pk"?p=>(eff(p,"off")*1.2+eff(p,"tec"))*p.fx.pkK
     :kind==="fk"?p=>(eff(p,"tec")*1.2+eff(p,"off")*0.8)*p.fx.fk
     :p=>(eff(p,"tec")+eff(p,"pow")*0.6)*p.fx.ck;
@@ -3534,7 +3581,8 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist){
   const S=TUNING.shot, O=TUNING.rule, gk=gkOf(D);
   const near=sp==="pk"?1:nearOf(h), ang=sp==="pk"?1:angleOf(x);
   tire(p); p.st.shots++; T.st.shots++;
-  const ev={ side:T.side, type:"shot", by:p.id, gk:gk.id, from:[r2(h),r2(x)], vs:null, sp:sp||undefined };
+  const ev={ side:T.side, type:"shot", by:p.id, gk:gk.id, from:[r2(h),r2(x)], vs:null, sp:sp||undefined,
+    nk:(sp==="fk"||sp==="pk")&&T.roles&&T.roles[sp]===p.id||undefined };
   // ① ブロック(PKとヘディングには無い。FKは壁)
   if(sp==="fk"){
     if(rng()<O.wall){
@@ -3869,7 +3917,8 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[] };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[] };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -3995,6 +4044,7 @@ function playerDef(S){
   def.bench=def.bench.map(c=>growCard(S,c));
   def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
+  def.roles=Object.assign({},S.roles||{});      // キャプテンとキッカーの任命(→docs/12)
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
@@ -4140,6 +4190,7 @@ function newTerm(S,W){
   S.term++; S.played=0; S.slot=0; S.cyc=1; S.prev=null; S.termOver=false;
   S.grade=1;                                  // 育成が初めに戻るので、リーグの格も戻す(称号による上積みは 3c)
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
+  S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
   // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
@@ -4219,6 +4270,8 @@ function migrate(S){
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
+  if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
+  if(!S.capHist)S.capHist=[];
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
@@ -4559,6 +4612,7 @@ function swapSquad(S,outId,inId){
   S.sq[i]=inId;
   if(S.layout[outId]){ S.layout[inId]=S.layout[outId]; delete S.layout[outId]; }
   if(S.kp===outId)S.kp=null;
+  if(S.roles)for(const k in S.roles)if(S.roles[k]===outId)S.roles[k]=null;
   delete S.g.pl[outId];
   for(const k of Object.keys(S.g.links))if(k.split("|").includes(outId))delete S.g.links[k];
   S.g.pl[inId]=newPlayerGrowth();
@@ -4600,6 +4654,31 @@ const statTotal=c=>STATS.reduce((s,k)=>s+(c[k]||0),0);
 function clubOfCard(c){
   const t=c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
   return t?teamNameOf(t):(c.club||"");
+}
+
+/**
+ * キャプテン・キッカーを任命する(→docs/12)。id が null なら任命を解く(キッカーは自動、キャプテンは無し)。
+ * キャプテンの任命ではやる気が動く。**上がるのは同じ選手に任期1回まで**(付け替えでやる気を戻せないように)、
+ * 外された前のキャプテンは下がることがある。返り値は知らせの行
+ */
+function setRole(S,kind,id){
+  if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
+  const old=S.roles[kind], out=[];
+  if(old===id)return out;
+  S.roles[kind]=id;
+  if(kind!=="cap")return out;
+  const C=TUNING.cap, roll=k=>(hashStr("cap:"+S.term+":"+S.played+":"+k)%1000)/1000;
+  if(old&&S.g.pl[old]&&roll("d"+old)<C.drop&&S.g.pl[old].mot>0){ S.g.pl[old].mot--; out.push(nameOf(CARDS[old])+" は腕章を外されて、やる気が下がった"); }
+  if(id&&S.g.pl[id]){
+    if(!S.capHist)S.capHist=[];
+    const a=capApt(CARDS[id]), g=S.g.pl[id];
+    if(!S.capHist.includes(id)){
+      S.capHist.push(id);
+      if(roll("u"+id)<C.up[a]&&g.mot<4){ g.mot++; out.push(nameOf(CARDS[id])+" はキャプテンを任されて、やる気が上がった"); }
+      else if(roll("w"+id)<C.down[a]&&g.mot>0){ g.mot--; out.push(nameOf(CARDS[id])+" には腕章が重荷のようだ。やる気が下がった"); }
+    }
+  }
+  return out;
 }
 
 /* =========================================================================
@@ -6567,6 +6646,7 @@ function syncBoard(M){
     el.classList.toggle("tired",p.stam<TUNING.stam.tiredAt);
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
+    el.classList.toggle("iscap",!!M.home.roles&&p.id===M.home.roles.cap);
     el.classList.toggle("booked",p.yc>0);
     el.classList.toggle("inj",!!p.inj);
   }
@@ -6932,7 +7012,8 @@ function sqTokenHtml(id,i,on){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+'</div>';
+    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+(sign?'<i class="sg">兆</i>':'')+
+    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+'</div>';
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
 function sqLinksSvg(){
@@ -6973,7 +7054,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     '<div class="sd-row"><span>'+(sk?'★'+sk.label:'')+(st?' ・ KP: '+st.name:'')+'</span><span class="dim">得意 '+c.roles.join("/")+'</span></div>'+
-    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span></div>'+
+    '<div class="sd-row"><span>'+natTxt(c)+'</span><span>'+aniTxt(c)+'</span><span>キャプテンシー <b>'+CAP_MARK[capApt(c)]+'</b></span></div>'+
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
@@ -6992,11 +7073,14 @@ function squadHtml(){
   const on=S.sq.slice(0,11), bench=S.sq.slice(11);
   let h='<section class="sq-head"><h3>SQUAD <small>この並びと KP で毎試合はじまる</small></h3>'+
     '<div class="sq-forms">'+SQ_FORMS.map(f=>'<button class="'+(S.form===f?'on':'')+'" data-act="sqform" data-v="'+f+'">'+f+'</button>').join("")+'</div></section>';
-  h+='<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+  // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
+  h+='<div class="sq-3col">'+sqRolesHtml()+
+    '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+sqLinksSvg()+
-    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>';
-  h+='<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>';
-  h+=sqDetailHtml();
+    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
+    '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>';
+  if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
+  h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
   // 連携の数・戦力グラフ
   const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
   h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
@@ -7009,9 +7093,35 @@ function squadHtml(){
         (v>=0?"+":"")+v.toFixed(2)+'</b></div>'; }).join("")+'</div></section>';
   return h;
 }
-/** 選手を選ぶ。2人目で入れ替え(→pool.js moveSquad) */
+/* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
+const ROLE_KINDS=["cap","pk","fk","ck"], ROLE_LABEL={ cap:"CAP", pk:"PK", fk:"FK", ck:"CK" };
+const ROLE_SUB={ cap:"キャプテン", pk:"PKキッカー", fk:"FKキッカー", ck:"CKキッカー" };
+/** キッカーの向き不向き: 先発の中の順位(1位 S・2〜3位 A・4〜6位 B・ほか C)。式はエンジンの spKicker と同じ */
+function kickMark(S,id,kind){
+  const on=S.sq.slice(1,11);
+  if(!on.includes(id))return "-";
+  const sc=x=>{ const c=growCard(S,CARDS[x]), b=(c.skill&&SKILLS[c.skill].buff)||{}, k=1+((b[kind==="pk"?"pkK":kind]||1)-1)*(c.buffK||1);
+    return (kind==="pk"?c.off*1.2+c.tec:kind==="fk"?c.tec*1.2+c.off*0.8:c.tec+c.pow*0.6)*k; };
+  const r=on.slice().sort((a,b)=>sc(b)-sc(a)).indexOf(id);
+  return r===0?"S":r<=2?"A":r<=5?"B":"C";
+}
+function sqRolesHtml(){
+  const S=CL.S, R=S.roles||{};
+  return '<div class="sq-roles"><span class="lbl">任命</span>'+ROLE_KINDS.map(k=>{
+    const id=R[k], c=id&&CARDS[id], on=id&&S.sq.slice(0,11).includes(id);
+    const mk=!c?"":k==="cap"?CAP_MARK[capApt(c)]:kickMark(S,id,k);
+    return '<button class="rs'+(CL.roleSel===k?' sel':'')+(c?' set':'')+(c&&!on?' off':'')+'" data-act="sqrole" data-v="'+k+'">'+
+      '<b>'+ROLE_LABEL[k]+'</b>'+(c?'<i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span><em class="mk m'+mk+'">'+mk+'</em>'
+        :'<span class="nm auto">'+(k==="cap"?'未任命':'自動')+'</span>')+
+      (c&&!on?'<small>控え</small>':'')+'</button>'; }).join("")+'</div>';
+}
+/** 選手を選ぶ。2人目で入れ替え(→pool.js moveSquad)。任命の枠を選んでいるときは、その役に任命する */
 function sqPick(id){
   const S=CL.S;
+  if(CL.roleSel){
+    if(S.sq.indexOf(id)<11){ CL.roleMsg=setRole(S,CL.roleSel,id); CL.roleSel=null; persist(S); }
+    showClub(true); return;
+  }
   if(!CL.sqSel)CL.sqSel=id;
   else if(CL.sqSel===id)CL.sqSel=null;
   else{
@@ -7590,6 +7700,10 @@ function onClubClick(e){
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
+  else if(act==="sqrole"){ const k=b.dataset.v; CL.sqSel=null; CL.roleMsg=null;
+    if(CL.roleSel===k){ if(S.roles[k])CL.roleMsg=setRole(S,k,null); CL.roleSel=null; save(); }   // もう一度押すと解く
+    else CL.roleSel=k;
+    showClub(true); }
   else if(act==="sqkp"){ const id=b.dataset.id; S.kp=id; save(); showClub(true);
     if(rareOn(S,id))cutIn(CARDS[id],"H");   // レアKP が発動する選手を KP にした(→docs/11)
   }
@@ -8382,7 +8496,7 @@ const skt=s=>s?" ★"+s:"";
 function sayStart(ev){
   if(ev.type==="kickoff")return say(tag(ev)+"キックオフ");
   if(ev.type==="shot")
-    return say(tag(ev)+nm(ev.by)+(ev.sp==="pk"?"のPK！":ev.sp==="fk"?"が直接狙う！":ev.sp==="hdr"?"のヘディング！":"のシュート！"));
+    return say(tag(ev)+(ev.nk?"指名キッカーの":"")+nm(ev.by)+(ev.sp==="pk"?"のPK！":ev.sp==="fk"?"が直接狙う！":ev.sp==="hdr"?"のヘディング！":"のシュート！"));
   if(ev.type==="offside")return say(tag(ev)+nm(ev.by)+"の"+ev.label+" → "+nm(ev.to)+"はオフサイド");
   if(ev.type==="cross")
     return say(tag(ev)+nm(ev.by)+"の"+ev.label+(ev.ok?" → "+nm(ev.to)+"が競り勝つ":"は"+nm(ev.vs)+"がはね返す"));

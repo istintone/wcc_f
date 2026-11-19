@@ -481,5 +481,27 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   check("レアKP は上位互換で上積みは小さい(得失点差 0〜+0.3)",r.gd-g.gd>-0.05&&r.gd-g.gd<0.3,"+"+f2(r.gd-g.gd));
   check("技が試合で出る",r.n>0);
 }
+// ⑬ キャプテンとキッカーの任命(→docs/12)。キャプテンは軽い上積み、指名したキッカーが蹴る
+{
+  console.log("\n⑬ キャプテンとキッカー");
+  const xi=E.makeTeamDef("azr",false).xi.map(s=>s.card), best=xi.slice().sort((a,b)=>E.capApt(b)-E.capApt(a))[0];
+  const run=cap=>{ let gd=0, st=0; for(let i=0;i<N;i++){ const d=E.makeTeamDef("azr",false); d.cpu=true; d.roles={ cap };
+    const m=E.simulateMatch(d,E.makeTeamDef("ros",true),91000+i); gd+=m.home.score-m.away.score;
+    st+=m.home.players.reduce((s,p)=>s+p.stam,0)/m.home.players.length; } return { gd:gd/N, st:st/N }; };
+  const a=run("-"), b=run(best.id);
+  console.log("    キャプテンなし "+f2(a.gd)+"(終了時スタミナ "+f2(a.st)+") → "+best.id+"(適性 "+["C","B","A","S"][E.capApt(best)]+") "+f2(b.gd)+"("+f2(b.st)+")");
+  check("キャプテンは軽い上積み(得失点差 0〜+0.3)・スタミナが残る",b.gd-a.gd>-0.05&&b.gd-a.gd<0.3&&b.st>a.st,"+"+f2(b.gd-a.gd));
+  // 指名したキッカーが蹴る(いちばん能力の低い外の選手を FK に指名)
+  const low=xi.slice(1).sort((p,q)=>(p.tec+p.off)-(q.tec+q.off))[0];
+  let fk=0, by=0; for(let i=0;i<N/2;i++){ const d=E.makeTeamDef("azr",false); d.roles={ fk:low.id, pk:low.id };   // 交代しない(CPU の采配なし)
+    const m=E.simulateMatch(d,E.makeTeamDef("ros",true),93000+i);
+    for(const ev of m.events)if(ev.type==="shot"&&ev.side==="H"&&(ev.sp==="fk"||ev.sp==="pk")){ fk++; if(ev.by===low.id)by++; } }
+  console.log("    FK・PK "+fk+"本のうち、指名した "+low.id+" が "+by+"本");
+  check("指名したキッカーがピッチにいれば蹴る(9割以上。交代・退場のあとは自動)",fk>0&&by/fk>=0.9,by+"/"+fk);
+  // 任命のやる気: 同じ選手で上がるのは任期に1回まで
+  const S=E.newCareer(5); const id=best.id; S.g.pl[id].mot=1; let up=0;
+  for(let k=0;k<20;k++){ S.played=k; E.setRole(S,"cap",id); const m0=S.g.pl[id].mot; E.setRole(S,"cap",null); E.setRole(S,"cap",id); if(S.g.pl[id].mot>m0)up++; }
+  check("任命の付け替えでやる気を戻せない(上がるのは任期に1回まで)",up===0&&S.g.pl[id].mot<=2,"mot="+S.g.pl[id].mot);
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

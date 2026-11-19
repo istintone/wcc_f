@@ -153,7 +153,7 @@ const skt=s=>s?" ★"+s:"";
 function sayStart(ev){
   if(ev.type==="kickoff")return say(tag(ev)+"キックオフ");
   if(ev.type==="shot")
-    return say(tag(ev)+nm(ev.by)+(ev.sp==="pk"?"のPK！":ev.sp==="fk"?"が直接狙う！":ev.sp==="hdr"?"のヘディング！":"のシュート！"));
+    return say(tag(ev)+(ev.nk?"指名キッカーの":"")+nm(ev.by)+(ev.sp==="pk"?"のPK！":ev.sp==="fk"?"が直接狙う！":ev.sp==="hdr"?"のヘディング！":"のシュート！"));
   if(ev.type==="offside")return say(tag(ev)+nm(ev.by)+"の"+ev.label+" → "+nm(ev.to)+"はオフサイド");
   if(ev.type==="cross")
     return say(tag(ev)+nm(ev.by)+"の"+ev.label+(ev.ok?" → "+nm(ev.to)+"が競り勝つ":"は"+nm(ev.vs)+"がはね返す"));

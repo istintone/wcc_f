@@ -91,6 +91,7 @@ function swapSquad(S,outId,inId){
   S.sq[i]=inId;
   if(S.layout[outId]){ S.layout[inId]=S.layout[outId]; delete S.layout[outId]; }
   if(S.kp===outId)S.kp=null;
+  if(S.roles)for(const k in S.roles)if(S.roles[k]===outId)S.roles[k]=null;
   delete S.g.pl[outId];
   for(const k of Object.keys(S.g.links))if(k.split("|").includes(outId))delete S.g.links[k];
   S.g.pl[inId]=newPlayerGrowth();
@@ -132,4 +133,29 @@ const statTotal=c=>STATS.reduce((s,k)=>s+(c[k]||0),0);
 function clubOfCard(c){
   const t=c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
   return t?teamNameOf(t):(c.club||"");
+}
+
+/**
+ * キャプテン・キッカーを任命する(→docs/12)。id が null なら任命を解く(キッカーは自動、キャプテンは無し)。
+ * キャプテンの任命ではやる気が動く。**上がるのは同じ選手に任期1回まで**(付け替えでやる気を戻せないように)、
+ * 外された前のキャプテンは下がることがある。返り値は知らせの行
+ */
+function setRole(S,kind,id){
+  if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
+  const old=S.roles[kind], out=[];
+  if(old===id)return out;
+  S.roles[kind]=id;
+  if(kind!=="cap")return out;
+  const C=TUNING.cap, roll=k=>(hashStr("cap:"+S.term+":"+S.played+":"+k)%1000)/1000;
+  if(old&&S.g.pl[old]&&roll("d"+old)<C.drop&&S.g.pl[old].mot>0){ S.g.pl[old].mot--; out.push(nameOf(CARDS[old])+" は腕章を外されて、やる気が下がった"); }
+  if(id&&S.g.pl[id]){
+    if(!S.capHist)S.capHist=[];
+    const a=capApt(CARDS[id]), g=S.g.pl[id];
+    if(!S.capHist.includes(id)){
+      S.capHist.push(id);
+      if(roll("u"+id)<C.up[a]&&g.mot<4){ g.mot++; out.push(nameOf(CARDS[id])+" はキャプテンを任されて、やる気が上がった"); }
+      else if(roll("w"+id)<C.down[a]&&g.mot>0){ g.mot--; out.push(nameOf(CARDS[id])+" には腕章が重荷のようだ。やる気が下がった"); }
+    }
+  }
+  return out;
 }

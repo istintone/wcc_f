@@ -113,6 +113,7 @@ function syncBoard(M){
     el.classList.toggle("tired",p.stam<TUNING.stam.tiredAt);
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
+    el.classList.toggle("iscap",!!M.home.roles&&p.id===M.home.roles.cap);
     el.classList.toggle("booked",p.yc>0);
     el.classList.toggle("inj",!!p.inj);
   }
