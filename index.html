@@ -7315,7 +7315,7 @@ function commChatHtml(){
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
       '</div><div class="ch-acts">'+(commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
-        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">キックオフへ</button>')+'</div></div>';
+        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">戦略方針へ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
@@ -7367,19 +7367,21 @@ function commStepHtml(){
  */
 function prepHtml(){
   const S=CL.S, fx=CL.fx, st=S.g.step, comp=COMPS[fx.comp];
-  const no=st==="train"?1:2;
+  // 準備は3段: チーム練習 → コミュニケーション → 戦略方針(監督能力を選ぶ)→ キックオフ(→docs/14)
+  const no=st==="train"?1:CL.strat?3:2;
   let h='<header class="prep-top"><button class="x" data-act="home">×</button>'+
-    '<div class="steps">'+["チーム練習","コミュニケーション","試合"].map((t,i)=>
+    '<div class="steps">'+["チーム練習","コミュニケーション","戦略方針"].map((t,i)=>
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():commStepHtml())+mabHtml()+'</div>'+
+    '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<span class="dim">練習と強さを選んで決定する</span>')
-        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="play">残り '+commLeft(CL.S)+' 回を使わずに試合へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="play">試合へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="play">試合へ</button>'))+
+        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="stratback">‹ コミュニケーションに戻る</button>':'')
+        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに戦略方針へ(もう一度押す)</button>'
+            :'<button class="btn btn-sub go-soft" data-act="strat">戦略方針へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">戦略方針へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>';
   return h;
@@ -7912,6 +7914,10 @@ function bizClubHtml(){
 const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"・ケガが治る率 +"+Math.round(TUNING.biz.medHeal[lv]*100)+"%"
   :"経験 ×"+TUNING.biz.facK[lv];
 /* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
+/** ③ 戦略方針: 監督能力を選ぶ(→docs/14) */
+function stratStepHtml(){
+  return '<div class="step-h"><b>戦略方針</b><small>この試合で使う監督能力を選ぶ。選んだまま次の試合にも引き継ぐ</small></div>'+mabHtml();
+}
 function mabHtml(){
   const S=CL.S, set=S.mab.set, M=TUNING.mab;
   const chip=k=>{ const a=MAB.find(x=>x.id===k), r=mabRank(S,k), on=set.includes(k), xp=S.mab.xp[k]||0, nx=M.rankAt[r+1];
@@ -8093,7 +8099,7 @@ function onClubClick(e){
   if(!b||b.disabled)return;
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
-  if(act!=="play")CL.armPlay=false;
+  if(act!=="strat")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
@@ -8101,7 +8107,7 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
-  if(act==="chatgo"){ CL.chat=null; startFixture(); return; }   // 最後の1回の結果を見てから試合へ
+  if(act==="chatgo"){ CL.chat=null; CL.strat=true; CL.mabOpen=true; showClub(); return; }   // 最後の1回の結果を見てから戦略方針へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
@@ -8127,11 +8133,13 @@ function onClubClick(e){
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
-  if(act==="home"){ CL.flow=null; CL.tab="home"; showClub(); return; }
-  if(act==="play"){
+  if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; showClub(); return; }
+  if(act==="strat"){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
-    CL.armPlay=false; startFixture();
+    CL.armPlay=false; CL.strat=true; CL.mabOpen=true; CL.chat=null; CL.pick=[]; showClub(); return;
   }
+  if(act==="stratback"){ CL.strat=false; CL.mabOpen=false; showClub(); return; }
+  if(act==="play"){ CL.strat=false; CL.mabOpen=false; startFixture(); }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
   else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)
