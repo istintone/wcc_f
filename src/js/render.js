@@ -168,9 +168,35 @@ function drawFrame(G,dt){
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
   items.sort((a,b)=>a.v-b.v).forEach(o=>o.draw());
 }
-/** 選手 = 地面に立つ紙の板(チームの色・背番号)。縁に厚み、足元に影 */
+/** 【仮】選手の立ち姿の絵(pftb の汎用選手。→docs/10 §10.9)。読み込んだ Image を使い回す */
+const RV_IMG={};
+function standImg(c){
+  if(typeof artSrc!=="function")return null;
+  const src=artSrc(c,"play"); if(!src)return null;   // カードと同じ動きのある絵
+  let im=RV_IMG[src]; if(!im){ im=RV_IMG[src]=new Image(); im.src=src; }
+  return im.complete&&im.naturalWidth?im:null;
+}
+/** 選手 = 立ち姿の絵(仮)。足元にチームの色の輪と背番号の札。絵が無いときは地面に立つ紙の板 */
 function drawMan(c,o,unit,holderId){
   const { p, T }=o, [x,y,s]=proj(o.u,o.v), h=unit*s, w=h*0.62;
+  const im=standImg(p.c);
+  if(im){
+    const col=p.gk?"#d9a521":T.color, ih=h*1.45, iw=ih*im.naturalWidth/im.naturalHeight;
+    c.fillStyle="rgba(0,0,0,.3)"; c.beginPath(); c.ellipse(x,y,w*0.7,h*0.14,0,0,Math.PI*2); c.fill();
+    c.lineWidth=p.id===holderId?2.6:1.8; c.strokeStyle=p.id===holderId?"#f2c14e":col;
+    c.beginPath(); c.ellipse(x,y,w*0.72,h*0.16,0,0,Math.PI*2); c.stroke();
+    if(T.side==="A"){ c.save(); c.translate(x,0); c.scale(-1,1); c.drawImage(im,-iw/2,y-ih*0.97,iw,ih); c.restore(); }   // 相手は左右反転
+    else c.drawImage(im,x-iw/2,y-ih*0.97,iw,ih);
+    const tw=Math.max(10,h*0.5), th=Math.max(7,h*0.32);
+    c.fillStyle=col; c.fillRect(x-tw/2,y+2,tw,th);
+    c.fillStyle="#fff"; c.font="800 "+Math.max(6,Math.round(th*0.85))+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
+    c.fillText(p.c.no,x,y+2+th/2+0.5);
+    if(p.kp){ c.fillStyle="#f2c14e"; c.font="900 "+Math.round(h*0.45)+"px system-ui,sans-serif"; c.fillText("★",x+iw*0.42,y-ih*0.85); }
+    if(p.yc){ c.fillStyle="#ffd84a"; c.fillRect(x-iw*0.5,y-ih*0.85,w*0.28,h*0.36); }
+    if(p.inj){ c.fillStyle="#c8102e"; c.fillRect(x+iw*0.3,y-ih*0.95,w*0.3,w*0.3); }
+    if(p.stam<TUNING.stam.tiredAt){ c.fillStyle="#ff7a6b"; c.fillRect(x-tw/2,y+2+th+1,tw*p.stam/TUNING.stam.tiredAt,2); }
+    return;
+  }
   c.fillStyle="rgba(0,0,0,.28)"; c.beginPath(); c.ellipse(x+w*0.18,y,w*0.62,h*0.12,0,0,Math.PI*2); c.fill();
   const col=p.gk?"#d9a521":T.color, top=y-h;
   // 厚み(右の縁を暗く)→ 表の板

@@ -833,3 +833,123 @@
 #club .tabs.t4 .tab{position:relative}
 #club .tabs.t4 .tab .tsg{position:absolute;right:4px;top:3px;width:15px;height:15px;line-height:15px;border-radius:50%;font-size:10px;font-weight:900;background:var(--t-sub);color:#fff}
 #club .tabs.t4 .tab.on .tsg{background:#fff;color:var(--t-sub)}
+
+/* ---- カードの排出: 上の排出口からパックを引き出し、破る(→docs/07 §7.12) ---- */
+.sc-card .pk-head{margin-bottom:6px}
+.pk-mouth.top{position:relative;z-index:6;width:260px;height:30px;margin:0 0 -16px;border-radius:7px;
+  background:linear-gradient(180deg,#14161c,#3a3f4c);box-shadow:0 8px 16px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.18)}
+.pk-mouth.top i{position:absolute;left:10%;right:10%;bottom:7px;top:auto;height:8px;border-radius:4px;background:#000;box-shadow:inset 0 -2px 3px rgba(0,0,0,.9)}
+.pk-slot{position:relative;width:210px;height:300px}
+.pk-pack{position:absolute;inset:0;z-index:2;cursor:pointer;touch-action:none;
+  transition:transform .55s cubic-bezier(.2,1.1,.4,1),clip-path .55s cubic-bezier(.2,1.1,.4,1)}
+/* ① 口から下の端だけ出ている(上の 72% は口の後ろ) */
+.pk-slot.st0 .pk-pack{transform:translateY(-72%);clip-path:inset(72% 0 0 0);animation:packPeek .9s .2s ease-in-out infinite alternate}
+@keyframes packPeek{to{transform:translateY(-69%);clip-path:inset(69% 0 0 0)}}
+.pk-slot.st1 .pk-pack,.pk-slot.st2 .pk-pack{transform:none;clip-path:inset(0 0 0 0)}
+.pk-slot.st0 .pk-aura,.pk-slot.st0 .rays{opacity:0!important}
+/* 中のカード(破るまでは包みの下) */
+.pk-cardin{position:absolute;inset:6px 8px;border-radius:10px;overflow:hidden}
+.pk-cardin .kc{position:absolute;inset:0;aspect-ratio:auto;border-radius:10px}
+.pk-cardin .kc .k-no{font-size:44px} .pk-cardin .kc .k-pos{font-size:12px}
+.pk-cardin .kc .k-name b{font-size:19px} .pk-cardin .kc .k-name small{font-size:10px}
+.pk-cardin .kc .k-st b{font-size:24px} .pk-cardin .kc .k-st i{font-size:9px} .pk-cardin .kc .k-sk{font-size:11px}
+/* 包み(アルミのパック): 上の切り口と本体 */
+.pk-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
+.pk-top{position:absolute;left:0;right:0;top:0;height:16%;border-radius:8px 8px 0 0;
+  background:linear-gradient(115deg,#c9ced8,#f4f6fa 35%,#9aa3b2 60%,#e6e9ef);
+  -webkit-mask:linear-gradient(#000,#000);transition:transform .6s cubic-bezier(.3,.9,.4,1),opacity .6s}
+.pk-top::after{content:"";position:absolute;left:4%;right:4%;bottom:0;border-bottom:2px dashed rgba(60,60,70,.55)}
+.pk-top span{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:10px;font-weight:900;color:#3a3f4c;letter-spacing:.08em}
+.pk-body{position:absolute;left:0;right:0;top:16%;bottom:0;border-radius:0 0 10px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px);box-shadow:0 14px 30px rgba(0,0,0,.5);transition:transform .7s .1s cubic-bezier(.5,0,.7,.4),opacity .7s .1s}
+.pk-body b{font-family:"Oswald",sans-serif;font-size:46px;font-weight:700;color:#fff;text-shadow:3px 3px 0 #141414;transform:skewX(-8deg)}
+.pk-body b span{color:var(--t-gold2,#e9c76b)}
+.pk-body small{font-size:10px;font-weight:900;letter-spacing:.12em;color:#fff}
+.pk-body i{position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.25) 45%,transparent 60%);animation:sheen 2.2s infinite}
+/* ② 破る: 切り口がちぎれて飛び、本体が下へ抜けてカードが見える */
+.pk-slot.st2 .pk-top{transform:translate(70px,-60px) rotate(24deg);opacity:0}
+.pk-slot.st2 .pk-body{transform:translateY(115%);opacity:0}
+.pk-slot.st2 .pk-cardin{box-shadow:0 0 0 2px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.5)}
+.glow-K .pk-cardin .kc{box-shadow:0 0 32px rgba(160,120,255,.55)}
+.glow-L .pk-cardin .kc{box-shadow:0 0 40px rgba(242,193,78,.85)}
+.sc-card>.pk-mouth:not(.top){display:none}
+.pk-slot.om-L.st1 .pk-pack{animation:shake .18s .3s linear infinite}
+
+/* 【仮】カードの選手の絵(pftb の汎用選手。→docs/10 §10.9)。ドット絵なのでなめらかにしない */
+.kc .k-img{position:absolute;left:4%;right:4%;bottom:0;width:92%;height:100%;object-fit:contain;object-position:50% 100%;image-rendering:pixelated}
+.kc-m .k-img{left:0;width:74%}
+.kc .k-art{-webkit-mask:none;mask:none}
+
+/* ---- HOME の直近の試合とクラブ新聞(→docs/07 §7.13) ---- */
+#club .recent{list-style:none;margin:6px 0 0;padding:0}
+#club .recent button{display:grid;grid-template-columns:22px auto auto 1fr auto;align-items:center;gap:0 6px;width:100%;padding:6px 2px;border:0;border-top:1px solid var(--t-rule);background:none;color:var(--t-ink);text-align:left;cursor:pointer}
+#club .recent .wdl{font-style:normal;font-family:"Oswald",sans-serif;font-weight:700;font-size:12px;text-align:center;color:#fff;border-radius:3px;line-height:18px}
+#club .recent .wdl.W{background:#1f8a4c} #club .recent .wdl.D{background:#8a8a8a} #club .recent .wdl.L{background:#c8102e}
+#club .recent .op{font-size:12px} #club .recent b{font-family:"Oswald",sans-serif;font-size:14px;text-align:right}
+#club .recent small{font-size:9px;color:var(--t-mute)}
+#club .recent em{grid-column:2/6;font-style:normal;font-size:11px;font-weight:700;color:var(--t-ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .tile.last .ls-card{display:flex;align-items:center;gap:8px;margin-top:8px} #club .tile.last .ls-card .kc{width:64px}
+#club .tile.last .ls-card small{font-size:11px;color:var(--t-mute)}
+/* 紙面: クリームの紙、題字、太い見出し、網点の写真、段組み、ゴシップ欄 */
+#club .paper-wrap{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:14px 10px 30px;background:rgba(10,12,18,.72)}
+#club .paper{position:relative;width:100%;max-width:400px;padding:12px 14px 14px;background:#f4ecd8;color:#16130e;
+  box-shadow:0 18px 40px rgba(0,0,0,.6);transform:rotate(-.6deg);font-family:Georgia,"Times New Roman","Yu Mincho","Hiragino Mincho ProN",serif;
+  background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1.2px);background-size:4px 4px}
+#club .paper .mast{text-align:center;border-bottom:3px double #16130e;padding-bottom:4px}
+#club .paper .mast small{display:block;font-size:10px;letter-spacing:.06em;border-bottom:1px solid #16130e;padding-bottom:2px;margin-bottom:3px}
+#club .paper .mast b{display:block;font-size:28px;font-weight:900;letter-spacing:.02em;line-height:1.05}
+#club .paper .mast i{display:block;font-size:9.5px;letter-spacing:.2em}
+#club .paper .kicker{margin:8px 0 2px;font-family:system-ui,sans-serif;font-size:11px;font-weight:900;color:#fff;background:#c8102e;display:inline-block;padding:1px 6px}
+#club .paper.k-crash .kicker,#club .paper.k-lose .kicker,#club .paper.k-pklose .kicker{background:#16130e}
+#club .paper.k-title .kicker{background:#b8892c}
+#club .paper h1{margin:4px 0 4px;font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",system-ui,sans-serif;font-size:25px;font-weight:900;line-height:1.18;letter-spacing:-.01em}
+#club .paper .sub{margin:0 0 8px;font-size:11.5px;font-weight:700;border-top:1px solid #16130e;border-bottom:1px solid #16130e;padding:3px 0}
+#club .paper figure{margin:0 0 8px;background:#d9cfb6;border:1px solid #16130e;text-align:center}
+#club .paper figure img{height:150px;image-rendering:pixelated;filter:grayscale(1) contrast(1.25) sepia(.25)}
+#club .paper figcaption{font-size:10px;padding:2px 6px;text-align:left;border-top:1px solid #16130e;font-style:italic}
+#club .paper .cols{column-count:2;column-gap:12px;column-rule:1px solid rgba(0,0,0,.35);font-size:12px;line-height:1.6;text-align:justify}
+#club .paper .cols p{margin:0 0 6px}
+#club .paper .cols p:first-child::first-letter{float:left;font-size:30px;line-height:1;margin:2px 4px 0 0;font-weight:900}
+#club .paper .q{font-style:italic;font-weight:700}
+#club .paper aside{margin-top:8px;padding:6px 8px;border:2px solid #16130e;background:#fff6c2}
+#club .paper aside b{display:block;font-family:system-ui,sans-serif;font-size:11px;font-weight:900;letter-spacing:.2em;color:#c8102e;margin-bottom:2px}
+#club .paper aside p{margin:3px 0;font-size:11.5px;line-height:1.45;border-top:1px dotted rgba(0,0,0,.4);padding-top:3px}
+#club .paper aside p:first-of-type{border-top:0}
+#club .paper footer{margin-top:10px;text-align:center}
+
+#club .recent button{display:block}
+#club .recent .rw{display:flex;align-items:center;gap:8px}
+#club .recent .rw .op{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;color:var(--t-ink2)}
+#club .recent .rw .wdl{flex:0 0 20px}
+#club .recent em{display:block;margin:2px 0 0 28px}
+#club .paper .mast b{font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---- コミュニケーションのチャット(→docs/07 §7.14)。pftb のクラブチャットにならう:
+   選手 = 灰の丸(立ち絵の顔)・左 / 秘書 = 紫の丸 / 監督 = 金の吹き出し・右。顔と名前はまとまりの先頭だけ ---- */
+#club .chat-sheet{position:fixed;left:0;right:0;bottom:0;z-index:70;max-width:480px;margin:0 auto;display:flex;flex-direction:column;max-height:68vh;
+  background:#1c2233;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.025) 0 6px,transparent 6px 12px);
+  border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.45);animation:chatUp .32s cubic-bezier(.2,1.1,.4,1)}
+@keyframes chatUp{from{transform:translateY(100%)}to{transform:none}}
+#club .ch-head{display:flex;align-items:center;gap:8px;padding:10px 14px 8px;color:#fff;border-bottom:1px solid rgba(255,255,255,.12)}
+#club .ch-head b{font-size:14px} #club .ch-head small{flex:1;min-width:0;font-size:11px;color:#bcd2f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .ch-x{width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:16px;cursor:pointer}
+#club .ch-log{flex:1;min-height:0;overflow-y:auto;padding:8px 12px 4px}
+#club .cm{display:flex;align-items:flex-start;gap:8px;margin:3px 0}
+#club .cm.first{margin-top:9px}
+#club .cf{flex:0 0 36px;width:36px;height:36px;border-radius:50%;overflow:hidden;display:flex;align-items:flex-end;justify-content:center}
+#club .cf.pl{background:#8a93a6} #club .cf.pl img{width:100%;height:auto;margin-bottom:-60%;image-rendering:pixelated}
+#club .cf.pl b{color:#fff;font-family:"Oswald",sans-serif;font-size:15px;margin:auto}
+#club .cf.se{background:radial-gradient(circle at 50% 38%,#e8dcff 0 22%,transparent 23%),radial-gradient(ellipse at 50% 100%,#e8dcff 0 45%,transparent 46%),#7d4fc4}
+#club .cf.sp{background:none}
+#club .cm small{display:block;font-size:10px;font-weight:700;color:#dfe6f2;margin:0 0 2px 2px}
+#club .cm p{margin:0;padding:7px 11px;font-size:13px;line-height:1.5;background:#f3ecdd;color:#16130e;border-radius:12px;max-width:270px}
+#club .cm.first p{border-top-left-radius:4px}
+#club .cm.sec p{background:#ece4ff}
+#club .cm.me{justify-content:flex-end} #club .cm.me p{background:linear-gradient(180deg,#ffe28a,#f2c14e);border-radius:12px;border-top-right-radius:4px;font-weight:700}
+#club .cm .dim{color:#5a5f6b;font-size:11.5px} #club .cm .bonus{color:#8a5c06;font-weight:700;font-size:11.5px}
+#club .cn{margin:6px auto;max-width:300px;text-align:center;font-size:11px;color:#dfe6f2;background:rgba(0,0,0,.3);border-radius:10px;padding:3px 10px}
+#club .ch-acts{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding:8px 12px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid rgba(255,255,255,.12)}
+#club .cr{max-width:85%;padding:9px 14px;font-size:13.5px;font-weight:800;color:#201400;border:0;border-radius:14px;border-bottom-right-radius:4px;
+  background:linear-gradient(180deg,#ffe58a,#f2b822);box-shadow:0 2px 0 #8a5c06;cursor:pointer;text-align:right}
+#club .cr:active{transform:translateY(2px);box-shadow:none}
+#club .cr.ok{min-width:120px;text-align:center;background:#fff}

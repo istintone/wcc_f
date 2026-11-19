@@ -29,7 +29,7 @@ OUT = ROOT / "index.html"
 
 # 結合順。data.js は先頭("use strict" を持つ)、main.js は起動の副作用を持つので最後。
 # DOM に触らない8つ(data / trainings / realcards / engine / club / pool / grow / term)は src/tests/_setup.js の ENGINE_FILES と同じ並びにする。
-JS_FILES = ["data.js", "trainings.js", "realcards.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "emblem-art.js", "emblem.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
+JS_FILES = ["data.js", "trainings.js", "realcards.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "emblem-art.js", "emblem.js", "art-players.js", "paper.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
 CSS_FILES = ["base.css", "theme.css"]
 # 埋め込む書体(英数字だけの latin サブセット。日本語はシステムの書体)。Oswald は SIL Open Font License
 FONTS = [("oswald-latin.woff2", "Oswald", "200 700")]

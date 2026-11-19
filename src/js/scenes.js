@@ -211,44 +211,69 @@ function sceneCard(id,isNew,go){
   const c=CARDS[id], r=c.rar||"W", P=TUNING.pack, S=CL.S;
   const promo=r!=="W"&&(hashStr("om:"+id+":"+(S?S.term+":"+S.played:0))%1000)/1000<(P.promo[r]||0);
   const shown=promo?OMEN_ORD[OMEN_ORD.indexOf(r)-1]:r;
+  // 本家と同じく、上の排出口からパックを引き出し(①)、パックを破って中身を見る(②)。予兆の光は引き出したパックの後ろで
   sceneShow("sc-card",
     '<div class="pk-head"><b>CARD</b><small>試合のあとに1枚</small></div>'+
-    '<div class="pk-slot om-'+shown+'"><i class="pk-aura"></i><div class="pk-card" data-sc="flip"><div class="pk-in">'+
-      '<div class="pk-back"><b>wcc<span>_</span>f</b><i></i></div>'+
-      '<div class="pk-front r-'+r+'">'+cardHtml(id,"m")+'</div>'+
-    '</div></div>'+(r==="L"?'<div class="rays"></div>':'')+'</div>'+
-    '<div class="pk-mouth"><i></i></div>'+
-    '<div class="pk-msg">カードをタッチしてめくる</div>',
-    { lock:600 });
+    '<div class="pk-mouth top"><i></i></div>'+
+    '<div class="pk-slot st0">'+(r==="L"?'<div class="rays"></div>':'')+'<i class="pk-aura"></i>'+
+      '<div class="pk-pack" data-sc="flip">'+
+        '<div class="pk-cardin r-'+r+'">'+cardHtml(id,"m")+'</div>'+
+        '<div class="pk-wrap"><div class="pk-top"><span>ここから破る ✂</span></div>'+
+          '<div class="pk-body"><b>wcc<span>_</span>f</b><small>PLAYER CARD ・ 1枚入り</small><i></i></div></div>'+
+      '</div></div>'+
+    '<div class="pk-msg">パックを下へ引き出す</div>',
+    { lock:500 });
+  SC.card={ r, shown, promo, isNew, c, go, stage:0 };
   SC.promote=()=>{
     clearTimeout(SC.promoT); SC.promote=null;
     const slot=SC.el.querySelector(".pk-slot");
     if(!slot||slot.classList.contains("om-"+r))return;
-    slot.className="pk-slot om-"+r+" promo";
+    slot.classList.remove("om-"+shown); slot.classList.add("om-"+r,"promo");
     sndShimmer(r==="L");
   };
-  SC.promoT=promo?setTimeout(()=>SC.promote&&SC.promote(),P.promoMs):0;
-  if(!promo)SC.promote=null;
-  SC.flipNext=()=>{
-    SC.el.querySelector(".pk-msg").innerHTML='<b class="rar r-'+r+'">'+RAR_TAG[r]+'</b>'+(isNew?' <b class="new">NEW</b>':'')+
-      '<br><span>'+nameOf(c)+' ・ '+clubOfCard(c)+'</span><br><small>TOUCH で監督室へ</small>';
-    SC.next=go; SC.busy=true; setTimeout(()=>{ SC.busy=false; },700);
-  };
+  // 引く・破るは、なぞっても押しても進む(なぞる向き: 引く = 下、破る = 横)
+  const pack=SC.el.querySelector(".pk-pack"); let p0=null;
+  pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; });
+  pack.addEventListener("pointermove",e=>{
+    if(!p0)return; const dx=e.clientX-p0.x, dy=e.clientY-p0.y, st=SC.card&&SC.card.stage;
+    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ p0=null; SC.packMoved=true; packStep(); }
+  });
+  pack.addEventListener("pointerup",()=>{ p0=null; });
   sndUi("tap");
-  if(shown!=="W")setTimeout(()=>sndShimmer(shown==="L"),500);
 }
+/** パックを1段進める: 0 口から少し出ている → 1 引き出した → 2 破って中身が見えた → 監督室へ */
+function packStep(){
+  const K=SC.card; if(!K||SC.busy)return;
+  const slot=SC.el.querySelector(".pk-slot"), msg=SC.el.querySelector(".pk-msg");
+  if(K.stage===0){
+    K.stage=1; slot.classList.replace("st0","st1"); slot.classList.add("om-"+K.shown);
+    msg.textContent="切り口を横になぞって破る";
+    sndPull(); if(K.shown!=="W")setTimeout(()=>sndShimmer(K.shown==="L"),420);
+    SC.promoT=K.promo?setTimeout(()=>SC.promote&&SC.promote(),TUNING.pack.promoMs):0;
+    if(!K.promo)SC.promote=null;
+    SC.busy=true; setTimeout(()=>{ SC.busy=false; },550);
+    return;
+  }
+  if(K.stage===1){
+    if(SC.promote)SC.promote();                 // 昇格の前に破ったら、先に昇格させる
+    K.stage=2; slot.classList.replace("st1","st2");
+    sndTear();
+    if(K.r==="L"){ SC.el.classList.add("glow-L"); setTimeout(sndFanfare,350); setTimeout(()=>sndShimmer(true),500); }
+    else if(K.r==="K"){ SC.el.classList.add("glow-K"); setTimeout(()=>sndShimmer(false),350); }
+    else setTimeout(()=>sndUi("ok"),300);
+    msg.innerHTML='<b class="rar r-'+K.r+'">'+RAR_TAG[K.r]+'</b>'+(K.isNew?' <b class="new">NEW</b>':'')+
+      '<br><span>'+nameOf(K.c)+' ・ '+clubOfCard(K.c)+'</span><br><small>TOUCH で監督室へ</small>';
+    SC.next=K.go; SC.busy=true; setTimeout(()=>{ SC.busy=false; },700);
+    return;
+  }
+  if(SC.next){ const f=SC.next; SC.next=null; SC.card=null; f(); }
+}
+function sndPull(){ if(sndOk())noiseBurst(now(),0.22,0.25,"bandpass",900,1400,0.4); }
+function sndTear(){ if(sndOk()){ noiseBurst(now(),0.12,0.3,"highpass",1800,3200,0.5); noiseBurst(now()+0.08,0.16,0.22,"bandpass",2400,3000,0.45); } }
 function sceneAct(act,b){
   if(act==="snd"){ sndUnlock(); sndSetOn(!SND.on); b.textContent=SND.on?"🔊 音あり":"🔇 音なし"; sndUi("ok"); return; }
   if(act==="flip"){
-    const card=SC.el.querySelector(".pk-card");
-    if(card.classList.contains("open")){ if(SC.next&&!SC.busy){ const f=SC.next; SC.next=null; f(); } return; }
-    if(SC.promote)SC.promote();                 // 昇格の前にめくったら、先に昇格させる
-    card.classList.add("open");
-    const r=SC.el.querySelector(".pk-front").className.match(/r-(\w)/)[1];
-    sndFlip();
-    if(r==="L"){ SC.el.classList.add("glow-L"); setTimeout(sndFanfare,350); setTimeout(()=>sndShimmer(true),500); }
-    else if(r==="K"){ SC.el.classList.add("glow-K"); setTimeout(()=>sndShimmer(false),350); }
-    else setTimeout(()=>sndUi("ok"),300);
-    SC.flipNext();
+    if(SC.packMoved){ SC.packMoved=false; return; }   // なぞった直後のタップは数えない
+    packStep();
   }
 }

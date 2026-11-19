@@ -134,6 +134,56 @@ function trainStepHtml(){
         '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
 }
 /** ② コミュニケーション */
+/* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
+const chatFace=id=>{ const c=CARDS[id], src=c&&typeof artSrc==="function"?artSrc(c,"stand"):null;
+  return '<i class="cf pl">'+(src?'<img src="'+src+'" alt="">':'<b>'+(c?c.no:"")+'</b>')+'</i>'; };
+const chatPl=(id,t,first)=>'<div class="cm pl'+(first?' first':'')+'">'+(first?chatFace(id):'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+cname(id)+'</small>':'')+'<p>'+t+'</p></div></div>';
+const chatSec=(t,first)=>'<div class="cm sec'+(first?' first':'')+'">'+(first?'<i class="cf se"></i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
+const chatMe=t=>'<div class="cm me"><p>'+t+'</p></div>';
+const chatNote=t=>'<div class="cn">'+t+'</div>';
+/** いま開いているやりとり(選手を選んだら)と、答えたあとの結果 */
+function commChatHtml(){
+  const S=CL.S, U=COMM_UI[CL.comm];
+  if(CL.chat){
+    const K=CL.chat;
+    return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b></div><div class="ch-log">'+
+      K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
+      K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
+      '</div><div class="ch-acts"><button class="cr ok" data-act="chatok">OK</button></div></div>';
+  }
+  if(!U||CL.pick.length!==U.n)return "";
+  const id=CL.pick[0], who=CL.pick.slice();
+  let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+"」",true)+chatNote("信頼度: "+TRUST_LABEL[trustLv(S.g.pl[x])])).join(""), acts="";
+  if(CL.comm==="lounge"){
+    const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
+    log+=chatSec(cname(who[0])+" と "+cname(who[1])+"、いまは「"+LINK_LABEL[f.lv]+"」"+(f.gold?"(黄金線の兆し)":"")+"です。",true)+
+      chatSec(f.hint+"。<br><span class=\"dim\">"+who.map(x=>cname(x)+" "+aniTxt(CARDS[x])+" ・ "+natTxt(CARDS[x])).join("<br>")+"</span>"+
+        (bo.length?"<br><span class=\"bonus\">"+bo.map(t=>BONUS_LABEL[t]).join("・")+" ― 連携が付きやすい</span>":""),false);
+    acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
+  }else if(CL.comm==="meet"){
+    const f=meetInfo(S,id);
+    log+=chatSec("特殊能力 "+stars(f.ss)+" ・ 経験 "+Math.min(Math.floor(f.se),f.need)+"/"+f.need+"。"+
+      (f.near.length?"周りで "+f.near.map(cname).join("・")+" も聞いています。":""),true);
+    if(f.ready){ log+=chatSec("★突破の話を切り出してきました。性格は「"+f.pers+"」です。",false);
+      acts=f.choices.map((t,i)=>'<button class="cr" data-act="meet" data-i="'+i+'">'+t+'</button>').join(""); }
+    else acts='<button class="cr" data-act="meet" data-i="0">戦術の話をする</button>';
+  }else if(CL.comm==="ind"){
+    const p=S.g.pl[id];
+    log+=chatSec("個人能力 "+stars(p.is)+(p.q?"(覚醒の兆し)":"")+" ・ 次の★まで "+Math.floor(indProgress(p)*100)+"%"+(dupOf(S,id)?" ・ 重なり ×"+dupOf(S,id):"")+"。",true);
+    acts='<button class="cr" data-act="ind">個別に指導する</button>';
+  }else{
+    const p=S.g.pl[id];
+    log+=chatSec("いま「"+MOT_LABEL[p.mot]+"」・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
+    acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
+  }
+  return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
+    '<button class="ch-x" data-act="chatx">×</button></div><div class="ch-log">'+log+'</div><div class="ch-acts">'+acts+'</div></div>';
+}
+/** 答えたあと: 結果をチャットに残す(OK で閉じる)。react は選手の返事(reactOf の「」の中) */
+function chatResult(kind,who,said,r,react){
+  CL.chat={ title:COMM_LABEL[kind], who, said, lines:r.lines||[], react:react?react.replace(/^[^「]*/,""):"" };
+  CL.pick=[];
+}
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>コミュニケーション</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
@@ -142,37 +192,7 @@ function commStepHtml(){
   if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>';
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
-  if(CL.pick.length===U.n){
-    const id=CL.pick[0];
-    h+='<div class="ask">'+CL.pick.map(x=>'<p class="voice"><b>'+cname(x)+'</b>「'+voiceOf(S,x)+'」<small>信頼度: '+
-      TRUST_LABEL[trustLv(S.g.pl[x])]+'</small></p>').join("");
-    if(CL.comm==="lounge"){
-      const f=loungeInfo(S,CL.pick[0],CL.pick[1]);
-      const bo=linkBonusOf(CL.pick[0],CL.pick[1]);
-      h+='<p class="dim">'+CL.pick.map(x=>cname(x)+' '+aniTxt(CARDS[x])+' ・ '+natTxt(CARDS[x])).join('<br>')+'</p>'+
-        (bo.length?'<p class="bonus">'+bo.map(t=>'<b>'+BONUS_LABEL[t]+'</b>').join("")+' 連携が付きやすい</p>':'');
-      h+='<p><b>'+cname(CL.pick[0])+'</b> と <b>'+cname(CL.pick[1])+'</b> ・ いま: '+LINK_LABEL[f.lv]+
-        (f.gold?'(黄金線の兆し)':'')+'</p><p class="hint">'+f.hint+'</p>'+
-        f.choices.map((t,i)=>'<button class="btn ch" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
-    }else if(CL.comm==="meet"){
-      const f=meetInfo(S,id);
-      h+='<p><b>'+cname(id)+'</b> ・ 特殊能力 '+stars(f.ss)+' ・ 経験 '+Math.min(Math.floor(f.se),f.need)+'/'+f.need+'</p>'+
-        '<p class="dim near">'+(f.near.length?'周りで聞く選手: '+f.near.map(cname).join("・")+'(経験が少し入る。★突破の成否はやる気にも響く)'
-          :'周りで聞く選手はいない(連携のある選手と、先発なら盤面で近い選手にも効く)')+'</p>';
-      if(f.ready)h+='<p class="hint">★突破の話を切り出してきた。性格: '+f.pers+'</p>'+
-        f.choices.map((t,i)=>'<button class="btn ch" data-act="meet" data-i="'+i+'">'+t+'</button>').join("");
-      else h+='<button class="btn ch" data-act="meet" data-i="0">戦術の話をする</button>';
-    }else if(CL.comm==="ind"){
-      const p=S.g.pl[id];
-      h+='<p><b>'+cname(id)+'</b> ・ 個人能力 '+stars(p.is)+(p.q?'(覚醒の兆し)':'')+'</p>'+
-        '<button class="btn ch" data-act="ind">個別に指導する</button>';
-    }else{
-      const p=S.g.pl[id];
-      h+='<p><b>'+cname(id)+'</b> ・ いま '+MOT_LABEL[p.mot]+' ・ 疲労 '+Math.round(p.fat*100)+'%</p>'+
-        '<button class="btn ch" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
-    }
-    h+='</div>';
-  }
+  h+=commChatHtml();
   return h;
 }
 /**
@@ -373,6 +393,11 @@ function poseSvg(c){
     '<text x="'+mid[0]+'" y="'+(mid[1]+3.5)+'" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="Oswald,system-ui,sans-serif">'+c.no+'</text>'+
     (P.ball?'<circle cx="'+P.ball[0]+'" cy="'+P.ball[1]+'" r="5" fill="#fff" stroke="#1d1d1d" stroke-width="1.2"/>':'')+'</svg>';
 }
+/** 【仮】選手の絵(pftb の汎用選手。→docs/10 §10.9)。GK は GK の絵、ほかは外野の絵から、id で決まる1枚 */
+const ART_POOL={ gk:[], out:[] };
+if(typeof PLAYER_ART!=="undefined")for(const k in PLAYER_ART){ const m=/^any-(gk|out)-(\w+)_play$/.exec(k); if(m)ART_POOL[m[1]].push(k.slice(0,-5)); }
+function artKeyOf(c){ const p=ART_POOL[c.pos==="GK"?"gk":"out"]; return p&&p.length?p[hashStr("art:"+c.id)%p.length]:null; }
+const artSrc=(c,kind)=>{ const k=artKeyOf(c); return k&&PLAYER_ART[k+"_"+kind]||null; };
 /** カードのクラブ(エンブレムを描くため) */
 const cardTeam=c=>c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
 // レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
@@ -389,7 +414,7 @@ function cardHtml(id,size,extra){
   const top=STATS.slice().sort((a,b)=>c[b]-c[a]).slice(0,3);
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
-    '<i class="k-band"></i><div class="k-art">'+poseSvg(c)+'</div>'+
+    '<i class="k-band"></i><div class="k-art">'+(artSrc(c,"play")?'<img class="k-img" src="'+artSrc(c,"play")+'" alt="">':poseSvg(c))+'</div>'+
     (cardTeam(c)?'<i class="k-emb">'+emblemSvg(cardTeam(c),size==="m"?22:13)+'</i>':'')+
     '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
@@ -690,16 +715,30 @@ function secPickHtml(title){
     return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
       '<i>「'+SEC_LINES[x.id].hello+'」</i></button>'; }).join("")+'</section>';
 }
-/** 前の試合(要約) */
+/** HOME: 直近の試合(最大5)。押すとその試合のクラブ新聞を開く(→docs/07 §7.13) */
 function lastHtml(){
-  const S=CL.S, L=S.last;
-  if(!L)return "";
-  const lines=L.lines.filter(x=>!/^カード:/.test(x)).slice(0,3);
-  return '<section class="tile last"><h3>前の試合 <small>'+COMPS[L.comp].name+' '+(L.label||"")+'</small></h3>'+
-    '<div class="ls"><div class="ls-sc">'+myTeam(S).short+' <b>'+L.hg+' - '+L.ag+'</b> '+clubShort(L.opp)+
-      (L.pso?'<small>PK '+L.pso[0]+'-'+L.pso[1]+'</small>':'')+'</div>'+
-      (L.card?'<div class="ls-card">'+cardHtml(L.card,"s")+'</div>':'')+'</div>'+
-    (lines.length?'<ul>'+lines.map(x=>'<li>'+x+'</li>').join("")+'</ul>':'')+'</section>';
+  const S=CL.S, P=(S.paper||[]).slice(-TUNING.paper.recent).reverse(), L=S.last;
+  if(!P.length&&!L)return "";
+  const res=a=>{ const d=a.hg-a.ag, w=d>0||(d===0&&a.pso&&a.pso[0]>a.pso[1]), l=d<0||(d===0&&a.pso&&a.pso[0]<a.pso[1]); return w?"W":l?"L":"D"; };
+  return '<section class="tile last"><h3>直近の試合 <small>押すとクラブ新聞</small></h3>'+
+    (P.length?'<ul class="recent">'+P.map((a,i)=>'<li><button data-act="paper" data-i="'+(S.paper.length-1-i)+'"><span class="rw"><i class="wdl '+res(a)+'">'+res(a)+'</i>'+
+      '<span class="op">'+COMPS[a.comp].name+' ・ vs '+clubShort(a.opp)+'</span><b>'+a.hg+' - '+a.ag+(a.pso?'<small> PK</small>':'')+'</b></span>'+
+      '<em>'+a.head+'</em></button></li>').join("")+'</ul>'
+      :'<p class="dim">'+myTeam(S).short+' '+L.hg+' - '+L.ag+' '+clubShort(L.opp)+'</p>')+
+    (L&&L.card?'<div class="ls-card">'+cardHtml(L.card,"s")+'<small>この試合のカード</small></div>':'')+'</section>';
+}
+/** クラブ新聞の紙面(ヨーロッパのタブロイド紙風)。i … S.paper の番号 */
+function paperHtml(i){
+  const S=CL.S, a=S.paper[i]; if(!a)return "";
+  const club=S.club?S.club.name:TEAMS.azr.name, ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
+  return '<div class="paper-wrap" data-act="paperclose"><article class="paper k-'+a.kind+'" data-act="none">'+
+    '<header class="mast"><small>第'+a.term+'任期 ・ 第'+a.no+'試合 ・ ¥150</small><b>'+club+' タイムズ</b><i>THE '+(S.club?S.club.short:"AZR")+' TIMES ・ '+(S.club?S.club.town:"")+'</i></header>'+
+    '<p class="kicker">'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</p>'+
+    '<h1>'+a.head+'</h1><p class="sub">'+a.sub+'</p>'+
+    (img?'<figure><img src="'+img+'" alt=""><figcaption>'+(a.mvp?nameOf(CARDS[a.mvp.id])+' ・ 採点 '+a.mvp.r.toFixed(1):'')+'</figcaption></figure>':'')+
+    '<div class="cols"><p>'+a.lead+'</p>'+(a.quote?'<p class="q">'+a.quote+'</p>':'')+'</div>'+
+    (a.side.length?'<aside><b>ゴシップ</b>'+a.side.map(x=>'<p>'+x+'</p>').join("")+'</aside>':'')+
+    '<footer><button class="btn btn-sub" data-act="paperclose">新聞をたたむ</button></footer></article></div>';
 }
 function homeHtml(){
   const S=CL.S;
@@ -757,6 +796,7 @@ function tabbarHtml(){
     '<i>'+ic+'</i><span>'+l+'</span>'+(k==="squad"&&sign?'<b class="dot"></b>':'')+'</button>').join("")+'</nav>';
 }
 function clubHtml(){
+  if(CL.paperI!=null)return paperHtml(CL.paperI);
   if(CL.flow==="prep"&&!CL.S.termOver)return prepHtml();
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
@@ -784,8 +824,9 @@ function finishFixture(M){
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
-  persist(CL.S);
   const L=CL.S.last;
+  if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
+  persist(CL.S);
   // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
   sceneResult(M,L,RT=>{
     const done=()=>{ sceneHide(); showClub(); };
@@ -799,9 +840,15 @@ function onClubClick(e){
   const act=b.dataset.act, S=CL.S, save=()=>persist(S);
   if(act!=="reset")CL.armReset=false;
   if(onSettingsClick(act,b))return;
+  if(act==="comm")CL.chat=null;
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
+  if(act==="chatok"){ CL.chat=null; showClub(true); return; }
+  if(act==="paper"){ CL.paperI=+b.dataset.i; showClub(); return; }
+  if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
+  if(act==="none")return;
   if(act==="htset"){ if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
@@ -845,12 +892,12 @@ function onClubClick(e){
   else if(act==="sqkp"){ S.kp=b.dataset.id; save(); showClub(true); }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doIndTrain(S,id); CL.msg=CL.msg.concat(["個人練習"],r.lines,[reactOf(S,id,"ind",r.res===1?1:0)]);
-    CL.pick=[]; save(); showClub(true);
+    const id=CL.pick[0], r=doIndTrain(S,id); chatResult("ind",[id],b.textContent,r,reactOf(S,id,"ind",r.res===1?1:0));
+    save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doTalk(S,id); CL.msg=CL.msg.concat(["ケア"],r.lines,[reactOf(S,id,"talk",0)]);
-    CL.pick=[]; save(); showClub(true);
+    const id=CL.pick[0], r=doTalk(S,id); chatResult("talk",[id],b.textContent,r,reactOf(S,id,"talk",0));
+    save(); showClub(true);
   }
   else if(act==="pick"){
     const id=b.dataset.id, max=COMM_UI[CL.comm]?COMM_UI[CL.comm].n:1, i=CL.pick.indexOf(id);
@@ -858,14 +905,14 @@ function onClubClick(e){
     showClub(true);
   }
   else if(act==="lounge"&&CL.pick.length===2){
-    const r=doLounge(S,CL.pick[0],CL.pick[1],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ラウンジ: "+cname(CL.pick[0])+" と "+cname(CL.pick[1])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"lounge",r.res)]:[]);
-    CL.pick=[]; save(); showClub(true);
+    const who=CL.pick.slice(), r=doLounge(S,who[0],who[1],+b.dataset.i);
+    chatResult("lounge",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"lounge",r.res):"");
+    save(); showClub(true);
   }
   else if(act==="meet"&&CL.pick.length===1){
-    const r=doMeeting(S,CL.pick[0],+b.dataset.i);
-    CL.msg=CL.msg.concat(["ミーティング: "+cname(CL.pick[0])],r.lines,r.res>=0?[reactOf(S,CL.pick[0],"meet",r.res)]:[]);
-    CL.pick=[]; save(); showClub(true);
+    const who=CL.pick.slice(), r=doMeeting(S,who[0],+b.dataset.i);
+    chatResult("meet",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"meet",r.res):"");
+    save(); showClub(true);
   }
   else if(act==="reset"){
     if(!CL.armReset){ CL.armReset=true; showClub(true); return; }
