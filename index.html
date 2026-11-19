@@ -1823,6 +1823,9 @@ body.th-bk{
 #scene .vs-radar{width:190px}
 /* 試合中の詳細の枠: カードの裏を載せるので暗く */
 .th-bk #info{background:rgba(8,10,14,.96);border:1px solid #2b303c;color:#eef0f4}
+/* VS を挟んで左右にレーダー */
+#scene .vs-mid .vs-mark{font-size:64px;flex:0 0 auto;margin:0 -4px}
+#scene .vs-mid .vs-radar{width:auto;flex:1;max-width:160px}
 </style>
 </head>
 <body>
@@ -8288,9 +8291,9 @@ function clubTabHtml(){
     spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
-  const S=CL.S, sign=Object.keys(S.g.pl).some(id=>hasSign(S,id));
+  const S=CL.S;
   return '<nav class="tabbar">'+TABS.map(([k,l,ic])=>'<button class="'+(CL.tab===k?'on':'')+'" data-act="tab" data-v="'+k+'">'+
-    '<i>'+ic+'</i><span>'+l+'</span>'+(k==="squad"&&sign?'<b class="dot"></b>':'')+'</button>').join("")+'</nav>';
+    '<i>'+ic+'</i><span>'+l+'</span></button>').join("")+'</nav>';   // SQUAD に兆しの点は出さない(→docs/14 §14.14)
 }
 function clubHtml(){
   if(CL.paperI!=null)return paperHtml(CL.paperI);
@@ -8912,8 +8915,10 @@ function sceneMatchup(fx,go){
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
     // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
-    '<div class="vs-mid"><div class="vs-mark">VS</div><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" },{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+
-      '<p><i class="h"></i>'+me.short+' <i class="a"></i>'+opp.short+'</p></div></div>'+
+    // VS を挟んで、左に自チーム・右に相手のレーダー
+    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" }],{ short:true })+'<p><i class="h"></i>'+me.short+'</p></div>'+
+      '<div class="vs-mark">VS</div>'+
+      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+'<p><i class="a"></i>'+opp.short+'</p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',

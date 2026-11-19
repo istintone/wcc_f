@@ -84,8 +84,10 @@ function sceneMatchup(fx,go){
     '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
     // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
-    '<div class="vs-mid"><div class="vs-mark">VS</div><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" },{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+
-      '<p><i class="h"></i>'+me.short+' <i class="a"></i>'+opp.short+'</p></div></div>'+
+    // VS を挟んで、左に自チーム・右に相手のレーダー
+    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" }],{ short:true })+'<p><i class="h"></i>'+me.short+'</p></div>'+
+      '<div class="vs-mark">VS</div>'+
+      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+'<p><i class="a"></i>'+opp.short+'</p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',

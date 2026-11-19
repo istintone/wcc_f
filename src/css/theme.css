@@ -1246,3 +1246,6 @@ body.th-bk{
 #scene .vs-radar{width:190px}
 /* 試合中の詳細の枠: カードの裏を載せるので暗く */
 .th-bk #info{background:rgba(8,10,14,.96);border:1px solid #2b303c;color:#eef0f4}
+/* VS を挟んで左右にレーダー */
+#scene .vs-mid .vs-mark{font-size:64px;flex:0 0 auto;margin:0 -4px}
+#scene .vs-mid .vs-radar{width:auto;flex:1;max-width:160px}

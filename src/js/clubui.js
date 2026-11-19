@@ -921,9 +921,9 @@ function clubTabHtml(){
     spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
-  const S=CL.S, sign=Object.keys(S.g.pl).some(id=>hasSign(S,id));
+  const S=CL.S;
   return '<nav class="tabbar">'+TABS.map(([k,l,ic])=>'<button class="'+(CL.tab===k?'on':'')+'" data-act="tab" data-v="'+k+'">'+
-    '<i>'+ic+'</i><span>'+l+'</span>'+(k==="squad"&&sign?'<b class="dot"></b>':'')+'</button>').join("")+'</nav>';
+    '<i>'+ic+'</i><span>'+l+'</span></button>').join("")+'</nav>';   // SQUAD に兆しの点は出さない(→docs/14 §14.14)
 }
 function clubHtml(){
   if(CL.paperI!=null)return paperHtml(CL.paperI);
