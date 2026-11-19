@@ -243,7 +243,7 @@ function sqTokenHtml(id,i,on){
   else pos=' style="--cc:'+col+'"';
   const sign=g&&(g.q||g.sq||spReady(S,id));
   return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+(on?'':' data-act="sqpick"')+pos+'>'+
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
@@ -278,7 +278,7 @@ function sqLinksSvg(){
 /** 選んでいる選手の板(役割と適性・育成・KP にする) */
 function sqDetailHtml(){
   const S=CL.S, id=CL.sqSel;
-  if(!id)return '<p class="sq-hint">ドラッグで位置を動かす ・ 2人をタップで入れ替え(控えとも)・ 選んだ選手は KP にできる</p>';
+  if(!id)return '<p class="sq-hint">カードを引っ張って位置を動かす ・ ほかの選手に重ねると入れ替え(控えからも)・ タップで選手の詳細と KP</p>';
   const c=CARDS[id], g=S.g.pl[id], i=S.sq.indexOf(id), on=i<11, G0=TUNING.grow;
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c);
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
@@ -295,7 +295,7 @@ function sqDetailHtml(){
     '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
-    '<p class="sq-hint">入れ替える相手をタップ</p></div>';
+    '<p class="sq-hint">入れ替えるときは、カードを引っ張って相手に重ねる</p></div>';
 }
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
@@ -309,8 +309,10 @@ function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
   fillLayout(S);
   const on=S.sq.slice(0,11), bench=S.sq.slice(11);
-  let h='<section class="sq-head"><h3>SQUAD <small>この並びと KP で毎試合はじまる</small></h3>'+
-    '<div class="sq-forms">'+SQ_FORMS.map(f=>'<button class="'+(S.form===f?'on':'')+'" data-act="sqform" data-v="'+f+'">'+f+'</button>').join("")+'</div></section>';
+  // 上部: 左に OVR(チーム力)、右にフォーメーションのプルダウンと最適配置(→docs/14 §14.12)
+  let h='<section class="sq-head"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
+    '<div class="sq-ctl"><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
+    '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div></section>';
   // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
   h+='<div class="sq-3col">'+sqRolesHtml()+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
@@ -360,16 +362,19 @@ function sqPick(id){
     if(S.sq.indexOf(id)<11){ CL.roleMsg=setRole(S,CL.roleSel,id); CL.roleSel=null; persist(S); }
     showClub(true); return;
   }
-  if(!CL.sqSel)CL.sqSel=id;
-  else if(CL.sqSel===id)CL.sqSel=null;
-  else{
-    const a=CL.sqSel;
-    moveSquad(S,a,id);
-    // KP が控えに下がったら、代わりに入った人が KP を引き継ぐ
-    if(S.kp===a&&S.sq.indexOf(a)>=11)S.kp=id; else if(S.kp===id&&S.sq.indexOf(id)>=11)S.kp=a;
-    fillLayout(S); CL.sqSel=null; persist(S);
-  }
+  CL.sqSel=CL.sqSel===id?null:id;              // タップは選ぶだけ。入れ替えはカードを引っ張る(試合と同じ。→docs/14 §14.12)
   showClub(true);
+}
+/** 2人を入れ替える(引っ張って重ねたとき)。KP が控えに下がったら、代わりに入った人が引き継ぐ */
+function sqSwap(a,b){
+  const S=CL.S; if(!moveSquad(S,a,b))return;
+  if(S.kp===a&&S.sq.indexOf(a)>=11)S.kp=b; else if(S.kp===b&&S.sq.indexOf(b)>=11)S.kp=a;
+  fillLayout(S); CL.sqSel=null; persist(S); sndUi&&sndUi("tap");
+}
+/** 指の下にある、自分以外の選手のカード(ピッチでも控えでも) */
+function sqCardAt(x,y,self){
+  for(const n of document.elementsFromPoint(x,y)){ const c=n.closest&&n.closest("#club .sqc"); if(c&&c!==self)return c; }
+  return null;
 }
 /** ピッチのカードをドラッグで動かす。動かさずに離したらタップ(選ぶ・入れ替え) */
 function sqBind(pitch){
@@ -392,15 +397,49 @@ function sqBind(pitch){
     b.className="rl "+rl.cls; b.textContent=rl.role;
     pitch.querySelectorAll('line[data-a="'+d.id+'"]').forEach(l=>{ l.setAttribute("x1",p.l); l.setAttribute("y1",p.t); });
     pitch.querySelectorAll('line[data-b="'+d.id+'"]').forEach(l=>{ l.setAttribute("x2",p.l); l.setAttribute("y2",p.t); });
+    const tg=sqCardAt(e.clientX,e.clientY,d.el);
+    document.querySelectorAll("#club .sqc.tgt").forEach(x=>{ if(x!==tg)x.classList.remove("tgt"); });
+    if(tg)tg.classList.add("tgt");
   });
   const end=e=>{
     if(!d||e.pointerId!==d.pid)return;
     const dd=d; d=null;
-    if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; persist(CL.S); showClub(true); }
+    const tg=dd.moved?sqCardAt(e.clientX,e.clientY,dd.el):null;
+    if(tg){ sqSwap(dd.id,tg.dataset.id); showClub(true); }               // 別の選手に重ねたら入れ替え
+    else if(dd.moved&&dd.q){ CL.S.layout[dd.id]=[r2(dd.q.h),r2(dd.q.x)]; persist(CL.S); showClub(true); }
     else if(!dd.moved&&e.type==="pointerup")sqPick(dd.id);
   };
   pitch.addEventListener("pointerup",end);
   pitch.addEventListener("pointercancel",end);
+  // 控えのカード: 引っ張ってピッチの選手に重ねると入れ替え(試合の交代と同じ操作)。動かさずに離せば選ぶだけ
+  const bench=document.querySelector("#club .sq-bench");
+  if(!bench)return;
+  let b=null;
+  bench.addEventListener("pointerdown",e=>{
+    const el=e.target.closest(".sqc"); if(!el)return;
+    b={ el, id:el.dataset.id, x0:e.clientX, y0:e.clientY, moved:false, pid:e.pointerId, g:null };
+    try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  bench.addEventListener("pointermove",e=>{
+    if(!b||e.pointerId!==b.pid)return;
+    if(!b.moved&&Math.hypot(e.clientX-b.x0,e.clientY-b.y0)<10)return;
+    if(!b.moved){ b.moved=true; b.g=b.el.cloneNode(true); b.g.classList.add("sq-ghost"); document.body.appendChild(b.g); b.el.classList.add("dragging"); }
+    b.g.style.left=e.clientX+"px"; b.g.style.top=(e.clientY-24)+"px";
+    const tg=sqCardAt(e.clientX,e.clientY,b.el);
+    document.querySelectorAll("#club .sqc.tgt").forEach(x=>{ if(x!==tg)x.classList.remove("tgt"); });
+    if(tg&&tg!==b.g)tg.classList.add("tgt");
+  });
+  const bend=e=>{
+    if(!b||e.pointerId!==b.pid)return;
+    const bb=b; b=null;
+    if(bb.g)bb.g.remove(); bb.el.classList.remove("dragging");
+    if(!bb.moved){ if(e.type==="pointerup")sqPick(bb.id); return; }
+    const tg=sqCardAt(e.clientX,e.clientY,bb.el);
+    if(tg&&!tg.classList.contains("sq-ghost")){ sqSwap(bb.id,tg.dataset.id); }
+    showClub(true);
+  };
+  bench.addEventListener("pointerup",bend);
+  bench.addEventListener("pointercancel",bend);
 }
 
 /* ---- カード(→pool.js) ---- */
@@ -584,7 +623,7 @@ function homeHeadHtml(){
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
   return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
-    '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>チーム力</small></div>'+
+    '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>OVR</small></div>'+
     '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
     '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>資金</small></div>'+
     (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>ファン</small></div>':'')+'</header>';
@@ -996,6 +1035,7 @@ function onClubClick(e){
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
+  else if(act==="sqauto"){ autoSquad(S); CL.sqSel=null; CL.msg=[]; save(); showClub(true); sndUi("ok"); }
   else if(act==="sqrole"){ const k=b.dataset.v; CL.sqSel=null; CL.roleMsg=null;
     if(CL.roleSel===k){ if(S.roles[k])CL.roleMsg=setRole(S,k,null); CL.roleSel=null; save(); }   // もう一度押すと解く
     else CL.roleSel=k;
@@ -1033,4 +1073,10 @@ function onClubClick(e){
     CL.S=newCareer(Date.now()&0x7fffffff); CL.W=worldOf(CL.S);
     persist(CL.S); showClub();
   }
+}
+
+/** 監督室の <select>(フォーメーションのプルダウンなど)。data-chg に名前 */
+function onClubChange(e){
+  const t=e.target; if(!t||!t.dataset||!t.dataset.chg)return;
+  if(t.dataset.chg==="sqform"){ setForm(CL.S,t.value); CL.sqSel=null; persist(CL.S); showClub(true); }
 }

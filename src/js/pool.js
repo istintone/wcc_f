@@ -159,3 +159,26 @@ function setRole(S,kind,id){
   }
   return out;
 }
+
+/* ---- 最適配置(→docs/14)。いまの陣形の枠ごとに、その役割に合う能力 × 適性が最も高い選手を当てはめる ---- */
+/** 役割ごとに重く見る能力 */
+const ROLE_W={ GK:{ def:3, pow:1, tec:1 }, CB:{ def:3, pow:2, spd:1 }, SB:{ def:2, spd:2, sta:1 }, DMF:{ def:2, sta:1, tec:1 },
+  CMF:{ tec:2, sta:1, off:1 }, SMF:{ spd:2, tec:1, off:1 }, OMF:{ tec:2, off:2 }, WG:{ spd:2, off:2, tec:1 }, CF:{ off:3, pow:1, spd:1 } };
+/** その選手をその役割に置いたときの値(育成を入れた能力。ケガの選手はほとんど選ばない) */
+function slotValue(S,id,role){
+  const c=growCard(S,CARDS[id]), w=ROLE_W[role]||{}, g=S.g.pl[id];
+  let v=0, n=0; for(const k in w){ v+=c[k]*w[k]; n+=w[k]; }
+  return v/(n||1)*aptOf(c,role)*(g&&g.mot===0?0.3:1);
+}
+/** 登録16人から、いまの陣形に最適な11人と並びを決める。いちばん値の高い組から順に埋める。KP は先発に残れば引き継ぐ */
+function autoSquad(S){
+  const f=FORMS[S.form]||FORMS[TEAMS.azr.form], roles=f.map((p,i)=>i===0?"GK":roleAt(p[0],p[1]));
+  const pairs=[];
+  for(const id of S.sq)roles.forEach((r,i)=>pairs.push({ id, i, v:slotValue(S,id,r) }));
+  pairs.sort((a,b)=>b.v-a.v);
+  const slot=new Array(roles.length).fill(null), used=new Set();
+  for(const p of pairs){ if(slot[p.i]||used.has(p.id))continue; slot[p.i]=p.id; used.add(p.id); }
+  S.sq=slot.concat(S.sq.filter(id=>!used.has(id)));
+  S.layout={}; fillLayout(S);
+  return S.sq.slice(0,11);
+}

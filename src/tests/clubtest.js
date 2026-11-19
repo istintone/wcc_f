@@ -604,5 +604,13 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     L2.sq.every(id=>E.CARDS[id]&&L2.g.pl[id])&&!L2.g.pl.k123);
 }
 
+// 最適配置(→docs/14): 崩した並びから、陣形の枠に合う11人に戻す
+{
+  const S=E.newCareer(3), base=E.teamPower(S); E.fillLayout(S);
+  const sq=S.sq; [sq[0],sq[11]]=[sq[11],sq[0]]; [sq[3],sq[12]]=[sq[12],sq[3]]; S.layout={}; E.fillLayout(S);
+  const bad=E.teamPower(S); E.autoSquad(S);
+  check("最適配置: 崩した並びから強さが戻り、GK が枠の先頭、16人が重ならない",E.teamPower(S)>=base-1e-9&&E.teamPower(S)>bad&&E.CARDS[S.sq[0]].pos==="GK"&&new Set(S.sq).size===16,
+    f2(bad)+" → "+f2(E.teamPower(S)));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

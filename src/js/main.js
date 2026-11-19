@@ -434,6 +434,7 @@ function boot(){
   document.addEventListener("touchmove",e=>{ if(e.touches.length>1)e.preventDefault(); },{ passive:false });
 
   document.getElementById("club").addEventListener("click",onClubClick);
+  document.getElementById("club").addEventListener("change",onClubChange);
   applyTheme(storedTheme());                   // テーマ(→settings.js)
   sceneInit();
   // 押したら必ず音が返る(→docs/07 §7.3)
