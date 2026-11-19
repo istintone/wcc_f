@@ -167,10 +167,11 @@ try{ BGM.on=localStorage.getItem(BGM_KEY)!=="off"; }catch(e){}
 const mtof=n=>440*Math.pow(2,(n-69)/12);
 /** 曲。prog は小節ごとの和音(MIDI の音の高さ)、bass は小節ごとの根音 */
 const BGM_TRACKS={
-  club:{ bpm:92, vol:0.10, prog:[[57,60,64,67],[53,57,60,64],[48,52,55,59],[55,59,62,65]], bass:[45,41,36,43],
-    arp:[0,2,1,3,2,1,3,2], kick:[0,4], hat:[2,6], snare:[], bassPat:[0,3,4] },
-  match:{ bpm:124, vol:0.07, prog:[[62,65,69,72],[58,62,65,69],[53,57,60,64],[60,64,67,70]], bass:[38,34,41,36],
-    arp:[0,1,2,3,2,1,0,2], kick:[0,2,4,6], hat:[1,3,5,7], snare:[2,6], bassPat:[0,1,2,3,4,5,6,7] }
+  // アップテンポのスポーツゲーム風(→docs/14 §14.15)。16分のシェイカー・8分のハイハット・2拍4拍のスネア・裏拍の和音のスタブ
+  club:{ bpm:116, vol:0.10, prog:[[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,65]], bass:[36,33,29,31],
+    arp:[0,2,1,3,2,1,3,2], kick:[0,3,4], hat:[0,1,2,3,4,5,6,7], snare:[2,6], bassPat:[0,2,3,4,6,7], oct:[3,7], stab:[1,3,5,7], shaker:true },
+  match:{ bpm:138, vol:0.075, prog:[[62,65,69,72],[58,62,65,69],[53,57,60,64],[60,64,67,70]], bass:[38,34,41,36],
+    arp:[0,1,2,3,2,1,0,2], kick:[0,2,4,6], hat:[0,1,2,3,4,5,6,7], snare:[2,6], bassPat:[0,1,2,3,4,5,6,7], oct:[1,3,5,7], stab:[1,4,7], shaker:true }
 };
 function bgmVoice(type,freq,t,dur,peak,cut){
   const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
@@ -193,12 +194,14 @@ function bgmKick(t,peak){
 /** 8分音符1つぶんを予約する */
 function bgmStep(T,i,t){
   const e=60/T.bpm/2, pos=i%8, bar=Math.floor(i/8)%T.prog.length, ch=T.prog[bar];
-  if(pos===0)ch.forEach((n,k)=>{ bgmVoice("triangle",mtof(n),t,e*7.6,0.05,1400); bgmVoice("sawtooth",mtof(n)*1.003,t,e*7.6,0.012,900); });   // パッド
-  if(T.bassPat.includes(pos))bgmVoice("sine",mtof(T.bass[bar]),t,e*(T.bpm>110?0.9:2.6),0.16,600);              // ベース
-  bgmVoice("triangle",mtof(ch[T.arp[pos]]+12),t,e*0.9,0.03,2600);                                               // アルペジオ
-  if(T.kick.includes(pos))bgmKick(t,0.22);
-  if(T.hat.includes(pos))bgmNoise(t,0.04,0.035,"highpass",7000);
-  if(T.snare.includes(pos))bgmNoise(t,0.12,0.06,"bandpass",1800);
+  if(pos===0)ch.forEach(n=>{ bgmVoice("triangle",mtof(n),t,e*7.6,0.03,1600); bgmVoice("sawtooth",mtof(n)*1.004,t,e*7.6,0.008,1100); });   // パッド(薄く)
+  if(T.stab&&T.stab.includes(pos))ch.forEach(n=>bgmVoice("square",mtof(n+12),t,e*0.35,0.012,3200));                                // 裏拍の和音のスタブ
+  if(T.bassPat.includes(pos))bgmVoice("sawtooth",mtof(T.bass[bar]+(T.oct&&T.oct.includes(pos)?12:0)),t,e*0.8,0.09,700);          // ベース(オクターブ跳び)
+  bgmVoice("triangle",mtof(ch[T.arp[pos]]+24),t,e*0.6,0.022,4200);                                                            // アルペジオ
+  if(T.kick.includes(pos))bgmKick(t,0.26);
+  if(T.hat.includes(pos))bgmNoise(t,0.035,pos%2?0.03:0.045,"highpass",8000);                                                 // ハイハット
+  if(T.shaker){ bgmNoise(t+e/2,0.03,0.022,"bandpass",9000); if(pos%2)bgmNoise(t+e/4,0.02,0.012,"bandpass",10000); }          // 16分のシェイカー
+  if(T.snare.includes(pos)){ bgmNoise(t,0.14,0.08,"bandpass",1900); bgmNoise(t+0.012,0.08,0.04,"highpass",5000); }          // スネア + クラップ
 }
 /** 曲を鳴らす(同じ曲なら何もしない)。音が出せない・切ってあるときは何もしない */
 function bgmPlay(name){
