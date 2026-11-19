@@ -328,7 +328,7 @@ function squadHtml(){
   // 戦力グラフ: 六角形のレーダー(本家にならう →docs/14 §14.14)。横に練習による上下の値
   const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
   h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
-    radarSvg([{ v:ax, color:"#e01f3d" }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
+    radarSvg([{ v:ax, color:teamColor(myTeam(S)) }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
       return '<li><span>'+AXIS_LABEL[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
   return h;
 }

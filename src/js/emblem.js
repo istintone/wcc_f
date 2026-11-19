@@ -502,6 +502,11 @@ function embStars(){ return 0; }                    // wcc_f では★を出さ�
  *   opts.stars … ★を出すか(既定は出す)
  * 色は clubHue と同じ色相から取る(→docs/06 §6.13 の色の決まりに合わせる)。
  */
+/** エンブレムの主色(地の色)。embSvg と同じ決め方(→docs/14 §14.16。チャートなどの色をエンブレムにそろえる) */
+function embMainColor(clubId,name,opts){
+  const o=opts||{}, d=embDesign(clubId,name,o.design||null,o.color||null), ph=embHueById(d.home);
+  return ph?ph.hex:"oklch(0.72 0.22 "+(hashStr("hue:"+clubId)%360).toFixed(1)+")";
+}
 function embSvg(clubId,name,size,opts){
   const o=opts||{};
   const d=embDesign(clubId,name,o.design||null,o.color||null);

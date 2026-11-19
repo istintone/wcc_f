@@ -28,6 +28,11 @@ function sceneShow(cls,html,opt){
 }
 function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; SC.el.innerHTML=""; }
 
+/** チームのエンブレムの主色(emblemSvg と同じ引数で)。チャートや線の色に使う */
+function teamColor(team){
+  const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club, c=own?CL.S.club:null;
+  return embMainColor(team.id,c?c.name:(team.name||team.short||""),{ color:c?c.color:team.color, design:c?c.emblem:null });
+}
 /* ---- エンブレム(クラブの色と略称から描く盾。独自の意匠) ---- */
 function emblemSvg(team,size){
   // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
@@ -85,9 +90,9 @@ function sceneMatchup(fx,go){
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
     // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
     // VS を挟んで、左に自チーム・右に相手のレーダー
-    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:"#e01f3d" }],{ short:true })+'<p><i class="h"></i>'+me.short+'</p></div>'+
+    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:teamColor(me) }],{ short:true })+'<p><i style="background:'+teamColor(me)+'"></i>'+me.short+'</p></div>'+
       '<div class="vs-mark">VS</div>'+
-      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:"#4aa3ff" }],{ short:true })+'<p><i class="a"></i>'+opp.short+'</p></div></div>'+
+      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:teamColor(opp) }],{ short:true })+'<p><i style="background:'+teamColor(opp)+'"></i>'+opp.short+'</p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',
@@ -117,7 +122,7 @@ function sceneResult(M,last,go){
     return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
   // 採点は両チーム(左に自チーム・右に相手。→docs/14)
   const side=sd=>RT.list.filter(x=>x.side===sd).sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
-  const rtCol=(sd,T)=>'<div class="col"><h4 style="--tc:'+T.color+'">'+T.short+'</h4>'+side(sd).map(x=>{ const c=CARDS[x.id];
+  const rtCol=(sd,T)=>'<div class="col"><h4 style="--tc:'+teamColor(T)+'">'+T.short+'</h4>'+side(sd).map(x=>{ const c=CARDS[x.id];
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   const rtHtml='<div class="res-rt two">'+rtCol("H",H)+rtCol("A",A)+'</div>';
