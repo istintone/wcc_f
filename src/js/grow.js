@@ -220,6 +220,8 @@ function doTraining(S,i,intensity){
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
+    // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
+    if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
   }
   for(const id of ids){
     const g=S.g.pl[id];
@@ -701,4 +703,36 @@ function teamPower(S){
   const xi=S.sq.slice(0,11); let t=0;
   for(const id of xi){ const c=growCard(S,CARDS[id]); t+=STATS.reduce((a,k)=>a+c[k],0); }
   return t/xi.length;
+}
+
+/* ---------- ハーフタイムの指示(→docs/10 §10.8) ----------
+ * S.ht = { cnt:{ 特殊練習の番号: した回数 }, set:[登録した指示の id(最大3)] }。監督の覚えた作戦なので任期をまたいで残る。
+ * 指示の id: 初めから使えるものは "b1"〜"b3"、特殊練習から覚えたものは "t" + 特殊練習の番号 */
+const htName=n=>HT_PHRASE[n]||n+"を思い出せ";
+function htOf(id){
+  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ k:TUNING.ht.basicK },b);
+  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]];
+  return t?{ id, name:htName(t.name), up:t.up, down:t.down, k:1, train:t.name }:null;
+}
+/** 使える指示(初めからの3つ + 覚えたもの) */
+function htAvail(S){ const out=HT_BASIC.map(b=>b.id); if(S&&S.ht)for(const i in S.ht.cnt)if(S.ht.cnt[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
+function toggleHt(S,id){
+  const set=S.ht.set, i=set.indexOf(id);
+  if(i>=0){ set.splice(i,1); return true; }
+  if(!htAvail(S).includes(id)||set.length>=TUNING.ht.max)return false;
+  set.push(id); return true;
+}
+
+/**
+ * コミュニケーションの種類ごとの「！」(→docs/05 §5.3)。その指示を求めている選手だけに付ける
+ *   ind   … 個人能力の★が近い(次の★まで commSignK 以上)/ meet … ★突破の話がある / lounge … 黄金線の兆しか、連携の段が近い / talk … ケガか、絶不調の先発
+ */
+function commSign(S,id,kind){
+  const g=S.g.pl[id], K=TUNING.grow.commSignK; if(!g)return false;
+  if(kind==="ind")return g.is<4&&!g.q&&indProgress(g)>=K;
+  if(kind==="meet")return spReady(S,id);
+  if(kind==="talk")return g.mot===0||(g.mot<=1&&S.sq.indexOf(id)<11);
+  if(kind==="lounge")return Object.keys(S.g.links).some(k=>{ const p=k.split("|"); if(!p.includes(id))return false;
+    const l=S.g.links[k]; return l.gold||(l.lv<2&&linkProgress(S,p[0],p[1])>=K); });
+  return false;
 }

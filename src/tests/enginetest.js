@@ -455,5 +455,15 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   console.log("    なし "+f2(b)+" → マスター3つ "+f2(t));
   check("監督能力は3つ・最高ランクでも上積みが小さい(得失点差 +0.35 未満)",t-b<0.35&&t-b>-0.1,"+"+f2(t-b));
 }
+// ⑪ ハーフタイムの指示(→docs/10 §10.8)。どの指示も後半の上積みは小さい
+{
+  console.log("\n⑪ ハーフタイムの指示");
+  const run=h=>{ let gd=0; for(let i=0;i<N;i++){ const d=E.makeTeamDef("azr",false); d.cpu=true;
+    const M=E.createMatch(d,E.makeTeamDef("ros",true),71000+i); while(!M.ht&&!M.over)E.stepMatch(M);
+    if(h)E.orderMatch(M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k }); E.finishMatch(M); gd+=M.home.score-M.away.score; } return gd/N; };
+  const b=run(null), a=run(E.htOf("t47")), c=run(E.htOf("t8"));   // すべて上がる(非公開練習)/ 守りに寄せる(カテナチオ)
+  console.log("    なし "+f2(b)+" ・ 相手の裏をかけ "+f2(a)+" ・ ゴール前に鍵をかけろ "+f2(c));
+  check("ハーフタイムの指示の上積みは小さい(±0.25 以内)",Math.abs(a-b)<0.25&&Math.abs(c-b)<0.25);
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

@@ -86,6 +86,9 @@ function overlay(title,body,ms,fn){
   c.className="on"; G.onOv=fn; G.capT=ms;
 }
 const capOn=()=>$("cap").classList.contains("on");
+/** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
+const HT_AX={ O:"攻", D:"守", R:"支", C:"奪", S:"速", P:"力" };
+const htAxTxt=h=>h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"");
 function closeOverlay(){
   $("cap").className=""; G.capT=0;
   const fn=G.onOv; G.onOv=null;
@@ -251,8 +254,11 @@ function startEvent(ev){
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
+    // ハーフタイムの指示(→docs/10 §10.8): 登録した3つ + 「このまま維持しろ」(何も変えない)。時間が来たら維持のまま後半へ
+    const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
+    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("")+'<button class="htb none" data-ht="">このまま維持しろ<i>変化なし</i></button>';
     overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
-      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>',TUNING.play.capHalf,()=>setPlaying(true));
+      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small><div class="ht-btns">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
     return;
   }
   if(ev.type==="fulltime"){
@@ -368,6 +374,14 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("replay").addEventListener("click",skipReplay);
+  // ハーフタイムの指示を選ぶ(字幕の中のボタン)
+  $("cap").addEventListener("click",e=>{
+    const b=e.target.closest("[data-ht]"); if(!b)return;
+    const h=htOf(b.dataset.ht);
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("ハーフタイムの指示: 「"+h.name+"」"); }
+    else say("ハーフタイムの指示: 「このまま維持しろ」");
+    sndUi("ok"); closeOverlay();
+  });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
   document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);
   $("infoClose").addEventListener("click",hideInfo);

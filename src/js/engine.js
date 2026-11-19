@@ -233,6 +233,11 @@ function refreshFx(M,min){
       if(B.setpiece){ fx.fk*=1+B.setpiece; fx.ck*=1+B.setpiece; fx.pkK*=1+B.setpiece; }
       if(B.saving&&p.gk)fx.gk*=1+B.saving;
       if(B.spurt&&min>=75)fx.all*=1+B.spurt;
+      // ハーフタイムの指示(→docs/10 §10.8): 上がる軸は強く、下がる軸は弱く
+      if(T.ht){ const H=T.ht, X=TUNING.ht, m=a=>(H.up.includes(a)?1:0)-(H.down.includes(a)?X.downR:0), kA=X.allK*H.k, kO=X.otherK*H.k;
+        if(g==="FW"||g==="MF")fx.all*=1+m("O")*kA*(g==="FW"?1:0.5);
+        if(g==="DF")fx.all*=1+m("D")*kA;
+        fx.recv*=1+m("R")*kO; fx.chase*=1+m("C")*kO; fx.blk*=1+m("C")*kO; fx.sta*=1-m("S")*kO; fx.aerial*=1+m("P")*kO; }
       if(p.gk){                                 // キーパーの指示: 高い位置で裏を処理する。ループに弱く、疲れる
         const I=TUNING.ins; p.up=T.ins.keeper?I.keeperH:0;
         if(T.ins.keeper){ fx.sweep*=I.keeperSweep; fx.lob*=I.keeperLob; fx.sta*=I.keeperSta; }
@@ -443,6 +448,9 @@ function applyOrders(M,t){
       else if(o.type==="sub")doSub(M,T,o.out,o.in,t);
       else if(o.type==="shoot")T.shootOrder=TUNING.shot.orderN;      // 自分たちが持っている間、最大 orderN 手(→docs/08 §8.12)
       else if(o.type==="shootCancel")T.shootOrder=0;
+      else if(o.type==="htPlan"){ T.ht={ up:o.up||"", down:o.down||"", k:o.k||1 };   // ハーフタイムの指示(後半のあいだ。→docs/10 §10.8)
+        if(T.graph){ T.graph=Object.assign({},T.graph); for(const a of T.ht.up)T.graph[a]=(T.graph[a]||0)+TUNING.ht.graph*T.ht.k; for(const a of T.ht.down)T.graph[a]=(T.graph[a]||0)-TUNING.ht.graph*TUNING.ht.downR*T.ht.k; }
+        M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"htPlan", name:o.name||"" }); }
       else if(o.type==="ins")setIns(M,T,o,t);
       else if(o.type==="kp")changeKp(M,T,o.id,t);
     }

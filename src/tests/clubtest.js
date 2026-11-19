@@ -330,6 +330,23 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
     E.doIndTrain(A,"h10"); E.doIndTrain(B,"h10");
     check("練習場 Lv3 は個人能力の経験を ×1.3",Math.abs(B.g.pl.h10.ie/A.g.pl.h10.ie-1.3)<1e-9,f2(A.g.pl.h10.ie)+" → "+f2(B.g.pl.h10.ie));
   }
+  { // コミュニケーションの「！」は種類ごと(その指示を求めている選手だけ)
+    const T=E.newCareer(4242), P=T.g.pl;
+    P.h10.ie=E.TUNING.grow.ind.need[0]*0.9; P.h08.se=E.TUNING.grow.sp.need[0]; P.h05.mot=0;
+    T.g.links[["h02","h03"].sort().join("|")]={ lv:2, exp:0, gold:true, cap:2 };
+    const who=k=>Object.keys(P).filter(id=>E.commSign(T,id,k)).sort().join(",");
+    check("「！」は種類ごと: 個人=★が近い / ミーティング=★突破 / ラウンジ=黄金線の兆し / ケア=ケガ",
+      who("ind")==="h10"&&who("meet")==="h08"&&who("lounge")==="h02,h03"&&who("talk")==="h05",["ind","meet","lounge","talk"].map(who).join(" / "));
+  }
+  { // ハーフタイムの指示(→docs/10 §10.8)
+    const T=E.newCareer(101);
+    check("初めは3つの指示が使えて、登録済み",E.htAvail(T).length===3&&T.ht.set.length===3);
+    let n=0, got=null;
+    for(let i=0;i<200&&!got;i++){ T.g.step="train"; T.g.opts=null; const o=E.trainOptions(T); const j=o.findIndex(x=>x.sp>=0);
+      if(j>=0){ const L=E.doTraining(T,j,0); n++; if(L.some(x=>/を覚えた/.test(x)))got=L.find(x=>/を覚えた/.test(x)); } T.played++; }
+    check("同じ特殊練習を2回すると、その指示を覚える",!!got&&E.htAvail(T).length>3,got||"");
+    check("登録は3つまで(外してから入れ替える)",!E.toggleHt(T,E.htAvail(T)[3])&&E.toggleHt(T,"b1")&&E.toggleHt(T,E.htAvail(T)[3]));
+  }
   { // 監督能力(→docs/10 §10.2 C)
     const T=E.newCareer(99), TW=E.worldOf(T), on=T.sq.slice(0,11);
     check("監督能力は3つまでセットでき、もう一度押すと外れる",E.toggleMab(T,"center")&&E.toggleMab(T,"half")&&E.toggleMab(T,"dfc")&&!E.toggleMab(T,"duel")&&E.toggleMab(T,"half")&&T.mab.set.join()==="center,dfc");

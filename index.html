@@ -566,6 +566,12 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 /* 盤面は縦長の比率を保って中央へ。余った左右は筐体の天板の色(→docs/07 §7.11) */
 #deck{justify-content:center;background:#15171c}
 
+/* ハーフタイムの指示(→docs/10 §10.8)。字幕の中に4つのボタン(字幕は触れるようにする) */
+#cap .ht-btns{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:94%;margin-top:4px;pointer-events:auto}
+#cap .htb{padding:5px 4px;font-size:11.5px;font-weight:800;color:#201400;background:linear-gradient(180deg,#ffe58a,#f2b822);border:0;border-radius:4px;cursor:pointer;line-height:1.2}
+#cap .htb i{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:#5a3d00}
+#cap .htb.none{background:#3a3f4c;color:#fff}
+
 /* =========================================================================
    wcc_f — テーマ(→docs/07 §7.8)
    色はすべてトークン(--t-*)を通す。テーマを足すときは、下のトークンの組を1つ増やすだけ。
@@ -1390,6 +1396,17 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #club .mabs .mab b{font-size:13px} #club .mabs .mab i{font-style:normal;font-family:"Oswald",sans-serif;font-size:12px;color:var(--t-gold)}
 #club .mabs .mab small{grid-column:1/3;font-size:10.5px;color:var(--t-mute)}
 #club .mabs .mab.on{border-color:var(--t-sub);box-shadow:inset 4px 0 0 var(--t-sub)}
+
+/* SQUAD: ハーフタイムの指示の登録 */
+#club .htset .ht{display:grid;grid-template-columns:1fr auto;gap:0 6px;width:100%;text-align:left;margin:4px 0;padding:6px 10px;background:var(--t-card);color:var(--t-ink);border:1px solid var(--t-rule);border-radius:4px;cursor:pointer}
+#club .htset .ht b{font-size:12.5px} #club .htset .ht i{font-style:normal;font-size:11px;font-weight:700;color:#1d5fbf}
+#club .htset .ht small{grid-column:1/3;font-size:10px;color:var(--t-mute)}
+#club .htset .ht.on{border-color:var(--t-sub);box-shadow:inset 4px 0 0 var(--t-sub)}
+
+/* コミュニケーションの種類のボタンの「！」(その指示を求めている選手がいる) */
+#club .tabs.t4 .tab{position:relative}
+#club .tabs.t4 .tab .tsg{position:absolute;right:4px;top:3px;width:15px;height:15px;line-height:15px;border-radius:50%;font-size:10px;font-weight:900;background:var(--t-sub);color:#fff}
+#club .tabs.t4 .tab.on .tsg{background:#fff;color:var(--t-sub)}
 </style>
 </head>
 <body>
@@ -1607,6 +1624,7 @@ const TUNING={
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
          // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
          //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
+         commSignK:0.8,   // コミュニケーションの「！」: 次の★・連携の段まで 80% 以上なら付ける
          dup:{ indK:0.1, max:5, awakeP:[0.7,0.25,0.05], awakeStep:[-0.08,0.03,0.05] },
          sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
               // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
@@ -1681,6 +1699,10 @@ const TUNING={
     // 全員・グループの力に掛かるもの(center・side・dfc・morale・spurt)は、ほんの少しでも勝敗に大きく響くので小さくしてある
     base:{ center:0.005, side:0.008, counter:0.08, post:0.05, duel:0.05, hotline:0.017, leader:0.05, half:0.01, dfc:0.007,
            stamina:0.017, morale:0.002, setpiece:0.05, saving:0.014, spurt:0.01 } },
+  // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
+  //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
+  //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 戦力グラフに足す量
+  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:0.3 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
   sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
@@ -2019,6 +2041,27 @@ const MAB=[
   { id:"spurt",    name:"ラストスパート",       desc:"75分以降、全員の力が上がる" }
 ];
 const MAB_RANK=["I","II","III","マスター"];
+/**
+ * ハーフタイムの指示(→docs/10 §10.8)。**特殊練習1つにつき1つ**で、上がる軸・下がる軸は練習と同じ(本家の表と同じ対応)。
+ * 同じ特殊練習を TUNING.ht.unlock 回すると覚える。初めから使えるのは HT_BASIC の3つ(上がる軸だけ・効きは小さめ)
+ */
+const HT_PHRASE={ "1VS1":"1対1で勝負しろ", "1タッチゲーム":"細かくパスを回せ", "3vs1とりかご":"ボールを失うな", "4VS4パスゲーム":"パスワークで崩せ",
+  "CK練習":"CKを生かせ", "FK練習":"FKを生かせ", "オーバーラップ":"サイドバックも上がれ", "オフ・ザ・ボールの動き":"ボールの無い所で動け",
+  "カテナチオ":"ゴール前に鍵をかけろ", "カバーリング":"互いにカバーしろ", "キック&ラッシュ":"蹴って走れ", "クロスボール":"クロスを放り込め",
+  "ゲーゲンプレス":"奪われたらすぐ奪い返せ", "ゲルマン魂":"最後まで諦めるな", "コーチング":"声をかけ合え", "サイドアタック":"サイドを突け",
+  "サインプレイ":"練習した形を出せ", "シャトルラン":"走り負けるな", "シャンパンサッカー":"華麗に崩せ", "ショートカウンター":"高い位置で奪って速く",
+  "ストップ・ザ・ゲーム":"試合を落ち着かせろ", "セクシーフットボール":"魅せて勝て", "セットプレイ":"セットプレイで仕留めろ", "ダイナミズム":"全員で動け",
+  "ダイレクトシュート":"迷わず撃て", "ダイレクトパス":"ワンタッチではたけ", "ダイレクトプレイ":"手数をかけるな", "トータルフットボール":"全員で攻めて全員で守れ",
+  "ハイインテンシティー":"強度を上げろ", "ハイプレス":"前から奪いに行け", "パス&ラン":"出したら走れ", "ビルドアップ":"後ろから組み立てろ",
+  "フルコート3対3":"数的優位を作れ", "ポジション変更":"ポジションを入れ替えろ", "ポストプレイ":"前線で収めろ", "ポゼッションフットボール":"ボールを握れ",
+  "マンマーク":"マークを外すな", "ミニゲーム":"狭い所で勝て", "ムービングフットボール":"動きながら崩せ", "ラインディフェンス":"ラインをそろえろ",
+  "リトリート":"一度引いて守れ", "ロングカウンター":"引いて一気に返せ", "攻守の切り替え":"切り替えを速く", "紅白戦":"練習どおりにやれ",
+  "組織プレイ":"組織で戦え", "中央突破":"真ん中をこじ開けろ", "特殊セットプレイ":"とっておきを出せ", "非公開練習":"相手の裏をかけ" };
+const HT_BASIC=[
+  { id:"b1", name:"気合いを入れ直せ", up:"ODRCSP", down:"" },
+  { id:"b2", name:"集中を切らすな",   up:"DC",     down:"" },
+  { id:"b3", name:"攻めの姿勢を見せろ", up:"OS",   down:"" }
+];
 
 const CARDS={};
 CARD_ROWS.forEach(r=>{
@@ -2630,6 +2673,11 @@ function refreshFx(M,min){
       if(B.setpiece){ fx.fk*=1+B.setpiece; fx.ck*=1+B.setpiece; fx.pkK*=1+B.setpiece; }
       if(B.saving&&p.gk)fx.gk*=1+B.saving;
       if(B.spurt&&min>=75)fx.all*=1+B.spurt;
+      // ハーフタイムの指示(→docs/10 §10.8): 上がる軸は強く、下がる軸は弱く
+      if(T.ht){ const H=T.ht, X=TUNING.ht, m=a=>(H.up.includes(a)?1:0)-(H.down.includes(a)?X.downR:0), kA=X.allK*H.k, kO=X.otherK*H.k;
+        if(g==="FW"||g==="MF")fx.all*=1+m("O")*kA*(g==="FW"?1:0.5);
+        if(g==="DF")fx.all*=1+m("D")*kA;
+        fx.recv*=1+m("R")*kO; fx.chase*=1+m("C")*kO; fx.blk*=1+m("C")*kO; fx.sta*=1-m("S")*kO; fx.aerial*=1+m("P")*kO; }
       if(p.gk){                                 // キーパーの指示: 高い位置で裏を処理する。ループに弱く、疲れる
         const I=TUNING.ins; p.up=T.ins.keeper?I.keeperH:0;
         if(T.ins.keeper){ fx.sweep*=I.keeperSweep; fx.lob*=I.keeperLob; fx.sta*=I.keeperSta; }
@@ -2840,6 +2888,9 @@ function applyOrders(M,t){
       else if(o.type==="sub")doSub(M,T,o.out,o.in,t);
       else if(o.type==="shoot")T.shootOrder=TUNING.shot.orderN;      // 自分たちが持っている間、最大 orderN 手(→docs/08 §8.12)
       else if(o.type==="shootCancel")T.shootOrder=0;
+      else if(o.type==="htPlan"){ T.ht={ up:o.up||"", down:o.down||"", k:o.k||1 };   // ハーフタイムの指示(後半のあいだ。→docs/10 §10.8)
+        if(T.graph){ T.graph=Object.assign({},T.graph); for(const a of T.ht.up)T.graph[a]=(T.graph[a]||0)+TUNING.ht.graph*T.ht.k; for(const a of T.ht.down)T.graph[a]=(T.graph[a]||0)-TUNING.ht.graph*TUNING.ht.downR*T.ht.k; }
+        M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"htPlan", name:o.name||"" }); }
       else if(o.type==="ins")setIns(M,T,o,t);
       else if(o.type==="kp")changeKp(M,T,o.id,t);
     }
@@ -3558,7 +3609,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} } };
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] } };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -3907,6 +3958,7 @@ function migrate(S){
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
+  if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
   if(!S.biz){ S.biz=newBiz(); S.biz.earn=Math.max(0,S.money-(S.money0||0)); }   // それまでの賞金は稼いだ額に数える
@@ -4511,6 +4563,8 @@ function doTraining(S,i,intensity){
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
+    // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
+    if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
   }
   for(const id of ids){
     const g=S.g.pl[id];
@@ -4992,6 +5046,38 @@ function teamPower(S){
   const xi=S.sq.slice(0,11); let t=0;
   for(const id of xi){ const c=growCard(S,CARDS[id]); t+=STATS.reduce((a,k)=>a+c[k],0); }
   return t/xi.length;
+}
+
+/* ---------- ハーフタイムの指示(→docs/10 §10.8) ----------
+ * S.ht = { cnt:{ 特殊練習の番号: した回数 }, set:[登録した指示の id(最大3)] }。監督の覚えた作戦なので任期をまたいで残る。
+ * 指示の id: 初めから使えるものは "b1"〜"b3"、特殊練習から覚えたものは "t" + 特殊練習の番号 */
+const htName=n=>HT_PHRASE[n]||n+"を思い出せ";
+function htOf(id){
+  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ k:TUNING.ht.basicK },b);
+  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]];
+  return t?{ id, name:htName(t.name), up:t.up, down:t.down, k:1, train:t.name }:null;
+}
+/** 使える指示(初めからの3つ + 覚えたもの) */
+function htAvail(S){ const out=HT_BASIC.map(b=>b.id); if(S&&S.ht)for(const i in S.ht.cnt)if(S.ht.cnt[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
+function toggleHt(S,id){
+  const set=S.ht.set, i=set.indexOf(id);
+  if(i>=0){ set.splice(i,1); return true; }
+  if(!htAvail(S).includes(id)||set.length>=TUNING.ht.max)return false;
+  set.push(id); return true;
+}
+
+/**
+ * コミュニケーションの種類ごとの「！」(→docs/05 §5.3)。その指示を求めている選手だけに付ける
+ *   ind   … 個人能力の★が近い(次の★まで commSignK 以上)/ meet … ★突破の話がある / lounge … 黄金線の兆しか、連携の段が近い / talk … ケガか、絶不調の先発
+ */
+function commSign(S,id,kind){
+  const g=S.g.pl[id], K=TUNING.grow.commSignK; if(!g)return false;
+  if(kind==="ind")return g.is<4&&!g.q&&indProgress(g)>=K;
+  if(kind==="meet")return spReady(S,id);
+  if(kind==="talk")return g.mot===0||(g.mot<=1&&S.sq.indexOf(id)<11);
+  if(kind==="lounge")return Object.keys(S.g.links).some(k=>{ const p=k.split("|"); if(!p.includes(id))return false;
+    const l=S.g.links[k]; return l.gold||(l.lv<2&&linkProgress(S,p[0],p[1])>=K); });
+  return false;
 }
 
 /* =========================================================================
@@ -6247,7 +6333,7 @@ function commBoardHtml(ids,on,info){
   const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
     return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
       '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
-      (hasSign(S,id)?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
+      (commSign(S,id,CL.comm)?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
       '<small>'+info(g,id)+'</small></button>'; };
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     xi.filter(id=>ids.includes(id)).map(id=>{ const l=L[id], p=sqPos(l[0],l[1]); return tok(id,' style="left:'+p.l.toFixed(1)+'%;top:'+p.t.toFixed(1)+'%"'); }).join("")+
@@ -6288,7 +6374,7 @@ function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>コミュニケーション</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">！</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>';
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
@@ -6419,6 +6505,13 @@ function sqDetailHtml(){
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
     '<p class="sq-hint">入れ替える相手をタップ</p></div>';
 }
+/** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
+function htSetHtml(){
+  const S=CL.S, set=S.ht.set, av=htAvail(S);
+  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
+    av.map(id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
+      (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; }).join("")+'</section>';
+}
 function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
   fillLayout(S);
@@ -6435,6 +6528,7 @@ function squadHtml(){
   h+='<section class="card"><h3>連携 <small>試合で一緒に出ると育つ</small></h3><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></section>';
+  h+=htSetHtml();
   h+='<section class="card"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="graph">'+
     Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a], w=Math.abs(v)/G0.graph.max*50;
       return '<div><span>'+AXIS_LABEL[a]+'</span><em><u class="'+(v<0?'neg':'')+'" style="width:'+w+'%;'+(v<0?'right:50%':'left:50%')+'"></u></em><b>'+
@@ -6944,6 +7038,7 @@ function onClubClick(e){
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="htset"){ if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
@@ -7660,6 +7755,9 @@ function overlay(title,body,ms,fn){
   c.className="on"; G.onOv=fn; G.capT=ms;
 }
 const capOn=()=>$("cap").classList.contains("on");
+/** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
+const HT_AX={ O:"攻", D:"守", R:"支", C:"奪", S:"速", P:"力" };
+const htAxTxt=h=>h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"");
 function closeOverlay(){
   $("cap").className=""; G.capT=0;
   const fn=G.onOv; G.onOv=null;
@@ -7825,8 +7923,11 @@ function startEvent(ev){
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
+    // ハーフタイムの指示(→docs/10 §10.8): 登録した3つ + 「このまま維持しろ」(何も変えない)。時間が来たら維持のまま後半へ
+    const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
+    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("")+'<button class="htb none" data-ht="">このまま維持しろ<i>変化なし</i></button>';
     overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
-      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>',TUNING.play.capHalf,()=>setPlaying(true));
+      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small><div class="ht-btns">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
     return;
   }
   if(ev.type==="fulltime"){
@@ -7942,6 +8043,14 @@ function boot(){
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
   $("replay").addEventListener("click",skipReplay);
+  // ハーフタイムの指示を選ぶ(字幕の中のボタン)
+  $("cap").addEventListener("click",e=>{
+    const b=e.target.closest("[data-ht]"); if(!b)return;
+    const h=htOf(b.dataset.ht);
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("ハーフタイムの指示: 「"+h.name+"」"); }
+    else say("ハーフタイムの指示: 「このまま維持しろ」");
+    sndUi("ok"); closeOverlay();
+  });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
   document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);
   $("infoClose").addEventListener("click",hideInfo);
