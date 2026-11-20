@@ -95,14 +95,31 @@ function chipsHtml(ids,on,info,act){
  */
 function commBoardHtml(ids,on,info){
   const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
+  const first=CL.comm==="lounge"&&on.length?on[0]:null;   // ラウンジで1人目を選んだら、その人との線と前兆だけを見せる(→docs/07 §7.14)
   const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
     return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
       '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
-      (commSign(S,id,CL.comm)?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
+      ((first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm))?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
       '<small>'+info(g,id)+'</small></button>'; };
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+    (first&&L[first]&&xi.includes(first)?loungeLinksSvg(first,xi.filter(id=>ids.includes(id)),L):'')+
     xi.filter(id=>ids.includes(id)).map(id=>{ const l=L[id], p=sqPos(l[0],l[1]); return tok(id,' style="left:'+p.l.toFixed(1)+'%;top:'+p.t.toFixed(1)+'%"'); }).join("")+
     '</div><div class="cm-bench">'+S.sq.slice(11).filter(id=>ids.includes(id)).map(id=>tok(id)).join("")+'</div></div>';
+}
+/**
+ * ラウンジの1人目と、盤面のほかの選手との連携の線。線なしは淡い点線、薄線・太線・黄金線は SQUAD と同じ線、
+ * 黄金線の兆しは金の点線を重ね、強くなる前兆がある相手は線を光らせる
+ */
+function loungeLinksSvg(a,ids,L){
+  const S=CL.S, P=id=>sqPos(L[id][0],L[id][1]), A=P(a);
+  let h='<svg class="sq-links cm-links" viewBox="0 0 100 100" preserveAspectRatio="none">';
+  for(const b of ids){
+    if(b===a||!L[b])continue;
+    const l=linkOf(S,a,b), B=P(b);
+    const ln=cls=>'<line class="'+cls+'" x1="'+A.l.toFixed(2)+'" y1="'+A.t.toFixed(2)+'" x2="'+B.l.toFixed(2)+'" y2="'+B.t.toFixed(2)+'" vector-effect="non-scaling-stroke"/>';
+    h+=(linkSign(S,a,b)?ln("lk sgl"):"")+ln("lk l"+l.lv)+(l.gold&&l.lv===2?ln("lk omen"):"");
+  }
+  return h+'</svg>';
 }
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
@@ -114,7 +131,8 @@ const COMM_UI={
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
     if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
-    return ic+" "+LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
+    // 札の幅に収まるよう短く(線なし→なし・黄金線→黄金。太線の黄金線の兆しは「兆し」)
+    return ic+(l.lv===2&&l.gold?"兆し":["なし","薄線","太線","黄金"][l.lv])+(l.lv>=2?"":Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
   talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */

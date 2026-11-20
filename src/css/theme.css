@@ -1369,3 +1369,8 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #scene.sc-lock .lk-head small{text-shadow:0 1px 2px rgba(0,0,0,.8)}
 #scene.sc-lock .lk-grow{background:rgba(5,6,10,.78)}
 
+/* ---- ラウンジ: 1人目と盤面のほかの選手との連携の線(loungeLinksSvg。→docs/07 §7.14) ---- */
+#club .cm-links .l0{stroke:rgba(255,255,255,.35);stroke-width:1;stroke-dasharray:1.5 3.5}
+#club .cm-links .sgl{stroke:var(--t-sub,#c8102e);stroke-width:7;stroke-opacity:.55;animation:cmSg 1.4s ease-in-out infinite alternate}
+@keyframes cmSg{from{stroke-opacity:.25}to{stroke-opacity:.7}}
+#club .cmt small{letter-spacing:-.02em;max-width:62px}

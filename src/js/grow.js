@@ -732,7 +732,11 @@ function commSign(S,id,kind){
   if(kind==="ind")return g.is<4&&!g.q&&indProgress(g)>=K;
   if(kind==="meet")return spReady(S,id);
   if(kind==="talk")return g.mot===0||(g.mot<=1&&S.sq.indexOf(id)<11);
-  if(kind==="lounge")return Object.keys(S.g.links).some(k=>{ const p=k.split("|"); if(!p.includes(id))return false;
-    const l=S.g.links[k]; return l.gold||(l.lv<2&&linkProgress(S,p[0],p[1])>=K); });
+  if(kind==="lounge")return Object.keys(S.g.links).some(k=>{ const p=k.split("|"); return p.includes(id)&&linkSign(S,p[0],p[1]); });
   return false;
+}
+/** 2人の連携が強くなる前兆(黄金線の兆しか、次の段が近い)。ラウンジで1人目を選んだあとの「！」はこれで付ける */
+function linkSign(S,a,b){
+  const l=linkOf(S,a,b);
+  return !!l.gold||(l.lv<2&&linkProgress(S,a,b)>=TUNING.grow.commSignK);
 }
