@@ -1659,3 +1659,11 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .tr-right .trs.two .tr{height:42px}
 #club .tr-top{grid-template-columns:148px minmax(0,1fr)}
 #club .tr-top .tf-radar{width:148px}
+/* ---- 盤面のピッチを SQUAD と同じ縦横比(100:150)に(→docs/14 §14.39)。幅も SQUAD と同じ、控えは右。チーム練習は同じ比率のまま小さく ---- */
+#club .cm-board{display:flex;justify-content:center;align-items:flex-start;gap:4px}
+#club .cm-board .cm-pitch,#club .tr-fx .cm-board .cm-pitch{flex:0 0 auto;width:min(258px,calc(100% - 58px));aspect-ratio:100/150}
+#club .tr-fx .cm-board .cm-pitch{width:222px}
+#club .cm-board .sq-bench{flex:0 0 54px}
+#club .sqc.cmx{width:50px}
+#club .cm-board .sq-bench .sqc.cmx{width:100%}
+#club .cm-pitch .pm.ga{display:block}
