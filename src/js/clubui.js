@@ -351,11 +351,14 @@ function sqDetailHtml(){
 }
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
+  // 監督能力と同じ形(→docs/14 §14.32): 閉じているときは登録中の指示をタイルで。「選ぶ」で使える指示を全部出す
   const S=CL.S, set=S.ht.set, av=htAvail(S);
-  return '<details class="card htset fold"'+(CL.htOpen?' open':'')+'><summary><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ '+set.map(id=>htOf(id).name).join(" / ")+'</small></h3></summary>'+
-    '<p class="dim">同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</p>'+
-    av.map(id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
-      (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; }).join("")+'</details>';
+  const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
+    (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
+  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
+    (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div><button class="lnk" data-act="htopen">閉じる</button>'
+      :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
+        '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
 }
 function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
@@ -1178,6 +1181,7 @@ function onClubClick(e){
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }
   if(act==="none")return;
+  if(act==="htopen"){ CL.htOpen=!CL.htOpen; showClub(true); return; }
   if(act==="htset"){ CL.htOpen=true; if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
