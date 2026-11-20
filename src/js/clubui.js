@@ -115,7 +115,7 @@ const COMM_UI={
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
     if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
     return ic+" "+LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
-  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>MOT_LABEL[g.mot] }
+  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
 function msgHtml(){
@@ -175,7 +175,7 @@ function commChatHtml(){
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
-    log+=chatSec("いま「"+MOT_LABEL[p.mot]+"」・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
+    log+=chatSec("いま <b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b> ・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
     acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
@@ -329,7 +329,7 @@ function squadHtml(){
   const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
   h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
     radarSvg([{ v:ax, color:teamColor(myTeam(S)) }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
-      return '<li><span>'+AXIS_LABEL[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
+      return '<li><span>'+AXIS_ABBR[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
   return h;
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
@@ -520,7 +520,7 @@ function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
   // カードの裏の形で見せる(→docs/14 §14.14)。登録中なら育成を入れた値
   const g=S.g.pl[id], cc=g?growCard(S,c):c;
-  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0,
+  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
     extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
       (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
   if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';

@@ -1875,6 +1875,60 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #club .tro b{position:absolute;right:8%;top:6px;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:13px;color:var(--t-sub)}
 #club .tro i{position:absolute;left:6%;top:6px;padding:0 4px;font-style:normal;font-size:8.5px;font-weight:900;line-height:14px;color:#fff;background:var(--t-sub);transform:skewX(-8deg)}
 
+/* ---- 実況の帯を3行に(→docs/14 §14.22)。新しい行が下、古い行ほど薄く。左に LIVE の札 ---- */
+#ticker{flex:0 0 auto;height:59px;padding:4px 10px 4px 0;line-height:normal;white-space:normal;display:flex;align-items:stretch;gap:8px;overflow:hidden}
+#ticker::before{content:"LIVE";flex:0 0 auto;display:flex;align-items:center;margin:-4px 0;padding:0 10px 0 8px;font-family:var(--f-num);font-style:italic;font-weight:800;
+  font-size:12px;letter-spacing:.14em;color:#fff;background:var(--t-sub,#c8102e);clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+#ticker .tk{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end}
+#ticker .tk p{margin:0;line-height:17px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.45}
+#ticker .tk p:nth-last-child(2){opacity:.7}
+#ticker .tk p:last-child{opacity:1;font-size:12.5px}
+#ticker.goal{color:#fff}
+#ticker .tk p.goal{color:#fff;font-weight:900}
+#ticker .tk p.boss{color:#ffd84a;font-weight:900}
+#ticker .tk p.hint{color:#b4bac6;font-weight:600}
+#ticker .tk-tm,#ticker .tk-boss,#ticker .tk-goal{display:inline-block;margin-right:5px;padding:0 6px;line-height:14px;font-size:11px;font-weight:800;vertical-align:1px;
+  clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+#ticker .tk-tm{font-family:var(--f-num);font-style:italic;letter-spacing:.06em}
+#ticker .tk-boss{background:#ffd84a;color:#111}
+#ticker .tk-goal{font-family:var(--f-num);font-style:italic;letter-spacing:.1em;background:#e3172f;color:#fff}
+.radar text{font-family:var(--f-num);letter-spacing:.06em}
+
+/* ---- コンディション(→docs/14 §14.22)。本家に合わせた色: ケガ = グレー / 絶不調 = 青 / 不調 = 緑 / 好調 = オレンジ / 絶好調 = 赤 ---- */
+:root{--mot0:#8b9099;--mot1:#2f6fe0;--mot2:#1f9d55;--mot3:#f28c18;--mot4:#e3172f}
+#club .sqc .mt.m0,.cd .mtm.m0{background:var(--mot0)} #club .sqc .mt.m1,.cd .mtm.m1{background:var(--mot1)} #club .sqc .mt.m2,.cd .mtm.m2{background:var(--mot2)}
+#club .sqc .mt.m3,.cd .mtm.m3{background:var(--mot3)} #club .sqc .mt.m4,.cd .mtm.m4{background:var(--mot4)}
+#club .sqc .mt{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
+#club .mot{display:inline-block;padding:0 7px;font-size:10.5px;font-weight:900;line-height:17px;color:#fff;white-space:nowrap;background:var(--mot2);
+  clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+#club .mot.m0{background:var(--mot0);color:#fff} #club .mot.m1{background:var(--mot1);color:#fff} #club .mot.m2{background:var(--mot2);color:#fff} #club .mot.m3{background:var(--mot3);color:#fff} #club .mot.m4{background:var(--mot4);color:#fff}
+
+/* ---- カードの詳細: 左端にカードの表面、能力のグラフは詰める(→docs/14 §14.22) ---- */
+.cardback .cb-body.wf{grid-template-columns:78px 64px minmax(0,1fr);gap:8px}
+.cb-front{pointer-events:none}
+.cb-front .kc{width:100%}
+.cb-body.wf .cb-map svg{width:64px}
+.cb-body.wf .cb-map small{font-size:9px}
+.cb-body.wf .cb-sts{gap:3px}
+.cb-body.wf .cb-st{grid-template-columns:24px 1fr 24px;gap:4px}
+.cb-body.wf .cb-st i{font-size:10px} .cb-body.wf .cb-st b{font-size:13px} .cb-body.wf .cb-st em{height:5px}
+.cb-body.wf .cb-tot{font-size:10px}
+
+/* ---- 対戦カード: KP の絵は帯の外の入れ物に置き、下の端は帯にそろえて上にだけ飛び出させる(→docs/14 §14.22)。
+   帯には斜めの切り抜き(clip-path)があり、中に置くと絵も切れていた ---- */
+#scene .vs-wrap{position:relative;width:100%}
+#scene .vs-wrap.home{animation:fromL .5s .45s cubic-bezier(.2,1.2,.4,1) both}
+#scene .vs-wrap.away{animation:fromR .5s .75s cubic-bezier(.2,1.2,.4,1) both}
+#scene .vs-wrap>.vs-side{animation:none}
+#scene .vs-wrap>.vs-art{position:absolute;bottom:0;height:172px;z-index:2;image-rendering:pixelated;opacity:1;pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+#scene .vs-wrap.home>.vs-art{right:2px}
+#scene .vs-wrap.away>.vs-art{left:2px;transform:scaleX(-1)}
+
+#scene .vs-wrap.home>.vs-side{padding-right:100px}
+#scene .vs-wrap.away>.vs-side{padding-left:100px}
+#scene .vs-wrap .vs-info b{white-space:normal;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#scene .vs-wrap.home{margin-top:26px}
+
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
    参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
@@ -2053,7 +2107,7 @@ body.th-bk #hud .tn{font-family:var(--f-disp);font-style:italic;font-weight:800;
 body.th-bk #hudScore{font-size:24px;background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);padding:0 10px}
 body.th-bk #hudComp{font-family:var(--f-disp);font-weight:700;letter-spacing:.14em;color:var(--n-mute)}
 body.th-bk #hudClock{color:#fff;font-size:22px;text-shadow:0 0 10px rgba(255,42,80,.7)}
-body.th-bk #ticker{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(10,13,23,.95) 40%);border-left:3px solid var(--n-red);box-shadow:inset 0 -1px 0 var(--n-line);font-weight:800;letter-spacing:.02em}
+body.th-bk #ticker{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(10,13,23,.95) 40%);border-left:0;box-shadow:inset 0 -1px 0 var(--n-line);font-weight:800;letter-spacing:.02em}
 body.th-bk #deck,body.th-bk #bench{background:
   repeating-linear-gradient(120deg,rgba(255,255,255,.02) 0 1px,transparent 1px 22px),
   linear-gradient(180deg,#0a0d17,#06070d)}
@@ -2138,7 +2192,7 @@ body.th-bk .sc-vs .vs-band b{color:var(--n-gold);text-shadow:0 0 10px rgba(255,2
 body.th-bk #scene .vs-note{display:inline-block;padding:3px 14px;font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff;
   background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 body.th-bk #scene .vs-mark{color:#fff;-webkit-text-fill-color:#fff;filter:none;text-shadow:0 0 18px rgba(255,42,80,.9),3px 3px 0 var(--n-red3)}
-body.th-bk .radar text{font-family:var(--f-jp)}
+body.th-bk .radar text{font-family:var(--f-num)}
 body.th-bk #scene .vs-radar p{font-family:var(--f-num);font-weight:700;letter-spacing:.1em}
 
 /* ---- 試合中の割り込みの枠(ハーフタイムなど) ---- */
@@ -2228,6 +2282,7 @@ body.th-bk #club .tro b{color:var(--n-gold);text-shadow:0 0 8px rgba(255,209,102
 body.th-bk #club .tro i{background:var(--n-red);box-shadow:var(--n-glow)}
 
 body.th-bk #club .tro small{font-size:10px}
+body.th-bk #ticker::before{background:var(--n-red);box-shadow:var(--n-glow)}
 
 /* =========================================================================
    wcc_f — ホワイト × レッドの作り込み(→docs/14 §14.21)。既定のテーマ(th-wr)にだけ掛かる(body.th-wl)
@@ -2466,10 +2521,8 @@ body.th-wl #hudScore{font-family:var(--f-num);font-style:italic;font-weight:800;
 body.th-wl #hudComp{font-family:var(--f-num);font-weight:700;letter-spacing:.14em}
 body.th-wl #hudClock{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;color:var(--w-red)}
 /* 実況の帯: 左に LIVE の札 */
-body.th-wl #ticker{background:linear-gradient(90deg,#1b1c22,var(--w-black) 60%);border-left:0;font-weight:800;letter-spacing:.02em;padding-left:0}
-body.th-wl #ticker::before{content:"LIVE";display:inline-block;margin-right:10px;padding:0 10px 0 8px;height:100%;font-family:var(--f-num);font-style:italic;font-weight:800;
-  letter-spacing:.14em;color:#fff;background:var(--w-red);clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
-body.th-wl #ticker.goal{color:var(--w-gold2)}
+body.th-wl #ticker{background:linear-gradient(90deg,#1b1c22,var(--w-black) 60%);border-left:0;letter-spacing:.02em}
+body.th-wl #ticker::before{background:var(--w-red)}
 /* 盤面の外 */
 body.th-wl #deck{background:repeating-linear-gradient(120deg,rgba(0,0,0,.03) 0 1px,transparent 1px 22px),linear-gradient(180deg,#e9e5de,#dcd7ce)}
 body.th-wl #bench{background:#f4f2ee;border-left:1px solid var(--w-line2)}
@@ -3020,6 +3073,9 @@ const STYLES={
         fx:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.30 } }
 };
 const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"奪取", S:"スピード", P:"パワー" };
+/** レーダー・グラフの表記(→docs/14 §14.22)。英語の略で、カードの能力(OFE / DEF / SPE / POW)と同じ3文字にそろえる。
+    支配 = CONTROL → CON、奪取 = INTERCEPT → INT */
+const AXIS_ABBR={ O:"OFE", D:"DEF", R:"CON", C:"INT", S:"SPE", P:"POW" };
 
 /**
  * スキル(→docs/04 §4.10)。**カードはスキルを1つ持ち、スキルがスタイルとバフを引き当てる。**
@@ -5853,8 +5909,8 @@ function trainOptions(S){
 function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:STAT_LABEL[o.param]+"の練習"; }
 /** 練習の中身を、選ぶ前に見せる文にする */
 function trainDesc(o){
-  const ax=s=>s.split("").map(a=>AXIS_LABEL[a]).join("・");
-  if(o.sp<0)return "個人能力 ・ グラフ: "+AXIS_LABEL[PARAM_AXIS[o.param]]+" ↑";
+  const ax=s=>s.split("").map(a=>AXIS_ABBR[a]).join("・");
+  if(o.sp<0)return "個人能力 ・ グラフ: "+AXIS_ABBR[PARAM_AXIS[o.param]]+" ↑";
   const t=TRAIN_SP[o.sp], e=t.eff, nm={ ind:"個人", link:"連携", sp:"特殊", set:"セットプレイ" };
   return Object.keys(e).map(k=>nm[k]+"★".repeat(e[k])).join(" ")+" ・ グラフ: "+
     (t.up?ax(t.up)+" ↑":"")+(t.down?" / "+ax(t.down)+" ↓":"");
@@ -7475,7 +7531,7 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_LABEL[a].slice(0,opts.short?2:9)+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
 /** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */
@@ -7488,7 +7544,7 @@ function teamAxes(cards,graph){
 }
 
 /* ---- カードの裏(本家のカードの裏の構成にならう。意匠は独自) ---- */
-/** c … カード(育成を入れたものでもよい)。x … { stars:[個,特], extra:'追加の行の HTML' } */
+/** c … カード(育成を入れたものでもよい)。x … { stars:[個,特], extra:'追加の行の HTML', front:'左端に出すカードの表面の HTML' } */
 function cardBackHtml(c,x){
   x=x||{};
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c), R=typeof rareOfCard==="function"?rareOfCard(c):null;
@@ -7496,11 +7552,11 @@ function cardBackHtml(c,x){
   return '<div class="cardback r-'+(c.rar||"B")+'">'+
     '<div class="cb-head"><b class="cb-no">'+c.no+'</b><div><b>'+nameOf(c)+'</b><small>'+(typeof cardNoOf==="function"?cardNoOf(c)+' ・ ':'')+(typeof clubOfCard==="function"?clubOfCard(c):'')+(c.age?' ・ '+c.age+'歳':'')+'</small></div>'+
       '<span class="cb-pos '+c.pos.toLowerCase()+'">'+c.pos+'</span></div>'+
-    '<div class="cb-body"><div class="cb-map">'+aptMapSvg(c)+'<small>'+c.roles.join(" / ")+'</small></div>'+
+    '<div class="cb-body'+(x.front?' wf':'')+'">'+(x.front?'<div class="cb-front">'+x.front+'</div>':'')+'<div class="cb-map">'+aptMapSvg(c)+'<small>'+c.roles.join(" / ")+'</small></div>'+
       '<div class="cb-sts">'+STATS.map(bar).join("")+'<div class="cb-tot">合計 <b>'+Math.round(STATS.reduce((s,k)=>s+c[k],0))+'</b>'+
         (x.stars?' ・ 個★'+x.stars[0]+' 特★'+x.stars[1]:'')+'</div></div></div>'+
     '<div class="cb-foot">'+(sk?'<p><b>★'+sk.label+'</b> '+sk.desc+'</p>':'')+
-      (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small></p>':'')+
+      (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (R?'<p class="cb-rare"><b>RARE KP</b> '+((x.ss||0)>=5?R.name:'？？？(特殊能力★5で解放)')+'</p>':'')+
       '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+(x.extra||'')+'</div></div>';
 }
@@ -8027,7 +8083,7 @@ function bindBenchDrag(el,id){
       d.over.classList.remove("drop");
       if(e.type==="pointerup")askSub(d.over.dataset.id,id);
     }
-    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代");
+    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代",false,"hint");
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
@@ -8050,7 +8106,7 @@ function answerSub(yes){
     const b=[...document.querySelectorAll("#bench .cd")].find(x=>x.dataset.id===a.inId);
     if(b)b.classList.add("used");
     onSubQueued(a.inId,a.outId);
-  }else say("交代をやめた");
+  }else say("交代をやめた",false,"hint");
   if(a.wasPlaying)setPlaying(true);
 }
 
@@ -8171,7 +8227,7 @@ const COMM_UI={
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
     if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
     return ic+" "+LINK_LABEL[l.lv]+(l.lv>=2?(l.gold?"・兆し":""):" "+Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
-  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>MOT_LABEL[g.mot] }
+  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
 function msgHtml(){
@@ -8231,7 +8287,7 @@ function commChatHtml(){
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
-    log+=chatSec("いま「"+MOT_LABEL[p.mot]+"」・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
+    log+=chatSec("いま <b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b> ・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
     acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
@@ -8385,7 +8441,7 @@ function squadHtml(){
   const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
   h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
     radarSvg([{ v:ax, color:teamColor(myTeam(S)) }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
-      return '<li><span>'+AXIS_LABEL[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
+      return '<li><span>'+AXIS_ABBR[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
   return h;
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
@@ -8576,7 +8632,7 @@ function cardDetailHtml(id){
   const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
   // カードの裏の形で見せる(→docs/14 §14.14)。登録中なら育成を入れた値
   const g=S.g.pl[id], cc=g?growCard(S,c):c;
-  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0,
+  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
     extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
       (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
   if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
@@ -9645,19 +9701,20 @@ function axisBars(T){
     const ids=T.xi||[], f=AXIS_STAT[a];
     const v=ids.length?ids.map(id=>f(CARDS[id])).sort((x,y)=>y-x).slice(0,6).reduce((s,x)=>s+x,0)/6:12;
     const w=Math.max(6,Math.min(100,(v+t-9)/9*100));
-    return '<span><i>'+AXIS_LABEL[a].slice(0,2)+'</i><em><u style="width:'+w+'%"></u></em></span>'; }).join("")+'</div>';
+    return '<span><i>'+AXIS_ABBR[a]+'</i><em><u style="width:'+w+'%"></u></em></span>'; }).join("")+'</div>';
 }
 function sideHtml(T,side,kpId){
   const kp=kpId?CARDS[kpId]:null, st=kp?styleOfCard(kp):null;
   const art=kp&&typeof artSrc==="function"?artSrc(kp,"play"):null;   // KP の絵を帯の奥に大きく(→docs/14 第3弾)
-  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+
+  // 絵は帯の外(帯は斜めに切り抜くので、中に置くと絵も切れる)。下は帯にそろえ、上にだけ飛び出す(→docs/14 §14.22)
+  return '<div class="vs-wrap '+side+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+'<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+
     '<div class="vs-em">'+emblemSvg(T,74)+'</div>'+
     '<div class="vs-info"><b>'+teamNameOf(T)+'</b>'+
       '<small>'+(T.tier?"★".repeat(T.tier)+"☆".repeat(5-T.tier)+" ・ ":"")+T.form+'</small>'+
       (kp?'<div class="vs-kp"><i>KP</i>'+nameOf(kp)+'<em>'+(st?st.name:"")+'</em></div>':'')+
       (side==="away"&&T.id?'<div class="vs-coach">相手監督: '+TUNING.coach.pers[T.pers||persOfClub(T.id)].name+'型</div>':'')+   // 性格(→docs/13 §13.5)
       (side==="home"&&CL.S&&CL.S.biz&&CL.S.biz.sp?'<div class="vs-sp">'+CL.S.biz.sp.name+'</div>':'')+
-      '</div></div>';
+      '</div></div></div>';
 }
 function sceneMatchup(fx,go){
   const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
@@ -9933,6 +9990,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   $("hudHc").innerHTML=emblemSvg(M.home,22); $("hudAc").innerHTML=emblemSvg(M.away,22);
   $("hudComp").textContent=G.meta.career?G.meta.title:"FRIENDLY";
   setHud(0,0,"0'");
+  G.tk=[];
   say(teamNameOf(M.home)+" vs "+teamNameOf(M.away));
   hideInfo();
   buildBoard(M);
@@ -9947,8 +10005,51 @@ function setHud(hg,ag,clock){
   $("hudScore").textContent=hg+" - "+ag;
   $("hudClock").textContent=clock;
 }
-function say(text,goal){
-  const t=$("ticker"); t.textContent=text; t.classList.toggle("goal",!!goal);
+/* ---- 実況の帯(→docs/14 §14.22): 直近の3行を出す(古い行ほど薄く)。チームの略称はチームの色の札、監督の指示は目立つ色 ---- */
+const TICKER_N=3;
+const escT=s=>String(s).replace(/[&<>"]/g,ch=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]));
+/** 地の色に乗せる字の色(明るい色なら黒) */
+function inkOn(hex){
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex||""); if(!m)return "#fff";
+  const n=parseInt(m[1],16), y=((n>>16)&255)*0.299+((n>>8)&255)*0.587+(n&255)*0.114;
+  return y>150?"#111":"#fff";
+}
+function tickHtml(text){
+  let h=escT(text);
+  if(G.M)for(const T of [G.M.home,G.M.away]){
+    const k="["+escT(T.short)+"]"; if(!h.includes(k))continue;
+    const col=typeof teamColor==="function"?teamColor(T):(T.color||"#888");
+    h=h.split(k).join('<b class="tk-tm" style="background:'+col+';color:'+inkOn(col)+'">'+escT(T.short)+'</b>');
+  }
+  return h.replace("⚽ GOAL! ",'<b class="tk-goal">GOAL</b>').replace(/^監督「/,'<b class="tk-boss">監督</b>「');
+}
+/** kind … "boss"(監督の指示)/ "hint"(操作の手引き)/ なし(実況) */
+function say(text,goal,kind){
+  const t=$("ticker"); if(!t)return;
+  G.tk=G.tk||[];
+  G.tk.push('<p class="'+(goal?"goal":"")+(kind?" "+kind:"")+'">'+tickHtml(text)+'</p>');
+  if(G.tk.length>TICKER_N)G.tk.splice(0,G.tk.length-TICKER_N);
+  t.innerHTML='<div class="tk">'+G.tk.join("")+'</div>';
+  t.classList.toggle("goal",!!goal);
+}
+/* ---- 監督の声(→docs/14 §14.22): 自分の操作は、監督がピッチに叫ぶせりふで実況の帯に出す。言い回しは数通りから選ぶ ---- */
+const BOSS_SAY={
+  shoot:["シュートしろ！！","撃て！ 狙っていけ！","どんどん打っていけ！"],
+  shootCancel:["シュートは待て！","無理に打つな、つなげ！"],
+  center:["中央から崩せ！","真ん中を突破しろ！"], centerOff:["中央突破はもういい！"],
+  left:["左サイドを使え！","左から攻めろ！"], leftOff:["左はもういい！"],
+  right:["右サイドを使え！","右から攻めろ！"], rightOff:["右はもういい！"],
+  both:["両サイドを使え！","幅を使って揺さぶれ！"],
+  counter:["カウンターを狙え！","奪ったら一気に行け！"], counterOff:["カウンターはやめだ、落ち着け！"],
+  press:["前から追い込め！","プレスをかけろ！"], pressOff:["プレスを緩めろ！"],
+  keeper:["キーパーは上がれ！","GK、ラインを押し上げろ！"], keeperOff:["キーパーは下がれ！"],
+  kp:["頼んだぞ、%！","%、お前が軸だ！","%、見せてやれ！"],
+  sub:["交代だ！ 準備しろ！","次のプレーで代えるぞ！"]
+};
+function bossSay(key,name,extra){
+  const a=BOSS_SAY[key]; if(!a)return;
+  const line=a[Math.floor(Math.random()*a.length)].replace("%",name||"");   // 見た目だけの揺らぎ(試合の乱数は使わない)
+  say("監督「"+line+"」"+(extra||""),false,"boss");
 }
 function updateCtl(){
   if(G.M&&$("btnShoot"))$("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
@@ -10002,24 +10103,25 @@ function closeOverlay(){
   const fn=G.onOv; G.onOv=null;
   if(fn)fn();
 }
-function onSubQueued(){ updateCtl(); say("交代を指示(次のプレーで入る)"); }
+function onSubQueued(){ updateCtl(); bossSay("sub"); }
 /** KP を替える。エンジンには次のステップで渡り、それまでは盤面に仮の印を出す */
 function pickKp(id){
   if(G.M.over||!G.M.home.players.some(p=>p.id===id))return;
   orderMatch(G.M,"H",{ type:"kp", id });
   BD.kp=id; G.kpMode=false;
   const st=styleOfCard(CARDS[id]);
-  say("KP "+nm(id)+(st?" ▶ "+st.name:""),true);
+  bossSay("kp",nm(id),st?"  KP ▶ "+st.name:"");
   syncBoard(G.M); updateCtl();
 }
 /** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に。詳細は長押し(→board.js) */
-function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP"); }
+function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP",false,"hint"); }
 /** 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられ、もう一度押すと消える */
 const INS_BTN=[["btnCenter","center"],["btnLeft","left"],["btnRight","right"],["btnCounter","counter"],["btnPress","press"],["btnKeeper","keeper"]];
 function toggleIns(key){
   if(!G.M||G.M.over)return;
   G.ins[key]=!G.ins[key];
   orderMatch(G.M,"H",Object.assign({ type:"ins" },{ [key]:G.ins[key] }));
+  bossSay(G.ins[key]?(G.ins.left&&G.ins.right&&(key==="left"||key==="right")?"both":key):key+"Off");
   updateCtl();
 }
 
@@ -10294,12 +10396,12 @@ function boot(){
     const armed=G.M.home.shootOrder>0||$("btnShoot").classList.contains("armed");
     orderMatch(G.M,"H",{ type:armed?"shootCancel":"shoot" });
     $("btnShoot").classList.toggle("armed",!armed);
-    say(armed?"シュートの指示を取り消した":"シュートを狙え(敵陣の深い所で撃つ)");
+    bossSay(armed?"shootCancel":"shoot");
   });
   $("btnKp").addEventListener("click",()=>{
     if(G.M.over)return;
     G.kpMode=!G.kpMode; hideInfo();
-    if(G.kpMode)say("KP にする選手のカードをタップ(もう一度 KP ボタンで取り消し)");
+    if(G.kpMode)say("KP にする選手のカードをタップ(もう一度 KP ボタンで取り消し)",false,"hint");
     updateCtl();
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
@@ -10308,8 +10410,8 @@ function boot(){
   $("cap").addEventListener("click",e=>{
     const b=e.target.closest("[data-ht]"); if(!b)return;
     const h=htOf(b.dataset.ht);
-    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("ハーフタイムの指示: 「"+h.name+"」"); }
-    else say("ハーフタイムの指示: 「このまま維持しろ」");
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
+    else say("監督「このまま維持しろ！」",false,"boss");
     sndUi("ok"); closeOverlay();
   });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する

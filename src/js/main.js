@@ -27,6 +27,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   $("hudHc").innerHTML=emblemSvg(M.home,22); $("hudAc").innerHTML=emblemSvg(M.away,22);
   $("hudComp").textContent=G.meta.career?G.meta.title:"FRIENDLY";
   setHud(0,0,"0'");
+  G.tk=[];
   say(teamNameOf(M.home)+" vs "+teamNameOf(M.away));
   hideInfo();
   buildBoard(M);
@@ -41,8 +42,51 @@ function setHud(hg,ag,clock){
   $("hudScore").textContent=hg+" - "+ag;
   $("hudClock").textContent=clock;
 }
-function say(text,goal){
-  const t=$("ticker"); t.textContent=text; t.classList.toggle("goal",!!goal);
+/* ---- 実況の帯(→docs/14 §14.22): 直近の3行を出す(古い行ほど薄く)。チームの略称はチームの色の札、監督の指示は目立つ色 ---- */
+const TICKER_N=3;
+const escT=s=>String(s).replace(/[&<>"]/g,ch=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch]));
+/** 地の色に乗せる字の色(明るい色なら黒) */
+function inkOn(hex){
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex||""); if(!m)return "#fff";
+  const n=parseInt(m[1],16), y=((n>>16)&255)*0.299+((n>>8)&255)*0.587+(n&255)*0.114;
+  return y>150?"#111":"#fff";
+}
+function tickHtml(text){
+  let h=escT(text);
+  if(G.M)for(const T of [G.M.home,G.M.away]){
+    const k="["+escT(T.short)+"]"; if(!h.includes(k))continue;
+    const col=typeof teamColor==="function"?teamColor(T):(T.color||"#888");
+    h=h.split(k).join('<b class="tk-tm" style="background:'+col+';color:'+inkOn(col)+'">'+escT(T.short)+'</b>');
+  }
+  return h.replace("⚽ GOAL! ",'<b class="tk-goal">GOAL</b>').replace(/^監督「/,'<b class="tk-boss">監督</b>「');
+}
+/** kind … "boss"(監督の指示)/ "hint"(操作の手引き)/ なし(実況) */
+function say(text,goal,kind){
+  const t=$("ticker"); if(!t)return;
+  G.tk=G.tk||[];
+  G.tk.push('<p class="'+(goal?"goal":"")+(kind?" "+kind:"")+'">'+tickHtml(text)+'</p>');
+  if(G.tk.length>TICKER_N)G.tk.splice(0,G.tk.length-TICKER_N);
+  t.innerHTML='<div class="tk">'+G.tk.join("")+'</div>';
+  t.classList.toggle("goal",!!goal);
+}
+/* ---- 監督の声(→docs/14 §14.22): 自分の操作は、監督がピッチに叫ぶせりふで実況の帯に出す。言い回しは数通りから選ぶ ---- */
+const BOSS_SAY={
+  shoot:["シュートしろ！！","撃て！ 狙っていけ！","どんどん打っていけ！"],
+  shootCancel:["シュートは待て！","無理に打つな、つなげ！"],
+  center:["中央から崩せ！","真ん中を突破しろ！"], centerOff:["中央突破はもういい！"],
+  left:["左サイドを使え！","左から攻めろ！"], leftOff:["左はもういい！"],
+  right:["右サイドを使え！","右から攻めろ！"], rightOff:["右はもういい！"],
+  both:["両サイドを使え！","幅を使って揺さぶれ！"],
+  counter:["カウンターを狙え！","奪ったら一気に行け！"], counterOff:["カウンターはやめだ、落ち着け！"],
+  press:["前から追い込め！","プレスをかけろ！"], pressOff:["プレスを緩めろ！"],
+  keeper:["キーパーは上がれ！","GK、ラインを押し上げろ！"], keeperOff:["キーパーは下がれ！"],
+  kp:["頼んだぞ、%！","%、お前が軸だ！","%、見せてやれ！"],
+  sub:["交代だ！ 準備しろ！","次のプレーで代えるぞ！"]
+};
+function bossSay(key,name,extra){
+  const a=BOSS_SAY[key]; if(!a)return;
+  const line=a[Math.floor(Math.random()*a.length)].replace("%",name||"");   // 見た目だけの揺らぎ(試合の乱数は使わない)
+  say("監督「"+line+"」"+(extra||""),false,"boss");
 }
 function updateCtl(){
   if(G.M&&$("btnShoot"))$("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
@@ -96,24 +140,25 @@ function closeOverlay(){
   const fn=G.onOv; G.onOv=null;
   if(fn)fn();
 }
-function onSubQueued(){ updateCtl(); say("交代を指示(次のプレーで入る)"); }
+function onSubQueued(){ updateCtl(); bossSay("sub"); }
 /** KP を替える。エンジンには次のステップで渡り、それまでは盤面に仮の印を出す */
 function pickKp(id){
   if(G.M.over||!G.M.home.players.some(p=>p.id===id))return;
   orderMatch(G.M,"H",{ type:"kp", id });
   BD.kp=id; G.kpMode=false;
   const st=styleOfCard(CARDS[id]);
-  say("KP "+nm(id)+(st?" ▶ "+st.name:""),true);
+  bossSay("kp",nm(id),st?"  KP ▶ "+st.name:"");
   syncBoard(G.M); updateCtl();
 }
 /** 盤面のカードをタップしたとき。KP ボタンを押したあとなら KP に。詳細は長押し(→board.js) */
-function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP"); }
+function tapCard(id){ if(G.kpMode)pickKp(id); else if(G.info===id)hideInfo(); else say("長押しでカードの裏を見る ・ KP ボタン → タップで KP",false,"hint"); }
 /** 十字の戦術ボタン + キーパー(→docs/04 §4.9b)。どれも同時に点けられ、もう一度押すと消える */
 const INS_BTN=[["btnCenter","center"],["btnLeft","left"],["btnRight","right"],["btnCounter","counter"],["btnPress","press"],["btnKeeper","keeper"]];
 function toggleIns(key){
   if(!G.M||G.M.over)return;
   G.ins[key]=!G.ins[key];
   orderMatch(G.M,"H",Object.assign({ type:"ins" },{ [key]:G.ins[key] }));
+  bossSay(G.ins[key]?(G.ins.left&&G.ins.right&&(key==="left"||key==="right")?"both":key):key+"Off");
   updateCtl();
 }
 
@@ -388,12 +433,12 @@ function boot(){
     const armed=G.M.home.shootOrder>0||$("btnShoot").classList.contains("armed");
     orderMatch(G.M,"H",{ type:armed?"shootCancel":"shoot" });
     $("btnShoot").classList.toggle("armed",!armed);
-    say(armed?"シュートの指示を取り消した":"シュートを狙え(敵陣の深い所で撃つ)");
+    bossSay(armed?"shootCancel":"shoot");
   });
   $("btnKp").addEventListener("click",()=>{
     if(G.M.over)return;
     G.kpMode=!G.kpMode; hideInfo();
-    if(G.kpMode)say("KP にする選手のカードをタップ(もう一度 KP ボタンで取り消し)");
+    if(G.kpMode)say("KP にする選手のカードをタップ(もう一度 KP ボタンで取り消し)",false,"hint");
     updateCtl();
   });
   for(const [id,k] of INS_BTN)$(id).addEventListener("click",()=>toggleIns(k));
@@ -402,8 +447,8 @@ function boot(){
   $("cap").addEventListener("click",e=>{
     const b=e.target.closest("[data-ht]"); if(!b)return;
     const h=htOf(b.dataset.ht);
-    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("ハーフタイムの指示: 「"+h.name+"」"); }
-    else say("ハーフタイムの指示: 「このまま維持しろ」");
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
+    else say("監督「このまま維持しろ！」",false,"boss");
     sndUi("ok"); closeOverlay();
   });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する

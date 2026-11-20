@@ -70,19 +70,20 @@ function axisBars(T){
     const ids=T.xi||[], f=AXIS_STAT[a];
     const v=ids.length?ids.map(id=>f(CARDS[id])).sort((x,y)=>y-x).slice(0,6).reduce((s,x)=>s+x,0)/6:12;
     const w=Math.max(6,Math.min(100,(v+t-9)/9*100));
-    return '<span><i>'+AXIS_LABEL[a].slice(0,2)+'</i><em><u style="width:'+w+'%"></u></em></span>'; }).join("")+'</div>';
+    return '<span><i>'+AXIS_ABBR[a]+'</i><em><u style="width:'+w+'%"></u></em></span>'; }).join("")+'</div>';
 }
 function sideHtml(T,side,kpId){
   const kp=kpId?CARDS[kpId]:null, st=kp?styleOfCard(kp):null;
   const art=kp&&typeof artSrc==="function"?artSrc(kp,"play"):null;   // KP の絵を帯の奥に大きく(→docs/14 第3弾)
-  return '<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+
+  // 絵は帯の外(帯は斜めに切り抜くので、中に置くと絵も切れる)。下は帯にそろえ、上にだけ飛び出す(→docs/14 §14.22)
+  return '<div class="vs-wrap '+side+'">'+(art?'<img class="vs-art" src="'+art+'" alt="">':'')+'<div class="vs-side '+side+'" style="--tc:'+T.color+'">'+
     '<div class="vs-em">'+emblemSvg(T,74)+'</div>'+
     '<div class="vs-info"><b>'+teamNameOf(T)+'</b>'+
       '<small>'+(T.tier?"★".repeat(T.tier)+"☆".repeat(5-T.tier)+" ・ ":"")+T.form+'</small>'+
       (kp?'<div class="vs-kp"><i>KP</i>'+nameOf(kp)+'<em>'+(st?st.name:"")+'</em></div>':'')+
       (side==="away"&&T.id?'<div class="vs-coach">相手監督: '+TUNING.coach.pers[T.pers||persOfClub(T.id)].name+'型</div>':'')+   // 性格(→docs/13 §13.5)
       (side==="home"&&CL.S&&CL.S.biz&&CL.S.biz.sp?'<div class="vs-sp">'+CL.S.biz.sp.name+'</div>':'')+
-      '</div></div>';
+      '</div></div></div>';
 }
 function sceneMatchup(fx,go){
   const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });

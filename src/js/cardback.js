@@ -61,7 +61,7 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_LABEL[a].slice(0,opts.short?2:9)+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
 /** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */
@@ -74,7 +74,7 @@ function teamAxes(cards,graph){
 }
 
 /* ---- カードの裏(本家のカードの裏の構成にならう。意匠は独自) ---- */
-/** c … カード(育成を入れたものでもよい)。x … { stars:[個,特], extra:'追加の行の HTML' } */
+/** c … カード(育成を入れたものでもよい)。x … { stars:[個,特], extra:'追加の行の HTML', front:'左端に出すカードの表面の HTML' } */
 function cardBackHtml(c,x){
   x=x||{};
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c), R=typeof rareOfCard==="function"?rareOfCard(c):null;
@@ -82,11 +82,11 @@ function cardBackHtml(c,x){
   return '<div class="cardback r-'+(c.rar||"B")+'">'+
     '<div class="cb-head"><b class="cb-no">'+c.no+'</b><div><b>'+nameOf(c)+'</b><small>'+(typeof cardNoOf==="function"?cardNoOf(c)+' ・ ':'')+(typeof clubOfCard==="function"?clubOfCard(c):'')+(c.age?' ・ '+c.age+'歳':'')+'</small></div>'+
       '<span class="cb-pos '+c.pos.toLowerCase()+'">'+c.pos+'</span></div>'+
-    '<div class="cb-body"><div class="cb-map">'+aptMapSvg(c)+'<small>'+c.roles.join(" / ")+'</small></div>'+
+    '<div class="cb-body'+(x.front?' wf':'')+'">'+(x.front?'<div class="cb-front">'+x.front+'</div>':'')+'<div class="cb-map">'+aptMapSvg(c)+'<small>'+c.roles.join(" / ")+'</small></div>'+
       '<div class="cb-sts">'+STATS.map(bar).join("")+'<div class="cb-tot">合計 <b>'+Math.round(STATS.reduce((s,k)=>s+c[k],0))+'</b>'+
         (x.stars?' ・ 個★'+x.stars[0]+' 特★'+x.stars[1]:'')+'</div></div></div>'+
     '<div class="cb-foot">'+(sk?'<p><b>★'+sk.label+'</b> '+sk.desc+'</p>':'')+
-      (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_LABEL[st.axis]+'</small></p>':'')+
+      (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (R?'<p class="cb-rare"><b>RARE KP</b> '+((x.ss||0)>=5?R.name:'？？？(特殊能力★5で解放)')+'</p>':'')+
       '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+(x.extra||'')+'</div></div>';
 }

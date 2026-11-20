@@ -473,6 +473,9 @@ const STYLES={
         fx:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.30 } }
 };
 const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"奪取", S:"スピード", P:"パワー" };
+/** レーダー・グラフの表記(→docs/14 §14.22)。英語の略で、カードの能力(OFE / DEF / SPE / POW)と同じ3文字にそろえる。
+    支配 = CONTROL → CON、奪取 = INTERCEPT → INT */
+const AXIS_ABBR={ O:"OFE", D:"DEF", R:"CON", C:"INT", S:"SPE", P:"POW" };
 
 /**
  * スキル(→docs/04 §4.10)。**カードはスキルを1つ持ち、スキルがスタイルとバフを引き当てる。**

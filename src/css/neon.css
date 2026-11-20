@@ -176,7 +176,7 @@ body.th-bk #hud .tn{font-family:var(--f-disp);font-style:italic;font-weight:800;
 body.th-bk #hudScore{font-size:24px;background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);padding:0 10px}
 body.th-bk #hudComp{font-family:var(--f-disp);font-weight:700;letter-spacing:.14em;color:var(--n-mute)}
 body.th-bk #hudClock{color:#fff;font-size:22px;text-shadow:0 0 10px rgba(255,42,80,.7)}
-body.th-bk #ticker{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(10,13,23,.95) 40%);border-left:3px solid var(--n-red);box-shadow:inset 0 -1px 0 var(--n-line);font-weight:800;letter-spacing:.02em}
+body.th-bk #ticker{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(10,13,23,.95) 40%);border-left:0;box-shadow:inset 0 -1px 0 var(--n-line);font-weight:800;letter-spacing:.02em}
 body.th-bk #deck,body.th-bk #bench{background:
   repeating-linear-gradient(120deg,rgba(255,255,255,.02) 0 1px,transparent 1px 22px),
   linear-gradient(180deg,#0a0d17,#06070d)}
@@ -261,7 +261,7 @@ body.th-bk .sc-vs .vs-band b{color:var(--n-gold);text-shadow:0 0 10px rgba(255,2
 body.th-bk #scene .vs-note{display:inline-block;padding:3px 14px;font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff;
   background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 body.th-bk #scene .vs-mark{color:#fff;-webkit-text-fill-color:#fff;filter:none;text-shadow:0 0 18px rgba(255,42,80,.9),3px 3px 0 var(--n-red3)}
-body.th-bk .radar text{font-family:var(--f-jp)}
+body.th-bk .radar text{font-family:var(--f-num)}
 body.th-bk #scene .vs-radar p{font-family:var(--f-num);font-weight:700;letter-spacing:.1em}
 
 /* ---- 試合中の割り込みの枠(ハーフタイムなど) ---- */
@@ -351,3 +351,4 @@ body.th-bk #club .tro b{color:var(--n-gold);text-shadow:0 0 8px rgba(255,209,102
 body.th-bk #club .tro i{background:var(--n-red);box-shadow:var(--n-glow)}
 
 body.th-bk #club .tro small{font-size:10px}
+body.th-bk #ticker::before{background:var(--n-red);box-shadow:var(--n-glow)}

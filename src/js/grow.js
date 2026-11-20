@@ -132,8 +132,8 @@ function trainOptions(S){
 function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:STAT_LABEL[o.param]+"の練習"; }
 /** 練習の中身を、選ぶ前に見せる文にする */
 function trainDesc(o){
-  const ax=s=>s.split("").map(a=>AXIS_LABEL[a]).join("・");
-  if(o.sp<0)return "個人能力 ・ グラフ: "+AXIS_LABEL[PARAM_AXIS[o.param]]+" ↑";
+  const ax=s=>s.split("").map(a=>AXIS_ABBR[a]).join("・");
+  if(o.sp<0)return "個人能力 ・ グラフ: "+AXIS_ABBR[PARAM_AXIS[o.param]]+" ↑";
   const t=TRAIN_SP[o.sp], e=t.eff, nm={ ind:"個人", link:"連携", sp:"特殊", set:"セットプレイ" };
   return Object.keys(e).map(k=>nm[k]+"★".repeat(e[k])).join(" ")+" ・ グラフ: "+
     (t.up?ax(t.up)+" ↑":"")+(t.down?" / "+ax(t.down)+" ↓":"");

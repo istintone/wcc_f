@@ -1293,3 +1293,56 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #club .tro b{position:absolute;right:8%;top:6px;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:13px;color:var(--t-sub)}
 #club .tro i{position:absolute;left:6%;top:6px;padding:0 4px;font-style:normal;font-size:8.5px;font-weight:900;line-height:14px;color:#fff;background:var(--t-sub);transform:skewX(-8deg)}
 
+/* ---- 実況の帯を3行に(→docs/14 §14.22)。新しい行が下、古い行ほど薄く。左に LIVE の札 ---- */
+#ticker{flex:0 0 auto;height:59px;padding:4px 10px 4px 0;line-height:normal;white-space:normal;display:flex;align-items:stretch;gap:8px;overflow:hidden}
+#ticker::before{content:"LIVE";flex:0 0 auto;display:flex;align-items:center;margin:-4px 0;padding:0 10px 0 8px;font-family:var(--f-num);font-style:italic;font-weight:800;
+  font-size:12px;letter-spacing:.14em;color:#fff;background:var(--t-sub,#c8102e);clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+#ticker .tk{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end}
+#ticker .tk p{margin:0;line-height:17px;font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.45}
+#ticker .tk p:nth-last-child(2){opacity:.7}
+#ticker .tk p:last-child{opacity:1;font-size:12.5px}
+#ticker.goal{color:#fff}
+#ticker .tk p.goal{color:#fff;font-weight:900}
+#ticker .tk p.boss{color:#ffd84a;font-weight:900}
+#ticker .tk p.hint{color:#b4bac6;font-weight:600}
+#ticker .tk-tm,#ticker .tk-boss,#ticker .tk-goal{display:inline-block;margin-right:5px;padding:0 6px;line-height:14px;font-size:11px;font-weight:800;vertical-align:1px;
+  clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+#ticker .tk-tm{font-family:var(--f-num);font-style:italic;letter-spacing:.06em}
+#ticker .tk-boss{background:#ffd84a;color:#111}
+#ticker .tk-goal{font-family:var(--f-num);font-style:italic;letter-spacing:.1em;background:#e3172f;color:#fff}
+.radar text{font-family:var(--f-num);letter-spacing:.06em}
+
+/* ---- コンディション(→docs/14 §14.22)。本家に合わせた色: ケガ = グレー / 絶不調 = 青 / 不調 = 緑 / 好調 = オレンジ / 絶好調 = 赤 ---- */
+:root{--mot0:#8b9099;--mot1:#2f6fe0;--mot2:#1f9d55;--mot3:#f28c18;--mot4:#e3172f}
+#club .sqc .mt.m0,.cd .mtm.m0{background:var(--mot0)} #club .sqc .mt.m1,.cd .mtm.m1{background:var(--mot1)} #club .sqc .mt.m2,.cd .mtm.m2{background:var(--mot2)}
+#club .sqc .mt.m3,.cd .mtm.m3{background:var(--mot3)} #club .sqc .mt.m4,.cd .mtm.m4{background:var(--mot4)}
+#club .sqc .mt{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
+#club .mot{display:inline-block;padding:0 7px;font-size:10.5px;font-weight:900;line-height:17px;color:#fff;white-space:nowrap;background:var(--mot2);
+  clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+#club .mot.m0{background:var(--mot0);color:#fff} #club .mot.m1{background:var(--mot1);color:#fff} #club .mot.m2{background:var(--mot2);color:#fff} #club .mot.m3{background:var(--mot3);color:#fff} #club .mot.m4{background:var(--mot4);color:#fff}
+
+/* ---- カードの詳細: 左端にカードの表面、能力のグラフは詰める(→docs/14 §14.22) ---- */
+.cardback .cb-body.wf{grid-template-columns:78px 64px minmax(0,1fr);gap:8px}
+.cb-front{pointer-events:none}
+.cb-front .kc{width:100%}
+.cb-body.wf .cb-map svg{width:64px}
+.cb-body.wf .cb-map small{font-size:9px}
+.cb-body.wf .cb-sts{gap:3px}
+.cb-body.wf .cb-st{grid-template-columns:24px 1fr 24px;gap:4px}
+.cb-body.wf .cb-st i{font-size:10px} .cb-body.wf .cb-st b{font-size:13px} .cb-body.wf .cb-st em{height:5px}
+.cb-body.wf .cb-tot{font-size:10px}
+
+/* ---- 対戦カード: KP の絵は帯の外の入れ物に置き、下の端は帯にそろえて上にだけ飛び出させる(→docs/14 §14.22)。
+   帯には斜めの切り抜き(clip-path)があり、中に置くと絵も切れていた ---- */
+#scene .vs-wrap{position:relative;width:100%}
+#scene .vs-wrap.home{animation:fromL .5s .45s cubic-bezier(.2,1.2,.4,1) both}
+#scene .vs-wrap.away{animation:fromR .5s .75s cubic-bezier(.2,1.2,.4,1) both}
+#scene .vs-wrap>.vs-side{animation:none}
+#scene .vs-wrap>.vs-art{position:absolute;bottom:0;height:172px;z-index:2;image-rendering:pixelated;opacity:1;pointer-events:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
+#scene .vs-wrap.home>.vs-art{right:2px}
+#scene .vs-wrap.away>.vs-art{left:2px;transform:scaleX(-1)}
+
+#scene .vs-wrap.home>.vs-side{padding-right:100px}
+#scene .vs-wrap.away>.vs-side{padding-left:100px}
+#scene .vs-wrap .vs-info b{white-space:normal;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#scene .vs-wrap.home{margin-top:26px}

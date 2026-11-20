@@ -219,7 +219,7 @@ function bindBenchDrag(el,id){
       d.over.classList.remove("drop");
       if(e.type==="pointerup")askSub(d.over.dataset.id,id);
     }
-    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代");
+    if(!d.moved&&!d.long&&e.type==="pointerup")say("長押しでカードの裏を見る ・ 盤面の選手に重ねると交代",false,"hint");
   };
   el.addEventListener("pointerup",end);
   el.addEventListener("pointercancel",end);
@@ -242,6 +242,6 @@ function answerSub(yes){
     const b=[...document.querySelectorAll("#bench .cd")].find(x=>x.dataset.id===a.inId);
     if(b)b.classList.add("used");
     onSubQueued(a.inId,a.outId);
-  }else say("交代をやめた");
+  }else say("交代をやめた",false,"hint");
   if(a.wasPlaying)setPlaying(true);
 }
