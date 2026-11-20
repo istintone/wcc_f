@@ -69,6 +69,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 相手監督の采配(性格・陣形の変更・スペース・交代)を変える | 数値と性格の表は `TUNING.coach`、仕組みは `engine.js` の `coachStep` / `coachMove` / `setShape` / `coachAim` / `coachTacSub`、性格は `persOfClub`。実況は `main.js` の `shape` → `enginetest.js` の ⑭。正本は docs/13 |
 | 試合の描画で、ボールを持たない選手の動き(ゆらぎ・走り込み・寄せ・遅れ)を変える | `render.js` の `offBallGoal` / `drawFrame` と `TUNING.view.mv`(見た目だけ。結果に触れない)。正本は docs/07 §7.15 |
 | サイド攻撃・流れの中のクロスを変える | 数値は `TUNING.ins` の `flank*` と `TUNING.shot` の `xc*`、仕組みは `engine.js` の1ステップ(サイドの守備の厚さ・`M.ball.cross` / `xk`)と `shoot` の `xk`。正本は docs/02 §2.15 |
+| タイトルのロゴ(オーナーが作ったもの)を差し替える | `assets/logo_src.png` を置き換え → `python tools/gen_logo.py` → `src/js/logo-img.js`(生成物)と `assets/logo_white.png` / `logo_black.png`。タイトルは `scenes.js` の `sceneTitle`。正本は docs/14 §14.17 |
 | ロゴ(スラッシュ・ボール)を変える | `src/js/logo.js` の `ballMarkSvg` / `logoSvg` / `logoMarkSvg`(タイトル・看板・結果の透かし)、アイコンは `build.py` の `_png`。正本は docs/14 §14.8 |
 | レーダー・適性の色・カードの裏を変える | `src/js/cardback.js`(`radarSvg` / `teamAxes` / `aptZones` / `aptOverlaySvg` / `aptMapSvg` / `cardBackHtml`)と theme.css の「適性の色・レーダー・カードの裏」。正本は docs/14 §14.14 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・引っ張って入れ替え)/ `sqSwap`、`pool.js` の `fillLayout` / `setForm` / `moveSquad` / `autoSquad`(最適配置)。正本は docs/07 §7.10・docs/14 §14.12 |

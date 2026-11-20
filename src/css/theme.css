@@ -1249,3 +1249,12 @@ body.th-bk{
 /* VS を挟んで左右にレーダー */
 #scene .vs-mid .vs-mark{font-size:64px;flex:0 0 auto;margin:0 -4px}
 #scene .vs-mid .vs-radar{width:auto;flex:1;max-width:160px}
+/* ---- タイトル: オーナーが作ったロゴ(白黒反転の版。→docs/14 §14.17) ---- */
+#scene .logo .lg-img{display:block;width:min(68vw,270px);height:auto;filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));animation:lgIn .9s .1s cubic-bezier(.2,.9,.3,1.1) both}
+@keyframes lgIn{from{opacity:0;transform:scale(.82) rotate(-25deg)}}
+@media (prefers-reduced-motion:reduce){#scene .logo .lg-img{animation:none}}
+/* ボールの後ろに暗い円(赤い帯が透けないように)。位置は画像の中のボール(中心 50.7% / 31.4%、幅 62.9%) */
+#scene .logo .lg-wrap{position:relative;display:inline-block}
+#scene .logo .lg-wrap::before{content:"";position:absolute;left:50.7%;top:31.4%;width:61%;aspect-ratio:1;border-radius:50%;background:#0c0e13;
+  transform:translate(-50%,-50%);animation:lgIn .9s .1s cubic-bezier(.2,.9,.3,1.1) both}
+#scene .logo .lg-img{position:relative}
