@@ -1258,3 +1258,7 @@ body.th-bk{
 #scene .logo .lg-wrap::before{content:"";position:absolute;left:50.7%;top:31.4%;width:61%;aspect-ratio:1;border-radius:50%;background:#0c0e13;
   transform:translate(-50%,-50%);animation:lgIn .9s .1s cubic-bezier(.2,.9,.3,1.1) both}
 #scene .logo .lg-img{position:relative}
+#scene .logo .lg-wrap.lt::before{background:var(--t-paper)}
+#scene .logo .lg-wrap.lt .lg-img{filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
+/* 白 × レッドのタイトルは明るい地なので、TOUCH は赤 */
+body.th-wr:not(.th-bk) .sc-title .touch{color:var(--t-sub);text-shadow:none}

@@ -42,11 +42,13 @@ function emblemSvg(team,size){
 }
 
 /* ---- タイトル ---- */
+/** 明るい地のテーマ(白 × レッド)か。そのときロゴは反転前の黒い線の版(→docs/14 §14.17) */
+const logoLight=()=>document.body.classList.contains("th-wr")&&!document.body.classList.contains("th-bk");
 function sceneTitle(onStart){
   const S=CL.S, sub=S?"第"+S.term+"任期 ・ "+S.played+"/"+TUNING.club.termLen+" 試合":"";
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
-    '<div class="logo">'+(typeof LOGO_IMG!=="undefined"?'<span class="lg-wrap"><img class="lg-img" src="'+LOGO_IMG.white+'" alt="WCC/F"></span>':logoSvg(true))+'</div>'+   // オーナーが作ったロゴ(白黒反転の版。→docs/14 §14.17)
+    '<div class="logo">'+(typeof LOGO_IMG!=="undefined"?'<span class="lg-wrap'+(logoLight()?' lt':'')+'"><img class="lg-img" src="'+(logoLight()?LOGO_IMG.black:LOGO_IMG.white)+'" alt="WCC/F"></span>':logoSvg(true))+'</div>'+   // オーナーが作ったロゴ(白黒反転の版。→docs/14 §14.17)
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',

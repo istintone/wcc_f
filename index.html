@@ -1835,6 +1835,10 @@ body.th-bk{
 #scene .logo .lg-wrap::before{content:"";position:absolute;left:50.7%;top:31.4%;width:61%;aspect-ratio:1;border-radius:50%;background:#0c0e13;
   transform:translate(-50%,-50%);animation:lgIn .9s .1s cubic-bezier(.2,.9,.3,1.1) both}
 #scene .logo .lg-img{position:relative}
+#scene .logo .lg-wrap.lt::before{background:var(--t-paper)}
+#scene .logo .lg-wrap.lt .lg-img{filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
+/* 白 × レッドのタイトルは明るい地なので、TOUCH は赤 */
+body.th-wr:not(.th-bk) .sc-title .touch{color:var(--t-sub);text-shadow:none}
 </style>
 </head>
 <body>
@@ -8912,11 +8916,13 @@ function emblemSvg(team,size){
 }
 
 /* ---- タイトル ---- */
+/** 明るい地のテーマ(白 × レッド)か。そのときロゴは反転前の黒い線の版(→docs/14 §14.17) */
+const logoLight=()=>document.body.classList.contains("th-wr")&&!document.body.classList.contains("th-bk");
 function sceneTitle(onStart){
   const S=CL.S, sub=S?"第"+S.term+"任期 ・ "+S.played+"/"+TUNING.club.termLen+" 試合":"";
   sceneShow("sc-title",
     '<div class="beams"><i></i><i></i><i></i><i></i></div>'+
-    '<div class="logo">'+(typeof LOGO_IMG!=="undefined"?'<span class="lg-wrap"><img class="lg-img" src="'+LOGO_IMG.white+'" alt="WCC/F"></span>':logoSvg(true))+'</div>'+   // オーナーが作ったロゴ(白黒反転の版。→docs/14 §14.17)
+    '<div class="logo">'+(typeof LOGO_IMG!=="undefined"?'<span class="lg-wrap'+(logoLight()?' lt':'')+'"><img class="lg-img" src="'+(logoLight()?LOGO_IMG.black:LOGO_IMG.white)+'" alt="WCC/F"></span>':logoSvg(true))+'</div>'+   // オーナーが作ったロゴ(白黒反転の版。→docs/14 §14.17)
     '<div class="club">'+emblemSvg(myTeam(CL.S),46)+'<div><b>'+myTeam(CL.S).name+'</b><small>'+sub+'</small></div></div>'+
     '<div class="touch">TOUCH TO START</div>'+
     '<button class="snd" data-sc="snd">'+(SND.on?"🔊 音あり":"🔇 音なし")+'</button>',
