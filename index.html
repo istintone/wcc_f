@@ -2249,6 +2249,9 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .sqc.cmx{width:50px}
 #club .cm-board .sq-bench .sqc.cmx{width:100%}
 #club .cm-pitch .pm.ga{display:block}
+/* 盤面を大きく: ピッチは控えの列を除いた幅いっぱい(比率は SQUAD と同じ 100:150) */
+#club .cm-board .cm-pitch{width:calc(100% - 58px)}
+#club .cm-board .sqc.cmx{width:56px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
