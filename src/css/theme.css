@@ -1574,13 +1574,7 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .tr-fx{margin-top:6px;padding-top:4px}
 #club .tr-fx .tf-cap{margin:0 0 2px}
 #club .tr-fx .cm-board{margin:2px 0 0}
-#club .tr-fx .cm-pitch{aspect-ratio:100/80}
-#club .tr-fx .cmt{width:56px;padding-bottom:1px}
-#club .tr-fx .cmt .rl{font-size:8px;padding:0}
-#club .tr-fx .cmt .no{font-size:12px;line-height:1.1}
-#club .tr-fx .cmt .nm{font-size:8px}
 #club .tr-fx .cm-bench{gap:3px;margin-top:3px}
-#club .tr-fx .cm-bench .cmt{flex:0 0 56px}
 #club .cl-main.prep .step-h{margin-bottom:4px} #club .cl-main.prep .step-h small{font-size:10.5px}
 #club .cl-main.prep .ints{margin-bottom:2px}
 #club .cl-main.prep .ints+.dim{margin:2px 0 6px;font-size:11px}
@@ -1588,13 +1582,33 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .trs.one .tr b{font-size:12.5px;white-space:nowrap}
 #club .trs.one .tr small{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 #club .trs.one .tr small{max-width:55%}
-#club .tr-fx .cm-pitch{aspect-ratio:100/62}
-#club .tr-fx .cmt .nm{display:none}
-#club .tr-fx .cmt .no{font-size:11.5px}
-#club .tr-fx .cmt small{font-size:8.5px}
 #club .trs.one .tr{height:28px}
-#club .tr-fx .cm-pitch{aspect-ratio:100/56}
 #club .tr-top .tf-chips span{font-family:var(--f-num);font-weight:800}
 #club .tr-top .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-top .tf-chips span.dn{background:#5b6170;color:#fff}
 #club .cl-main.prep .step-h small b{font-family:var(--f-num)}
 #club .cl-main.prep .step-h small b{display:inline;font-size:11.5px;font-weight:800}
+/* ---- チーム練習: 候補は名前だけで2列、効きはグラフの軸名を光らせて見せる(→docs/14 §14.35) ---- */
+#club .trs.two{display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start}
+#club .trs.two .tr{display:flex;align-items:center;justify-content:center;height:40px;min-height:0;padding:0 4px;text-align:center}
+#club .trs.two .tr b{font-size:12.5px;line-height:1.15}
+.radar text.hu{fill:#d99a00;filter:drop-shadow(0 0 2.5px rgba(255,200,40,1));font-weight:900}
+.radar text.hd{fill:#7d8494}
+body.th-bk .radar text.hu,.th-navy .radar text.hu{fill:#ffcf3a}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}
+#club .tr-top{grid-template-columns:118px minmax(0,1fr)}
+#club .tr-top .tf-radar{width:118px}
+#club .tr-right{display:flex;flex-direction:column;gap:5px;min-width:0}
+#club .tr-right .trs.two .tr{height:36px}
+#club .tr-right .tf-chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:11px}
+#club .tr-right .tf-chips span{font-family:var(--f-num);font-weight:800;padding:1px 6px;font-size:11.5px}
+#club .tr-right .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-right .tf-chips span.dn{background:#5b6170;color:#fff}
+#club .tr-right .tf-chips span.dim,#club .tr-right .tf-chips .tf-leg{font-family:inherit;font-weight:500;background:none;padding:0;font-size:10px;display:inline-flex;align-items:center;gap:4px}
+#club .tr-right .tf-fit{display:inline-block;width:10px;height:10px;outline:2px solid var(--t-gold2,#f2c14e);box-shadow:0 0 5px rgba(242,193,78,.9)}
+#club .step-h.one{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+#club .step-h.one>small{margin:0}
+#club .tr-fx{margin-top:4px;padding-top:0;border-top:0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/86}
+#club .step-h.one{flex-direction:row;align-items:baseline}
+#club .step-h.one>b{font-size:18px}
+#club .cl-main.prep .ints .tab{padding-top:4px;padding-bottom:4px;min-height:0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}

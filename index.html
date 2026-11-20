@@ -2156,13 +2156,7 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .tr-fx{margin-top:6px;padding-top:4px}
 #club .tr-fx .tf-cap{margin:0 0 2px}
 #club .tr-fx .cm-board{margin:2px 0 0}
-#club .tr-fx .cm-pitch{aspect-ratio:100/80}
-#club .tr-fx .cmt{width:56px;padding-bottom:1px}
-#club .tr-fx .cmt .rl{font-size:8px;padding:0}
-#club .tr-fx .cmt .no{font-size:12px;line-height:1.1}
-#club .tr-fx .cmt .nm{font-size:8px}
 #club .tr-fx .cm-bench{gap:3px;margin-top:3px}
-#club .tr-fx .cm-bench .cmt{flex:0 0 56px}
 #club .cl-main.prep .step-h{margin-bottom:4px} #club .cl-main.prep .step-h small{font-size:10.5px}
 #club .cl-main.prep .ints{margin-bottom:2px}
 #club .cl-main.prep .ints+.dim{margin:2px 0 6px;font-size:11px}
@@ -2170,16 +2164,36 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .trs.one .tr b{font-size:12.5px;white-space:nowrap}
 #club .trs.one .tr small{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 #club .trs.one .tr small{max-width:55%}
-#club .tr-fx .cm-pitch{aspect-ratio:100/62}
-#club .tr-fx .cmt .nm{display:none}
-#club .tr-fx .cmt .no{font-size:11.5px}
-#club .tr-fx .cmt small{font-size:8.5px}
 #club .trs.one .tr{height:28px}
-#club .tr-fx .cm-pitch{aspect-ratio:100/56}
 #club .tr-top .tf-chips span{font-family:var(--f-num);font-weight:800}
 #club .tr-top .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-top .tf-chips span.dn{background:#5b6170;color:#fff}
 #club .cl-main.prep .step-h small b{font-family:var(--f-num)}
 #club .cl-main.prep .step-h small b{display:inline;font-size:11.5px;font-weight:800}
+/* ---- チーム練習: 候補は名前だけで2列、効きはグラフの軸名を光らせて見せる(→docs/14 §14.35) ---- */
+#club .trs.two{display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start}
+#club .trs.two .tr{display:flex;align-items:center;justify-content:center;height:40px;min-height:0;padding:0 4px;text-align:center}
+#club .trs.two .tr b{font-size:12.5px;line-height:1.15}
+.radar text.hu{fill:#d99a00;filter:drop-shadow(0 0 2.5px rgba(255,200,40,1));font-weight:900}
+.radar text.hd{fill:#7d8494}
+body.th-bk .radar text.hu,.th-navy .radar text.hu{fill:#ffcf3a}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}
+#club .tr-top{grid-template-columns:118px minmax(0,1fr)}
+#club .tr-top .tf-radar{width:118px}
+#club .tr-right{display:flex;flex-direction:column;gap:5px;min-width:0}
+#club .tr-right .trs.two .tr{height:36px}
+#club .tr-right .tf-chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:11px}
+#club .tr-right .tf-chips span{font-family:var(--f-num);font-weight:800;padding:1px 6px;font-size:11.5px}
+#club .tr-right .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-right .tf-chips span.dn{background:#5b6170;color:#fff}
+#club .tr-right .tf-chips span.dim,#club .tr-right .tf-chips .tf-leg{font-family:inherit;font-weight:500;background:none;padding:0;font-size:10px;display:inline-flex;align-items:center;gap:4px}
+#club .tr-right .tf-fit{display:inline-block;width:10px;height:10px;outline:2px solid var(--t-gold2,#f2c14e);box-shadow:0 0 5px rgba(242,193,78,.9)}
+#club .step-h.one{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+#club .step-h.one>small{margin:0}
+#club .tr-fx{margin-top:4px;padding-top:0;border-top:0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/86}
+#club .step-h.one{flex-direction:row;align-items:baseline}
+#club .step-h.one>b{font-size:18px}
+#club .cl-main.prep .ints .tab{padding-top:4px;padding-bottom:4px;min-height:0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8008,7 +8022,7 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.hl&&opts.hl[a]?'class="h'+opts.hl[a]+'"':opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
 /** チームの戦力の6軸を 0〜1 に(先発の能力の上位6人の平均)。cards … 先発11人のカード */
@@ -8760,22 +8774,24 @@ function trainEffectHtml(part){
     const x=pv.pl[id]||{ ind:0, sp:0 };
     return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
   // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
-  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, cls:"tf-radar" })+'<div class="tf-chips"><b>成長グラフ</b>'+chips+'</div></div>';
+  const hl={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; });
+  // part="graph" … 候補の左のグラフ / "chips" … 候補の下の変わる軸と凡例 / それ以外 … 盤面(→docs/14 §14.35)
+  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, cls:"tf-radar" })+'</div>';
+  if(part==="chips")return '<div class="tf-chips">'+chips+(pv?'<span class="tf-leg"><i class="tf-fit"></i>よく伸びる選手</span>':'')+'</div>';
   return '<section class="tr-fx">'+
-    '<p class="tf-cap">'+(pv?'<i class="tf-fit"></i>得意な練習でよく伸びる選手 ・ 札は個人(特殊)能力の進みの増え':'札はいまの個人能力の★と進み')+'</p>'+
     commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
 }
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが疲れる ・ いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
+  return '<div class="step-h one"><b>チーム練習</b><small>強いほど伸びるが疲れる ・ 疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
-      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="trs one">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div></div>'+trainEffectHtml());
+      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div>'+trainEffectHtml("chips")+'</div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */

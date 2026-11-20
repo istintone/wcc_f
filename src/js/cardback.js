@@ -61,7 +61,7 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.hl&&opts.hl[a]?'class="h'+opts.hl[a]+'"':opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
 /** チームの戦力の6軸を 0〜1 に(先発の能力の上位6人の平均)。cards … 先発11人のカード */

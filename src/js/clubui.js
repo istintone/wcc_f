@@ -171,22 +171,24 @@ function trainEffectHtml(part){
     const x=pv.pl[id]||{ ind:0, sp:0 };
     return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
   // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
-  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, cls:"tf-radar" })+'<div class="tf-chips"><b>成長グラフ</b>'+chips+'</div></div>';
+  const hl={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; });
+  // part="graph" … 候補の左のグラフ / "chips" … 候補の下の変わる軸と凡例 / それ以外 … 盤面(→docs/14 §14.35)
+  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, cls:"tf-radar" })+'</div>';
+  if(part==="chips")return '<div class="tf-chips">'+chips+(pv?'<span class="tf-leg"><i class="tf-fit"></i>よく伸びる選手</span>':'')+'</div>';
   return '<section class="tr-fx">'+
-    '<p class="tf-cap">'+(pv?'<i class="tf-fit"></i>得意な練習でよく伸びる選手 ・ 札は個人(特殊)能力の進みの増え':'札はいまの個人能力の★と進み')+'</p>'+
     commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
 }
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが疲れる ・ いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
+  return '<div class="step-h one"><b>チーム練習</b><small>強いほど伸びるが疲れる ・ 疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
-      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="trs one">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div></div>'+trainEffectHtml());
+      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div>'+trainEffectHtml("chips")+'</div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
