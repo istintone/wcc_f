@@ -292,7 +292,7 @@ function prepHtml(){
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+(st==="train"||CL.strat?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
+    '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
