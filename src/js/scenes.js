@@ -188,13 +188,70 @@ function lockerSay(sp,res){
   const list=LOCKER_VOICE[k]||LOCKER_VOICE.mvpD, S=CL.S;
   return list[hashStr("lk:"+S.term+":"+S.played+":"+sp.id)%list.length];
 }
+/**
+ * ロッカールームの背景(→docs/14 §14.23)。天井の照明と光の筋 / チームの色の帯 / 6つのロッカー(上は開いた棚にユニフォーム、下は扉)/
+ * 木のベンチ / 奥へ伸びる線の床。ユニフォームはチームの色、背番号は先発から。画面に合わせて切り取る(slice)
+ */
+function lockerRoomSvg(col,nos){
+  const m=/^#?([0-9a-f]{6})$/i.exec(col||""), n=m?parseInt(m[1],16):0x1d5fbf;
+  const ink=((n>>16)&255)*0.299+((n>>8)&255)*0.587+(n&255)*0.114>150?"#111":"#fff";
+  const W=62, G=3, X0=(390-(6*W+5*G))/2, TOP=86;
+  const jersey=(cx,t,no)=>
+    '<path d="M'+(cx-16)+' '+(t+4)+'L'+cx+' '+(t-5)+'L'+(cx+16)+' '+(t+4)+'" fill="none" stroke="#9aa1ad" stroke-width="1.6"/>'+
+    '<path d="M'+cx+' '+(t-5)+'v-5a3 3 0 1 1 3-3" fill="none" stroke="#9aa1ad" stroke-width="1.4"/>'+
+    '<path d="M'+(cx-8)+' '+t+'L'+(cx-20)+' '+(t+6)+'L'+(cx-27)+' '+(t+29)+'L'+(cx-19)+' '+(t+35)+'L'+(cx-18)+' '+(t+106)+'L'+(cx+18)+' '+(t+106)+'L'+(cx+19)+' '+(t+35)+
+      'L'+(cx+27)+' '+(t+29)+'L'+(cx+20)+' '+(t+6)+'L'+(cx+8)+' '+t+'Q'+cx+' '+(t+9)+' '+(cx-8)+' '+t+'z" fill="'+col+'" stroke="rgba(0,0,0,.45)" stroke-width="1"/>'+
+    '<path d="M'+(cx-8)+' '+t+'Q'+cx+' '+(t+9)+' '+(cx+8)+' '+t+'" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2"/>'+
+    '<rect x="'+(cx-18)+'" y="'+t+'" width="36" height="106" fill="url(#lkShine)"/>'+
+    '<text x="'+cx+'" y="'+(t+66)+'" text-anchor="middle" font-family="Barlow Condensed,Oswald,sans-serif" font-weight="800" font-size="28" fill="'+ink+'">'+no+'</text>';
+  let lk='';
+  for(let i=0;i<6;i++){
+    const x=X0+i*(W+G), cx=x+W/2;
+    lk+='<g><rect x="'+x+'" y="'+TOP+'" width="'+W+'" height="452" fill="url(#lkSteel)" stroke="#07080b"/>'+
+      '<rect x="'+(x+9)+'" y="'+(TOP+8)+'" width="'+(W-18)+'" height="13" fill="#e8ebf0"/>'+
+      '<text x="'+cx+'" y="'+(TOP+18.5)+'" text-anchor="middle" font-family="Barlow Condensed,Oswald,sans-serif" font-weight="800" font-size="11" fill="#111">'+(nos[i]!=null?nos[i]:"")+'</text>'+
+      '<rect x="'+(x+4)+'" y="'+(TOP+28)+'" width="'+(W-8)+'" height="172" fill="url(#lkIn)"/>'+
+      '<rect x="'+(x+4)+'" y="'+(TOP+28)+'" width="'+(W-8)+'" height="3" fill="#000" fill-opacity=".6"/>'+
+      jersey(cx,TOP+52,nos[i]!=null?nos[i]:"")+
+      '<rect x="'+(x+3)+'" y="'+(TOP+200)+'" width="'+(W-6)+'" height="5" fill="#3b414c"/>'+
+      '<rect x="'+(x+4)+'" y="'+(TOP+208)+'" width="'+(W-8)+'" height="238" fill="url(#lkDoor)"/>'+
+      [0,1,2,3,4].map(k=>'<rect x="'+(cx-15)+'" y="'+(TOP+220+k*6)+'" width="30" height="2.5" rx="1" fill="#07080b" fill-opacity=".75"/>').join("")+
+      '<rect x="'+(x+W-12)+'" y="'+(TOP+300)+'" width="3.5" height="30" rx="1.5" fill="#b9c0cc"/></g>';
+  }
+  const lamps=[50,195,340].map(x=>'<polygon points="'+(x-34)+',30 '+(x+34)+',30 '+(x+120)+',600 '+(x-120)+',600" fill="url(#lkBeam)"/>'+
+    '<rect x="'+(x-36)+'" y="26" width="72" height="5" rx="2" fill="#fff6dc"/><rect x="'+(x-50)+'" y="20" width="100" height="16" fill="url(#lkLamp)"/>').join("");
+  const floor=[-260,-90,80,195,310,480,650].map(x=>'<line x1="195" y1="560" x2="'+x+'" y2="780" stroke="#fff" stroke-opacity=".05"/>').join("");
+  return '<svg viewBox="0 0 390 780" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><defs>'+
+    '<linearGradient id="lkWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b1f27"/><stop offset="1" stop-color="#0d0f14"/></linearGradient>'+
+    '<linearGradient id="lkSteel" x1="0" x2="1"><stop offset="0" stop-color="#2b3039"/><stop offset=".5" stop-color="#3a404b"/><stop offset="1" stop-color="#262a32"/></linearGradient>'+
+    '<linearGradient id="lkDoor" x1="0" x2="1"><stop offset="0" stop-color="#323844"/><stop offset=".45" stop-color="#454c59"/><stop offset="1" stop-color="#2c313b"/></linearGradient>'+
+    '<linearGradient id="lkIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05060a"/><stop offset="1" stop-color="#14171d"/></linearGradient>'+
+    '<linearGradient id="lkShine" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#fff" stop-opacity=".16"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>'+
+    '<linearGradient id="lkBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4d6" stop-opacity=".16"/><stop offset="1" stop-color="#fff4d6" stop-opacity="0"/></linearGradient>'+
+    '<radialGradient id="lkLamp"><stop offset="0" stop-color="#fff6dc" stop-opacity=".55"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient>'+
+    '<linearGradient id="lkWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b07a46"/><stop offset="1" stop-color="#6e4524"/></linearGradient>'+
+    '<linearGradient id="lkFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1d24"/><stop offset="1" stop-color="#06070a"/></linearGradient>'+
+    '<radialGradient id="lkVig" cx=".5" cy=".42" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".7"/></radialGradient>'+
+    '</defs><rect width="390" height="780" fill="url(#lkWall)"/>'+
+    '<rect y="0" width="390" height="40" fill="#08090c"/>'+
+    '<rect y="'+(TOP-14)+'" width="390" height="8" fill="'+col+'"/><rect y="'+(TOP-6)+'" width="390" height="2" fill="#fff" fill-opacity=".7"/>'+
+    lk+'<rect y="'+(TOP+452)+'" width="390" height="22" fill="#0a0b0f"/>'+
+    '<rect y="560" width="390" height="220" fill="url(#lkFloor)"/>'+floor+
+    '<rect y="600" width="390" height="3" fill="'+col+'" fill-opacity=".6"/>'+
+    '<rect x="14" y="580" width="12" height="44" fill="#2a2016"/><rect x="364" y="580" width="12" height="44" fill="#2a2016"/><rect x="190" y="580" width="10" height="44" fill="#2a2016"/>'+
+    '<rect x="6" y="560" width="378" height="16" rx="2" fill="url(#lkWood)"/><rect x="6" y="574" width="378" height="6" fill="#4a2e17"/>'+
+    lamps+'<rect width="390" height="780" fill="url(#lkVig)"/></svg>';
+}
 function sceneLocker(M,last,RT,go){
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M);
   const gl0=last&&last.gl||[], gset=new Set(gl0);
   const rl=(last&&last.lines||[]).filter(x=>!/^カード:/.test(x)&&!gset.has(x));
   const sps=lockerSpeakers(last,RT), said=new Set(sps.map(sp=>sp.line));
   const gl=gl0.filter(x=>!said.has(x));                // 吹き出しで話した知らせは繰り返さない
+  const nos=(CL.S&&CL.S.sq||[]).slice(0,11).map(id=>CARDS[id]&&CARDS[id].no).filter(x=>x!=null);
+  const room=[0,1,2,3,4,5].map(i=>nos[(i*2+1)%Math.max(1,nos.length)]);         // 先発から6人(散らして選ぶ)
   sceneShow("sc-lock",
+    '<div class="lk-room">'+lockerRoomSvg(teamColor(H),nos.length?room:[])+'</div>'+
     '<div class="lk-head"><b>LOCKER ROOM</b><small>'+H.short+' '+H.score+' - '+A.score+' '+A.short+(pso?' (PK '+pso[0]+'-'+pso[1]+')':'')+'</small></div>'+
     '<div class="lk-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+secOf(CL.S).name+'</b><p>'+secSay(CL.S,res.toLowerCase())+'</p>'+
       (rl.length?'<ul>'+rl.map(x=>'<li>'+x+'</li>').join("")+'</ul>':'')+'</div></div>'+
