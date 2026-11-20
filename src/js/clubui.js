@@ -99,15 +99,13 @@ function chipsHtml(ids,on,info,act){
 function commBoardHtml(ids,on,info){
   const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
   const first=CL.comm==="lounge"&&on.length?on[0]:null;   // ラウンジで1人目を選んだら、その人との線と前兆だけを見せる(→docs/07 §7.14)
-  const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
-    return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+(g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
-      '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
-      ((first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm))?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
-      '<small>'+info(g,id)+'</small></button>'; };
+  const o=id=>{ const g=S.g.pl[id];
+    return { act:"pick", info:info(g,id), hi:on.includes(id), sign:first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm) }; };
+  const bench=S.sq.slice(11).filter(id=>ids.includes(id));
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     (first&&L[first]&&xi.includes(first)?loungeLinksSvg(first,xi.filter(id=>ids.includes(id)),L):'')+
-    xi.filter(id=>ids.includes(id)).map(id=>{ const l=L[id], p=sqPos(l[0],l[1]); return tok(id,' style="left:'+p.l.toFixed(1)+'%;top:'+p.t.toFixed(1)+'%"'); }).join("")+
-    '</div><div class="cm-bench">'+S.sq.slice(11).filter(id=>ids.includes(id)).map(id=>tok(id)).join("")+'</div></div>';
+    xi.filter(id=>ids.includes(id)).map(id=>sqTokenHtml(id,xi.indexOf(id),true,o(id))).join("")+'</div>'+
+    '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+bench.map(id=>sqTokenHtml(id,S.sq.indexOf(id),false,o(id))).join("")+'</div></div>';
 }
 /**
  * ラウンジの1人目と、盤面のほかの選手との連携の線。線なしは淡い点線、薄線・太線・黄金線は SQUAD と同じ線、
@@ -299,21 +297,26 @@ function sqRole(id,i,h,x){
   const role=i===0?"GK":roleAt(h,x), a=aptOf(CARDS[id],role);
   return { role, a, cls:aptClass(a), mark:APT_MARK(a) };
 }
-function sqTokenHtml(id,i,on){
+/**
+ * 盤面の札(SQUAD の作り)。o を渡すとコミュニケーション・チーム練習の盤面用(→docs/14 §14.38):
+ *   o = { act:押したときの動き, info:下の段の小さな情報(HTML), hi:光らせる, sign:「！」を付ける }。引っ張りはしない
+ */
+function sqTokenHtml(id,i,on,o){
   const S=CL.S, c=CARDS[id], g=S.g.pl[id], col=cardColor(c);
   let pos="", rl=null;
   if(on){ const l=S.layout[id], p=sqPos(l[0],l[1]); rl=sqRole(id,i,l[0],l[1]);
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
-  return '<div class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+  return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
     (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
-    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+'</div>';
+    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+
+    (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
 function sqLinksSvg(){

@@ -1633,3 +1633,29 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .rest-fx .tf-cap{display:block;font-size:10.5px;margin:0 0 3px}
 #club .rest-fx .cmt small b.fw{color:#d0102f}
 #club .rest-fx .cmt small .mu{font-style:normal;color:#1f9d55;font-weight:900}
+/* ---- コミュニケーション・チーム練習・休憩の盤面を SQUAD の作りに(→docs/14 §14.38): ピッチ + 右に控え。札は SQUAD と同じ(下の段に情報) ---- */
+#club .cm-board{display:grid;grid-template-columns:minmax(0,1fr) 54px;gap:4px;align-items:start;margin:6px 0 4px}
+#club .cm-board .cm-pitch,#club .tr-fx .cm-board .cm-pitch{aspect-ratio:100/112}
+#club .cm-board .sq-bench{flex-direction:column;align-items:stretch;gap:6px;padding:6px 2px;margin:0;overflow:visible}
+#club .cm-board .sq-bench .lbl{writing-mode:horizontal-tb;text-align:center;font-size:9px;font-weight:900;letter-spacing:.1em;color:var(--t-mute)}
+#club .sqc.cmx{width:54px;height:62px;padding:0;border:0;margin:0;font:inherit;text-align:center;cursor:pointer;grid-template-rows:15px 18px 13px 1fr;-webkit-appearance:none;appearance:none}
+#club .cm-board .sq-bench .sqc.cmx{width:100%;height:62px}
+#club .sqc.cmx .nm{grid-row:3;font-size:8.5px}
+#club .sqc.cmx .if{grid-row:4;align-self:center;display:block;padding:0 2px;font-size:8.5px;font-weight:800;line-height:1.1;color:#1d5fbf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sqc.cmx .mt{bottom:auto;top:18px}
+#club .sqc.cmx.on{outline:3px solid var(--t-gold2,#f2c14e);outline-offset:1px;box-shadow:0 0 12px rgba(242,193,78,.9);z-index:3}
+#club .sqc.cmx.inj{opacity:.75}
+#club .sqc.cmx .gs{position:absolute;left:-6px;top:-7px;font-style:normal;font-size:8px;font-weight:900;padding:0 3px;line-height:12px;background:#ffe28a;color:#2a1d00;border-radius:2px}
+#club .tr-fx .sqc{pointer-events:none}
+#club .sqc.cmx .if .tg{color:#1f9d55;font-weight:900}
+#club .rest-fx .sqc.cmx .if b.fw{color:#d0102f}
+#club .rest-fx .sqc.cmx .if .mu{font-style:normal;color:#1f9d55;font-weight:900}
+#club .sqc.cmx,#club .cm-board .sq-bench .sqc.cmx{height:56px;grid-template-rows:14px 17px 12px 1fr}
+#club .sqc.cmx .rl{height:14px;line-height:14px}
+#club .sqc.cmx .no{line-height:17px;font-size:15px}
+#club .sqc.cmx .mt{top:17px}
+#club .tr-right .trs.two .tr{height:44px}
+#club .tr-fx .cm-board .cm-pitch{aspect-ratio:100/108}
+#club .tr-right .trs.two .tr{height:42px}
+#club .tr-top{grid-template-columns:148px minmax(0,1fr)}
+#club .tr-top .tf-radar{width:148px}
