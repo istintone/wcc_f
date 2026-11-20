@@ -48,19 +48,20 @@ function aptMapSvg(card){
 /* ---- 戦力のレーダー(6軸の六角形) ---- */
 const RADAR_AX=["O","R","S","P","C","D"];     // 時計回り(上がオフェンス)
 /**
- * レーダー。sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか
+ * レーダー。線と軸の名前は文字の色(currentColor)。地の明るさは CSS の .radar の color で合わせる
+ * sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか
  */
 function radarSvg(sets,opts){
   opts=opts||{};
   const R=40, cx=50, cy=50, pt=(i,r)=>{ const a=-Math.PI/2+i*Math.PI/3; return [cx+Math.cos(a)*r,cy+Math.sin(a)*r]; };
   const ring=k=>RADAR_AX.map((_,i)=>pt(i,R*k).map(n=>n.toFixed(1)).join(",")).join(" ");
-  let g='<g fill="none" stroke="rgba(255,255,255,.18)" stroke-width=".6">'+[1,0.75,0.5,0.25].map(k=>'<polygon points="'+ring(k)+'"/>').join("")+
+  let g='<g class="rd-grid" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width=".6">'+[1,0.75,0.5,0.25].map(k=>'<polygon points="'+ring(k)+'"/>').join("")+
     RADAR_AX.map((_,i)=>{ const p=pt(i,R); return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>'; }).join("")+'</g>';
   for(const s of sets){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="#dfe3ea">'+AXIS_LABEL[a].slice(0,opts.short?2:9)+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_LABEL[a].slice(0,opts.short?2:9)+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
 /** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */

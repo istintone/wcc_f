@@ -319,7 +319,7 @@ body.th-bk #club .cf{box-shadow:0 0 0 2px rgba(255,255,255,.22),0 0 14px rgba(25
 body.th-bk #club .cm small{color:var(--n-ink2);letter-spacing:.04em}
 body.th-bk #club .cm p{border-radius:0;background:linear-gradient(180deg,#f6f7fb,#e3e7f0);color:#11131a;
   clip-path:polygon(9px 0,100% 0,100% 100%,0 100%,0 9px)}
-body.th-bk #club .cm.sec p{background:linear-gradient(180deg,#f1ecff,#ddd3fa)}
+body.th-bk #club .cm.csec p{background:linear-gradient(180deg,#f1ecff,#ddd3fa)}
 body.th-bk #club .cm.me p{border-radius:0;background:linear-gradient(180deg,#ffe7a0,var(--n-gold) 60%,#e2a93a);
   clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,0 100%)}
 body.th-bk #club .cn{border-radius:0;background:none;color:var(--n-ink2);padding:2px 14px;
@@ -343,3 +343,11 @@ body.th-bk #cap .cap-bar{border-radius:0} body.th-bk #cap .cap-bar u{background:
 
 /* ---- 取り返しのつかない操作(最初からやり直す など)は赤の縁で区別 ---- */
 body.th-bk #club .set [data-act="reset"],body.th-bk #club .set .danger{color:#ff8fa3;border-color:var(--n-red)}
+
+/* ---- トロフィーの棚(暗い地): 棚の線を光らせ、取っていないものは白い影 ---- */
+body.th-bk #club .tro-grid{background:repeating-linear-gradient(180deg,transparent 0 80px,rgba(255,42,80,.35) 80px 81px,transparent 81px 92px)}
+body.th-bk #club .tro-ic.off{color:#fff;opacity:.12}
+body.th-bk #club .tro b{color:var(--n-gold);text-shadow:0 0 8px rgba(255,209,102,.5)}
+body.th-bk #club .tro i{background:var(--n-red);box-shadow:var(--n-glow)}
+
+body.th-bk #club .tro small{font-size:10px}

@@ -139,7 +139,7 @@ function trainStepHtml(){
 const chatFace=id=>{ const c=CARDS[id], src=c&&typeof artSrc==="function"?artSrc(c,"stand"):null;
   return '<i class="cf pl">'+(src?'<img src="'+src+'" alt="">':'<b>'+(c?c.no:"")+'</b>')+'</i>'; };
 const chatPl=(id,t,first)=>'<div class="cm pl'+(first?' first':'')+'">'+(first?chatFace(id):'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+cname(id)+'</small>':'')+'<p>'+t+'</p></div></div>';
-const chatSec=(t,first)=>'<div class="cm sec'+(first?' first':'')+'">'+(first?'<i class="cf se"></i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
+const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf se"></i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
 const chatMe=t=>'<div class="cm me"><p>'+t+'</p></div>';
 const chatNote=t=>'<div class="cn">'+t+'</div>';
 /** いま開いているやりとり(選手を選んだら)と、答えたあとの結果 */
@@ -918,6 +918,34 @@ function seasonHtml(){
     '</table></section>';
   return h;
 }
+/* ---- トロフィーの棚(→docs/14 §14.20): 全大会のトロフィーを並べ、獲得したものだけ光らせる ---- */
+const TROPHY_ORDER=["ICC","CT","JT","LG","CONTI","CSC","W4","KINGS","NSC","ENT","PRE"];      // 格の高い順
+const TROPHY_SHORT={ ICC:"インターナショナル", CT:"チャンピオンズ", JT:"ジャパン", LG:"リーグ", CONTI:"コンチネンタル", CSC:"コンチネンタルSC",
+  W4:"W4", KINGS:"キングス", NSC:"ナショナルSC", ENT:"エンタープライズ", PRE:"プレシーズン" };
+/** 格ごとの形(S = 取っ手の大杯 / リーグ = 盾の皿 / A = 脚の長い杯 / B = 星 / C = 小杯 / D・E = メダル)と金属の色 */
+function trophyIconSvg(id,won){
+  const g=id==="LG"?"L":COMPS[id].grade, metal=!won?"":g==="S"||g==="L"||g==="A"?"g":g==="B"||g==="C"?"s":"b";
+  const f=won?'url(#tm-'+metal+')':'currentColor', base='<rect x="11" y="40" width="18" height="6" rx="1" fill="'+(won?'#1a1a1a':'currentColor')+'"/>';
+  let body;
+  if(g==="S")body='<path fill="'+f+'" d="M10 4h20v5c0 10-4 16-8 18v7h4l2 5H12l2-5h4v-7c-4-2-8-8-8-18z"/><path fill="none" stroke="'+f+'" stroke-width="2.6" d="M11 8H4c0 7 3 10 8 11M29 8h7c0 7-3 10-8 11"/>';
+  else if(g==="L")body='<circle cx="20" cy="18" r="15" fill="'+f+'"/><circle cx="20" cy="18" r="10" fill="none" stroke="'+(won?'rgba(0,0,0,.25)':'none')+'" stroke-width="1.4"/><path fill="'+f+'" d="M17 32h6l2 8H15z"/>';
+  else if(g==="A")body='<path fill="'+f+'" d="M11 3h18c0 9-3 14-7 15v14h5v6H13v-6h5V18c-4-1-7-6-7-15z"/>';
+  else if(g==="B")body='<path fill="'+f+'" d="M20 2l3.2 6.6 7.2 1-5.2 5 1.3 7.2L20 18.4l-6.5 3.4 1.3-7.2-5.2-5 7.2-1z"/><path fill="'+f+'" d="M18.5 21h3v13h4l1.5 6h-14l1.5-6h4z"/>';
+  else if(g==="C")body='<path fill="'+f+'" d="M11 9h18c0 9-4 13-8 14v9h5l2 6H12l2-6h5v-9c-4-1-8-5-8-14z"/>';
+  else body='<path fill="'+(won?'#c8102e':'currentColor')+'" d="M13 2h6l3 12h-6zM27 2h-6l-3 12h6z"/><circle cx="20" cy="27" r="11" fill="'+f+'"/><path fill="'+(won?'rgba(0,0,0,.28)':'none')+'" d="M20 20.5l2 4.2 4.5.6-3.3 3.1.8 4.5-4-2.1-4 2.1.8-4.5-3.3-3.1 4.5-.6z"/>';
+  return '<svg class="tro-ic'+(won?'':' off')+'" viewBox="0 0 40 48">'+body+(g==="B"||g==="D"||g==="E"?'':base)+'</svg>';
+}
+function trophyShelfHtml(){
+  const S=CL.S, n={}, now={};
+  for(const t of S.titles){ n[t.comp]=(n[t.comp]||0)+1; if(t.term===S.term)now[t.comp]=1; }
+  const kinds=TROPHY_ORDER.filter(id=>n[id]).length;
+  const stop=(o,c)=>'<stop offset="'+o+'" stop-color="'+c+'"/>', grad=(k,cs)=>'<linearGradient id="tm-'+k+'" x1="0" x2="1">'+cs.map((c,i)=>stop(i/(cs.length-1),c)).join("")+'</linearGradient>';
+  return '<section class="card troph"><h3>トロフィー <small>獲得 '+kinds+' / '+TROPHY_ORDER.length+' 種 ・ 通算 '+S.titles.length+' 回</small></h3>'+
+    '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+grad("g",["#8a6414","#ffe9a3","#e2b84a","#7a5510"])+
+      grad("s",["#5d6470","#f4f6fa","#b8bec9","#555c68"])+grad("b",["#5a2f10","#f3c08e","#c07a3e","#5a2f10"])+'</defs></svg>'+
+    '<div class="tro-grid">'+TROPHY_ORDER.map(id=>'<div class="tro'+(n[id]?' won':'')+'" title="'+COMPS[id].name+'">'+trophyIconSvg(id,!!n[id])+
+      '<small>'+TROPHY_SHORT[id]+'</small>'+(n[id]?'<b>×'+n[id]+'</b>':'')+(now[id]?'<i>今期</i>':'')+'</div>').join("")+'</div></section>';
+}
 /** CLUB: この任期の記録・歴代・設定 */
 function clubTabHtml(){
   const S=CL.S, r=S.rec, names=S.titles.filter(t=>t.term===S.term).map(t=>COMPS[t.comp].name);
@@ -926,7 +954,7 @@ function clubTabHtml(){
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p>'+
     '<p class="dim">リーグの格 '+S.grade+' ・ 監督ランク '+S.fac+(S.tset?' ・ セットした称号「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
-    spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
+    trophyShelfHtml()+spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
 }
 function tabbarHtml(){
   const S=CL.S;

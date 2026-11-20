@@ -957,7 +957,7 @@ body.th-bk{
 #club .cm small{display:block;font-size:10px;font-weight:700;color:#dfe6f2;margin:0 0 2px 2px}
 #club .cm p{margin:0;padding:7px 11px;font-size:13px;line-height:1.5;background:#f3ecdd;color:#16130e;border-radius:12px;max-width:270px}
 #club .cm.first p{border-top-left-radius:4px}
-#club .cm.sec p{background:#ece4ff}
+#club .cm.csec p{background:#ece4ff}
 #club .cm.me{justify-content:flex-end} #club .cm.me p{background:linear-gradient(180deg,#ffe28a,#f2c14e);border-radius:12px;border-top-right-radius:4px;font-weight:700}
 #club .cm .dim{color:#5a5f6b;font-size:11.5px} #club .cm .bonus{color:#8a5c06;font-weight:700;font-size:11.5px}
 #club .cn{margin:6px auto;max-width:300px;text-align:center;font-size:11px;color:#dfe6f2;background:rgba(0,0,0,.3);border-radius:10px;padding:3px 10px}
@@ -1261,3 +1261,35 @@ body.th-bk{
 #scene .logo .lg-wrap.lt .lg-img{filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
 /* 白 × レッドのタイトルは明るい地なので、TOUCH は赤 */
 body.th-wr:not(.th-bk) #scene.sc-title .touch{color:var(--t-sub);text-shadow:none}
+
+/* ---- SQUAD の上部: 陣形のプルダウンと最適配置のボタンは同じ高さ(どのテーマでも。→docs/14 §14.20) ---- */
+#club .sq-ctl .sq-formsel,#club .sq-ctl .sq-auto{height:38px!important;min-height:0;margin:0;box-sizing:border-box;line-height:1}
+#club .sq-ctl .sq-auto{display:inline-flex;align-items:center;justify-content:center}
+#club .sq-ctl .sq-formsel{background-position:calc(100% - 15px) 16px,calc(100% - 10px) 16px}
+
+/* ---- 下のメニューの線画のアイコン: どのテーマでも文字と同じ色の線で描く(黒い地で黒く潰れないように) ---- */
+#club .tabbar .ico{width:22px;height:22px;display:block;margin:0 auto 2px}
+#club .tabbar .ico *{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.th-wr #club .tabbar button{color:#a9adb6}
+.th-wr #club .tabbar button.on{color:#fff}
+.th-wr #club .tabbar button.on .ico{color:var(--t-sub3);filter:drop-shadow(0 0 5px rgba(255,80,104,.6))}
+
+/* ---- レーダーの線と軸の名前: 暗い地では明るく、明るい地(白 × レッド)では濃く(→docs/14 §14.20) ---- */
+.radar{color:#dfe3ea}
+body.th-wr:not(.th-bk) .radar{color:#2a2f3a}
+body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
+
+/* ---- トロフィーの棚(CLUB。→docs/14 §14.20): 4つずつ棚に並べる。取ったものは金・銀・銅で光り、回数と「今期」が付く ---- */
+#club .tro-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0 4px;margin-top:2px;
+  background:repeating-linear-gradient(180deg,transparent 0 80px,var(--t-rule) 80px 82px,transparent 82px 92px)}
+#club .tro{position:relative;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12px;text-align:center;min-width:0}
+#club .tro-ic{width:34px;height:41px;overflow:visible}
+#club .tro-ic.off{color:var(--t-ink);opacity:.13}
+#club .tro.won .tro-ic{filter:drop-shadow(0 3px 3px rgba(0,0,0,.3))}
+#club .tro.won::before{content:"";position:absolute;left:50%;top:6px;width:56px;height:56px;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,209,102,.45),rgba(255,209,102,0) 68%);pointer-events:none}
+#club .tro small{display:block;max-width:100%;margin-top:3px;font-size:9.5px;font-weight:700;line-height:1.15;color:var(--t-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .tro.won small{color:var(--t-ink)}
+#club .tro b{position:absolute;right:8%;top:6px;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:13px;color:var(--t-sub)}
+#club .tro i{position:absolute;left:6%;top:6px;padding:0 4px;font-style:normal;font-size:8.5px;font-weight:900;line-height:14px;color:#fff;background:var(--t-sub);transform:skewX(-8deg)}
+

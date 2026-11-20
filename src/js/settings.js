@@ -7,18 +7,20 @@
 
 const PACK_KEY="wcc_f.pack.v1";
 /** テーマ(→docs/07 §7.8)。色は theme.css のトークンで決まる。ここは名前と体のクラスだけ */
-// bk(既定)は th-wr の形をそのまま使い、色の組だけを暗くする(body に th-wr と th-bk の両方を付ける)
-const THEMES={ bk:"ブラック × レッド", wr:"ホワイト × レッド", navy:"ネイビー × ゴールド" };
-const THEME_KEY="wcc_f.theme.v2";            // 既定を bk に変えたので、前の保存(いつも wr が入っている)は読まない
+// 既定は wr(オーナーのイメージに一番近い。→docs/14 §14.20)。bk は th-wr の形をそのまま使い、色の組だけを暗くする(body に th-wr と th-bk の両方を付ける)
+const THEMES={ wr:"ホワイト × レッド", bk:"ブラック × レッド", navy:"ネイビー × ゴールド" };
+const THEME_DEFAULT="wr";
+const THEME_KEY="wcc_f.theme.v3";            // 既定を wr に戻したので、前の保存(起動のたびに bk が書かれていた)は読まない
 function applyTheme(id){
-  if(!THEMES[id])id="bk";
+  if(!THEMES[id])id=THEME_DEFAULT;
   Object.keys(THEMES).forEach(k=>document.body.classList.toggle("th-"+k,k===id));
   if(id==="bk")document.body.classList.add("th-wr");
   if(typeof LOGO_IMG!=="undefined"&&LOGO_IMG.wm)document.body.style.setProperty("--logo-wm",'url("'+LOGO_IMG.wm+'")');   // 監督室の地の透かし(neon.css。→docs/14 §14.19)
-  try{ localStorage.setItem(THEME_KEY,id); }catch(e){}
   return id;
 }
-function storedTheme(){ try{ return localStorage.getItem(THEME_KEY)||"bk"; }catch(e){ return "bk"; } }
+/** 選んだときだけ保存する(起動のたびには書かない。既定を変えたときに前の既定が残らないように) */
+function saveTheme(id){ try{ localStorage.setItem(THEME_KEY,id); }catch(e){} }
+function storedTheme(){ try{ return localStorage.getItem(THEME_KEY)||THEME_DEFAULT; }catch(e){ return THEME_DEFAULT; } }
 
 /** 実名パックの形を確かめる。{ names:{カードid:名前}, teams:{クラブid:{name}} } */
 function checkPack(d){
@@ -101,7 +103,7 @@ function onSettingsClick(act,b){
   const S=CL.S;
   if(act==="sndtoggle"){ sndUnlock(); sndSetOn(!SND.on); showClub(true); return true; }
   if(act==="bgmtoggle"){ sndUnlock(); bgmSetOn(!BGM.on); showClub(true); return true; }
-  if(act==="theme"){ applyTheme(b.dataset.v); showClub(true); return true; }
+  if(act==="theme"){ saveTheme(applyTheme(b.dataset.v)); showClub(true); return true; }
   if(act==="exbad"){
     settingsMsg(saveText("wcc_f-save-unreadable.json",rawBad()||"")?"書き出した: wcc_f-save-unreadable.json":"この端末ではファイルにできなかった");
     return true;
