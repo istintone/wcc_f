@@ -74,6 +74,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | レーダー・適性の色・カードの裏を変える | `src/js/cardback.js`(`radarSvg` / `teamAxes` / `aptZones` / `aptOverlaySvg` / `aptMapSvg` / `cardBackHtml`)と theme.css の「適性の色・レーダー・カードの裏」。正本は docs/14 §14.14 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・引っ張って入れ替え)/ `sqSwap`、`pool.js` の `fillLayout` / `setForm` / `moveSquad` / `autoSquad`(最適配置)。正本は docs/07 §7.10・docs/14 §14.12 |
 | 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
+| 見た目の決まり(ネオンのデザインシステム: 地・パネル・ボタン・タブ・アイコン・書体)を変える | `src/css/neon.css`(既定の th-bk にだけ掛かる。トークンは先頭の `--n-*` と `--fs-*`)、アイコンは `clubui.js` の `TAB_ICON`、書体は build.py の `FONTS`。正本は docs/14 §14.18 |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。**既定は暗い地の `th-bk`**(th-wr の形 + 暗い色の組。白を直に書いた部品は theme.css の末尾で直す)。設計の正本は docs/07 §7.8 |
 | カードの見た目を変える | `clubui.js` の `cardHtml`(構成)と `theme.css` の「カード」(意匠) |
 | 音を変える | `src/js/sound.js`(Web Audio で合成。音声ファイルは持たない)。BGM は末尾の `BGM_TRACKS`(曲)と `bgmPlay`(どこで鳴らすかは `showClub` / `newMatch` / `sceneResult` / タイトル)。正本は docs/14 §14.9 |

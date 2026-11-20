@@ -30,9 +30,14 @@ OUT = ROOT / "index.html"
 # 結合順。data.js は先頭("use strict" を持つ)、main.js は起動の副作用を持つので最後。
 # DOM に触らない8つ(data / trainings / realcards / engine / club / pool / grow / term)は src/tests/_setup.js の ENGINE_FILES と同じ並びにする。
 JS_FILES = ["data.js", "trainings.js", "realcards.js", "rarekp.js", "engine.js", "club.js", "pool.js", "grow.js", "term.js", "emblem-art.js", "emblem.js", "art-players.js", "paper.js", "logo-img.js", "logo.js", "cardback.js", "render.js", "board.js", "clubui.js", "settings.js", "sound.js", "scenes.js", "main.js"]
-CSS_FILES = ["base.css", "theme.css"]
+CSS_FILES = ["base.css", "theme.css", "neon.css"]
 # 埋め込む書体(英数字だけの latin サブセット。日本語はシステムの書体)。Oswald は SIL Open Font License
-FONTS = [("oswald-latin.woff2", "Oswald", "200 700")]
+# (ファイル, 書体名, 太さ, 斜体か)。Barlow Condensed は見出し・数字用(本物の斜体を持つ。OFL。→docs/14 §14.18)
+FONTS = [("oswald-latin.woff2", "Oswald", "200 700", False),
+         ("BarlowCondensed-500.woff2", "Barlow Condensed", "500", False),
+         ("BarlowCondensed-700.woff2", "Barlow Condensed", "700", False),
+         ("BarlowCondensed-700i.woff2", "Barlow Condensed", "700", True),
+         ("BarlowCondensed-800i.woff2", "Barlow Condensed", "800", True)]
 
 
 def _join(sub, names):
@@ -43,14 +48,14 @@ def _font_css():
     """src/assets/fonts の woff2 を base64 で埋め込む(外へ取りに行かない。オフラインで動く)"""
     import base64
     out = []
-    for fname, family, weight in FONTS:
+    for fname, family, weight, italic in FONTS:
         f = SRC / "assets" / "fonts" / fname
         if not f.is_file():
             print("書体が無いので飛ばす:", fname)
             continue
         b64 = base64.b64encode(f.read_bytes()).decode("ascii")
-        out.append("@font-face{font-family:'%s';font-style:normal;font-weight:%s;font-display:swap;"
-                   "src:url(data:font/woff2;base64,%s) format('woff2')}" % (family, weight, b64))
+        out.append("@font-face{font-family:'%s';font-style:%s;font-weight:%s;font-display:swap;"
+                   "src:url(data:font/woff2;base64,%s) format('woff2')}" % (family, "italic" if italic else "normal", weight, b64))
     return "\n".join(out)
 
 

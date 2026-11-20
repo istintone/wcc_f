@@ -1,0 +1,204 @@
+/* =========================================================================
+   wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
+   参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
+     地       … ほぼ黒の紺。右上に赤、左下に金の淡い光。細い斜めの格子と、ロゴのボールのマークのタイル
+     パネル   … 半透明のガラス。角を斜めに落とし、上の縁に細いネオンの線。見出しは左に光る縦線
+     ボタン   … 主 = 角を落としたネオン赤(光をまとう)/ 副 = ネオンの縁取り / タブ = 光る下線
+     書体     … 英字と数字は Barlow Condensed(見出しは斜体)。日本語は端末の標準。大きさは5段
+   ドット絵の選手(カード・試合)には触らない
+   ========================================================================= */
+
+body.th-bk{
+  --n-bg0:#05060b; --n-bg1:#0a0d17; --n-bg2:#111527;
+  --n-glass:rgba(20,24,40,.72); --n-glass2:rgba(12,15,27,.86);
+  --n-line:rgba(255,255,255,.08); --n-line2:rgba(255,255,255,.14);
+  --n-red:#ff2a50; --n-red2:#ff5a7c; --n-red3:#b0102e; --n-gold:#ffd166; --n-cyan:#45e0ff;
+  --n-ink:#f3f5fa; --n-ink2:#c3c9d8; --n-mute:#7f88a0;
+  --n-glow:0 0 18px rgba(255,42,80,.45); --n-glow2:0 0 28px rgba(255,42,80,.35);
+  --n-cut:10px;
+  --fs-xs:10.5px; --fs-s:11.5px; --fs-m:13px; --fs-l:15px; --fs-xl:19px;
+  --f-disp:"Barlow Condensed","Oswald","Arial Narrow",system-ui,sans-serif;
+  --f-jp:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+  /* 既存のトークンもネオンに寄せる */
+  --t-paper:var(--n-bg1); --t-paper2:var(--n-bg2); --t-card:var(--n-glass); --t-rule:var(--n-line2);
+  --t-ink:var(--n-ink); --t-ink2:var(--n-ink2); --t-mute:var(--n-mute);
+  --t-sub:var(--n-red); --t-sub2:var(--n-red3); --t-sub3:var(--n-red2); --t-gold:#e8b13d; --t-gold2:var(--n-gold);
+  font-family:var(--f-jp);
+}
+
+/* ---- 地: 光・斜めの格子・ロゴのタイル ---- */
+body.th-bk #club{
+  background:
+    radial-gradient(80% 38% at 100% 0%,rgba(255,42,80,.20),transparent 70%),
+    radial-gradient(70% 30% at 0% 100%,rgba(255,209,102,.08),transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.035'%3E%3Ccircle cx='40' cy='40' r='22'/%3E%3Cpath d='M40 27l12 9-5 14H33l-5-14z'/%3E%3Ccircle cx='120' cy='120' r='22'/%3E%3Cpath d='M120 107l12 9-5 14h-14l-5-14z'/%3E%3C/g%3E%3C/svg%3E"),
+    repeating-linear-gradient(120deg,rgba(255,255,255,.022) 0 1px,transparent 1px 26px),
+    repeating-linear-gradient(60deg,rgba(255,255,255,.016) 0 1px,transparent 1px 26px),
+    linear-gradient(180deg,var(--n-bg1),var(--n-bg0));
+  background-attachment:fixed;color:var(--n-ink);font-family:var(--f-jp)}
+
+/* ---- 文字の大きさ(5段)と書体 ---- */
+body.th-bk #club{font-size:var(--fs-m);line-height:1.55}
+body.th-bk #club small,body.th-bk #club .dim{font-size:var(--fs-s)}
+body.th-bk #club h3{margin:0 0 10px;font-size:var(--fs-l);font-weight:800;letter-spacing:.02em;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px}
+body.th-bk #club h3 small{font-size:var(--fs-xs);font-weight:600;color:var(--n-mute);letter-spacing:0}
+
+/* ---- パネル(card / tile / sec): ガラス・角を落とす・上の縁にネオン ---- */
+body.th-bk #club .card,body.th-bk #club .tile,body.th-bk #club .sec{
+  position:relative;background:linear-gradient(180deg,var(--n-glass),var(--n-glass2));border:1px solid var(--n-line);border-radius:0;
+  box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);
+  clip-path:polygon(var(--n-cut) 0,100% 0,100% calc(100% - var(--n-cut)),calc(100% - var(--n-cut)) 100%,0 100%,0 var(--n-cut));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.th-bk #club .card::before,body.th-bk #club .tile::before{content:"";position:absolute;left:var(--n-cut);top:0;width:38%;height:2px;border-radius:0;
+  background:linear-gradient(90deg,var(--n-red),rgba(255,42,80,0));box-shadow:var(--n-glow);clip-path:none;transform:none}
+body.th-bk #club .card h3::before{content:"";align-self:stretch;width:3px;margin-right:2px;background:var(--n-red);box-shadow:var(--n-glow)}
+
+/* ---- ボタン ---- */
+body.th-bk .btn,body.th-bk #club .btn{font-family:var(--f-jp);font-weight:800;letter-spacing:.04em;border-radius:0;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+body.th-bk #club .btn-main,body.th-bk .btn-main{height:48px;font-size:var(--fs-l);color:#fff;border:0;
+  background:linear-gradient(100deg,var(--n-red3),var(--n-red) 45%,var(--n-red2));box-shadow:var(--n-glow2);text-shadow:0 1px 0 rgba(0,0,0,.25)}
+body.th-bk #club .btn-main small{font-weight:600;opacity:.85;margin-left:6px;font-size:var(--fs-s)}
+body.th-bk #club .btn-main:active{filter:brightness(1.12);transform:translateY(1px)}
+body.th-bk #club .btn-main.warn{background:linear-gradient(100deg,#7a5a00,#e8a400 50%,#ffd166);color:#1a1200}
+body.th-bk #club .btn-sub,body.th-bk .btn-sub{height:40px;color:#ffd6de;background:rgba(255,42,80,.06);border:1px solid rgba(255,90,124,.55);box-shadow:inset 0 0 12px rgba(255,42,80,.12)}
+body.th-bk #club .btn-sub:active{background:rgba(255,42,80,.18)}
+body.th-bk #club .btn-sub:disabled{opacity:.35}
+body.th-bk #club .lnk{color:var(--n-mute);font-size:var(--fs-s)}
+
+/* ---- タブ(区切りのボタン) ---- */
+body.th-bk #club .tabs{gap:6px}
+body.th-bk #club .tab{position:relative;min-height:40px;border-radius:0;border:1px solid var(--n-line2);background:rgba(255,255,255,.03);color:var(--n-ink2);
+  font-family:var(--f-jp);font-weight:800;font-size:var(--fs-m);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+body.th-bk #club .tab small{color:var(--n-mute);font-weight:600}
+body.th-bk #club .tab.on{color:#fff;border-color:rgba(255,90,124,.7);background:linear-gradient(180deg,rgba(255,42,80,.32),rgba(255,42,80,.12));box-shadow:inset 0 -2px 0 var(--n-red),var(--n-glow)}
+body.th-bk #club .tab.on small{color:#ffd6de}
+body.th-bk #club .tab:disabled{opacity:.35}
+
+/* ---- 監督室のヘッダ ---- */
+body.th-bk #club .chd{background:linear-gradient(180deg,rgba(10,13,23,.96),rgba(10,13,23,.82));border-bottom:1px solid rgba(255,42,80,.5);
+  box-shadow:0 1px 0 rgba(255,42,80,.25),0 8px 24px rgba(0,0,0,.4);margin:0;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.th-bk #club .chd>div:nth-child(2) b{font-size:var(--fs-l);font-weight:900}
+body.th-bk #club .chd .num b{font-family:var(--f-disp);font-style:italic;font-weight:800;font-size:22px;color:#fff;text-shadow:0 0 12px rgba(255,42,80,.55)}
+body.th-bk #club .chd .num b i{font-style:italic;font-size:12px;color:var(--n-ink2);text-shadow:none}
+body.th-bk #club .chd .num.pw b{color:var(--n-gold);text-shadow:0 0 12px rgba(255,209,102,.45)}
+body.th-bk #club .chd .num small{font-family:var(--f-disp);font-weight:700;font-size:var(--fs-xs);letter-spacing:.16em;color:var(--n-mute)}
+
+/* ---- 下のメニュー(専用のアイコン) ---- */
+body.th-bk #club .tabbar{background:linear-gradient(180deg,rgba(8,10,18,.9),#05060b);border-top:1px solid rgba(255,42,80,.45);box-shadow:0 -8px 24px rgba(0,0,0,.5);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.th-bk #club .tabbar button{color:var(--n-mute)}
+body.th-bk #club .tabbar .ico{width:22px;height:22px;display:block;margin:0 auto 2px}
+body.th-bk #club .tabbar .ico *{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.th-bk #club .tabbar span{font-family:var(--f-disp);font-weight:700;font-size:11px;letter-spacing:.18em}
+body.th-bk #club .tabbar button.on{color:#fff}
+body.th-bk #club .tabbar button.on .ico{filter:drop-shadow(0 0 6px rgba(255,42,80,.9));color:var(--n-red2)}
+body.th-bk #club .tabbar button.on::before{left:26%;right:26%;height:2px;background:var(--n-red);box-shadow:var(--n-glow)}
+
+/* ---- 見出しの英字(SQUAD・OVR・WEEKLY NEWS など) ---- */
+body.th-bk #club .sq-ovr b,body.th-bk #club .nx-band b,body.th-bk #club .vs,body.th-bk #club .nx-vs b{font-family:var(--f-disp);font-style:italic}
+body.th-bk #club .sq-ovr b{font-weight:800;font-size:38px;color:var(--n-gold);text-shadow:0 0 16px rgba(255,209,102,.5)}
+body.th-bk #club .sq-ovr small{font-family:var(--f-disp);font-weight:700;font-size:13px;letter-spacing:.22em}
+
+/* ---- HOME: 次の試合の札 ---- */
+body.th-bk #club .tile.next{background:
+  linear-gradient(115deg,rgba(255,42,80,.16) 0 34%,transparent 34%),
+  linear-gradient(180deg,var(--n-glass),var(--n-glass2))}
+body.th-bk #club .nx-band{background:linear-gradient(90deg,rgba(0,0,0,.65),rgba(0,0,0,.25));border-bottom:1px solid var(--n-line2)}
+body.th-bk #club .nx-band b{font-weight:800;font-size:16px;color:var(--n-gold)}
+body.th-bk #club .nx-band i{font-family:var(--f-disp);letter-spacing:.14em}
+body.th-bk #club .nx-hype{font-weight:900;color:var(--n-red2);text-shadow:0 0 10px rgba(255,42,80,.4)}
+body.th-bk #club .nx-vs b{font-weight:800;font-size:26px}
+body.th-bk #club .nx-vs .vs{font-family:var(--f-disp);font-style:italic;font-weight:800;font-size:30px;color:#fff;-webkit-text-stroke:0;text-shadow:0 0 14px rgba(255,42,80,.8)}
+body.th-bk #club .tile.next .nx-go span{font-size:var(--fs-l);letter-spacing:.08em;background:linear-gradient(100deg,var(--n-red3),var(--n-red) 45%,var(--n-red2));box-shadow:var(--n-glow2)}
+body.th-bk #club .nx-form .wdl{font-family:var(--f-disp);font-weight:800;font-style:italic;font-size:14px}
+body.th-bk #club .nx-form .wdl.W{background:#14b866;box-shadow:0 0 8px rgba(20,184,102,.5)} body.th-bk #club .nx-form .wdl.L{background:var(--n-red);box-shadow:0 0 8px rgba(255,42,80,.5)}
+body.th-bk #club .nx-form .wdl:last-child{box-shadow:0 0 0 2px var(--n-gold),0 0 10px rgba(255,209,102,.6)}
+/* WEEKLY NEWS の1行 */
+body.th-bk #club .tile.news{padding-left:0}
+body.th-bk #club .tile.news .nw-tag{font-family:var(--f-disp);font-weight:800;font-style:italic;font-size:11px;letter-spacing:.12em;color:#fff;
+  background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow)}
+body.th-bk #club .tile.news .nw-line{font-weight:700;color:var(--n-ink)}
+
+/* ---- 秘書の帯 ---- */
+body.th-bk #club .sec{border-left:0}
+body.th-bk #club .sec .sec-ic{font-family:var(--f-disp);font-style:italic;font-weight:800;letter-spacing:.12em;background:var(--n-gold);color:#1a1200;box-shadow:0 0 10px rgba(255,209,102,.4)}
+body.th-bk #club .sec .sec-nm{color:var(--n-gold)}
+
+/* ---- 準備の手順 ---- */
+body.th-bk #club .prep-top{background:linear-gradient(180deg,#0a0d17,#070910);border-bottom:1px solid rgba(255,42,80,.4)}
+body.th-bk #club .prep-top .x{border-radius:0;background:rgba(255,255,255,.05);border:1px solid var(--n-line2);color:#fff;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+body.th-bk #club .steps span{font-weight:800;color:var(--n-mute);background:rgba(255,255,255,.04)}
+body.th-bk #club .steps span.now{color:#fff;background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow)}
+body.th-bk #club .steps span.done{color:var(--n-ink2);background:rgba(255,42,80,.12)}
+body.th-bk #club .steps span i{font-family:var(--f-disp);font-style:italic;font-weight:800}
+body.th-bk #club .prep-vs{background:rgba(255,255,255,.03);border-bottom:1px solid var(--n-line)}
+body.th-bk #club .step-h b{font-size:var(--fs-xl);font-weight:900}
+body.th-bk #club .step-h small{color:var(--n-mute)}
+body.th-bk #club .prep-bot{background:linear-gradient(180deg,rgba(8,10,18,.6),#05060b);border-top:1px solid var(--n-line2)}
+body.th-bk #club .tr{border-radius:0;background:rgba(255,255,255,.035);border:1px solid var(--n-line2);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+body.th-bk #club .tr b{font-size:var(--fs-l);font-weight:800}
+body.th-bk #club .tr.sp{border-color:rgba(255,209,102,.5);background:linear-gradient(180deg,rgba(255,209,102,.1),rgba(255,209,102,.03))}
+
+/* ---- 表 ---- */
+body.th-bk #club .tbl th{font-family:var(--f-disp);font-weight:700;letter-spacing:.1em;color:var(--n-mute)}
+body.th-bk #club .tbl td{border-color:var(--n-line)}
+body.th-bk #club .tbl tr.me td{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(255,42,80,.04));color:#fff}
+
+/* ---- SQUAD ---- */
+body.th-bk #club .sq-pitch{border-radius:0;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 30px rgba(0,0,0,.5)}
+body.th-bk #club .sq-roles,body.th-bk #club .sq-3col .sq-bench{background:rgba(255,255,255,.035);border:1px solid var(--n-line);border-radius:0}
+body.th-bk #club .sq-roles .rs{background:rgba(0,0,0,.25);border-color:var(--n-line2)}
+body.th-bk #club .sq-roles .rs b{font-family:var(--f-disp);font-style:italic;letter-spacing:.14em}
+body.th-bk #club .sq-formsel{border-radius:0;background-color:rgba(255,255,255,.04);border-color:rgba(255,90,124,.5);font-family:var(--f-disp);font-weight:700;font-size:17px;color:#fff}
+
+/* ---- 選手の札(SQUAD の盤面): 背番号は斜体の数字 ---- */
+body.th-bk #club .sqc .no{font-family:var(--f-disp);font-style:italic;font-weight:800}
+body.th-bk #club .sqc .rl{font-family:var(--f-disp);font-weight:700;letter-spacing:.06em}
+
+/* ---- チャット・新聞の外側 ---- */
+body.th-bk #club .chat-sheet{background:linear-gradient(180deg,rgba(14,17,30,.97),rgba(8,10,18,.98));border-top:1px solid rgba(255,42,80,.55);box-shadow:0 -12px 40px rgba(0,0,0,.6),0 -1px 0 rgba(255,42,80,.3)}
+body.th-bk #club .cr{border-radius:0;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+
+/* ---- 場面(タイトル以外の場面の TOUCH・見出し) ---- */
+body.th-bk #scene .touch{font-family:var(--f-disp);font-style:italic;font-weight:800;letter-spacing:.4em}
+body.th-bk #scene .res-word,body.th-bk #scene .vs-mark,body.th-bk #scene .rn b{font-family:var(--f-disp);font-style:italic;font-weight:800}
+
+/* ---- 試合の HUD と操作の台 ---- */
+body.th-bk #hudScore,body.th-bk #hudClock{font-family:var(--f-disp);font-style:italic;font-weight:800}
+body.th-bk #pad .tac{font-family:var(--f-jp)}
+body.th-bk .btn-shoot,body.th-bk .btn-keeper{font-family:var(--f-disp);font-style:italic;font-weight:800;letter-spacing:.16em;font-size:16px}
+
+/* ---- 試合: HUD・実況の帯・盤面の外(→docs/14 §14.18) ---- */
+body.th-bk #hud{background:linear-gradient(180deg,#0b0e19,#070911);border-bottom:1px solid rgba(255,42,80,.6);box-shadow:0 1px 0 rgba(255,42,80,.25),0 6px 18px rgba(0,0,0,.5)}
+body.th-bk #hud .sb{background:rgba(255,255,255,.04);border:1px solid var(--n-line2);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+body.th-bk #hud .tn{font-family:var(--f-disp);font-style:italic;font-weight:800;letter-spacing:.1em;font-size:16px}
+body.th-bk #hudScore{font-size:24px;background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);padding:0 10px}
+body.th-bk #hudComp{font-family:var(--f-disp);font-weight:700;letter-spacing:.14em;color:var(--n-mute)}
+body.th-bk #hudClock{color:#fff;font-size:22px;text-shadow:0 0 10px rgba(255,42,80,.7)}
+body.th-bk #ticker{background:linear-gradient(90deg,rgba(255,42,80,.22),rgba(10,13,23,.95) 40%);border-left:3px solid var(--n-red);box-shadow:inset 0 -1px 0 var(--n-line);font-weight:800;letter-spacing:.02em}
+body.th-bk #deck,body.th-bk #bench{background:
+  repeating-linear-gradient(120deg,rgba(255,255,255,.02) 0 1px,transparent 1px 22px),
+  linear-gradient(180deg,#0a0d17,#06070d)}
+body.th-bk #bench{border-left:1px solid var(--n-line2)}
+body.th-bk #bench .lbl{font-family:var(--f-disp);font-weight:700;letter-spacing:.2em;color:var(--n-mute)}
+/* スポンサーのロゴの札(白い札に黒の字) */
+body.th-bk #club .logo{background:#fff;color:#111!important;border-color:#111}
+
+/* ---- 試合後の場面(→docs/14 §14.18) ---- */
+/* 結果: チームの数字の棒は左右それぞれのエンブレムの色 */
+body.th-bk .res-st{background:rgba(255,255,255,.04);border:1px solid var(--n-line)}
+body.th-bk .res-st span em{background:var(--ac,#4aa3ff);height:5px}
+body.th-bk .res-st span em::before{background:var(--hc,#ff2a50);box-shadow:0 0 6px var(--hc,#ff2a50)}
+body.th-bk .res-st b{font-family:var(--f-disp);font-style:italic;font-weight:800;font-size:17px}
+/* ロッカールーム: 木目の上に暗いガラスのパネル */
+body.th-bk .sc-lock{background:linear-gradient(180deg,rgba(5,6,11,.55),rgba(5,6,11,.75)),repeating-linear-gradient(90deg,#3a2414 0 38px,#2e1c10 38px 40px)!important}
+body.th-bk .lk-sec{background:linear-gradient(180deg,rgba(20,24,40,.9),rgba(10,12,22,.92))!important;color:var(--n-ink);border:1px solid var(--n-line2);border-left:3px solid var(--n-gold)!important;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+body.th-bk .lk-sec ul{color:var(--n-ink2)}
+body.th-bk .lk-sec .sec-ic{background:var(--n-gold);color:#1a1200}
+body.th-bk .lk-say{background:linear-gradient(180deg,rgba(20,24,40,.92),rgba(10,12,22,.94));color:var(--n-ink);border:1px solid var(--n-line2);border-radius:0;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+body.th-bk .lk-say::before{display:none}
+body.th-bk .lk-say b{color:var(--n-red2)} body.th-bk .lk-say em{color:var(--n-mute)} body.th-bk .lk-say em.hi{color:var(--n-gold)}
+/* 優勝: 選手名の札を暗く */
+body.th-bk .tr-team span{background:rgba(5,6,11,.7);color:#fff;border:1px solid rgba(255,209,102,.45)}

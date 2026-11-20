@@ -119,7 +119,7 @@ function sceneResult(M,last,go){
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
   const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
   const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
-  const stHtml='<div class="res-st">'+rows.map(([l,k,u])=>{
+  const stHtml='<div class="res-st" style="--hc:'+teamColor(H)+';--ac:'+teamColor(A)+'">'+rows.map(([l,k,u])=>{
     const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
     return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
   // 採点は両チーム(左に自チーム・右に相手。→docs/14)

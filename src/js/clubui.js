@@ -583,6 +583,14 @@ function careerHtml(){
 }
 /* ---- 監督室(→docs/07 §7.9)。HOME をハブにして、下のタブで行き来する ---- */
 
+/** 下のメニューの専用アイコン(独自の線画。→docs/14 §14.18) */
+const TAB_ICON={
+  home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  squad:'<rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.6"/><circle cx="8" cy="7.5" r="1"/><circle cx="16" cy="7.5" r="1"/><circle cx="12" cy="17" r="1"/>',
+  cards:'<rect x="7" y="3.5" width="12" height="16" rx="1.5" transform="rotate(8 13 11.5)"/><rect x="4.5" y="5" width="12" height="16" rx="1.5"/><path d="M8 9h5M8 12h3"/>',
+  season:'<path d="M7 4h10v4a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/>',
+  club:'<path d="M12 3l7 3v6c0 4.2-3 7.5-7 9-4-1.5-7-4.8-7-9V6z"/><path d="M9.5 12.5l1.8 1.8 3.5-4"/>'
+};
 const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"],["season","SEASON","☰"],["club","CLUB","◎"]];
 
 /** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ。言葉はいまの秘書の口調(→grow.js の secSay) */
@@ -923,7 +931,7 @@ function clubTabHtml(){
 function tabbarHtml(){
   const S=CL.S;
   return '<nav class="tabbar">'+TABS.map(([k,l,ic])=>'<button class="'+(CL.tab===k?'on':'')+'" data-act="tab" data-v="'+k+'">'+
-    '<i>'+ic+'</i><span>'+l+'</span></button>').join("")+'</nav>';   // SQUAD に兆しの点は出さない(→docs/14 §14.14)
+    (TAB_ICON[k]?'<svg class="ico" viewBox="0 0 24 24">'+TAB_ICON[k]+'</svg>':'<i>'+ic+'</i>')+'<span>'+l+'</span></button>').join("")+'</nav>';   // SQUAD に兆しの点は出さない(→docs/14 §14.14)
 }
 function clubHtml(){
   if(CL.paperI!=null)return paperHtml(CL.paperI);
