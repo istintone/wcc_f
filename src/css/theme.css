@@ -1560,3 +1560,41 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .htset .ht .hx b{color:inherit!important}
 #club .htset .ht .hx b{-webkit-text-fill-color:currentColor;background:none;font-family:Arial,sans-serif;font-weight:900}
 #club .htset .ht .hx b{font-size:13.5px;letter-spacing:-.12em;margin-left:2px}
+/* ---- チーム練習を1画面に(→docs/14 §14.34): 成長グラフを練習の候補の左に。候補は右に1列、盤面は詰める ---- */
+#club .tr-top{display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px;align-items:start}
+#club .tr-top .tf-g{display:flex;flex-direction:column;gap:4px;position:sticky;top:0}
+#club .tr-top .tf-radar{width:132px;height:auto}
+#club .tr-top .tf-chips{display:flex;flex-wrap:wrap;gap:3px;font-size:11px}
+#club .tr-top .tf-chips>b{flex-basis:100%;font-size:11.5px}
+#club .tr-top .tf-chips span{font-size:11px;padding:1px 5px}
+#club .tr-top .tf-chips span.dim{font-size:10px;line-height:1.35}
+#club .trs.one{grid-template-columns:1fr;gap:4px}
+#club .trs.one .tr{padding:5px 9px}
+#club .trs.one .tr b{font-size:13px} #club .trs.one .tr small{font-size:10px;line-height:1.3}
+#club .tr-fx{margin-top:6px;padding-top:4px}
+#club .tr-fx .tf-cap{margin:0 0 2px}
+#club .tr-fx .cm-board{margin:2px 0 0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}
+#club .tr-fx .cmt{width:56px;padding-bottom:1px}
+#club .tr-fx .cmt .rl{font-size:8px;padding:0}
+#club .tr-fx .cmt .no{font-size:12px;line-height:1.1}
+#club .tr-fx .cmt .nm{font-size:8px}
+#club .tr-fx .cm-bench{gap:3px;margin-top:3px}
+#club .tr-fx .cm-bench .cmt{flex:0 0 56px}
+#club .cl-main.prep .step-h{margin-bottom:4px} #club .cl-main.prep .step-h small{font-size:10.5px}
+#club .cl-main.prep .ints{margin-bottom:2px}
+#club .cl-main.prep .ints+.dim{margin:2px 0 6px;font-size:11px}
+#club .trs.one .tr{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 9px;height:31px;min-height:0}
+#club .trs.one .tr b{font-size:12.5px;white-space:nowrap}
+#club .trs.one .tr small{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+#club .trs.one .tr small{max-width:55%}
+#club .tr-fx .cm-pitch{aspect-ratio:100/62}
+#club .tr-fx .cmt .nm{display:none}
+#club .tr-fx .cmt .no{font-size:11.5px}
+#club .tr-fx .cmt small{font-size:8.5px}
+#club .trs.one .tr{height:28px}
+#club .tr-fx .cm-pitch{aspect-ratio:100/56}
+#club .tr-top .tf-chips span{font-family:var(--f-num);font-weight:800}
+#club .tr-top .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-top .tf-chips span.dn{background:#5b6170;color:#fff}
+#club .cl-main.prep .step-h small b{font-family:var(--f-num)}
+#club .cl-main.prep .step-h small b{display:inline;font-size:11.5px;font-weight:800}

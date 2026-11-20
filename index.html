@@ -2142,6 +2142,44 @@ body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .h
 #club .htset .ht .hx b{color:inherit!important}
 #club .htset .ht .hx b{-webkit-text-fill-color:currentColor;background:none;font-family:Arial,sans-serif;font-weight:900}
 #club .htset .ht .hx b{font-size:13.5px;letter-spacing:-.12em;margin-left:2px}
+/* ---- チーム練習を1画面に(→docs/14 §14.34): 成長グラフを練習の候補の左に。候補は右に1列、盤面は詰める ---- */
+#club .tr-top{display:grid;grid-template-columns:132px minmax(0,1fr);gap:8px;align-items:start}
+#club .tr-top .tf-g{display:flex;flex-direction:column;gap:4px;position:sticky;top:0}
+#club .tr-top .tf-radar{width:132px;height:auto}
+#club .tr-top .tf-chips{display:flex;flex-wrap:wrap;gap:3px;font-size:11px}
+#club .tr-top .tf-chips>b{flex-basis:100%;font-size:11.5px}
+#club .tr-top .tf-chips span{font-size:11px;padding:1px 5px}
+#club .tr-top .tf-chips span.dim{font-size:10px;line-height:1.35}
+#club .trs.one{grid-template-columns:1fr;gap:4px}
+#club .trs.one .tr{padding:5px 9px}
+#club .trs.one .tr b{font-size:13px} #club .trs.one .tr small{font-size:10px;line-height:1.3}
+#club .tr-fx{margin-top:6px;padding-top:4px}
+#club .tr-fx .tf-cap{margin:0 0 2px}
+#club .tr-fx .cm-board{margin:2px 0 0}
+#club .tr-fx .cm-pitch{aspect-ratio:100/80}
+#club .tr-fx .cmt{width:56px;padding-bottom:1px}
+#club .tr-fx .cmt .rl{font-size:8px;padding:0}
+#club .tr-fx .cmt .no{font-size:12px;line-height:1.1}
+#club .tr-fx .cmt .nm{font-size:8px}
+#club .tr-fx .cm-bench{gap:3px;margin-top:3px}
+#club .tr-fx .cm-bench .cmt{flex:0 0 56px}
+#club .cl-main.prep .step-h{margin-bottom:4px} #club .cl-main.prep .step-h small{font-size:10.5px}
+#club .cl-main.prep .ints{margin-bottom:2px}
+#club .cl-main.prep .ints+.dim{margin:2px 0 6px;font-size:11px}
+#club .trs.one .tr{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 9px;height:31px;min-height:0}
+#club .trs.one .tr b{font-size:12.5px;white-space:nowrap}
+#club .trs.one .tr small{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+#club .trs.one .tr small{max-width:55%}
+#club .tr-fx .cm-pitch{aspect-ratio:100/62}
+#club .tr-fx .cmt .nm{display:none}
+#club .tr-fx .cmt .no{font-size:11.5px}
+#club .tr-fx .cmt small{font-size:8.5px}
+#club .trs.one .tr{height:28px}
+#club .tr-fx .cm-pitch{aspect-ratio:100/56}
+#club .tr-top .tf-chips span{font-family:var(--f-num);font-weight:800}
+#club .tr-top .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-top .tf-chips span.dn{background:#5b6170;color:#fff}
+#club .cl-main.prep .step-h small b{font-family:var(--f-num)}
+#club .cl-main.prep .step-h small b{display:inline;font-size:11.5px;font-weight:800}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8707,7 +8745,7 @@ function trainPreview(S,i,lv){
   return out;
 }
 /** チーム練習の下: 成長グラフ(練習後を重ねる)と、フォーメーションの盤面(誰がどれだけ伸びるか) */
-function trainEffectHtml(){
+function trainEffectHtml(part){
   const S=CL.S, G=S.g.graph, R=TUNING.grow.graph, sel=CL.trSel!=null&&CL.int!==-1;
   const pv=sel?trainPreview(S,CL.trSel,CL.int):null, cur={}, aft={};
   for(const a in G){ cur[a]=G[a]/R.max; if(pv)aft[a]=pv.graph[a]/R.max; }
@@ -8721,23 +8759,23 @@ function trainEffectHtml(){
   const info=(g,id)=>{ if(!pv)return "個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%";
     const x=pv.pl[id]||{ ind:0, sp:0 };
     return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
-  return '<section class="tr-fx"><div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, cls:"tf-radar" })+
-      '<div class="tf-chips"><b>成長グラフ</b>'+chips+'</div></div>'+
+  // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
+  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, cls:"tf-radar" })+'<div class="tf-chips"><b>成長グラフ</b>'+chips+'</div></div>';
+  return '<section class="tr-fx">'+
     '<p class="tf-cap">'+(pv?'<i class="tf-fit"></i>得意な練習でよく伸びる選手 ・ 札は個人(特殊)能力の進みの増え':'札はいまの個人能力の★と進み')+'</p>'+
     commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
 }
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが、疲れて試合に入る</small></div>'+
+  return '<div class="step-h"><b>チーム練習</b><small>全員に効く。強いほど伸びるが疲れる ・ いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
-    '<p class="dim">いまの疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b>(盤面の11人の平均)</p>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
-      :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>'+trainEffectHtml());
+      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="trs one">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
