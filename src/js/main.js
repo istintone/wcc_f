@@ -101,7 +101,7 @@ function updateCtl(){
 function styleText(T,pendingKp){
   const id=pendingKp||T.kp, c=id?CARDS[id]:null, st=c?styleOfCard(c):null;
   if(!st)return "KP なし";
-  const rank=pendingKp?rankOf(axisVal(T,st.axis)):T.rank||rankOf(axisVal(T,st.axis));
+  const rank=pendingKp?styleRank(T,st):T.rank||styleRank(T,st);
   return "KP "+nameOf(c)+"｜"+st.name+" <b class=\"rk rk"+rank+"\">"+rank+"</b>";
 }
 function updateStyleBar(){
@@ -170,7 +170,7 @@ function showInfo(id){
   if(!c)return;
   const sk=c.skill?SKILLS[c.skill]:null;
   const kp=(BD.kp||M.home.kp)===id, st=styleOfCard(c);
-  const rank=st?rankOf(axisVal(M.home,st.axis)):null;
+  const rank=st?styleRank(M.home,st):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
   // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に

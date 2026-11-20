@@ -70,7 +70,7 @@ function newPlayerGrowth(){
 function newGrowth(ids){
   const pl={};
   (ids||TEAMS.azr.xi.concat(TEAMS.azr.bench)).forEach(id=>{ pl[id]=newPlayerGrowth(); });
-  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, set:0,
+  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, gold:{}, golden:0, set:0,
     step:"train", cn:0, done:[], opts:null };
 }
 /** 古いセーブの育成に、あとから増えた項目を補う */
@@ -82,6 +82,8 @@ function migrateGrowth(g,sq){
   if(g.cn==null)g.cn=0;
   if(!g.done)g.done=[];
   if(g.step==="ready")g.step="comm";
+  // 成長グラフ(→docs/15)。前の戦力グラフ(−2〜+3 の上乗せ)とは目盛りが違うので 0 から
+  if(!g.gold){ g.gold={}; g.golden=0; for(const a in g.graph)g.graph[a]=0; }
   return g;
 }
 const linkOf=(S,a,b)=>S.g.links[lkey(a,b)]||{ lv:0, exp:0, gold:false };
@@ -138,9 +140,33 @@ function trainDesc(o){
   return Object.keys(e).map(k=>nm[k]+"★".repeat(e[k])).join(" ")+" ・ グラフ: "+
     (t.up?ax(t.up)+" ↑":"")+(t.down?" / "+ax(t.down)+" ↓":"");
 }
-function graphAdd(S,axis,v){
-  const R=TUNING.grow.graph;
-  S.g.graph[axis]=clamp(S.g.graph[axis]+v,R.min,R.max);
+/* ---------- チームの成長グラフ(→docs/15) ----------
+ * 6軸 0〜100。対角の2軸(AXIS_PAIR)は合計が器(graphCap)を超えない。伸ばして超えたぶんは対角が下がる。
+ * 100 は MAX。MAX の軸をさらに伸ばす練習で、breakP の率で限界突破 → 金色(固定)。金色の対角は「器 − 100」まで。
+ * 金色が3つ(各対に1つ)そろうと黄金期: golden 試合のあいだ全員が絶好調 */
+const graphCap=S=>{ const R=TUNING.grow.graph; return R.cap+(S.biz?R.capFac[S.biz.fac.tact||0]||0:0); };
+const graphGoldN=S=>Object.keys(S.g.gold).filter(a=>S.g.gold[a]).length;
+function graphAdd(S,a,v){
+  const R=TUNING.grow.graph, g=S.g.graph, gold=S.g.gold, b=AXIS_PAIR[a], cap=graphCap(S);
+  if(gold[a]||!v)return;
+  if(v<0){ g[a]=Math.max(0,g[a]+v); return; }
+  g[a]=Math.min(gold[b]?cap-R.max:R.max,g[a]+v);
+  const over=g[a]+g[b]-cap;
+  if(over>0)g[b]=Math.max(0,g[b]-over);
+}
+/** 練習で伸ばした軸のうち、練習の前から MAX だったものが限界突破するか見る。3つそろえば黄金期 */
+function graphBreak(S,axes,out){
+  const R=TUNING.grow.graph, rng=mulberry32((S.seed^hashStr("gb:"+S.term+":"+S.played))>>>0);
+  for(const a of axes){
+    if(S.g.gold[a]||S.g.gold[AXIS_PAIR[a]]||rng()>=R.breakP)continue;
+    S.g.gold[a]=true; S.g.graph[a]=R.max;
+    out.push("🌟 成長グラフの "+AXIS_ABBR[a]+" が限界突破！ 金色に輝いた(もう下がらない)");
+    if(graphGoldN(S)>=3&&!S.g.golden){
+      S.g.golden=R.golden; S.g.goldenAt=S.played;
+      for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4;
+      out.push("👑 黄金期が到来！ 成長グラフが黄金に。"+R.golden+"試合のあいだ全員が絶好調");
+    }
+  }
 }
 /** 個人能力の★が上がるか見る(試合のあとに呼ぶ)。上がったら、その間にいちばん練習した能力が伸びる */
 function checkInd(S,id,out){
@@ -195,14 +221,15 @@ function doTraining(S,i,intensity){
   if(S.g.step!=="train"||!o)return out;
   const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv];
   const ids=Object.keys(S.g.pl);
-  for(const a in S.g.graph)S.g.graph[a]*=R.decay;
+  const gk=facK(S,"tact"), maxed=Object.keys(S.g.graph).filter(a=>S.g.graph[a]>=R.max-1e-9&&!S.g.gold[a]);   // 練習の前から MAX の軸(戦術室で伸びやすい)
+  let ups=[];
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
       g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
-    graphAdd(S,PARAM_AXIS[o.param],R.basic*k);
+    graphAdd(S,PARAM_AXIS[o.param],R.basic*k*gk); ups=[PARAM_AXIS[o.param]];
   }else{
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
@@ -218,8 +245,9 @@ function doTraining(S,i,intensity){
         linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
-    for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
+    for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k*gk);
+    ups=[...t.up];
     // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
     if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
   }
@@ -228,6 +256,7 @@ function doTraining(S,i,intensity){
     g.fat=Math.min(N.fatMax,g.fat+N.fat[lv]);
     checkSp(S,id,out);
   }
+  graphBreak(S,ups.filter(a=>maxed.includes(a)),out);
   if(N.fat[lv]>0)out.push("疲労 +"+Math.round(N.fat[lv]*100)+"%(試合はそのぶん消耗した状態で始まる)");
   S.g.step="comm"; S.g.cn=0; S.g.done=[];
   return out;
@@ -562,6 +591,12 @@ function afterMatchGrowth(S,fx,res){
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
+  }
+  // 黄金期(→docs/15 §15.3): 残りの試合のあいだ、ケガ以外の全員が絶好調のまま。終わっても金色のグラフは残る
+  if(S.g.golden>0){
+    S.g.golden--;
+    if(S.g.golden>0){ for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4; }
+    else out.push("黄金期がひと区切り(金色の成長グラフはそのまま)");
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;

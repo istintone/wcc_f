@@ -46,10 +46,10 @@ function aptMapSvg(card){
 }
 
 /* ---- 戦力のレーダー(6軸の六角形) ---- */
-const RADAR_AX=["O","R","S","P","C","D"];     // 時計回り(上がオフェンス)
+const RADAR_AX=["O","R","S","D","C","P"];     // 時計回り(上がオフェンス)。向かい合う軸が成長グラフの対角(OFE↔DEF・TEC↔STA・SPE↔POW。→docs/15 §15.1)
 /**
  * レーダー。線と軸の名前は文字の色(currentColor)。地の明るさは CSS の .radar の color で合わせる
- * sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか
+ * sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか。gold … { 軸:true } の名前を金色で光らせる(成長グラフ)
  */
 function radarSvg(sets,opts){
   opts=opts||{};
@@ -61,14 +61,14 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_ABBR[a]+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
-/** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */
-function teamAxes(cards,graph){
+/** チームの戦力の6軸を 0〜1 に(先発の能力の上位6人の平均)。cards … 先発11人のカード */
+function teamAxes(cards){
   const v={};
   for(const a of RADAR_AX){ const f=AXIS_STAT[a], top=cards.map(c=>f(c)).sort((x,y)=>y-x).slice(0,6);
-    const base=top.reduce((s,x)=>s+x,0)/(top.length||1)+(graph&&graph[a]||0);
+    const base=top.reduce((s,x)=>s+x,0)/(top.length||1);
     v[a]=(base-8)/9; }                         // 能力の目盛りは実際の幅(8〜17)に合わせる
   return v;
 }

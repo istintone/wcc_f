@@ -59,13 +59,13 @@ function sceneTitle(onStart){
 /** 対戦カードのレーダーの値。自チームは育成を入れた先発と戦力グラフ、相手はクラブの段の上乗せ */
 function vsAxes(T,mine){
   const S=CL.S;
-  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
-  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
-  return teamAxes((T.xi||[]).map(id=>CARDS[id]),{ O:t, D:t, R:t, C:t, S:t, P:t });
+  // 戦力(選手の能力)を比べる。チームの成長グラフ(→docs/15)は監督室で見せる
+  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])));
+  return teamAxes((T.xi||[]).map(id=>CARDS[id]));
 }
 function axisBars(T){
-  // 戦力グラフ(相手はクラブの段、自分は育成)を6本の短い帯で
-  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
+  // 戦力(能力の上位6人の平均)を6本の短い帯で
+  const t=0;
   return '<div class="ax">'+["O","D","R","C","S","P"].map(a=>{
     const ids=T.xi||[], f=AXIS_STAT[a];
     const v=ids.length?ids.map(id=>f(CARDS[id])).sort((x,y)=>y-x).slice(0,6).reduce((s,x)=>s+x,0)/6:12;

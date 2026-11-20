@@ -292,8 +292,8 @@ console.log("⑦ スキル → スタイル + バフ");
   check("KP を交代で下げるとスタイルが消える",M.home.kp===null&&M.home.style===null);
 
   // ---- スタイルを1つずつ測る。ランクは A に固定して比べる ----
-  const th0=E.TUNING.rank.th;
-  const setRank=r=>{ E.TUNING.rank.th=r==="C"?[99,99,99]:r==="S"?[0,0,0]:[0,0,99]; };
+  const th0=E.TUNING.rank.th, none0=E.TUNING.rank.none;   // 成長グラフを持つチームは th、持たないチームは none で固定する(→docs/15 §15.5)
+  const setRank=r=>{ E.TUNING.rank.th=r==="B"?[999,999]:r==="S"?[0,0]:[0,999]; E.TUNING.rank.none=r; };
   const skillFor={}; skills.forEach(k=>{ if(!skillFor[E.SKILLS[k].style])skillFor[E.SKILLS[k].style]=k; });
   // そのスタイルを持たせる選手(役割が合う場所)
   const who=id=>{
@@ -342,11 +342,11 @@ console.log("⑦ スキル → スタイル + バフ");
   check("どのスタイルも選ぶと大損にはならない(> -0.35)",d(worst)>-0.35,E.STYLES[worst].name+" "+f2(d(worst)));
 
   // ---- ランク: 得るものにだけ掛かる ----
-  setRank("C"); const lo=run(N2,1000,withStyle("T01"));
+  setRank("B"); const lo=run(N2,1000,withStyle("T01"));
   setRank("S"); const hi=run(N2,1000,withStyle("T01"));
   check("ランクが高いほどスタイルが効く(ショートパスワークのパス成功率)",pr(hi)>pr(r.T01)&&pr(r.T01)>pr(lo),
-    "C "+pc(pr(lo))+" / A "+pc(pr(r.T01))+" / S "+pc(pr(hi)));
-  check("失うものはランクが低くても満額(シュートは C でも減る)",lo.hSh<none.hSh,
+    "B "+pc(pr(lo))+" / A "+pc(pr(r.T01))+" / S "+pc(pr(hi)));
+  check("失うものはランクが低くても満額(シュートは B でも減る)",lo.hSh<none.hSh,
     f2(none.hSh/N2)+" → "+f2(lo.hSh/N2));
 
   // ---- アンチキープレイヤー: 相手の KP を抑える ----
@@ -362,14 +362,14 @@ console.log("⑦ スキル → スタイル + バフ");
   { const M=E.createMatch(home(),away(),9); withStyle("T16")(M); E.stepMatch(M);
     check("アンチキープレイヤー: 相手のスタイルの効きが落ちる",M.away.rk<M.away.rk0,
       f2(M.away.rk0)+" → "+f2(M.away.rk)); }
-  E.TUNING.rank.th=th0;
+  E.TUNING.rank.th=th0; E.TUNING.rank.none=none0;
 
   // ---- 実際のランク(固定を外して) ----
   { const M=E.createMatch(home(),away(),1);
     const ax=T=>Object.keys(E.AXIS_LABEL).map(a=>{ const sk=skills.find(k=>E.STYLES[E.SKILLS[k].style].axis===a);
       const p=T.players[5]; const keep=p.c; p.c=Object.assign({},keep,{ skill:sk });
       T.players.forEach(q=>q.kp=q===p); E.stepMatch(M); const s=a+" "+f2(T.axis)+"("+T.rank+")"; p.c=keep; return s; }).join(" ");
-    console.log("    戦力グラフ  AZR: "+ax(M.home)+"  /  ROS: "+ax(M.away)); }
+    console.log("    成長グラフ  AZR: "+ax(M.home)+"  /  ROS: "+ax(M.away)); }
 
   // ---- バフと連携 ----
   const strip=T=>{ T.players.forEach(p=>p.c=Object.assign({},p.c,{ skill:null }));
@@ -472,6 +472,7 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   const B=E.TUNING.grow.sp.buff, mvN={};
   const run=rare=>{ let gd=0, n=0;
     for(let i=0;i<N;i++){ const t=clubs[i%clubs.length], d=E.makeTeamDef(t.id,true); d.rareOpp=false;
+      d.graph={ O:100, D:30, R:100, C:30, S:100, P:30, gold:{ O:true, D:true, R:true, C:true, S:true, P:true } };   // レアKP は ★5 かつランク G(→docs/15 §15.6)。比べる両方を G に
       d.xi=d.xi.map(s=>s.card.id===t.kp?Object.assign({},s,{ card:Object.assign({},s.card,{ ss:5, buffK:1+B*5, rar:rare?s.card.rar:"B" }) }):s);
       const m=E.simulateMatch(d,E.makeTeamDef("ros",true),81000+i); gd+=m.home.score-m.away.score;
       if(rare)for(const ev of m.events)if(ev.mv&&ev.side==="H"){ mvN[ev.mv]=(mvN[ev.mv]||0)+1; n++; } }
@@ -480,6 +481,10 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
   console.log("    ★5 汎用 "+f2(g.gd)+" → レアKP "+f2(r.gd)+"  ("+clubs.length+"クラブ) 技 "+f2(r.n/N)+"回/試合 "+JSON.stringify(mvN));
   check("レアKP は上位互換で上積みは小さい(得失点差 0〜+0.3)",r.gd-g.gd>-0.05&&r.gd-g.gd<0.3,"+"+f2(r.gd-g.gd));
   check("技が試合で出る",r.n>0);
+  { const t=clubs[0], d=E.makeTeamDef(t.id,true); d.rareOpp=false; d.graph={ O:100, D:0, R:100, C:0, S:100, P:0, gold:{} };
+    d.xi=d.xi.map(s=>s.card.id===t.kp?Object.assign({},s,{ card:Object.assign({},s.card,{ ss:5 }) }):s);
+    const M=E.createMatch(d,E.makeTeamDef("ros",true),1); E.stepMatch(M);
+    check("KP が ★5 でも、ランク G(必要な軸が金色)でなければレアKP は出ない",!M.home.rare&&M.home.rank!=="G","ランク "+M.home.rank); }
 }
 // ⑬ キャプテンとキッカーの任命(→docs/12)。キャプテンは軽い上積み、指名したキッカーが蹴る
 {

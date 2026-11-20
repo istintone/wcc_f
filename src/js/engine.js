@@ -104,11 +104,13 @@ const COACH_PERS=["steady","quick","stubborn","attack","careful"];
 const persOfClub=id=>COACH_PERS[hashStr("coach:"+id)%COACH_PERS.length];
 function makeTeamDef(teamId,cpu){
   const t=TEAMS[teamId], f=FORMS[t.form];
-  // 相手クラブは育成しない代わりに、強さの段に応じた戦力グラフを初めから持つ(→docs/05 §5.6)
-  const tg=t.tier?TUNING.club.tierGraph[t.tier-1]:0;
+  // 相手クラブは育成しない代わりに、強さの段に応じた成長グラフを初めから持つ。上の段は既定の KP の軸が金色(→docs/15 §15.7)
+  const tg=t.tier?TUNING.club.tierGraph[t.tier-1]:0, st0=t.kp&&CARDS[t.kp]?styleOfCard(CARDS[t.kp]):null;
+  const graph=tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg, gold:{} }:null;
+  if(graph&&st0&&t.tier>=TUNING.club.tierGold)for(const a of styleAxes(st0)){ graph[a]=TUNING.grow.graph.max; graph.gold[a]=true; }
   return { id:t.id, name:t.name, short:t.short, color:t.color, cpu:!!cpu,
     kp:t.kp||null, links:t.links||[],
-    graph:tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg }:null, setplay:0,
+    graph, setplay:0,
     rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
     pers:t.pers||persOfClub(t.id),                   // 相手監督の性格(→docs/13 §13.5)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
@@ -142,8 +144,9 @@ const styleOfCard=c=>{ const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[
 const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&&RARE_KP[c.id]||null;
 /** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
 function rareOf(p,T){
-  const R=p&&p.kp?rareOfCard(p.c):null;
-  return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
+  const R=p&&p.kp?rareOfCard(p.c):null, st=R?styleOfCard(p.c):null;
+  // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。相手は強さの段で
+  return R&&(((p.c.ss||0)>=5&&st&&styleRank(T,st)==="G")||T.rareOpp)?R:null;
 }
 /** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
 const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
@@ -177,18 +180,24 @@ function linkLv(T,a,b){
   for(const l of T.links)if((l[0]===a&&l[1]===b)||(l[0]===b&&l[1]===a))return l[2];
   return 0;
 }
-/** 戦力グラフの軸の値。その能力の上位 top 人の平均(適性込み)+ 連携の上乗せ */
+/** 戦力の6軸に使う能力(レーダーの表示用。ランクには使わない) */
 const AXIS_STAT={ O:c=>c.off, D:c=>c.def, R:c=>c.tec, S:c=>c.spd, P:c=>c.pow,
   C:c=>(c.def+c.spd+c.sta)/3 };
-function axisVal(T,axis){
-  const R=TUNING.rank, L=TUNING.link, f=AXIS_STAT[axis];
-  const v=T.players.map(p=>f(p.c)*p.apt).sort((a,b)=>b-a).slice(0,R.top);
-  const base=v.reduce((s,x)=>s+x,0)/(v.length||1);
-  return base+Math.min(1,T.linkSum/L.full)*L.rank+(T.graph?T.graph[axis]||0:0);
+/** スタイルに必要な軸の値(2つなら低いほう)。成長グラフを持たないチームは null */
+function styleAxisVal(T,st){
+  const g=T.graph; if(!g)return null;
+  return Math.min(...styleAxes(st).map(a=>g[a]||0));
 }
-function rankOf(v){
-  const th=TUNING.rank.th;
-  return v>=th[2]?"S":v>=th[1]?"A":v>=th[0]?"B":"C";
+/**
+ * スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**。
+ * G = 必要な軸がすべて金色。成長グラフを持たないチームは TUNING.rank.none
+ */
+function styleRank(T,st){
+  const g=T.graph, R=TUNING.rank;
+  if(!g)return R.none;
+  if(styleAxes(st).every(a=>g.gold&&g.gold[a]))return "G";
+  const v=styleAxisVal(T,st);
+  return v>=R.th[1]?"S":v>=R.th[0]?"A":"B";
 }
 /** 全体スタイルの効果。**得るものにだけランクが掛かり、失うものは満額** */
 function teamFx(st,rk){
@@ -215,11 +224,9 @@ function refreshFx(M,min){
     const kp=T.players.find(p=>p.kp)||null, st=kp?styleOfCard(kp.c):null;
     if(!kp)T.kp=null;
     T.style=st?SKILLS[kp.c.skill].style:null;
-    // KP の特殊能力の★が、その選手のスタイルを押し上げる(★5で極まる)
-    const ss=kp&&kp.c.ss||0;
     T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
-    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0)+(T.rare?TUNING.rare.axis:0):0;
-    T.rank=st?rankOf(T.axis):null;
+    T.axis=st?styleAxisVal(T,st)||0:0;
+    T.rank=st?styleRank(T,st):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
   for(const T of teams){
@@ -578,7 +585,7 @@ function coachKp(M,T,mode,t){
   else for(const p of T.players){
     const st=styleOfCard(p.c);
     if(!st||(want&&st.kind!==want))continue;
-    const s=TUNING.rank.k[rankOf(axisVal(T,st.axis))]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
+    const s=TUNING.rank.k[styleRank(T,st)]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
     if(s>bs){ bs=s; best=p.id; }
   }
   if(best)changeKp(M,T,best,t);

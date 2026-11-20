@@ -114,21 +114,21 @@ const TUNING={
   // KP(→docs/04)。1クラブに1人。試合中も変えられる。recv = どのスタイルでも KP にボールが少し集まる
   kp:{ recv:1.25 },
   // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動
-  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / axis … スタイルの軸の上乗せ / oppTier … 相手はこの強さの段以上で発動
+  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / oppTier … 相手はこの強さの段以上で発動(自分は KP の特殊能力 ★5 かつランク G。→docs/15 §15.6)
   //   mvW … 技の札の選ばれやすさ / mvHold … 技を使ったときにモニターに名前を出す時間(ms) / cutMs … カットインの長さ(ms)
   // キャプテン(→docs/12 §12.4)。並びは CP適性 C / B / A / S
   //   sta … チーム全体のスタミナの減りを減らす割合 / back … 負けているときの全能力の上積み
   //   up … 任命したとき本人のやる気が上がる率(任期に1回まで)/ down … 任命したとき重荷で下がる率 / drop … 外された前のキャプテンのやる気が下がる率
   cap:{ sta:[0,0.02,0.04,0.06], back:[0,0.01,0.02,0.03], up:[0,0,0.45,0.7], down:[0.4,0,0,0], drop:0.5 },
-  rare:{ buffK:2.0, axis:0.6, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
-  // スタイルのランク(→docs/04 §4.5)。軸の値 = その能力の上位 top 人の平均 + 連携の上乗せ
-  //   th … B / A / S になる値 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
-  //   spStar/spEvo … KP の特殊能力の★1つごと / ★5で、軸の値に乗る量(→docs/05 §5.4)
-  rank:{ top:6, th:[13.6,15.0,16.4], k:{ C:0.5, B:0.8, A:1.0, S:1.25 }, spStar:0.2, spEvo:0.5 },
+  rare:{ buffK:2.0, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
+  // スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**(選手の能力・連携・★は効かない)
+  //   th … 必要な軸(2つなら低いほう)が A / S になる値。G は必要な軸がすべて金色 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
+  //   none … 成長グラフを持たないチーム(1試合だけのモード)のランク
+  rank:{ th:[40,75], k:{ B:0.8, A:1.0, S:1.25, G:1.5 }, none:"A" },
   // 連携(→docs/04 §4.6)。段は 1〜3
   //   pass … 線で結ばれた2人のパスに、段ごとに乗る強さ
-  //   full/rank … 盤面に居る線の段の合計がこの値で満点。満点で軸の値に rank が乗る
-  link:{ pass:0.04, full:50, rank:1.0 },
+  //   full … 盤面に居る線の段の合計の満点の目安
+  link:{ pass:0.04, full:50 },
   // 監督の指示(→docs/04 §4.9)
   //   line … ラインを上げる/下げるで隊列がずれる量
   //   sideOn/sideOff … 重視したサイドの選手 / 逆サイドの選手が受け手に選ばれる倍率
@@ -161,9 +161,9 @@ const TUNING={
   //   leagueTiers … リーグの格(1〜3)ごとの、同じリーグに入る7クラブの段
   //   promoteRank … 周の終わりにこの順位以内なら、リーグの格が上がる
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
-  //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの戦力グラフの上乗せ(相手は育成しない代わり)
+  //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
   club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
-         tierGraph:[-0.3,0,0.3,0.6,0.9],
+         tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[3,3,4,4,4,5,5]], promoteRank:2,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
@@ -179,7 +179,9 @@ const TUNING={
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
   //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
-  //   graph… 戦力グラフ。basic=基本練習 / up・upAll・down=特殊練習 / decay=練習のたびに全軸が0へ戻る割合
+  //   graph… チームの成長グラフ(→docs/15)。軸は 0〜max。対角の2軸の合計は器 cap(+ 戦術室の段ごとに capFac)を超えない
+  //          basic=基本練習 / up・upAll・down=特殊練習(上げる軸・全軸のとき・下げる軸)。戦術室の facK が掛かる
+  //          breakP=MAX の軸を伸ばす練習で限界突破(金色・固定)する率 / golden=金色が3つそろったときの黄金期(全員が絶好調)の試合数
   //   set  … セットプレイの練習。星1つぶん / 上限(FK・CK・PK に掛かる)
   //   mot  … モチベーション(ケガ/絶不調/不調/好調/絶好調)の倍率と、上下する率
   //   int  … 練習の強度(軽め/普通/ハード)。k=経験とグラフの伸び / fat=たまる疲労
@@ -203,7 +205,7 @@ const TUNING={
          // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
          link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
-         graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
+         graph:{ basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
          set:{ per:0.02, max:0.2 },
          mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
            // 控え(→docs/08 §8.4): 出番の無い試合が benchGrace 続くと下がり始める。勝てば控えも少し上がる。
@@ -271,8 +273,8 @@ const TUNING={
            stamina:0.017, morale:0.002, setpiece:0.05, saving:0.014, spurt:0.01 } },
   // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
   //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
-  //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 戦力グラフに足す量
-  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:0.3 },
+  //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 後半のあいだ成長グラフに足す量(ランクが上がることがある。金色は変わらない)
+  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
   // クラブ新聞(→docs/07 §7.13)。max … 残す記事の数 / recent … HOME に出す直近の試合の数
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
@@ -348,7 +350,7 @@ const CHANNELS={
 /**
  * スタイル(→docs/04)。**KP にしたカードのスキルが引き当てる。同時に有効なのは1つ。**
  *   scope … team(チームの動きを変える) / solo(KP 本人を強める)
- *   axis  … 効きを決める戦力グラフの軸(O/D/R/C/S/P)
+ *   axis  … 効きを決める成長グラフの軸(O/D/R/C/S/P)。axes … 2つ要るもの(低いほうでランクが決まる。→docs/15 §15.5)
  *   kind  … 相手監督が選ぶときの分類(atk / def / sup)
  *   gain  … 得るもの。**ランクの倍率が掛かる** / cost … 失うもの。ランクに関係なく満額
  *   fx    … solo のとき KP 本人に乗る効果(語彙はスキルのバフと同じ。ランクの倍率が掛かる)
@@ -370,13 +372,13 @@ const CHANNELS={
  *   others … 相手の KP 以外に対する守備
  */
 const STYLES={
-  T01:{ name:"ショートパスワーク", scope:"team", axis:"R", kind:"atk",
+  T01:{ name:"ショートパスワーク", scope:"team", axis:"R", axes:["R","O"], kind:"atk",
         get:"安全に繋ぎ、競り合いに強い", lose:"前進が遅く、撃たない",
         gain:{ safe:1.6, riskK:1.10 }, cost:{ gainK:0.85, urgeK:0.8 } },
   T02:{ name:"ダイレクトプレイ", scope:"team", axis:"S", kind:"atk",
         get:"一発で届く手を選び、前進が大きい", lose:"パスが通りにくい",
         gain:{ direct:1.8, gainK:1.12 }, cost:{ riskK:0.94 } },
-  T03:{ name:"ショートカウンター", scope:"team", axis:"S", kind:"atk",
+  T03:{ name:"ショートカウンター", scope:"team", axis:"S", axes:["S","C"], kind:"atk",
         get:"敵陣で奪ってすぐが速くて強い", lose:"遅攻が弱い",
         gain:{ fastK:1.20, fastTo:2.5 }, cost:{ fastN:2, fastZone:"opp", slowK:0.93 } },
   T04:{ name:"ロングカウンター", scope:"team", axis:"S", kind:"def",
@@ -385,7 +387,7 @@ const STYLES={
   T05:{ name:"スルーパス重視", scope:"team", axis:"O", kind:"atk",
         get:"スルーパス・ラストパスを選びやすく、通りやすい", lose:"オフサイドが増える",
         gain:{ chW:{ cmThru:1.8, omLast:1.8, cbVert:1.4, cfRun:1.4 }, chS:1.10 }, cost:{ offRisk:1.5 } },
-  T06:{ name:"センターポスト", scope:"team", axis:"O", kind:"atk",
+  T06:{ name:"センターポスト", scope:"team", axis:"O", axes:["O","P"], kind:"atk",
         get:"前線の的に当てて落とす。CF にボールが集まる", lose:"サイドを使わない",
         gain:{ recvRole:{ CF:1.8 }, chW:{ cfLay:2.0, omKeep:1.5 }, chS:1.15 }, cost:{ lane:{ out:0.6, box:0.7 } } },
   T07:{ name:"ハイタワー", scope:"team", axis:"P", kind:"atk",
@@ -395,13 +397,13 @@ const STYLES={
   T08:{ name:"キープレイヤーアタック", scope:"team", axis:"O", kind:"atk",
         get:"KP にボールを集め、KP の競り合いが強い", lose:"KP 以外へのパスが通りにくい",
         gain:{ kpRecv:3.0, kpS:1.12 }, cost:{ nonKpQ:0.94 } },
-  T09:{ name:"コンビネーションプレイ", scope:"team", axis:"R", kind:"atk",
+  T09:{ name:"コンビネーションプレイ", scope:"team", axis:"R", axes:["R","S"], kind:"atk",
         get:"連携の線の効果が倍", lose:"線の無い相手へのパスが弱い",
         gain:{ linkK:2.0 }, cost:{ noLinkK:0.95 } },
-  T10:{ name:"全員攻撃", scope:"team", axis:"O", kind:"atk",
+  T10:{ name:"全員攻撃", scope:"team", axis:"O", axes:["O","S"], kind:"atk",
         get:"隊列を押し上げ、撃ちに行く", lose:"裏が空く",
         gain:{ push:0.06, urgeK:1.15 }, cost:{ beaten:1.08 } },
-  T11:{ name:"プレッシング", scope:"team", axis:"C", kind:"atk",
+  T11:{ name:"プレッシング", scope:"team", axis:"C", axes:["C","S"], kind:"atk",
         get:"ボールが敵陣にあるとき守備が強い", lose:"自陣で弱い。スタミナを使う",
         gain:{ highK:1.30 }, cost:{ lowK:0.95, sta:1.22 } },
   T12:{ name:"リトリート", scope:"team", axis:"D", kind:"def",
@@ -410,10 +412,10 @@ const STYLES={
   T13:{ name:"ラインコントロール", scope:"team", axis:"D", kind:"def",
         get:"相手のオフサイドが増える", lose:"裏を取られると戻れない",
         gain:{ off:2.0 }, cost:{ beaten:1.30 } },
-  T14:{ name:"オーガナイズドディフェンス", scope:"team", axis:"D", kind:"def",
+  T14:{ name:"オーガナイズドディフェンス", scope:"team", axis:"D", axes:["D","C"], kind:"def",
         get:"人数の厚みがよく効き、反則が減る", lose:"1対1の寄せが緩い",
         gain:{ covK:1.6, foulK:0.7 }, cost:{ pressK:0.93 } },
-  T15:{ name:"マンツーマンディフェンス", scope:"team", axis:"D", kind:"def",
+  T15:{ name:"マンツーマンディフェンス", scope:"team", axis:"D", axes:["D","P"], kind:"def",
         get:"1対1の寄せが強い", lose:"厚みが効かない。反則が増える",
         gain:{ pressK:1.18 }, cost:{ covK:0.5, foulK:1.3 } },
   T16:{ name:"アンチキープレイヤー", scope:"team", axis:"D", kind:"def",
@@ -474,8 +476,12 @@ const STYLES={
 };
 const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"奪取", S:"スピード", P:"パワー" };
 /** レーダー・グラフの表記(→docs/14 §14.22)。英語の略で、カードの能力(OFE / DEF / SPE / POW)と同じ3文字にそろえる。
-    支配 = CONTROL → CON、奪取 = INTERCEPT → INT */
-const AXIS_ABBR={ O:"OFE", D:"DEF", R:"CON", C:"INT", S:"SPE", P:"POW" };
+    支配 = TEC、奪取 = STA(本家のテクニック・スタミナ。→docs/15 §15.1) */
+const AXIS_ABBR={ O:"OFE", D:"DEF", R:"TEC", C:"STA", S:"SPE", P:"POW" };
+/** 成長グラフの対角(→docs/15 §15.1)。対の2軸で器を1つ分け合う */
+const AXIS_PAIR={ O:"D", D:"O", S:"P", P:"S", R:"C", C:"R" };
+/** スタイルに必要な軸(1つか2つ。→docs/15 §15.5) */
+const styleAxes=st=>st.axes||[st.axis];
 
 /**
  * スキル(→docs/04 §4.10)。**カードはスキルを1つ持ち、スキルがスタイルとバフを引き当てる。**

@@ -308,7 +308,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     cardBackHtml(growCard(S,c),{ ss:g.ss })+                    // 能力・適性のマップ・スキルはカードの裏で(→docs/14 §14.14)
-    '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
+    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
     '<p class="sq-hint">入れ替えるときは、カードを引っ張って相手に重ねる</p></div>';
@@ -343,12 +343,29 @@ function squadHtml(){
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   h+=htSetHtml();
-  // 戦力グラフ: 六角形のレーダー(本家にならう →docs/14 §14.14)。横に練習による上下の値
-  const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
-  h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
-    radarSvg([{ v:ax, color:teamColor(myTeam(S)) }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
-      return '<li><span>'+AXIS_ABBR[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
+  h+=growGraphHtml(S);
   return h;
+}
+/** 自分のチームでの、そのスタイルのランク(成長グラフから。→docs/15 §15.5) */
+const myStyleRank=(S,st)=>styleRank({ graph:Object.assign({},S.g.graph,{ gold:S.g.gold }) },st);
+const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
+/**
+ * チームの成長グラフ(→docs/15)。六角形は向かい合う軸が対角。横に対ごとの値(MAX・金色)、下に KP のランク。
+ * 金色が3つそろうとグラフ全体が金色
+ */
+function growGraphHtml(S){
+  const G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, v={};
+  for(const a in G)v[a]=G[a]/R.max;
+  const ax=a=>'<span class="'+(gold[a]?'gd':G[a]>=R.max-1e-9?'mx':'')+'"><i>'+AXIS_ABBR[a]+'</i><b>'+Math.round(G[a])+'</b>'+
+    (gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
+  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
+  return '<section class="card graph-r'+(all?' gold':'')+'"><h3>成長グラフ <small>'+(all?'黄金のチーム':'練習で伸び縮みする。KP のランクを決める')+'</small></h3>'+
+    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    '<div class="gr-wrap">'+radarSvg([{ v, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
+    '<ul class="gr-list">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+ax(p[0])+'<i class="pr">⇄</i>'+ax(p[1])+'</li>').join("")+'</ul></div>'+
+    (st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
+      (rk==="G"?'':' が '+(rk==="B"?TUNING.rank.th[0]+' で A':rk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'')+
+    '<p class="dim gr-note">向かい合う2軸で器 '+graphCap(S)+' を分け合う(片方が伸びると対角が下がる)。MAX の軸をさらに伸ばす練習で、限界突破して金色に</p></section>';
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
 const ROLE_KINDS=["cap","pk","fk","ck"], ROLE_LABEL={ cap:"CAP", pk:"PK", fk:"FK", ck:"CK" };

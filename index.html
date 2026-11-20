@@ -1957,6 +1957,29 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 @keyframes cmSg{from{stroke-opacity:.25}to{stroke-opacity:.7}}
 #club .cmt small{letter-spacing:-.02em;max-width:62px}
 
+/* ---- チームの成長グラフ(growGraphHtml。→docs/15)と KP のランク G ---- */
+.rk.rkG,.th-wr .rk.rkG{background:linear-gradient(135deg,#fff3b8,#e8b11c 45%,#a8730a);color:#2a1a00;box-shadow:0 0 6px rgba(255,205,60,.85);animation:rkG 1.6s ease-in-out infinite alternate}
+@keyframes rkG{from{box-shadow:0 0 3px rgba(255,205,60,.5)}to{box-shadow:0 0 10px rgba(255,214,90,1)}}
+.radar text.gd{filter:drop-shadow(0 0 2px rgba(255,200,40,.95))}
+.radar.gold .rd-grid{stroke:#e8b11c;stroke-opacity:.6}
+#club .graph-r .gr-list li{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;padding:5px 0}
+#club .graph-r .gr-list li>span{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:2px 0;border-radius:3px}
+#club .graph-r .gr-list li>span i{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:11px;letter-spacing:.06em;opacity:.8}
+#club .graph-r .gr-list li>span b{font-size:17px;font-weight:700}
+#club .graph-r .gr-list li>span em{font-style:normal;font-family:var(--f-num);font-size:8.5px;font-weight:800;letter-spacing:.1em}
+#club .graph-r .gr-list li>span.mx em{color:var(--t-sub,#c8102e)}
+#club .graph-r .gr-list li>span.gd{background:linear-gradient(180deg,rgba(255,226,120,.28),rgba(232,177,28,.12));box-shadow:inset 0 0 0 1px rgba(232,177,28,.7)}
+#club .graph-r .gr-list li>span.gd i,#club .graph-r .gr-list li>span.gd b,#club .graph-r .gr-list li>span.gd em{color:#e8b11c;opacity:1;text-shadow:0 0 6px rgba(255,205,60,.75)}
+#club .graph-r .gr-list .pr{font-style:normal;font-size:11px;opacity:.45}
+#club .graph-r .gr-golden{margin:2px 0 6px;padding:5px 8px;font-size:12px;font-weight:800;color:#2a1a00;background:linear-gradient(90deg,#fff1a8,#e8b11c);text-align:center}
+#club .graph-r .gr-kp{margin:6px 0 2px;font-size:12px;font-weight:700} #club .graph-r .gr-kp small{font-weight:500;opacity:.75}
+#club .graph-r .gr-note{font-size:10.5px;margin:4px 0 0}
+#club .graph-r.gold{box-shadow:0 0 0 2px #e8b11c,0 0 22px rgba(232,177,28,.45)}
+#club .graph-r.gold h3{color:#c8900c}
+#club .sd-rk{font-size:11.5px;font-weight:700;margin-right:auto;align-self:center}
+body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd i,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd b,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd em{color:#9a6a00;text-shadow:0 0 6px rgba(255,200,40,.55)}
+body.th-wr:not(.th-bk) .radar text.gd{fill:#b07d0a}
+
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
    参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
@@ -2742,21 +2765,21 @@ const TUNING={
   // KP(→docs/04)。1クラブに1人。試合中も変えられる。recv = どのスタイルでも KP にボールが少し集まる
   kp:{ recv:1.25 },
   // レアKP(→docs/11)。WORLD CLASS 以上のカードが ★5 で KP のときに発動
-  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / axis … スタイルの軸の上乗せ / oppTier … 相手はこの強さの段以上で発動
+  //   buffK … スキルのバフの上乗せ分に掛ける倍率 / oppTier … 相手はこの強さの段以上で発動(自分は KP の特殊能力 ★5 かつランク G。→docs/15 §15.6)
   //   mvW … 技の札の選ばれやすさ / mvHold … 技を使ったときにモニターに名前を出す時間(ms) / cutMs … カットインの長さ(ms)
   // キャプテン(→docs/12 §12.4)。並びは CP適性 C / B / A / S
   //   sta … チーム全体のスタミナの減りを減らす割合 / back … 負けているときの全能力の上積み
   //   up … 任命したとき本人のやる気が上がる率(任期に1回まで)/ down … 任命したとき重荷で下がる率 / drop … 外された前のキャプテンのやる気が下がる率
   cap:{ sta:[0,0.02,0.04,0.06], back:[0,0.01,0.02,0.03], up:[0,0,0.45,0.7], down:[0.4,0,0,0], drop:0.5 },
-  rare:{ buffK:2.0, axis:0.6, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
-  // スタイルのランク(→docs/04 §4.5)。軸の値 = その能力の上位 top 人の平均 + 連携の上乗せ
-  //   th … B / A / S になる値 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
-  //   spStar/spEvo … KP の特殊能力の★1つごと / ★5で、軸の値に乗る量(→docs/05 §5.4)
-  rank:{ top:6, th:[13.6,15.0,16.4], k:{ C:0.5, B:0.8, A:1.0, S:1.25 }, spStar:0.2, spEvo:0.5 },
+  rare:{ buffK:2.0, oppTier:5, mvW:1.6, mvHold:650, cutMs:1300 },
+  // スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**(選手の能力・連携・★は効かない)
+  //   th … 必要な軸(2つなら低いほう)が A / S になる値。G は必要な軸がすべて金色 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
+  //   none … 成長グラフを持たないチーム(1試合だけのモード)のランク
+  rank:{ th:[40,75], k:{ B:0.8, A:1.0, S:1.25, G:1.5 }, none:"A" },
   // 連携(→docs/04 §4.6)。段は 1〜3
   //   pass … 線で結ばれた2人のパスに、段ごとに乗る強さ
-  //   full/rank … 盤面に居る線の段の合計がこの値で満点。満点で軸の値に rank が乗る
-  link:{ pass:0.04, full:50, rank:1.0 },
+  //   full … 盤面に居る線の段の合計の満点の目安
+  link:{ pass:0.04, full:50 },
   // 監督の指示(→docs/04 §4.9)
   //   line … ラインを上げる/下げるで隊列がずれる量
   //   sideOn/sideOff … 重視したサイドの選手 / 逆サイドの選手が受け手に選ばれる倍率
@@ -2789,9 +2812,9 @@ const TUNING={
   //   leagueTiers … リーグの格(1〜3)ごとの、同じリーグに入る7クラブの段
   //   promoteRank … 周の終わりにこの順位以内なら、リーグの格が上がる
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
-  //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの戦力グラフの上乗せ(相手は育成しない代わり)
+  //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
   club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
-         tierGraph:[-0.3,0,0.3,0.6,0.9],
+         tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[3,3,4,4,4,5,5]], promoteRank:2,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
@@ -2807,7 +2830,9 @@ const TUNING={
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
   //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
-  //   graph… 戦力グラフ。basic=基本練習 / up・upAll・down=特殊練習 / decay=練習のたびに全軸が0へ戻る割合
+  //   graph… チームの成長グラフ(→docs/15)。軸は 0〜max。対角の2軸の合計は器 cap(+ 戦術室の段ごとに capFac)を超えない
+  //          basic=基本練習 / up・upAll・down=特殊練習(上げる軸・全軸のとき・下げる軸)。戦術室の facK が掛かる
+  //          breakP=MAX の軸を伸ばす練習で限界突破(金色・固定)する率 / golden=金色が3つそろったときの黄金期(全員が絶好調)の試合数
   //   set  … セットプレイの練習。星1つぶん / 上限(FK・CK・PK に掛かる)
   //   mot  … モチベーション(ケガ/絶不調/不調/好調/絶好調)の倍率と、上下する率
   //   int  … 練習の強度(軽め/普通/ハード)。k=経験とグラフの伸び / fat=たまる疲労
@@ -2831,7 +2856,7 @@ const TUNING={
          // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
          link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
-         graph:{ basic:0.12, up:0.10, upAll:0.06, down:0.08, decay:0.985, min:-2, max:3 },
+         graph:{ basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
          set:{ per:0.02, max:0.2 },
          mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
            // 控え(→docs/08 §8.4): 出番の無い試合が benchGrace 続くと下がり始める。勝てば控えも少し上がる。
@@ -2899,8 +2924,8 @@ const TUNING={
            stamina:0.017, morale:0.002, setpiece:0.05, saving:0.014, spurt:0.01 } },
   // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
   //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
-  //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 戦力グラフに足す量
-  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:0.3 },
+  //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 後半のあいだ成長グラフに足す量(ランクが上がることがある。金色は変わらない)
+  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
   // クラブ新聞(→docs/07 §7.13)。max … 残す記事の数 / recent … HOME に出す直近の試合の数
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
@@ -2976,7 +3001,7 @@ const CHANNELS={
 /**
  * スタイル(→docs/04)。**KP にしたカードのスキルが引き当てる。同時に有効なのは1つ。**
  *   scope … team(チームの動きを変える) / solo(KP 本人を強める)
- *   axis  … 効きを決める戦力グラフの軸(O/D/R/C/S/P)
+ *   axis  … 効きを決める成長グラフの軸(O/D/R/C/S/P)。axes … 2つ要るもの(低いほうでランクが決まる。→docs/15 §15.5)
  *   kind  … 相手監督が選ぶときの分類(atk / def / sup)
  *   gain  … 得るもの。**ランクの倍率が掛かる** / cost … 失うもの。ランクに関係なく満額
  *   fx    … solo のとき KP 本人に乗る効果(語彙はスキルのバフと同じ。ランクの倍率が掛かる)
@@ -2998,13 +3023,13 @@ const CHANNELS={
  *   others … 相手の KP 以外に対する守備
  */
 const STYLES={
-  T01:{ name:"ショートパスワーク", scope:"team", axis:"R", kind:"atk",
+  T01:{ name:"ショートパスワーク", scope:"team", axis:"R", axes:["R","O"], kind:"atk",
         get:"安全に繋ぎ、競り合いに強い", lose:"前進が遅く、撃たない",
         gain:{ safe:1.6, riskK:1.10 }, cost:{ gainK:0.85, urgeK:0.8 } },
   T02:{ name:"ダイレクトプレイ", scope:"team", axis:"S", kind:"atk",
         get:"一発で届く手を選び、前進が大きい", lose:"パスが通りにくい",
         gain:{ direct:1.8, gainK:1.12 }, cost:{ riskK:0.94 } },
-  T03:{ name:"ショートカウンター", scope:"team", axis:"S", kind:"atk",
+  T03:{ name:"ショートカウンター", scope:"team", axis:"S", axes:["S","C"], kind:"atk",
         get:"敵陣で奪ってすぐが速くて強い", lose:"遅攻が弱い",
         gain:{ fastK:1.20, fastTo:2.5 }, cost:{ fastN:2, fastZone:"opp", slowK:0.93 } },
   T04:{ name:"ロングカウンター", scope:"team", axis:"S", kind:"def",
@@ -3013,7 +3038,7 @@ const STYLES={
   T05:{ name:"スルーパス重視", scope:"team", axis:"O", kind:"atk",
         get:"スルーパス・ラストパスを選びやすく、通りやすい", lose:"オフサイドが増える",
         gain:{ chW:{ cmThru:1.8, omLast:1.8, cbVert:1.4, cfRun:1.4 }, chS:1.10 }, cost:{ offRisk:1.5 } },
-  T06:{ name:"センターポスト", scope:"team", axis:"O", kind:"atk",
+  T06:{ name:"センターポスト", scope:"team", axis:"O", axes:["O","P"], kind:"atk",
         get:"前線の的に当てて落とす。CF にボールが集まる", lose:"サイドを使わない",
         gain:{ recvRole:{ CF:1.8 }, chW:{ cfLay:2.0, omKeep:1.5 }, chS:1.15 }, cost:{ lane:{ out:0.6, box:0.7 } } },
   T07:{ name:"ハイタワー", scope:"team", axis:"P", kind:"atk",
@@ -3023,13 +3048,13 @@ const STYLES={
   T08:{ name:"キープレイヤーアタック", scope:"team", axis:"O", kind:"atk",
         get:"KP にボールを集め、KP の競り合いが強い", lose:"KP 以外へのパスが通りにくい",
         gain:{ kpRecv:3.0, kpS:1.12 }, cost:{ nonKpQ:0.94 } },
-  T09:{ name:"コンビネーションプレイ", scope:"team", axis:"R", kind:"atk",
+  T09:{ name:"コンビネーションプレイ", scope:"team", axis:"R", axes:["R","S"], kind:"atk",
         get:"連携の線の効果が倍", lose:"線の無い相手へのパスが弱い",
         gain:{ linkK:2.0 }, cost:{ noLinkK:0.95 } },
-  T10:{ name:"全員攻撃", scope:"team", axis:"O", kind:"atk",
+  T10:{ name:"全員攻撃", scope:"team", axis:"O", axes:["O","S"], kind:"atk",
         get:"隊列を押し上げ、撃ちに行く", lose:"裏が空く",
         gain:{ push:0.06, urgeK:1.15 }, cost:{ beaten:1.08 } },
-  T11:{ name:"プレッシング", scope:"team", axis:"C", kind:"atk",
+  T11:{ name:"プレッシング", scope:"team", axis:"C", axes:["C","S"], kind:"atk",
         get:"ボールが敵陣にあるとき守備が強い", lose:"自陣で弱い。スタミナを使う",
         gain:{ highK:1.30 }, cost:{ lowK:0.95, sta:1.22 } },
   T12:{ name:"リトリート", scope:"team", axis:"D", kind:"def",
@@ -3038,10 +3063,10 @@ const STYLES={
   T13:{ name:"ラインコントロール", scope:"team", axis:"D", kind:"def",
         get:"相手のオフサイドが増える", lose:"裏を取られると戻れない",
         gain:{ off:2.0 }, cost:{ beaten:1.30 } },
-  T14:{ name:"オーガナイズドディフェンス", scope:"team", axis:"D", kind:"def",
+  T14:{ name:"オーガナイズドディフェンス", scope:"team", axis:"D", axes:["D","C"], kind:"def",
         get:"人数の厚みがよく効き、反則が減る", lose:"1対1の寄せが緩い",
         gain:{ covK:1.6, foulK:0.7 }, cost:{ pressK:0.93 } },
-  T15:{ name:"マンツーマンディフェンス", scope:"team", axis:"D", kind:"def",
+  T15:{ name:"マンツーマンディフェンス", scope:"team", axis:"D", axes:["D","P"], kind:"def",
         get:"1対1の寄せが強い", lose:"厚みが効かない。反則が増える",
         gain:{ pressK:1.18 }, cost:{ covK:0.5, foulK:1.3 } },
   T16:{ name:"アンチキープレイヤー", scope:"team", axis:"D", kind:"def",
@@ -3102,8 +3127,12 @@ const STYLES={
 };
 const AXIS_LABEL={ O:"オフェンス", D:"ディフェンス", R:"支配", C:"奪取", S:"スピード", P:"パワー" };
 /** レーダー・グラフの表記(→docs/14 §14.22)。英語の略で、カードの能力(OFE / DEF / SPE / POW)と同じ3文字にそろえる。
-    支配 = CONTROL → CON、奪取 = INTERCEPT → INT */
-const AXIS_ABBR={ O:"OFE", D:"DEF", R:"CON", C:"INT", S:"SPE", P:"POW" };
+    支配 = TEC、奪取 = STA(本家のテクニック・スタミナ。→docs/15 §15.1) */
+const AXIS_ABBR={ O:"OFE", D:"DEF", R:"TEC", C:"STA", S:"SPE", P:"POW" };
+/** 成長グラフの対角(→docs/15 §15.1)。対の2軸で器を1つ分け合う */
+const AXIS_PAIR={ O:"D", D:"O", S:"P", P:"S", R:"C", C:"R" };
+/** スタイルに必要な軸(1つか2つ。→docs/15 §15.5) */
+const styleAxes=st=>st.axes||[st.axis];
 
 /**
  * スキル(→docs/04 §4.10)。**カードはスキルを1つ持ち、スキルがスタイルとバフを引き当てる。**
@@ -3841,11 +3870,13 @@ const COACH_PERS=["steady","quick","stubborn","attack","careful"];
 const persOfClub=id=>COACH_PERS[hashStr("coach:"+id)%COACH_PERS.length];
 function makeTeamDef(teamId,cpu){
   const t=TEAMS[teamId], f=FORMS[t.form];
-  // 相手クラブは育成しない代わりに、強さの段に応じた戦力グラフを初めから持つ(→docs/05 §5.6)
-  const tg=t.tier?TUNING.club.tierGraph[t.tier-1]:0;
+  // 相手クラブは育成しない代わりに、強さの段に応じた成長グラフを初めから持つ。上の段は既定の KP の軸が金色(→docs/15 §15.7)
+  const tg=t.tier?TUNING.club.tierGraph[t.tier-1]:0, st0=t.kp&&CARDS[t.kp]?styleOfCard(CARDS[t.kp]):null;
+  const graph=tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg, gold:{} }:null;
+  if(graph&&st0&&t.tier>=TUNING.club.tierGold)for(const a of styleAxes(st0)){ graph[a]=TUNING.grow.graph.max; graph.gold[a]=true; }
   return { id:t.id, name:t.name, short:t.short, color:t.color, cpu:!!cpu,
     kp:t.kp||null, links:t.links||[],
-    graph:tg?{ O:tg, D:tg, R:tg, C:tg, S:tg, P:tg }:null, setplay:0,
+    graph, setplay:0,
     rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
     pers:t.pers||persOfClub(t.id),                   // 相手監督の性格(→docs/13 §13.5)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
@@ -3879,8 +3910,9 @@ const styleOfCard=c=>{ const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[
 const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&&RARE_KP[c.id]||null;
 /** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
 function rareOf(p,T){
-  const R=p&&p.kp?rareOfCard(p.c):null;
-  return R&&((p.c.ss||0)>=5||T.rareOpp)?R:null;
+  const R=p&&p.kp?rareOfCard(p.c):null, st=R?styleOfCard(p.c):null;
+  // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。相手は強さの段で
+  return R&&(((p.c.ss||0)>=5&&st&&styleRank(T,st)==="G")||T.rareOpp)?R:null;
 }
 /** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
 const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
@@ -3914,18 +3946,24 @@ function linkLv(T,a,b){
   for(const l of T.links)if((l[0]===a&&l[1]===b)||(l[0]===b&&l[1]===a))return l[2];
   return 0;
 }
-/** 戦力グラフの軸の値。その能力の上位 top 人の平均(適性込み)+ 連携の上乗せ */
+/** 戦力の6軸に使う能力(レーダーの表示用。ランクには使わない) */
 const AXIS_STAT={ O:c=>c.off, D:c=>c.def, R:c=>c.tec, S:c=>c.spd, P:c=>c.pow,
   C:c=>(c.def+c.spd+c.sta)/3 };
-function axisVal(T,axis){
-  const R=TUNING.rank, L=TUNING.link, f=AXIS_STAT[axis];
-  const v=T.players.map(p=>f(p.c)*p.apt).sort((a,b)=>b-a).slice(0,R.top);
-  const base=v.reduce((s,x)=>s+x,0)/(v.length||1);
-  return base+Math.min(1,T.linkSum/L.full)*L.rank+(T.graph?T.graph[axis]||0:0);
+/** スタイルに必要な軸の値(2つなら低いほう)。成長グラフを持たないチームは null */
+function styleAxisVal(T,st){
+  const g=T.graph; if(!g)return null;
+  return Math.min(...styleAxes(st).map(a=>g[a]||0));
 }
-function rankOf(v){
-  const th=TUNING.rank.th;
-  return v>=th[2]?"S":v>=th[1]?"A":v>=th[0]?"B":"C";
+/**
+ * スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**。
+ * G = 必要な軸がすべて金色。成長グラフを持たないチームは TUNING.rank.none
+ */
+function styleRank(T,st){
+  const g=T.graph, R=TUNING.rank;
+  if(!g)return R.none;
+  if(styleAxes(st).every(a=>g.gold&&g.gold[a]))return "G";
+  const v=styleAxisVal(T,st);
+  return v>=R.th[1]?"S":v>=R.th[0]?"A":"B";
 }
 /** 全体スタイルの効果。**得るものにだけランクが掛かり、失うものは満額** */
 function teamFx(st,rk){
@@ -3952,11 +3990,9 @@ function refreshFx(M,min){
     const kp=T.players.find(p=>p.kp)||null, st=kp?styleOfCard(kp.c):null;
     if(!kp)T.kp=null;
     T.style=st?SKILLS[kp.c.skill].style:null;
-    // KP の特殊能力の★が、その選手のスタイルを押し上げる(★5で極まる)
-    const ss=kp&&kp.c.ss||0;
     T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
-    T.axis=st?axisVal(T,st.axis)+ss*TUNING.rank.spStar+(ss>=5?TUNING.rank.spEvo:0)+(T.rare?TUNING.rare.axis:0):0;
-    T.rank=st?rankOf(T.axis):null;
+    T.axis=st?styleAxisVal(T,st)||0:0;
+    T.rank=st?styleRank(T,st):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
   for(const T of teams){
@@ -4315,7 +4351,7 @@ function coachKp(M,T,mode,t){
   else for(const p of T.players){
     const st=styleOfCard(p.c);
     if(!st||(want&&st.kind!==want))continue;
-    const s=TUNING.rank.k[rankOf(axisVal(T,st.axis))]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
+    const s=TUNING.rank.k[styleRank(T,st)]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
     if(s>bs){ bs=s; best=p.id; }
   }
   if(best)changeKp(M,T,best,t);
@@ -5139,7 +5175,7 @@ function playerDef(S){
   // 育成を反映する: 能力・モチベーション・特殊能力はカードに、連携・グラフ・セットプレイはクラブに
   def.xi.forEach(s=>{ s.card=growCard(S,s.card); });
   def.bench=def.bench.map(c=>growCard(S,c));
-  def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
+  def.links=growLinks(S); def.graph=Object.assign({},S.g.graph,{ gold:Object.assign({},S.g.gold) }); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
   def.roles=Object.assign({},S.roles||{});      // キャプテンとキッカーの任命(→docs/12)
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
@@ -5875,7 +5911,7 @@ function newPlayerGrowth(){
 function newGrowth(ids){
   const pl={};
   (ids||TEAMS.azr.xi.concat(TEAMS.azr.bench)).forEach(id=>{ pl[id]=newPlayerGrowth(); });
-  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, set:0,
+  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, gold:{}, golden:0, set:0,
     step:"train", cn:0, done:[], opts:null };
 }
 /** 古いセーブの育成に、あとから増えた項目を補う */
@@ -5887,6 +5923,8 @@ function migrateGrowth(g,sq){
   if(g.cn==null)g.cn=0;
   if(!g.done)g.done=[];
   if(g.step==="ready")g.step="comm";
+  // 成長グラフ(→docs/15)。前の戦力グラフ(−2〜+3 の上乗せ)とは目盛りが違うので 0 から
+  if(!g.gold){ g.gold={}; g.golden=0; for(const a in g.graph)g.graph[a]=0; }
   return g;
 }
 const linkOf=(S,a,b)=>S.g.links[lkey(a,b)]||{ lv:0, exp:0, gold:false };
@@ -5943,9 +5981,33 @@ function trainDesc(o){
   return Object.keys(e).map(k=>nm[k]+"★".repeat(e[k])).join(" ")+" ・ グラフ: "+
     (t.up?ax(t.up)+" ↑":"")+(t.down?" / "+ax(t.down)+" ↓":"");
 }
-function graphAdd(S,axis,v){
-  const R=TUNING.grow.graph;
-  S.g.graph[axis]=clamp(S.g.graph[axis]+v,R.min,R.max);
+/* ---------- チームの成長グラフ(→docs/15) ----------
+ * 6軸 0〜100。対角の2軸(AXIS_PAIR)は合計が器(graphCap)を超えない。伸ばして超えたぶんは対角が下がる。
+ * 100 は MAX。MAX の軸をさらに伸ばす練習で、breakP の率で限界突破 → 金色(固定)。金色の対角は「器 − 100」まで。
+ * 金色が3つ(各対に1つ)そろうと黄金期: golden 試合のあいだ全員が絶好調 */
+const graphCap=S=>{ const R=TUNING.grow.graph; return R.cap+(S.biz?R.capFac[S.biz.fac.tact||0]||0:0); };
+const graphGoldN=S=>Object.keys(S.g.gold).filter(a=>S.g.gold[a]).length;
+function graphAdd(S,a,v){
+  const R=TUNING.grow.graph, g=S.g.graph, gold=S.g.gold, b=AXIS_PAIR[a], cap=graphCap(S);
+  if(gold[a]||!v)return;
+  if(v<0){ g[a]=Math.max(0,g[a]+v); return; }
+  g[a]=Math.min(gold[b]?cap-R.max:R.max,g[a]+v);
+  const over=g[a]+g[b]-cap;
+  if(over>0)g[b]=Math.max(0,g[b]-over);
+}
+/** 練習で伸ばした軸のうち、練習の前から MAX だったものが限界突破するか見る。3つそろえば黄金期 */
+function graphBreak(S,axes,out){
+  const R=TUNING.grow.graph, rng=mulberry32((S.seed^hashStr("gb:"+S.term+":"+S.played))>>>0);
+  for(const a of axes){
+    if(S.g.gold[a]||S.g.gold[AXIS_PAIR[a]]||rng()>=R.breakP)continue;
+    S.g.gold[a]=true; S.g.graph[a]=R.max;
+    out.push("🌟 成長グラフの "+AXIS_ABBR[a]+" が限界突破！ 金色に輝いた(もう下がらない)");
+    if(graphGoldN(S)>=3&&!S.g.golden){
+      S.g.golden=R.golden; S.g.goldenAt=S.played;
+      for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4;
+      out.push("👑 黄金期が到来！ 成長グラフが黄金に。"+R.golden+"試合のあいだ全員が絶好調");
+    }
+  }
 }
 /** 個人能力の★が上がるか見る(試合のあとに呼ぶ)。上がったら、その間にいちばん練習した能力が伸びる */
 function checkInd(S,id,out){
@@ -6000,14 +6062,15 @@ function doTraining(S,i,intensity){
   if(S.g.step!=="train"||!o)return out;
   const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv];
   const ids=Object.keys(S.g.pl);
-  for(const a in S.g.graph)S.g.graph[a]*=R.decay;
+  const gk=facK(S,"tact"), maxed=Object.keys(S.g.graph).filter(a=>S.g.graph[a]>=R.max-1e-9&&!S.g.gold[a]);   // 練習の前から MAX の軸(戦術室で伸びやすい)
+  let ups=[];
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
       g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
-    graphAdd(S,PARAM_AXIS[o.param],R.basic*k);
+    graphAdd(S,PARAM_AXIS[o.param],R.basic*k*gk); ups=[PARAM_AXIS[o.param]];
   }else{
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
@@ -6023,8 +6086,9 @@ function doTraining(S,i,intensity){
         linkExp(S,xi[a],xi[b],e.link*k*linkBonusK(xi[a],xi[b]),linkCap(xi[a],xi[b]));
     }
     if(e.set)S.g.set=Math.min(G0.set.max,S.g.set+G0.set.per*e.set*k*(tsetOf(S,"setK")||1));
-    for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k);
     for(const a of t.down)graphAdd(S,a,-R.down*k);
+    for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k*gk);
+    ups=[...t.up];
     // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
     if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
   }
@@ -6033,6 +6097,7 @@ function doTraining(S,i,intensity){
     g.fat=Math.min(N.fatMax,g.fat+N.fat[lv]);
     checkSp(S,id,out);
   }
+  graphBreak(S,ups.filter(a=>maxed.includes(a)),out);
   if(N.fat[lv]>0)out.push("疲労 +"+Math.round(N.fat[lv]*100)+"%(試合はそのぶん消耗した状態で始まる)");
   S.g.step="comm"; S.g.cn=0; S.g.done=[];
   return out;
@@ -6367,6 +6432,12 @@ function afterMatchGrowth(S,fx,res){
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
+  }
+  // 黄金期(→docs/15 §15.3): 残りの試合のあいだ、ケガ以外の全員が絶好調のまま。終わっても金色のグラフは残る
+  if(S.g.golden>0){
+    S.g.golden--;
+    if(S.g.golden>0){ for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4; }
+    else out.push("黄金期がひと区切り(金色の成長グラフはそのまま)");
   }
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
@@ -7420,6 +7491,8 @@ function makeArticle(S,M,L,RT){
   const quote=S.mgr?S.mgr.name+"監督「"+pick(PAPER_QUOTE[won?"win":lost?"lose":"draw"])+"」":"";
   // ゴシップ欄: 育成・ケガ・ミッション・スタジアムの知らせ + うわさ話1つ
   const side=[];
+  // 黄金期の到来(この試合の前の練習で、成長グラフの金色が3つそろった。→docs/15 §15.3)
+  if(S.g&&S.g.goldenAt!=null&&S.g.goldenAt===S.played-1)side.push("【黄金期到来】"+me+"の成長グラフが黄金に！ 全員が絶好調、手が付けられない");
   for(const x of L.lines){
     if(/が覚醒/.test(x))side.push("【独占】"+x.replace(/^⭐ /,"")+" 練習場で異次元の動き");
     else if(/★5 に/.test(x))side.push("【分析】"+x.replace(/^⭐ /,""));
@@ -7548,10 +7621,10 @@ function aptMapSvg(card){
 }
 
 /* ---- 戦力のレーダー(6軸の六角形) ---- */
-const RADAR_AX=["O","R","S","P","C","D"];     // 時計回り(上がオフェンス)
+const RADAR_AX=["O","R","S","D","C","P"];     // 時計回り(上がオフェンス)。向かい合う軸が成長グラフの対角(OFE↔DEF・TEC↔STA・SPE↔POW。→docs/15 §15.1)
 /**
  * レーダー。線と軸の名前は文字の色(currentColor)。地の明るさは CSS の .radar の color で合わせる
- * sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか
+ * sets … [{ v:{O:0〜1,...}, color, fill }](2つ重ねると比べられる)。labels … 軸の名前を出すか。gold … { 軸:true } の名前を金色で光らせる(成長グラフ)
  */
 function radarSvg(sets,opts){
   opts=opts||{};
@@ -7563,14 +7636,14 @@ function radarSvg(sets,opts){
     const pts=RADAR_AX.map((a,i)=>pt(i,R*Math.max(0.04,Math.min(1,s.v[a]||0))).map(n=>n.toFixed(1)).join(",")).join(" ");
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
-  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor">'+AXIS_ABBR[a]+'</text>'; }).join("");
+  if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+'</text>'; }).join("");
   return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 104">'+g+'</svg>';
 }
-/** チームの6軸を 0〜1 に(先発の能力の上位6人の平均 + 戦力グラフの上乗せ)。cards … 先発11人のカード、graph … S.g.graph など */
-function teamAxes(cards,graph){
+/** チームの戦力の6軸を 0〜1 に(先発の能力の上位6人の平均)。cards … 先発11人のカード */
+function teamAxes(cards){
   const v={};
   for(const a of RADAR_AX){ const f=AXIS_STAT[a], top=cards.map(c=>f(c)).sort((x,y)=>y-x).slice(0,6);
-    const base=top.reduce((s,x)=>s+x,0)/(top.length||1)+(graph&&graph[a]||0);
+    const base=top.reduce((s,x)=>s+x,0)/(top.length||1);
     v[a]=(base-8)/9; }                         // 能力の目盛りは実際の幅(8〜17)に合わせる
   return v;
 }
@@ -8452,7 +8525,7 @@ function sqDetailHtml(){
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     cardBackHtml(growCard(S,c),{ ss:g.ss })+                    // 能力・適性のマップ・スキルはカードの裏で(→docs/14 §14.14)
-    '<div class="sd-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
+    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
     '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
     '<p class="sq-hint">入れ替えるときは、カードを引っ張って相手に重ねる</p></div>';
@@ -8487,12 +8560,29 @@ function squadHtml(){
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   h+=htSetHtml();
-  // 戦力グラフ: 六角形のレーダー(本家にならう →docs/14 §14.14)。横に練習による上下の値
-  const ax=teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
-  h+='<section class="card graph-r"><h3>戦力グラフ <small>練習で上下する。スタイルのランクに効く</small></h3><div class="gr-wrap">'+
-    radarSvg([{ v:ax, color:teamColor(myTeam(S)) }])+'<ul class="gr-list">'+Object.keys(S.g.graph).map(a=>{ const v=S.g.graph[a];
-      return '<li><span>'+AXIS_ABBR[a]+'</span><b class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>=0?"+":"")+v.toFixed(2)+'</b></li>'; }).join("")+'</ul></div></section>';
+  h+=growGraphHtml(S);
   return h;
+}
+/** 自分のチームでの、そのスタイルのランク(成長グラフから。→docs/15 §15.5) */
+const myStyleRank=(S,st)=>styleRank({ graph:Object.assign({},S.g.graph,{ gold:S.g.gold }) },st);
+const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
+/**
+ * チームの成長グラフ(→docs/15)。六角形は向かい合う軸が対角。横に対ごとの値(MAX・金色)、下に KP のランク。
+ * 金色が3つそろうとグラフ全体が金色
+ */
+function growGraphHtml(S){
+  const G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, v={};
+  for(const a in G)v[a]=G[a]/R.max;
+  const ax=a=>'<span class="'+(gold[a]?'gd':G[a]>=R.max-1e-9?'mx':'')+'"><i>'+AXIS_ABBR[a]+'</i><b>'+Math.round(G[a])+'</b>'+
+    (gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
+  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
+  return '<section class="card graph-r'+(all?' gold':'')+'"><h3>成長グラフ <small>'+(all?'黄金のチーム':'練習で伸び縮みする。KP のランクを決める')+'</small></h3>'+
+    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    '<div class="gr-wrap">'+radarSvg([{ v, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
+    '<ul class="gr-list">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+ax(p[0])+'<i class="pr">⇄</i>'+ax(p[1])+'</li>').join("")+'</ul></div>'+
+    (st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
+      (rk==="G"?'':' が '+(rk==="B"?TUNING.rank.th[0]+' で A':rk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'')+
+    '<p class="dim gr-note">向かい合う2軸で器 '+graphCap(S)+' を分け合う(片方が伸びると対角が下がる)。MAX の軸をさらに伸ばす練習で、限界突破して金色に</p></section>';
 }
 /* ---- 任命(キャプテン・キッカー。→docs/12) ---- */
 const ROLE_KINDS=["cap","pk","fk","ck"], ROLE_LABEL={ cap:"CAP", pk:"PK", fk:"FK", ck:"CK" };
@@ -9740,13 +9830,13 @@ function sceneTitle(onStart){
 /** 対戦カードのレーダーの値。自チームは育成を入れた先発と戦力グラフ、相手はクラブの段の上乗せ */
 function vsAxes(T,mine){
   const S=CL.S;
-  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])),S.g.graph);
-  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
-  return teamAxes((T.xi||[]).map(id=>CARDS[id]),{ O:t, D:t, R:t, C:t, S:t, P:t });
+  // 戦力(選手の能力)を比べる。チームの成長グラフ(→docs/15)は監督室で見せる
+  if(mine&&S)return teamAxes(S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])));
+  return teamAxes((T.xi||[]).map(id=>CARDS[id]));
 }
 function axisBars(T){
-  // 戦力グラフ(相手はクラブの段、自分は育成)を6本の短い帯で
-  const t=T.tier?TUNING.club.tierGraph[T.tier-1]:0;
+  // 戦力(能力の上位6人の平均)を6本の短い帯で
+  const t=0;
   return '<div class="ax">'+["O","D","R","C","S","P"].map(a=>{
     const ids=T.xi||[], f=AXIS_STAT[a];
     const v=ids.length?ids.map(id=>f(CARDS[id])).sort((x,y)=>y-x).slice(0,6).reduce((s,x)=>s+x,0)/6:12;
@@ -10130,7 +10220,7 @@ function updateCtl(){
 function styleText(T,pendingKp){
   const id=pendingKp||T.kp, c=id?CARDS[id]:null, st=c?styleOfCard(c):null;
   if(!st)return "KP なし";
-  const rank=pendingKp?rankOf(axisVal(T,st.axis)):T.rank||rankOf(axisVal(T,st.axis));
+  const rank=pendingKp?styleRank(T,st):T.rank||styleRank(T,st);
   return "KP "+nameOf(c)+"｜"+st.name+" <b class=\"rk rk"+rank+"\">"+rank+"</b>";
 }
 function updateStyleBar(){
@@ -10199,7 +10289,7 @@ function showInfo(id){
   if(!c)return;
   const sk=c.skill?SKILLS[c.skill]:null;
   const kp=(BD.kp||M.home.kp)===id, st=styleOfCard(c);
-  const rank=st?rankOf(axisVal(M.home,st.axis)):null;
+  const rank=st?styleRank(M.home,st):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
   // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に

@@ -474,7 +474,7 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   while(!S.termOver){
     playOne(S,W,null,{ log });
     for(const id in S.g.pl){ const g=S.g.pl[id]; if(g.mot<0||g.mot>4||g.is>5||g.ss>5)ok=false; }
-    for(const a in S.g.graph)if(S.g.graph[a]<G0.graph.min-1e-9||S.g.graph[a]>G0.graph.max+1e-9)ok=false;
+    for(const a in S.g.graph)if(S.g.graph[a]<-1e-9||S.g.graph[a]>G0.graph.max+1e-9||S.g.graph[a]+S.g.graph[E.AXIS_PAIR[a]]>E.graphCap(S)+1e-9)ok=false;
   }
   const after=strength(S);
   const pl=Object.values(S.g.pl), xi=E.squadXi(S), avg=f=>pl.reduce((s,g)=>s+f(g),0)/pl.length;
@@ -484,10 +484,43 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   console.log("    個人能力 ★平均 "+f2(avg(g=>g.is))+" / 覚醒 "+awake+"人   特殊能力 最高 ★"+spMax+" / ★5 "+sp5+"人");
   console.log("    連携  薄線 "+lv[1]+" / 太線 "+lv[2]+" / 黄金線 "+lv[3]+"(盤面の11人で合計 "+
     def.links.filter(l=>xi.includes(l[0])&&xi.includes(l[1])).reduce((s,l)=>s+l[2],0)+")");
-  console.log("    戦力グラフ "+Object.keys(S.g.graph).map(a=>a+" "+f2(S.g.graph[a])).join(" ")+"   セットプレイ +"+pc(S.g.set));
+  console.log("    成長グラフ "+Object.keys(S.g.graph).map(a=>E.AXIS_ABBR[a]+" "+Math.round(S.g.graph[a])+(S.g.gold[a]?"(金)":"")).join(" ")+"   セットプレイ +"+pc(S.g.set));
   console.log("    モチベーション "+[0,1,2,3,4].map(m=>E.MOT_LABEL[m]+" "+pl.filter(g=>g.mot===m).length).join(" / "));
   console.log("    成績 "+S.rec.w+"勝"+S.rec.d+"分"+S.rec.l+"敗   段4の相手との得失点差 "+f2(before)+" → "+f2(after));
-  check("値が範囲を出ない(★0〜5・モチベーション0〜4(0=ケガ)・グラフの上下限・能力20以下)",ok&&maxStat<=20,"能力の最大 "+maxStat);
+  check("値が範囲を出ない(★0〜5・モチベーション0〜4(0=ケガ)・成長グラフ 0〜100 と対角の器・能力20以下)",ok&&maxStat<=20,"能力の最大 "+maxStat);
+  { // チームの成長グラフ(→docs/15)
+    const R=G0.graph, U=E.newCareer(77), cap=E.graphCap(U);
+    E.graphAdd(U,"O",80); E.graphAdd(U,"D",80);
+    check("対角の2軸は器を分け合う(伸ばすと対角が下がる)",U.g.graph.O+U.g.graph.D<=cap+1e-9&&U.g.graph.D===80&&U.g.graph.O===cap-80,"OFE "+U.g.graph.O+" DEF "+U.g.graph.D+" 器 "+cap);
+    E.graphAdd(U,"O",200); U.g.gold.O=true; E.graphAdd(U,"O",-50); E.graphAdd(U,"D",50);
+    check("金色の軸は下がらず、対角は「器 − 100」まで",U.g.graph.O===R.max&&U.g.graph.D===cap-R.max,"OFE "+U.g.graph.O+" DEF "+U.g.graph.D);
+    const T={ graph:{ O:100, D:0, R:45, C:0, S:80, P:0, gold:{ O:true } } }, st=id=>E.STYLES[id];
+    check("ランク: 必要な軸(2つなら低いほう)が 40 で A・75 で S、すべて金色で G",
+      E.styleRank(T,st("T05"))==="G"&&E.styleRank(T,st("T10"))==="S"&&E.styleRank(T,st("T01"))==="A"&&E.styleRank(T,st("T12"))==="B"&&E.styleRank({ graph:null },st("T05"))===E.TUNING.rank.none,
+      ["T05","T10","T01","T12"].map(k=>k+" "+E.styleRank(T,st(k))).join(" "));
+    // 狙って育てる(3軸 OFE・SPE・TEC を伸ばす練習を選ぶ)と、60〜80試合で黄金期
+    const aim=["O","S","R"], at=[];
+    for(let seed=1;seed<=12;seed++){
+      const V=E.newCareer(seed*7), VW=E.worldOf(V); let n=0, hit=null, mot=true;
+      while(!V.termOver&&n<100){
+        const G=V.g.graph, gold=V.g.gold, want=a=>aim.includes(a)&&!gold[a];
+        let bi=0, bs=-1e9;
+        E.trainOptions(V).forEach((o,i)=>{ let sc=0;
+          if(o.sp<0){ const a=E.PARAM_AXIS[o.param]; if(want(a))sc+=R.basic*(G[a]>=R.max?2:1); }
+          else{ const t=E.TRAIN_SP[o.sp], all=t.up.length===6; for(const a of t.up)if(want(a))sc+=(all?R.upAll:R.up)*(G[a]>=R.max?2:1); for(const a of t.down)if(want(a))sc-=R.down; }
+          if(sc>bs){ bs=sc; bi=i; } });
+        E.doTraining(V,bi,E.teamFatigue(V)>0.08?0:1); V.g.step="comm";
+        if(V.g.golden>0&&Object.values(V.g.pl).some(g=>g.mot>0&&g.mot<4))mot=false;
+        const fx=E.nextFixture(V,VW), on=V.sq.slice(0,11);
+        E.applyResult(V,VW,fx,{ hg:0, ag:2, played:on, onPitch:on, starters:on });
+        n++; if(hit==null&&E.graphGoldN(V)>=3)hit=n;
+      }
+      at.push(hit==null?999:hit);
+      if(seed===1)check("黄金期のあいだは、負けても全員が絶好調のまま",mot);
+    }
+    at.sort((a,b)=>a-b); const med=at[at.length>>1];
+    check("狙って育てると、およそ 60〜80 試合で黄金期(金色が3つ)",med>=60&&med<=80&&at[0]>=50,"中央 "+med+"試合(最短 "+at[0]+" / 最長 "+at[at.length-1]+")");
+  }
   // 集中育成の釣り合い(→docs/08 §8.5)
   const fo=FOCUS.slice(0,3).map(id=>S.g.pl[id]), never=Object.keys(S.g.pl).filter(id=>!FOCUS.includes(id)&&!xi.includes(id)).map(id=>S.g.pl[id]);
   const nevAvg=never.reduce((s,g)=>s+g.is,0)/(never.length||1);

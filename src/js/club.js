@@ -273,7 +273,7 @@ function playerDef(S){
   // 育成を反映する: 能力・モチベーション・特殊能力はカードに、連携・グラフ・セットプレイはクラブに
   def.xi.forEach(s=>{ s.card=growCard(S,s.card); });
   def.bench=def.bench.map(c=>growCard(S,c));
-  def.links=growLinks(S); def.graph=Object.assign({},S.g.graph); def.setplay=S.g.set;
+  def.links=growLinks(S); def.graph=Object.assign({},S.g.graph,{ gold:Object.assign({},S.g.gold) }); def.setplay=S.g.set;
   if(S.kp&&def.xi.some(s=>s.card.id===S.kp))def.kp=S.kp;
   def.roles=Object.assign({},S.roles||{});      // キャプテンとキッカーの任命(→docs/12)
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ

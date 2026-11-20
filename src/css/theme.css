@@ -1374,3 +1374,26 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #club .cm-links .sgl{stroke:var(--t-sub,#c8102e);stroke-width:7;stroke-opacity:.55;animation:cmSg 1.4s ease-in-out infinite alternate}
 @keyframes cmSg{from{stroke-opacity:.25}to{stroke-opacity:.7}}
 #club .cmt small{letter-spacing:-.02em;max-width:62px}
+
+/* ---- チームの成長グラフ(growGraphHtml。→docs/15)と KP のランク G ---- */
+.rk.rkG,.th-wr .rk.rkG{background:linear-gradient(135deg,#fff3b8,#e8b11c 45%,#a8730a);color:#2a1a00;box-shadow:0 0 6px rgba(255,205,60,.85);animation:rkG 1.6s ease-in-out infinite alternate}
+@keyframes rkG{from{box-shadow:0 0 3px rgba(255,205,60,.5)}to{box-shadow:0 0 10px rgba(255,214,90,1)}}
+.radar text.gd{filter:drop-shadow(0 0 2px rgba(255,200,40,.95))}
+.radar.gold .rd-grid{stroke:#e8b11c;stroke-opacity:.6}
+#club .graph-r .gr-list li{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;padding:5px 0}
+#club .graph-r .gr-list li>span{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:2px 0;border-radius:3px}
+#club .graph-r .gr-list li>span i{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:11px;letter-spacing:.06em;opacity:.8}
+#club .graph-r .gr-list li>span b{font-size:17px;font-weight:700}
+#club .graph-r .gr-list li>span em{font-style:normal;font-family:var(--f-num);font-size:8.5px;font-weight:800;letter-spacing:.1em}
+#club .graph-r .gr-list li>span.mx em{color:var(--t-sub,#c8102e)}
+#club .graph-r .gr-list li>span.gd{background:linear-gradient(180deg,rgba(255,226,120,.28),rgba(232,177,28,.12));box-shadow:inset 0 0 0 1px rgba(232,177,28,.7)}
+#club .graph-r .gr-list li>span.gd i,#club .graph-r .gr-list li>span.gd b,#club .graph-r .gr-list li>span.gd em{color:#e8b11c;opacity:1;text-shadow:0 0 6px rgba(255,205,60,.75)}
+#club .graph-r .gr-list .pr{font-style:normal;font-size:11px;opacity:.45}
+#club .graph-r .gr-golden{margin:2px 0 6px;padding:5px 8px;font-size:12px;font-weight:800;color:#2a1a00;background:linear-gradient(90deg,#fff1a8,#e8b11c);text-align:center}
+#club .graph-r .gr-kp{margin:6px 0 2px;font-size:12px;font-weight:700} #club .graph-r .gr-kp small{font-weight:500;opacity:.75}
+#club .graph-r .gr-note{font-size:10.5px;margin:4px 0 0}
+#club .graph-r.gold{box-shadow:0 0 0 2px #e8b11c,0 0 22px rgba(232,177,28,.45)}
+#club .graph-r.gold h3{color:#c8900c}
+#club .sd-rk{font-size:11.5px;font-weight:700;margin-right:auto;align-self:center}
+body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd i,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd b,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd em{color:#9a6a00;text-shadow:0 0 6px rgba(255,200,40,.55)}
+body.th-wr:not(.th-bk) .radar text.gd{fill:#b07d0a}

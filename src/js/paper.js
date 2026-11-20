@@ -49,6 +49,8 @@ function makeArticle(S,M,L,RT){
   const quote=S.mgr?S.mgr.name+"監督「"+pick(PAPER_QUOTE[won?"win":lost?"lose":"draw"])+"」":"";
   // ゴシップ欄: 育成・ケガ・ミッション・スタジアムの知らせ + うわさ話1つ
   const side=[];
+  // 黄金期の到来(この試合の前の練習で、成長グラフの金色が3つそろった。→docs/15 §15.3)
+  if(S.g&&S.g.goldenAt!=null&&S.g.goldenAt===S.played-1)side.push("【黄金期到来】"+me+"の成長グラフが黄金に！ 全員が絶好調、手が付けられない");
   for(const x of L.lines){
     if(/が覚醒/.test(x))side.push("【独占】"+x.replace(/^⭐ /,"")+" 練習場で異次元の動き");
     else if(/★5 に/.test(x))side.push("【分析】"+x.replace(/^⭐ /,""));
