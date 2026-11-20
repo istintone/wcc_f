@@ -397,7 +397,7 @@ function applyResult(S,W,fx,res){
   // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
-  S.history.push([fx.comp,fx.opp,hg,ag]);
+  S.history.push([fx.comp,fx.opp,hg,ag,fx.label||"",res.pso||null,fx.no,fx.home===false?0:1]);   // 大会・相手・得点・段・PK・試合番号・ホーム(SEASON の日程)
   if(S.history.length>TUNING.club.historyMax)S.history.shift();
   S.played++; S.slot++;
   if(S.slot>=SCHED.length)endCycle(S,W,out);
@@ -874,4 +874,33 @@ function misAfterMatch(S,fx,out){
   S.mis=fx.kind==="league"?{ kind:"lg", comp:"LG", n, cyc:S.cyc }:{ kind:"cup", comp:fx.comp, cyc:S.cyc };
   S.mis.text=misText(S.mis);
   out.push("👔 オーナーから指令: 「"+S.mis.text+"」(達成で年俸アップ、失敗でダウン)");
+}
+
+/* ---------- 日程の見通し(SEASON の日程。→docs/07 §7.16) ----------
+ * これからの n 試合の予定を返す(抽選などの副作用は起こさない)。分からないところは opp:null と note で示す。
+ * 返り値 [{ no, comp, label, kind:"league"|"cup"|"friendly", opp, home, note, ifWin }] */
+function upcoming(S,n){
+  const out=[], enter=new Set();
+  for(let k=0;k<n;k++){
+    const no=S.played+1+k; if(no>TUNING.club.termLen)break;
+    const slot=S.slot+k, wrap=slot>=SCHED.length, sl=slot%SCHED.length, cid=SCHED[sl][0], ix=SCHED[sl][1];
+    const comp=COMPS[cid], label=cid==="LG"?"第"+(ix+1)+"節":comp.stages[ix][1];
+    if(wrap){ out.push({ no, comp:cid, label, kind:cid==="LG"?"league":"cup", opp:null, home:true, note:"次の周(相手は未定)" }); continue; }
+    if(cid==="LG"){
+      const p=leagueRound(S.league.clubs,ix).find(x=>x[0]==="me"||x[1]==="me");
+      out.push({ no, comp:cid, label, kind:"league", opp:p[0]==="me"?p[1]:p[0], home:p[0]==="me" }); continue;
+    }
+    const cup=S.cups[cid], type=comp.stages[ix][0];
+    if(cup.st==="in"){
+      // 前の段を勝ち抜けば(グループの途中と2試合制の第2試合は、勝ち負けにかかわらず戦う)
+      const ifWin=k>0&&type!=="grp"&&type!=="leg2"&&ix>0;
+      out.push({ no, comp:cid, label, kind:"cup", opp:cup.opp[ix]||null, home:type!=="leg2", ifWin }); continue;
+    }
+    if(cup.st==="wait"&&(ix===0?entryOk(S,cid):enter.has(cid))){ enter.add(cid);   // 出られる大会は、2戦目からも「勝ち進めば」で見せる
+      out.push({ no, comp:cid, label, kind:"cup", opp:null, home:type!=="leg2", note:ix===0?"出場できる(相手は抽選)":"相手は抽選", ifWin:ix>0&&type!=="grp"&&type!=="leg2" }); continue; }
+    if(cup.st==="wait"&&ix===0&&!wrap){ out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true, note:comp.name+"の出場条件を満たせば、そちらに出る" }); continue; }
+    out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true,
+      note:cup.st==="wait"?comp.name+"は条件待ち":cup.st==="in"?"":comp.name+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
+  }
+  return out;
 }

@@ -971,12 +971,36 @@ const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングス�
   CONTI:"前の周のリーグ2位以内、または前の周にエンタープライズ・キングスクラブ・ナショナルスーパー・W4のどれかで優勝",
   CSC:"この周にコンチネンタルカップで優勝", CT:"前の周のリーグ優勝、または前の周にコンチネンタルカップかW4で優勝",
   JT:"この周にチャンピオンズトロフィーで優勝", ICC:"この周にチャンピオンズトロフィーかコンチネンタルカップで優勝、または前の周にチャンピオンズトロフィーで優勝" };
+/** SEASON の日程: 過去5試合と、次の試合から10試合(→docs/07 §7.16) */
+const schedComp=c=>c==="FR"?"フレンドリー":c==="LG"?"リーグ":TROPHY_SHORT[c]||COMPS[c].name;
+function schedRowHtml(r){
+  const T=r.opp&&TEAMS[r.opp], g=r.comp==="FR"?"":COMPS[r.comp].grade;
+  const opp=T?'<span class="sd-opp">'+emblemSvg(Object.assign({ id:r.opp },T),16)+'<b>'+teamNameOf(T)+'</b></span>'
+    :'<span class="sd-opp none">'+(r.note||"相手は当日に決まる")+'</span>';
+  const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'
+    :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'');
+  return '<li class="sd-row'+(r.res?' past':'')+(r.next?' next':'')+'"><i class="sd-no">'+r.no+'</i>'+
+    '<span class="sd-comp">'+(g&&g!=="-"?gradeTag(g):'')+'<b>'+schedComp(r.comp)+'</b><small>'+[r.label,T?(r.home?'H':'A'):''].filter(x=>x).join(' ・ ')+'</small></span>'+
+    opp+'<span class="sd-r">'+res+'</span></li>';
+}
+function scheduleHtml(){
+  const S=CL.S;
+  const past=(S.history||[]).slice(-5).map((h,i,a)=>{
+    const pso=h[5], win=h[2]>h[3]||(h[2]===h[3]&&pso&&pso[0]>pso[1]), lose=h[2]<h[3]||(h[2]===h[3]&&pso&&pso[0]<pso[1]);
+    return { no:h[6]||"", comp:h[0], label:h[4]||"", opp:h[1], home:h[7]!==0, res:win?"W":lose?"L":"D",
+      sc:h[2]+"-"+h[3]+(pso?"(PK"+pso[0]+"-"+pso[1]+")":"") }; });
+  const fut=S.termOver?[]:upcoming(S,10).map((r,i)=>Object.assign(r,{ next:i===0 }));
+  if(!past.length&&!fut.length)return "";
+  return '<section class="card sched"><h3>日程 <small>過去5試合と、この先10試合 ・ 第'+S.played+'/'+TUNING.club.termLen+'試合</small></h3><ol class="sd-list">'+
+    past.map(schedRowHtml).join("")+fut.map(schedRowHtml).join("")+'</ol>'+
+    '<p class="dim">カップの相手は出場が決まったときに抽選。出られない大会の枠はフレンドリーマッチになる</p></section>';
+}
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
   // 順位表は首位・自分の前後・最下位に畳む(「全部見る」で広げる →docs/14 第2弾)
   const mi=order.indexOf("me"), keep=i=>CL.fullTable||i===0||i===order.length-1||Math.abs(i-mi)<=2;
   let gap=false;
-  let h='<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節 ・ '+(mi+1)+'位</small></h3><table class="tbl">'+
+  let h=scheduleHtml()+'<section class="card"><h3>レギュラーリーグ <small>'+L.done+'/14 節 ・ '+(mi+1)+'位</small></h3><table class="tbl">'+
     '<tr><th></th><th></th><th>試</th><th>勝</th><th>分</th><th>敗</th><th>得失</th><th>点</th></tr>'+
     order.map((id,i)=>{ const r=L.table[id];
       if(!keep(i)){ if(gap)return ""; gap=true; return '<tr class="gap"><td colspan="8">…</td></tr>'; }
