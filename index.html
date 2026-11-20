@@ -8892,7 +8892,7 @@ function sqDetailHtml(){
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
-  return '<details class="card htset fold"><summary><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ '+set.map(id=>htOf(id).name).join(" / ")+'</small></h3></summary>'+
+  return '<details class="card htset fold"'+(CL.htOpen?' open':'')+'><summary><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ '+set.map(id=>htOf(id).name).join(" / ")+'</small></h3></summary>'+
     '<p class="dim">同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</p>'+
     av.map(id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
       (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; }).join("")+'</details>';
@@ -8918,7 +8918,7 @@ function squadHtml(){
   h+='<details class="card fold"><summary><h3>連携 <small>薄線 '+lv[1]+' ・ 太線 '+lv[2]+' ・ 黄金線 '+lv[3]+' ・ 線の見方</small></h3></summary><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
-  h+=htSetHtml();
+  // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   h+=growGraphHtml(S);
   return h;
 }
@@ -9422,7 +9422,7 @@ const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"�
 /* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
 /** ③ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
-  return '<div class="step-h"><b>戦略方針</b><small>この試合で使う監督能力を選ぶ。選んだまま次の試合にも引き継ぐ</small></div>'+mabHtml();
+  return '<div class="step-h"><b>戦略方針</b><small>この試合で使う監督能力とハーフタイムの指示を選ぶ。選んだまま次の試合にも引き継ぐ</small></div>'+mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
 function mabHtml(){
   const S=CL.S, set=S.mab.set, M=TUNING.mab;
@@ -9711,14 +9711,14 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
-  if(act==="chatgo"){ CL.chat=null; CL.strat=true; CL.mabOpen=true; showClub(); return; }   // 最後の1回の結果を見てから戦略方針へ
+  if(act==="chatgo"){ CL.chat=null; CL.strat=true; CL.mabOpen=false; showClub(); return; }   // 最後の1回の結果を見てから戦略方針へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }
   if(act==="none")return;
-  if(act==="htset"){ if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
+  if(act==="htset"){ CL.htOpen=true; if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
@@ -9741,10 +9741,10 @@ function onClubClick(e){
   if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; showClub(); return; }
   if(act==="strat"){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
-    CL.armPlay=false; CL.strat=true; CL.mabOpen=true; CL.chat=null; CL.pick=[]; showClub(); return;
+    CL.armPlay=false; CL.strat=true; CL.mabOpen=false; CL.chat=null; CL.pick=[]; showClub(); return;
   }
-  if(act==="stratback"){ CL.strat=false; CL.mabOpen=false; showClub(); return; }
-  if(act==="play"){ CL.strat=false; CL.mabOpen=false; startFixture(); }
+  if(act==="stratback"){ CL.strat=false; CL.mabOpen=false; CL.htOpen=false; showClub(); return; }
+  if(act==="play"){ CL.strat=false; CL.mabOpen=false; CL.htOpen=false; startFixture(); }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
   else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)
