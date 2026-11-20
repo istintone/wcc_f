@@ -137,8 +137,9 @@ const COMM_UI={
   talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
-function msgHtml(){
-  return CL.msg.length?'<div class="msgs">'+CL.msg.map(x=>'<span>'+x+'</span>').join("")+'</div>':"";
+function msgHtml(only){
+  const m=only?CL.msg.filter(x=>only.test(x)):CL.msg;   // only … この型の行だけ出す(コミュニケーションの上は大事な知らせだけ。→docs/14 §14.40)
+  return m.length?'<div class="msgs">'+m.map(x=>'<span>'+x+'</span>').join("")+'</div>':"";
 }
 /**
  * 練習の効果の見通し(→docs/14 §14.30)。セーブの写しで練習を1回行い、今との差を返す(本物は変えない)。
@@ -181,7 +182,7 @@ function restEffectHtml(){
   const S=CL.S, T=JSON.parse(JSON.stringify(S)); doRest(T);
   const info=(g,id)=>{ const b=T.g.pl[id]||g, f0=Math.round(g.fat*100), f1=Math.round(b.fat*100);
     return '<b class="'+(g.fat>=TUNING.grow.int.tiredSign?'fw':'')+'">疲'+f0+'%</b>'+(f1<f0?'→'+f1:'')+(b.mot>g.mot?' <i class="mu">調子↑</i>':''); };
-  return '<section class="tr-fx rest-fx"><p class="tf-cap">暗い札 = 疲労がたまっている選手(試合では体力が減った状態で始まる)。札は疲労の 今 → 休憩のあと</p>'+
+  return '<section class="tr-fx rest-fx">'+
     commBoardHtml(Object.keys(S.g.pl),[],info)+'</section>';
 }
 /** ① チーム練習 */
@@ -192,7 +193,7 @@ function trainStepHtml(){
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
-      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'+restEffectHtml()
+      ?'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
       :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
 }
@@ -272,7 +273,7 @@ function prepHtml(){
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+msgHtml()+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
+    '<div class="cl-main prep">'+(st==="train"||CL.strat?msgHtml():msgHtml(/^(🌟|👑|📋)/))+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'

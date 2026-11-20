@@ -1674,3 +1674,13 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .tr-fx .cm-board .cm-pitch{width:calc(100% - 116px)}
 #club .tr-fx .cm-board .sqc.cmx{width:50px}
 #club .tr-fx .cm-board .sq-bench .sqc.cmx{width:100%}
+/* ---- 準備の見出しを小さく・休憩もチーム練習と同じ形(→docs/14 §14.40) ---- */
+#club .cl-main.prep .step-h b,#club .cl-main.prep .step-h.one>b{font-size:15px}
+#club .cl-main.prep .step-h{margin-bottom:2px}
+#club .tr-top{grid-template-columns:136px minmax(0,1fr)}
+#club .tr-top .tf-radar{width:136px}
+#club .tr-right .trs.two .tr{height:38px}
+#club .tr-right .tr.rest{height:auto;min-height:0;padding:8px 10px}
+#club .tr-right .tr.rest small{white-space:normal;max-width:none;text-align:left;font-size:10.5px}
+#club .rest-fx{margin-top:4px}
+#club .tr-right .trs:not(.two){grid-template-columns:1fr}
