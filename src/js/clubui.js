@@ -567,7 +567,7 @@ function cardBackOf(id){
 function cardModalHtml(id,list){
   const S=CL.S, c=CARDS[id], inSq=S.sq.includes(id), i=list.indexOf(id);
   const nav=(d,t)=>{ const j=i+d; return '<button class="km-nav" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+'>'+t+'</button>'; };
-  let h='<div class="kmodal" data-act="kclose"><div class="kmod-box" data-act="none">'+
+  let h='<div class="kmodal" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+cardBackOf(id);
   if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
