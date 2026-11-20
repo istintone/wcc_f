@@ -171,9 +171,9 @@ function trainEffectHtml(part){
     const x=pv.pl[id]||{ ind:0, sp:0 };
     return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
   // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
-  const hl={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; });
+  const hl={}, delta={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; delta[x.a]=x.d; });
   // part="graph" … 候補の左のグラフ / "chips" … 候補の下の変わる軸と凡例 / それ以外 … 盤面(→docs/14 §14.35)
-  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, cls:"tf-radar" })+'</div>';
+  if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, delta, cls:"tf-radar" })+'</div>';
   if(part==="chips")return '<div class="tf-chips">'+chips+(pv?'<span class="tf-leg"><i class="tf-fit"></i>よく伸びる選手</span>':'')+'</div>';
   return '<section class="tr-fx">'+
     commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
@@ -188,7 +188,7 @@ function trainStepHtml(){
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
       :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div>'+trainEffectHtml("chips")+'</div></div>'+trainEffectHtml());
+        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
