@@ -5,6 +5,7 @@
   --pitch1:#1f7a43; --pitch2:#1b6e3c; --chalk:rgba(255,255,255,.55);
   --gk:#d9a521; --df:#2f7fe0; --mf:#2fa866; --fw:#d8493c;
   --good:#7ee08f; --mid:#f2c14e; --bad:#ff7a6b;
+  --f-num:"Oswald","Arial Narrow","Helvetica Neue",system-ui,sans-serif;   /* 英字と数字の書体(ブラック × レッドは neon.css で Barlow に) */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:hidden;
@@ -518,7 +519,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #replay.on{display:flex}
 #replay::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:repeating-linear-gradient(180deg,rgba(255,255,255,.05) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 3px rgba(200,16,46,.8)}
-#replay b{position:relative;font-family:"Oswald",sans-serif;font-size:15px;font-weight:700;letter-spacing:.2em;padding:1px 8px;
+#replay b{position:relative;font-family:var(--f-num);font-size:15px;font-weight:700;letter-spacing:.2em;padding:1px 8px;
   background:#c8102e;transform:skewX(-10deg);animation:blink 1.1s infinite}
 #replay small{position:relative;align-self:flex-end;font-size:10px;font-weight:700;padding:1px 6px;background:rgba(0,0,0,.55)}
 
@@ -538,9 +539,9 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
   border-top:2px solid #c9a23a;border-bottom:2px solid #c9a23a}
 #cap.on{display:flex;animation:capIn .45s cubic-bezier(.2,1.3,.4,1)}
 @keyframes capIn{from{transform:translateY(-50%) scaleY(0);opacity:0}to{transform:translateY(-50%);opacity:1}}
-#cap b{font-family:"Oswald",sans-serif;font-size:26px;font-weight:700;font-style:italic;letter-spacing:.14em;line-height:1.05;
+#cap b{font-family:var(--f-num);font-size:26px;font-weight:700;font-style:italic;letter-spacing:.14em;line-height:1.05;
   background:linear-gradient(180deg,#fff,#ffe28a 60%,#d9a52e);-webkit-background-clip:text;background-clip:text;color:transparent}
-#cap .sc{font-family:"Oswald",sans-serif;font-size:20px;font-weight:700}
+#cap .sc{font-family:var(--f-num);font-size:20px;font-weight:700}
 #cap small{font-size:11px;color:#dfe6f2}
 
 /* 試合映像を大きく(→docs/07 §7.11)。立体の見え方で奥行きを出す。盤面のカードは fitBoard が残りの高さに合わせて縮める */

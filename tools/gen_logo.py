@@ -6,7 +6,8 @@
 
   出力  assets/logo_black.png … 黒い線・透明な地(明るい地の上に)
         assets/logo_white.png … 白黒を反転した版。白い線・透明な地(暗い地の上に。タイトルはこちら)
-        src/js/logo-img.js   LOGO_IMG = { white:"data:image/png;base64,...", black:"..." }
+        (透かし wm) … 白い線をごく薄くした版(監督室の地の透かし。→docs/14 §14.19)。ファイルには書き出さない
+        src/js/logo-img.js   LOGO_IMG = { white:"data:image/png;base64,...", black:"...", wm:"..." }
 線の濃さをそのまま不透明さにする(縁のなめらかさを残す)。周りの余白は切り、幅 W に縮める。
 """
 import base64
@@ -19,6 +20,7 @@ ROOT = pathlib.Path(__file__).parent.parent
 SRC = ROOT / "assets" / "logo_src.png"
 OUT_JS = ROOT / "src" / "js" / "logo-img.js"
 W = 560
+WM_ALPHA = 0.06    # 透かしの濃さ
 
 
 def main():
@@ -32,18 +34,24 @@ def main():
     ink = ink.resize((W, h), Image.LANCZOS)
     ink = Image.eval(ink, lambda v: 0 if v < 24 else min(255, int((v - 24) * 255 / 200)))   # 地のかすかな汚れを消す
     data = {}
-    for name, rgb in (("white", (255, 255, 255)), ("black", (0, 0, 0))):
+    for name, rgb in (("white", (255, 255, 255)), ("black", (0, 0, 0)), ("wm", (255, 255, 255))):
         im = Image.new("RGBA", ink.size, rgb + (0,))
-        im.putalpha(ink)
-        im.save(ROOT / "assets" / ("logo_%s.png" % name), optimize=True)
+        im.putalpha(ink if name != "wm" else Image.eval(ink, lambda v: round(v * WM_ALPHA)))
+        if name == "wm":      # ボールのマークだけ(中心 50.7% / 31.4%、直径は幅の 62.9%。タイトルの暗い円と同じ値)。文字は入れない
+            cx, cy, r = 0.507 * W, 0.314 * ink.height, 0.629 * W / 2 + 4
+            im = im.crop((round(cx - r), max(0, round(cy - r)), round(cx + r), round(cy + r)))
+            im = im.resize((im.width // 2, im.height // 2), Image.LANCZOS)   # 薄いので半分の大きさで足りる
+        else:
+            im.save(ROOT / "assets" / ("logo_%s.png" % name), optimize=True)
         buf = io.BytesIO()
         im.save(buf, "PNG", optimize=True)
         data[name] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
     js = ["/* 生成物。手で編集しない。 python tools/gen_logo.py が assets/logo_src.png(オーナーが作ったロゴ)から書き出す(→docs/14 §14.17)。",
-          "   white … 白い線・透明な地(暗い地の上に) / black … 黒い線・透明な地 */",
+          "   white … 白い線・透明な地(暗い地の上に) / black … 黒い線・透明な地 / wm … ごく薄い白(地の透かし) */",
           "const LOGO_IMG={",
           '  white:"%s",' % data["white"],
-          '  black:"%s"' % data["black"],
+          '  black:"%s",' % data["black"],
+          '  wm:"%s"' % data["wm"],
           "};"]
     OUT_JS.write_text("\n".join(js) + "\n", encoding="utf-8", newline="\n")
     print("logo-img.js %d KB(%dx%d)" % (OUT_JS.stat().st_size // 1024, W, h))

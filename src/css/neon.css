@@ -202,3 +202,144 @@ body.th-bk .lk-say::before{display:none}
 body.th-bk .lk-say b{color:var(--n-red2)} body.th-bk .lk-say em{color:var(--n-mute)} body.th-bk .lk-say em.hi{color:var(--n-gold)}
 /* 優勝: 選手名の札を暗く */
 body.th-bk .tr-team span{background:rgba(5,6,11,.7);color:#fff;border:1px solid rgba(255,209,102,.45)}
+
+/* =========================================================================
+   第2段(→docs/14 §14.19): 書体を全場面でそろえる・場面の地・角丸の残り・試合の操作台・大会の札・地の透かし
+   ========================================================================= */
+body.th-bk{--f-num:"Barlow Condensed","Oswald","Arial Narrow",system-ui,sans-serif}
+
+/* ---- 地の透かし: 監督室の右下に、ロゴをごく薄く大きく(中身と一緒には流れない) ---- */
+body.th-bk #club{background:
+    var(--logo-wm,none) right -96px bottom 64px/330px auto no-repeat scroll,
+    radial-gradient(80% 38% at 100% 0%,rgba(255,42,80,.20),transparent 70%) fixed,
+    radial-gradient(70% 30% at 0% 100%,rgba(255,209,102,.08),transparent 70%) fixed,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.035'%3E%3Ccircle cx='40' cy='40' r='22'/%3E%3Cpath d='M40 27l12 9-5 14H33l-5-14z'/%3E%3Ccircle cx='120' cy='120' r='22'/%3E%3Cpath d='M120 107l12 9-5 14h-14l-5-14z'/%3E%3C/g%3E%3C/svg%3E") fixed,
+    repeating-linear-gradient(120deg,rgba(255,255,255,.022) 0 1px,transparent 1px 26px) fixed,
+    repeating-linear-gradient(60deg,rgba(255,255,255,.016) 0 1px,transparent 1px 26px) fixed,
+    linear-gradient(180deg,var(--n-bg1),var(--n-bg0)) fixed}
+
+/* ---- 場面の地(タイトル・対戦カード・カード排出): 監督室と同じ暗い地・光・斜めの格子 ---- */
+body.th-bk #scene.sc-title,body.th-bk #scene.sc-vs{background:
+    radial-gradient(90% 40% at 100% 0%,rgba(255,42,80,.22),transparent 70%),
+    radial-gradient(80% 34% at 0% 100%,rgba(255,209,102,.10),transparent 70%),
+    repeating-linear-gradient(120deg,rgba(255,255,255,.025) 0 1px,transparent 1px 26px),
+    repeating-linear-gradient(60deg,rgba(255,255,255,.018) 0 1px,transparent 1px 26px),
+    linear-gradient(180deg,var(--n-bg1),var(--n-bg0))}
+body.th-bk #scene.sc-card{background:
+    radial-gradient(ellipse 70% 46% at 50% 44%,rgba(255,42,80,.24),transparent 70%),
+    repeating-linear-gradient(120deg,rgba(255,255,255,.025) 0 1px,transparent 1px 26px),
+    radial-gradient(ellipse at 50% 40%,#1a1d2e 0%,#0a0c15 55%,#040509 100%)}
+
+/* ---- 場面の英字の見出し: すべて Barlow の太い斜体。光は控えめに ---- */
+body.th-bk #scene .touch,body.th-bk #scene .lk-head b,body.th-bk #scene .tr-head b,body.th-bk #scene .pk-head b,
+body.th-bk #scene .res-word,body.th-bk #scene .vs-mark,body.th-bk #scene .rn b,body.th-bk #scene .pk-back b,body.th-bk #ovTitle,
+body.th-bk #flash b,body.th-bk #cap b,body.th-bk #replay b{font-family:var(--f-num);font-style:italic;font-weight:800}
+body.th-bk #scene .touch{color:#fff;text-shadow:0 0 12px rgba(255,42,80,.85);letter-spacing:.42em}
+body.th-bk #scene .lk-head b{font-size:34px;letter-spacing:.12em;color:#fff;text-shadow:0 0 16px rgba(255,209,102,.55)}
+body.th-bk #scene .lk-head small{font-family:var(--f-num);font-weight:700;font-size:13px;letter-spacing:.14em;color:var(--n-ink2)}
+body.th-bk #scene .tr-head b{font-size:58px;letter-spacing:.02em}
+body.th-bk #scene .pk-head b{font-size:44px;letter-spacing:.24em;color:#fff;text-shadow:0 0 18px rgba(255,42,80,.7)}
+body.th-bk #scene .pk-head small{color:var(--n-ink2);letter-spacing:.1em}
+body.th-bk #scene .pk-msg small{color:var(--n-gold)}
+body.th-bk #scene .pk-msg .new{background:var(--n-red);box-shadow:var(--n-glow);font-family:var(--f-num);font-style:italic;letter-spacing:.08em}
+
+/* ---- タイトル: 赤い帯に光る縁・クラブの札はガラス・音の切り替えは角を落とした札 ---- */
+body.th-bk .sc-title .slab.s1{background:linear-gradient(100deg,var(--n-red3),var(--n-red) 50%,var(--n-red2));
+  box-shadow:0 0 30px rgba(255,42,80,.45),0 8px 0 var(--n-bg0),0 10px 0 var(--n-gold)}
+body.th-bk .sc-title .slab.s2{background:var(--n-bg0);box-shadow:0 -1px 0 rgba(255,42,80,.6)}
+body.th-bk #scene.sc-title .club{background:linear-gradient(180deg,var(--n-glass),var(--n-glass2));border:1px solid var(--n-line2);border-left:4px solid var(--n-red);
+  box-shadow:0 10px 30px rgba(0,0,0,.45),-6px 0 18px -6px rgba(255,42,80,.6)}
+body.th-bk #scene.sc-title .club b{font-family:var(--f-jp);font-weight:900}
+body.th-bk #scene.sc-title .club small{font-family:var(--f-num);font-weight:700;letter-spacing:.08em;color:var(--n-ink2)}
+body.th-bk #scene .snd{border-radius:0;padding:6px 12px;background:rgba(10,13,23,.7);border:1px solid var(--n-line2);color:var(--n-ink2);font-weight:700;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+
+/* ---- 対戦カード: 上下の帯・注記 ---- */
+body.th-bk .sc-vs .vs-band{background:linear-gradient(90deg,transparent,rgba(5,6,11,.9) 12%,rgba(5,6,11,.9) 88%,transparent);
+  border-top:1px solid rgba(255,42,80,.5);border-bottom:1px solid rgba(255,42,80,.5);clip-path:none}
+body.th-bk .sc-vs .vs-band b{color:var(--n-gold);text-shadow:0 0 10px rgba(255,209,102,.45)}
+body.th-bk #scene .vs-note{display:inline-block;padding:3px 14px;font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff;
+  background:linear-gradient(100deg,var(--n-red3),var(--n-red));box-shadow:var(--n-glow);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+body.th-bk #scene .vs-mark{color:#fff;-webkit-text-fill-color:#fff;filter:none;text-shadow:0 0 18px rgba(255,42,80,.9),3px 3px 0 var(--n-red3)}
+body.th-bk .radar text{font-family:var(--f-jp)}
+body.th-bk #scene .vs-radar p{font-family:var(--f-num);font-weight:700;letter-spacing:.1em}
+
+/* ---- 試合中の割り込みの枠(ハーフタイムなど) ---- */
+body.th-bk #ovBox{border-radius:0;border:1px solid var(--n-line2);border-top:0;color:var(--n-ink);
+  background:linear-gradient(180deg,rgba(20,24,40,.97),rgba(8,10,18,.98));box-shadow:0 0 0 1px rgba(0,0,0,.4),0 20px 50px rgba(0,0,0,.6),inset 0 2px 0 var(--n-red);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+body.th-bk #ovTitle{color:#fff;-webkit-text-fill-color:#fff;background:none;font-size:32px;letter-spacing:.1em;text-shadow:0 0 16px rgba(255,42,80,.7)}
+body.th-bk #ovBody{color:var(--n-ink2)} body.th-bk #ovBody b,body.th-bk #ovBody table{color:#fff}
+
+/* ---- 試合の操作台: 暗いガラスの平行四辺形に細い縁。点いているものは赤く光る ---- */
+body.th-bk #pad{background:
+    repeating-linear-gradient(120deg,rgba(255,255,255,.02) 0 1px,transparent 1px 22px),
+    linear-gradient(180deg,#0d1020,#05060b);border-top:1px solid rgba(255,42,80,.6);box-shadow:0 -1px 0 rgba(255,42,80,.25),0 -10px 24px rgba(0,0,0,.45)}
+body.th-bk #pad .tac{color:var(--n-ink);background:linear-gradient(180deg,rgba(40,46,70,.9),rgba(18,21,34,.95));border:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.12);font-weight:800}
+body.th-bk #pad .tac small{color:var(--n-mute)}
+body.th-bk #pad .tac:active{background:linear-gradient(180deg,rgba(60,66,96,.95),rgba(26,30,46,.95))}
+body.th-bk #pad .tac.md{background:radial-gradient(circle at 50% 40%,rgba(255,42,80,.35),rgba(60,10,22,.95) 70%);box-shadow:inset 0 0 0 1px rgba(255,90,124,.45)}
+body.th-bk #pad .tac.on,body.th-bk #pad .tac.md.on{color:#fff;background:linear-gradient(180deg,var(--n-red2),var(--n-red) 45%,var(--n-red3));
+  box-shadow:inset 0 0 0 1px rgba(255,200,210,.7),inset 0 0 14px rgba(255,255,255,.25);text-shadow:0 0 8px rgba(255,255,255,.5)}
+body.th-bk #pad .btn-kp{background:linear-gradient(180deg,rgba(60,48,16,.9),rgba(24,19,6,.95));border:0;color:var(--n-gold);
+  box-shadow:inset 0 0 0 1px rgba(255,209,102,.55);font-family:var(--f-num);font-style:italic;font-weight:800;letter-spacing:.12em}
+body.th-bk #pad .btn-kp:disabled{opacity:.4}
+body.th-bk .btn-shoot{background:linear-gradient(180deg,var(--n-red2),var(--n-red) 45%,var(--n-red3));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(255,160,180,.5),0 0 18px rgba(255,42,80,.35)}
+body.th-bk .btn-keeper{background:linear-gradient(180deg,#5fb4ff,#2a76e6 45%,#123f94);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 1px rgba(150,200,255,.5),0 0 18px rgba(69,160,255,.3)}
+body.th-bk .btn-keeper.on,body.th-bk .btn-shoot.armed{background:linear-gradient(180deg,#ffe7a0,var(--n-gold) 45%,#b8861c);color:#1a1200;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 22px rgba(255,209,102,.6)}
+body.th-bk #subInfo{font-family:var(--f-num);font-weight:700;letter-spacing:.1em;color:var(--n-mute)}
+
+/* ---- SEASON: 大会の状態を札に(出場中 = 赤 / 出場できる = 緑の縁 / 優勝 = 金 / 終わったものは薄く) ---- */
+body.th-bk #club .tbl.cups td:last-child{position:relative;white-space:nowrap;text-align:right;font-size:var(--fs-xs);font-weight:700;color:var(--n-mute)}
+body.th-bk #club .tbl.cups tr.st-in td,body.th-bk #club .tbl.cups tr.ok td,body.th-bk #club .tbl.cups tr.st-won td{color:var(--n-ink)}
+body.th-bk #club .tbl.cups tr.st-in td:last-child,body.th-bk #club .tbl.cups tr.ok td:last-child,body.th-bk #club .tbl.cups tr.st-won td:last-child{color:transparent}
+body.th-bk #club .tbl.cups tr.st-in td:last-child::after,body.th-bk #club .tbl.cups tr.ok td:last-child::after,body.th-bk #club .tbl.cups tr.st-won td:last-child::after{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);padding:0 8px;font-size:10.5px;font-weight:900;letter-spacing:.04em;line-height:18px;
+  clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+body.th-bk #club .tbl.cups tr.st-in td:last-child::after{content:"出場中";color:#fff;background:linear-gradient(100deg,var(--n-red3),var(--n-red))}
+body.th-bk #club .tbl.cups tr.ok td:last-child::after{content:"出場できる";color:#7ff0b0;background:rgba(47,178,106,.16);box-shadow:inset 0 0 0 1px rgba(47,178,106,.6)}
+body.th-bk #club .tbl.cups tr.st-won td:last-child::after{content:"優勝";color:#1a1200;background:linear-gradient(100deg,#b8861c,var(--n-gold))}
+body.th-bk #club .tbl.cups tr.st-in .nm2{color:#fff;font-weight:800}
+body.th-bk #club .tbl.cups tr.st-out td,body.th-bk #club .tbl.cups tr.st-quit td{opacity:.55}
+
+/* ---- 戦績の数字(CLUB の この任期 など) ---- */
+body.th-bk #club .rec b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:28px;color:#fff}
+body.th-bk #club .rec small{font-family:var(--f-jp);color:var(--n-mute)}
+body.th-bk #club .recent .wdl{border-radius:0;font-style:italic;clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+
+/* ---- チャット: 吹き出しは角を1つ落とした札(話し手の側)。丸い閉じるボタン・丸い注記をやめる ---- */
+body.th-bk #club .chat-sheet{border-radius:0;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%,0 14px)}
+body.th-bk #club .ch-head b{font-weight:900;font-size:var(--fs-l)}
+body.th-bk #club .ch-head small{color:var(--n-ink2)}
+body.th-bk #club .ch-x{border-radius:0;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--n-line2);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+body.th-bk #club .cf{box-shadow:0 0 0 2px rgba(255,255,255,.22),0 0 14px rgba(255,42,80,.25)}
+body.th-bk #club .cm small{color:var(--n-ink2);letter-spacing:.04em}
+body.th-bk #club .cm p{border-radius:0;background:linear-gradient(180deg,#f6f7fb,#e3e7f0);color:#11131a;
+  clip-path:polygon(9px 0,100% 0,100% 100%,0 100%,0 9px)}
+body.th-bk #club .cm.sec p{background:linear-gradient(180deg,#f1ecff,#ddd3fa)}
+body.th-bk #club .cm.me p{border-radius:0;background:linear-gradient(180deg,#ffe7a0,var(--n-gold) 60%,#e2a93a);
+  clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,0 100%)}
+body.th-bk #club .cn{border-radius:0;background:none;color:var(--n-ink2);padding:2px 14px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07) 20%,rgba(255,255,255,.07) 80%,transparent)}
+
+/* ---- 設定・データ ---- */
+body.th-bk #club .set h4{margin:12px 0 6px;font-size:var(--fs-s);font-weight:800;letter-spacing:.08em;color:var(--n-ink2)}
+body.th-bk #club .set input,body.th-bk #club .set select,body.th-bk #club .set textarea{border-radius:0;background:rgba(0,0,0,.3);color:var(--n-ink);border:1px solid var(--n-line2)}
+body.th-bk #club .cft .btn-sub{width:100%}
+
+/* ---- 中継の字幕(キックオフ・ハーフタイムなど): 縁はネオンの赤、見出しは金のまま。ハーフタイムの指示は角を落とした札 ---- */
+body.th-bk #cap{background:linear-gradient(90deg,transparent,rgba(5,6,11,.9) 14%,rgba(5,6,11,.9) 86%,transparent);
+  border-top:1px solid rgba(255,42,80,.75);border-bottom:1px solid rgba(255,42,80,.75);box-shadow:0 0 18px rgba(255,42,80,.25)}
+body.th-bk #cap b{font-size:30px;letter-spacing:.12em}
+body.th-bk #cap .sc{font-style:italic;font-weight:800;font-size:22px}
+body.th-bk #cap .htb{border-radius:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+  background:linear-gradient(180deg,#ffe7a0,var(--n-gold) 55%,#e2a93a);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+body.th-bk #cap .htb.none{background:linear-gradient(180deg,rgba(40,46,70,.95),rgba(18,21,34,.95));color:var(--n-ink);box-shadow:inset 0 0 0 1px var(--n-line2)}
+body.th-bk #cap .htb.none i{color:var(--n-mute)}
+body.th-bk #cap .cap-bar{border-radius:0} body.th-bk #cap .cap-bar u{background:var(--n-red);box-shadow:var(--n-glow)}
+
+/* ---- 取り返しのつかない操作(最初からやり直す など)は赤の縁で区別 ---- */
+body.th-bk #club .set [data-act="reset"],body.th-bk #club .set .danger{color:#ff8fa3;border-color:var(--n-red)}

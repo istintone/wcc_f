@@ -14,6 +14,7 @@ function applyTheme(id){
   if(!THEMES[id])id="bk";
   Object.keys(THEMES).forEach(k=>document.body.classList.toggle("th-"+k,k===id));
   if(id==="bk")document.body.classList.add("th-wr");
+  if(typeof LOGO_IMG!=="undefined"&&LOGO_IMG.wm)document.body.style.setProperty("--logo-wm",'url("'+LOGO_IMG.wm+'")');   // 監督室の地の透かし(neon.css。→docs/14 §14.19)
   try{ localStorage.setItem(THEME_KEY,id); }catch(e){}
   return id;
 }
