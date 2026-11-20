@@ -1261,4 +1261,4 @@ body.th-bk{
 #scene .logo .lg-wrap.lt::before{background:var(--t-paper)}
 #scene .logo .lg-wrap.lt .lg-img{filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))}
 /* 白 × レッドのタイトルは明るい地なので、TOUCH は赤 */
-body.th-wr:not(.th-bk) .sc-title .touch{color:var(--t-sub);text-shadow:none}
+body.th-wr:not(.th-bk) #scene.sc-title .touch{color:var(--t-sub);text-shadow:none}
