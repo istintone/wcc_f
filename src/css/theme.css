@@ -1397,3 +1397,32 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #club .sd-rk{font-size:11.5px;font-weight:700;margin-right:auto;align-self:center}
 body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd i,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd b,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd em{color:#9a6a00;text-shadow:0 0 6px rgba(255,200,40,.55)}
 body.th-wr:not(.th-bk) .radar text.gd{fill:#b07d0a}
+
+/* ---- クラブオファー(offerHtml。→docs/16)・クラブの期待(expTileHtml)・任期終了の内訳(termExpHtml) ---- */
+#club .offers .ofc{position:relative;margin:10px 0 0;padding:10px 10px 12px;background:var(--t-card,#fff);border:1px solid var(--t-rule,#ddd);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#club .offers .ofc header{position:relative;padding-right:52px}
+#club .offers .ofc header small{display:block;font-family:var(--f-num);font-size:10.5px;font-weight:700;letter-spacing:.08em;opacity:.7}
+#club .offers .ofc header b{display:block;font-size:15.5px;font-weight:900;line-height:1.25}
+#club .offers .ofc header i{display:block;font-style:normal;font-size:11px;opacity:.75;margin-top:1px}
+#club .offers .ofc header .lv{position:absolute;right:0;top:0;font-family:var(--f-num);font-weight:800;font-size:13px;padding:3px 7px;background:#121212;color:#fff}
+#club .offers .ofc.rare{border-color:#e8b11c;box-shadow:0 0 0 2px #e8b11c,0 0 18px rgba(232,177,28,.45)}
+#club .offers .ofc.rare header .lv{background:linear-gradient(135deg,#fff3b8,#e8b11c 45%,#a8730a);color:#2a1a00}
+#club .offers .of-body{display:grid;grid-template-columns:118px 1fr;gap:8px;align-items:center;margin-top:4px}
+#club .offers .of-radar{width:118px;height:auto}
+#club .offers dl{margin:0;font-size:12px}
+#club .offers dl div{display:flex;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px solid var(--t-rule,#ddd)}
+#club .offers dt{opacity:.7} #club .offers dd{margin:0;font-weight:800;text-align:right}
+#club .offers .hi dd,#club .offers .of-fac .hi b{color:var(--t-sub,#c8102e)}
+#club .offers .of-fac{display:flex;flex-wrap:wrap;gap:4px 10px;margin:6px 0 0;font-size:11.5px}
+#club .offers .of-exp{margin:6px 0 8px;font-size:12px}
+#club .offers .ofc .btn{width:100%}
+#club .exp-tile{margin:8px 0;padding:8px 10px;background:var(--t-card,#fff);border:1px solid var(--t-rule,#ddd)}
+#club .exp-tile .et-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#club .exp-tile .et-h small{font-size:11px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .exp-tile .et-h b{font-size:12.5px;white-space:nowrap}
+#club .exp-tile .et-bar{display:block;height:6px;margin-top:5px;background:rgba(127,127,127,.25)}
+#club .exp-tile .et-bar u{display:block;height:100%;background:var(--t-sub,#c8102e)} #club .exp-tile .et-bar u.ok{background:#e8b11c}
+#club .exp-tile .et-mis{margin:6px 0 0;font-size:12px} #club .exp-tile .et-mis b{color:var(--t-sub,#c8102e)}
+#club .texp{list-style:none;margin:4px 0 8px;padding:0;font-size:12px}
+#club .texp li{padding:3px 0;border-bottom:1px solid var(--t-rule,#ddd)} #club .texp li.ok{color:#1f9d55} #club .texp li.ng{color:#c8102e}
+body.th-bk #club .offers .ofc,body.th-bk #club .exp-tile{background:linear-gradient(180deg,rgba(20,24,40,.9),rgba(10,12,22,.92));border-color:var(--n-line2)}

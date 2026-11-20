@@ -165,7 +165,7 @@ const TUNING={
   club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[3,3,4,4,4,5,5]], promoteRank:2,
-         prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], friendly:0.3, titleK:4,
+         prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
          historyMax:120 },
   // 育成(→docs/05 §5.3〜5.6)
@@ -224,6 +224,18 @@ const TUNING={
   //   facAt … 累計の年俸がこの額に届くごとに施設レベルが1つ上がる(1〜5)
   //   follow/bondMin … 次の任期についてくる選手の数の上限 / 要る絆
   term:{ salaryBase:20, salaryK:0.15, facAt:[80,200,380,640], follow:3, bondMin:6 },
+  // クラブオファー(→docs/16)。size … 規模ごとの1部での幅(fans・money は部で divK 倍)・成長グラフの初めの幅・スタジアムの段・施設の段
+  //   lean … 地域の得意な軸に足す / spread … 監督の格からの差が 0・±1 になる率(残りが ±2)
+  //   rareP・rareSal・rareMax … レアオファーの率(累計の年俸 1億ごとに rareSal 増える。上限 rareMax)/ oilMoney … オイルマネークラブに足す資金
+  //   target … 期待の格(1〜7)ごとの、任期の獲得賞金の期待値(億)/ targetSal … 届いたときの年俸の上乗せ(× 期待の格)
+  //   misP … 期待の格ごとの、大会の初戦のあとにオーナーの指令が出る率 / misWin・misLose … 指令の達成・失敗の年俸(× 期待の格)
+  offer:{ size:{ weak:{ fans:[4000,6000],   money:[0,10],   graph:[0,0],   stad:1, fac:0 },
+                 mid: { fans:[9000,13000],  money:[10,30],  graph:[10,20], stad:1, fac:0 },
+                 big: { fans:[18000,26000], money:[30,60],  graph:[20,35], stad:2, fac:1 },
+                 mega:{ fans:[32000,45000], money:[60,100], graph:[35,50], stad:3, fac:1 } },
+          divK:[1,0.7,0.5], lean:15, spread:[0.6,0.32], rareP:0.05, rareSal:0.0003, rareMax:0.25, oilMoney:100,
+          target:[70,80,95,110,125,140,160], targetSal:4,
+          misP:[0.1,0.17,0.24,0.31,0.38,0.45,0.5], misWin:4, misLose:3 },
   // カード(→docs/06)
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合

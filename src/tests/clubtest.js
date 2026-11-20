@@ -196,6 +196,42 @@ function playOne(S,W,decline,opt){
   check("監督まかせの勝率が 35〜75%(簡単すぎず、勝てなさすぎない)",wr>=0.35&&wr<=0.75,pc(wr));
 }
 
+{ // クラブオファー(→docs/16): 3つ・地域は重ならない・格は監督の格に見合う・選ぶとクラブの状態が決まる・期待と指令が年俸に効く
+  console.log("  クラブオファー");
+  const S=E.newCareer(606), W=E.worldOf(S), L=E.offersOf(S);
+  check("オファーは3つ、地域は重ならず、同じ任期なら同じ",L.length===3&&new Set(L.map(o=>o.region)).size===3&&
+    JSON.stringify(E.makeOffers(E.newCareer(606)))===JSON.stringify(L),L.map(o=>o.name).join(" / "));
+  let lvs=[], rare=0;
+  for(let i=0;i<400;i++){ const T=E.newCareer(7000+i); E.offersOf(T).forEach(o=>{ lvs.push(o.lv); if(o.rare)rare++; }); }
+  const avg=lvs.reduce((s,x)=>s+x,0)/lvs.length, hi=lvs.filter(x=>x>=4).length/lvs.length;
+  check("1任期目のオファーは弱小〜中堅が中心(格の平均 1〜2、格4以上は 5% 未満。レアを除く)",avg>=1&&avg<=2.3&&hi<0.05,"平均 "+avg.toFixed(2)+" / 格4以上 "+(hi*100).toFixed(1)+"%");
+  check("レアオファーはまれ(1任期目は3択のうち1つが 5% ほど)",rare/400>0.02&&rare/400<0.09,(rare/400*100).toFixed(1)+"%");
+  const mk=(lv,reg,rare,seed)=>{ let a=seed||1; return E.mkOffer(S,()=>{ a=(a*1103515245+12345)%2147483648; return a/2147483648; },lv,reg,rare); };
+  const eu=mk(3,"eu"), sa=mk(3,"sa");
+  check("地域の特色: 欧州はスタジアム、南米は練習場が育ち、得意な軸(OFE・TEC)が高い",
+    eu.stad>sa.stad&&sa.fac.train>eu.fac.train&&eu.graph.O>=eu.graph.R&&sa.graph.R>=sa.graph.O,"欧州 "+eu.name+" / 南米 "+sa.name);
+  const mega=mk(6,"eu"), weak=mk(1,"as");
+  check("規模: メガは1部・ファンと資金が多く・期待も指令も多い",mega.div===1&&mega.fans>weak.fans*3&&mega.money>weak.money&&mega.target>weak.target&&mega.misP>weak.misP,
+    mega.name+" ファン "+mega.fans+" / "+weak.name+" ファン "+weak.fans);
+  const ri=mk(4,"af","rising"), tr=mk(2,"eu","trad");
+  check("新興クラブは1部級で期待が低く、伝統的クラブは2〜3部級で期待が高い",ri.div===1&&ri.expLv<ri.lv&&tr.div>=2&&tr.expLv>tr.lv);
+  check("成長グラフの初めは対の器に収まり、MAX・金色からは始まらない",[eu,sa,mega,weak,ri,tr].every(o=>Object.keys(o.graph).every(a=>o.graph[a]>=0&&o.graph[a]<100&&o.graph[a]+o.graph[E.AXIS_PAIR[a]]<=E.graphCap(S))));
+  S.coffers=[mega]; E.pickOffer(S,W,0);
+  check("選ぶと、リーグの格・ファン・資金・スタジアム・施設・成長グラフがそのクラブのものになる",
+    S.grade===3&&S.biz.fans===mega.fans&&S.money===mega.money&&S.money0===mega.money&&S.biz.stad===mega.stad&&S.g.graph.O===mega.graph.O&&!!S.biz.offers&&S.league.clubs.length===8);
+  // 1任期を回して、期待と指令が年俸に入る
+  S.club=E.defaultClub();
+  while(!S.termOver)playOne(S,W);
+  const e=S.tend;
+  check("任期の終わりに、獲得賞金と期待を比べ、指令の結果を年俸に足す",e.exp&&e.exp.target===mega.target&&Math.abs(e.exp.prize-S.ts.prize)<1&&
+    e.mis.length>0&&e.misSal===e.mis.reduce((s,m)=>s+m.v,0),
+    "獲得 "+e.exp.prize+" / 期待 "+e.exp.target+" ・ 指令 "+e.mis.map(m=>(m.ok?"○":"×")+m.v).join(" ")+" ・ 年俸 "+e.salary+"億");
+  E.startNextTerm(S,W);
+  check("次の任期はクラブを選び直す(オファーが届く)",!S.cprof&&!S.club&&E.offersOf(S).length===3);
+  const M=E.migrate(JSON.parse(JSON.stringify(Object.assign({},S,{ cprof:undefined, club:E.defaultClub() }))));
+  check("古いセーブ(途中の任期)は、オファーを出さずに続ける",M.cprof&&M.cprof.legacy===true);
+}
+
 // ---------- ⑤ 棄権と保存 ----------
 console.log("⑤ 棄権と保存");
 {

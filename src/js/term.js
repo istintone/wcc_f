@@ -11,7 +11,8 @@
 /** 任期中の記録(称号の条件に使う) */
 function newTermStats(){
   // awake・gold … この任期に起きた覚醒・黄金線の数(ついてきた選手の★・線は数えない)/ pow0 … 任期の始めのチーム力
-  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null };
+  // prize … 獲得賞金(期待値と比べる)/ misSal・misLog … オーナーの指令の年俸の増減と記録(→docs/16 §16.3)
+  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null, prize:0, misSal:0, misLog:[] };
 }
 
 /**
@@ -76,12 +77,17 @@ function facLevel(total){
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
   const T=TUNING.term, x=termFacts(S), title=TITLES.find(t=>t.ok(x));
-  const salary=Math.round(T.salaryBase+x.money*T.salaryK+title.bonus);
+  // クラブの期待(→docs/16 §16.3): 獲得賞金が期待値に届けば上乗せ。オーナーの指令の増減も足す
+  const cp=S.cprof&&!S.cprof.legacy?S.cprof:null, O=TUNING.offer;
+  const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target, bonus:0 }:null;
+  if(exp&&exp.ok)exp.bonus=O.targetSal*cp.expLv;
+  const misSal=S.ts.misSal||0;
+  const salary=Math.max(0,Math.round(T.salaryBase+x.money*T.salaryK+title.bonus+(exp?exp.bonus:0)+misSal));
   const before=facLevel(S.salary);
   S.salary+=salary;
   S.fac=facLevel(S.salary);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
-    grade:title.grade, follow:followers(S), facts:x };
+    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal };
   S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }

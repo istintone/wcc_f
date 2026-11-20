@@ -1980,6 +1980,35 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd i,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd b,body.th-wr:not(.th-bk) #club .graph-r .gr-list li>span.gd em{color:#9a6a00;text-shadow:0 0 6px rgba(255,200,40,.55)}
 body.th-wr:not(.th-bk) .radar text.gd{fill:#b07d0a}
 
+/* ---- クラブオファー(offerHtml。→docs/16)・クラブの期待(expTileHtml)・任期終了の内訳(termExpHtml) ---- */
+#club .offers .ofc{position:relative;margin:10px 0 0;padding:10px 10px 12px;background:var(--t-card,#fff);border:1px solid var(--t-rule,#ddd);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#club .offers .ofc header{position:relative;padding-right:52px}
+#club .offers .ofc header small{display:block;font-family:var(--f-num);font-size:10.5px;font-weight:700;letter-spacing:.08em;opacity:.7}
+#club .offers .ofc header b{display:block;font-size:15.5px;font-weight:900;line-height:1.25}
+#club .offers .ofc header i{display:block;font-style:normal;font-size:11px;opacity:.75;margin-top:1px}
+#club .offers .ofc header .lv{position:absolute;right:0;top:0;font-family:var(--f-num);font-weight:800;font-size:13px;padding:3px 7px;background:#121212;color:#fff}
+#club .offers .ofc.rare{border-color:#e8b11c;box-shadow:0 0 0 2px #e8b11c,0 0 18px rgba(232,177,28,.45)}
+#club .offers .ofc.rare header .lv{background:linear-gradient(135deg,#fff3b8,#e8b11c 45%,#a8730a);color:#2a1a00}
+#club .offers .of-body{display:grid;grid-template-columns:118px 1fr;gap:8px;align-items:center;margin-top:4px}
+#club .offers .of-radar{width:118px;height:auto}
+#club .offers dl{margin:0;font-size:12px}
+#club .offers dl div{display:flex;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px solid var(--t-rule,#ddd)}
+#club .offers dt{opacity:.7} #club .offers dd{margin:0;font-weight:800;text-align:right}
+#club .offers .hi dd,#club .offers .of-fac .hi b{color:var(--t-sub,#c8102e)}
+#club .offers .of-fac{display:flex;flex-wrap:wrap;gap:4px 10px;margin:6px 0 0;font-size:11.5px}
+#club .offers .of-exp{margin:6px 0 8px;font-size:12px}
+#club .offers .ofc .btn{width:100%}
+#club .exp-tile{margin:8px 0;padding:8px 10px;background:var(--t-card,#fff);border:1px solid var(--t-rule,#ddd)}
+#club .exp-tile .et-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#club .exp-tile .et-h small{font-size:11px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .exp-tile .et-h b{font-size:12.5px;white-space:nowrap}
+#club .exp-tile .et-bar{display:block;height:6px;margin-top:5px;background:rgba(127,127,127,.25)}
+#club .exp-tile .et-bar u{display:block;height:100%;background:var(--t-sub,#c8102e)} #club .exp-tile .et-bar u.ok{background:#e8b11c}
+#club .exp-tile .et-mis{margin:6px 0 0;font-size:12px} #club .exp-tile .et-mis b{color:var(--t-sub,#c8102e)}
+#club .texp{list-style:none;margin:4px 0 8px;padding:0;font-size:12px}
+#club .texp li{padding:3px 0;border-bottom:1px solid var(--t-rule,#ddd)} #club .texp li.ok{color:#1f9d55} #club .texp li.ng{color:#c8102e}
+body.th-bk #club .offers .ofc,body.th-bk #club .exp-tile{background:linear-gradient(180deg,rgba(20,24,40,.9),rgba(10,12,22,.92));border-color:var(--n-line2)}
+
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
    参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
@@ -2816,7 +2845,7 @@ const TUNING={
   club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[3,3,4,4,4,5,5]], promoteRank:2,
-         prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], friendly:0.3, titleK:4,
+         prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
          historyMax:120 },
   // 育成(→docs/05 §5.3〜5.6)
@@ -2875,6 +2904,18 @@ const TUNING={
   //   facAt … 累計の年俸がこの額に届くごとに施設レベルが1つ上がる(1〜5)
   //   follow/bondMin … 次の任期についてくる選手の数の上限 / 要る絆
   term:{ salaryBase:20, salaryK:0.15, facAt:[80,200,380,640], follow:3, bondMin:6 },
+  // クラブオファー(→docs/16)。size … 規模ごとの1部での幅(fans・money は部で divK 倍)・成長グラフの初めの幅・スタジアムの段・施設の段
+  //   lean … 地域の得意な軸に足す / spread … 監督の格からの差が 0・±1 になる率(残りが ±2)
+  //   rareP・rareSal・rareMax … レアオファーの率(累計の年俸 1億ごとに rareSal 増える。上限 rareMax)/ oilMoney … オイルマネークラブに足す資金
+  //   target … 期待の格(1〜7)ごとの、任期の獲得賞金の期待値(億)/ targetSal … 届いたときの年俸の上乗せ(× 期待の格)
+  //   misP … 期待の格ごとの、大会の初戦のあとにオーナーの指令が出る率 / misWin・misLose … 指令の達成・失敗の年俸(× 期待の格)
+  offer:{ size:{ weak:{ fans:[4000,6000],   money:[0,10],   graph:[0,0],   stad:1, fac:0 },
+                 mid: { fans:[9000,13000],  money:[10,30],  graph:[10,20], stad:1, fac:0 },
+                 big: { fans:[18000,26000], money:[30,60],  graph:[20,35], stad:2, fac:1 },
+                 mega:{ fans:[32000,45000], money:[60,100], graph:[35,50], stad:3, fac:1 } },
+          divK:[1,0.7,0.5], lean:15, spread:[0.6,0.32], rareP:0.05, rareSal:0.0003, rareMax:0.25, oilMoney:100,
+          target:[70,80,95,110,125,140,160], targetSal:4,
+          misP:[0.1,0.17,0.24,0.31,0.38,0.45,0.5], misWin:4, misLose:3 },
   // カード(→docs/06)
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
@@ -5051,7 +5092,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{} };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -5205,7 +5246,9 @@ function applyResult(S,W,fx,res){
   if(hg>ag)S.rec.w++; else if(hg<ag)S.rec.l++; else S.rec.d++;
   if(res.layout)S.layout=res.layout;
   if(res.kp)S.kp=res.kp;
-  const grade=COMPS[fx.comp].grade, prize=x=>{ S.money+=x; return x; };
+  // 上のリーグほど賞金が大きい(リーグ・カップ。→docs/16 §16.3)。獲得賞金は期待値と比べる
+  const grade=COMPS[fx.comp].grade, gk=fx.kind==="friendly"?1:C.prize.gradeK[S.grade-1]||1,
+    prize=x=>{ x*=gk; S.money+=x; S.ts.prize=(S.ts.prize||0)+x; return x; };   // 獲得賞金は期待値と比べる(→docs/16 §16.3)
   let got=0;
   if(fx.kind==="league"){
     const ix=SCHED[fx.slot][1], L=S.league;
@@ -5262,6 +5305,7 @@ function applyResult(S,W,fx,res){
     }
   }else if(win||hg>ag)got+=prize(C.prize.friendly);
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
+  misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
   const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[] };
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
@@ -5314,6 +5358,7 @@ function endCycle(S,W,out){
     if(S.biz){ S.biz.fans+=TUNING.biz.fansPromo; const nx=TUNING.biz.stad[S.biz.stad], disc=nx?Math.round(nx.cost*TUNING.biz.chanceK):0;
       if(!S.biz.offer&&nx&&S.money>=disc)S.biz.offer={ lv:S.biz.stad+1, cost:disc, why:"昇格" }; }
   }
+  if(S.mis)misEnd(S,false,out);                 // 周をまたいだ指令は失敗(出られなかった・棄権した)
   S.cyc++; S.slot=0;
   S.league=newLeague(S,W); S.cups=newCups();
   if(S.biz&&S.played+1<TUNING.club.termLen)spRenew(S);   // リーグの1周ごとにスポンサーを選び直す(任期の最後は除く)
@@ -5334,6 +5379,7 @@ function newTerm(S,W){
   if(S.biz){ S.biz=newBiz(); spRenew(S); }      // クラブの持ち物は元に戻す。スポンサーは選び直す
   S.tsetChosen=false;                           // 任期の始めに称号をセットし直す(→docs/10 §10.2 B)
   S.club=null;                                  // 新しい任期は新しいクラブ。監督契約で決め直す(→docs/10 §10.2 A)
+  S.cprof=null; S.coffers=null; S.mis=null;     // その前に、届いたオファーからクラブを選ぶ(→docs/16)
 }
 
 /* ---------- 保存 ---------- */
@@ -5389,6 +5435,8 @@ function migrate(S){
   if(S.kp&&!CARDS[S.kp])S.kp=null;
   if(S.last&&S.last.card&&!CARDS[S.last.card])S.last.card=null;
   S.g=S.g?migrateGrowth(S.g,S.sq):newGrowth(S.sq);
+  // クラブオファー(→docs/16)。途中の任期(クラブを決めたあと)は前の作りのまま続ける
+  if(S.cprof===undefined){ S.cprof=S.club?{ legacy:true }:null; S.coffers=null; S.mis=null; }
   if(!S.ts)S.ts=newTermStats();
   if(S.ts.awake===undefined){ S.ts.awake=null; S.ts.gold=null; S.ts.pow0=null; }   // 途中の任期は前の数え方のまま
   if(S.money0==null)S.money0=0;
@@ -5652,6 +5700,123 @@ function toggleMab(S,k){
   if(i>=0){ set.splice(i,1); return true; }
   if(!MAB.some(x=>x.id===k)||set.length>=TUNING.mab.max)return false;
   set.push(k); return true;
+}
+
+/* ---------- クラブオファー(→docs/16) ----------
+ * 任期の始め(1任期目も)に3つのクラブからオファーが届き、1つを選ぶ。名前は「地域 × 部 × 規模」のくくり(偽名)。
+ * 選んだクラブで、リーグの格・ファン・資金・スタジアム・施設・成長グラフの初めと、期待される獲得賞金が決まる。
+ * 選んだあとは、今までどおり監督契約でクラブ名・エンブレムを決める。
+ * S.coffers = [オファー] | null、S.cprof = 選んだオファー | null(古いセーブは { legacy:true })
+ * オファー = { name, region, size, div, rare, lv:クラブの格, expLv:期待の格, grade, fans, money, stad, fac:{...}, graph:{...}, target:賞金の期待値, misP:指令の率 } */
+const OF_REGIONS=[
+  { id:"eu", name:"欧州",   fac:"stad",   ax:"O" }, { id:"sa", name:"南米",   fac:"train",  ax:"R" },
+  { id:"na", name:"北中米", fac:"med",    ax:"P" }, { id:"as", name:"アジア", fac:"lounge", ax:"S" },
+  { id:"af", name:"アフリカ", fac:"tact", ax:"C" } ];
+const OF_SIZES=[
+  { id:"weak", name:"弱小", lv:1, div:[2,3] }, { id:"mid", name:"中堅", lv:2, div:[1,2,3] },
+  { id:"big",  name:"ビッグ", lv:3, div:[1,2] }, { id:"mega", name:"メガ", lv:4, div:[1] } ];
+const OF_RARES=[
+  { id:"galaxy", name:"銀河系軍団",       desc:"すべてがメガのさらに上" },
+  { id:"oil",    name:"オイルマネークラブ", desc:"初めから資金がとても多い" },
+  { id:"rising", name:"新興クラブ",       desc:"1部リーグ級だが、期待される成績は低い" },
+  { id:"noble",  name:"名門クラブ",       desc:"ファンがとても多い" },
+  { id:"trad",   name:"伝統的クラブ",     desc:"2〜3部リーグ級だが、期待される成績は高い" } ];
+const OF_FAC_NAME={ stad:"スタジアム", train:"練習場", tact:"戦術室", lounge:"ラウンジ", med:"メディカル" };
+const divBonus=div=>3-div;                      // 1部 +2・2部 +1・3部 0
+/** 監督の格(1〜6)。前の任期の称号の格と、監督ランク(累計の年俸)から。1任期目は 1 */
+function mgrLv(S){
+  const last=S.career.length?titleOf(S.career[S.career.length-1].title):null;
+  return clamp(1+Math.max(0,(last?last.grade:1)-1)+((S.fac||1)-1),1,6);
+}
+/** 格 lv のクラブを1つ作る(規模と部の組み合わせから。地域は reg) */
+function mkOffer(S,rng,lv,reg,rare){
+  const O=TUNING.offer, R=OF_REGIONS.find(r=>r.id===reg);
+  const pick=a=>a[Math.floor(rng()*a.length)], rnd=(a,b)=>a+(b-a)*rng();
+  let size, div;
+  if(rare==="galaxy"){ size=OF_SIZES[3]; div=1; }
+  else if(rare==="rising"){ size=OF_SIZES[1]; div=1; }
+  else if(rare==="trad"){ size=OF_SIZES[1]; div=pick([2,3]); }
+  else{
+    const combo=[]; for(const z of OF_SIZES)for(const d of z.div)if(z.lv+divBonus(d)===lv)combo.push([z,d]);
+    const c=combo.length?pick(combo):[OF_SIZES[0],3]; size=c[0]; div=c[1];
+  }
+  const Z=O.size[size.id], dk=O.divK[div-1], bon=divBonus(div);
+  const o={ region:reg, size:size.id, div, rare:rare||null, lv:size.lv+bon, grade:4-div,
+    fans:Math.round(rnd(Z.fans[0],Z.fans[1])*dk/100)*100, money:Math.round(rnd(Z.money[0],Z.money[1])*dk),
+    stad:Z.stad, fac:{ train:Z.fac, tact:Z.fac, lounge:Z.fac, med:Z.fac }, graph:{} };
+  // 地域の特色: その施設(欧州はスタジアム)が、部に応じて育っている
+  if(R.fac==="stad")o.stad+=bon; else o.fac[R.fac]+=bon;
+  // 成長グラフの初め: 規模の幅 + 地域(伝統的クラブは DEF)の得意な軸。対の器に収め、MAX には届かせない
+  const lean=rare==="trad"?"D":R.ax, G=TUNING.grow.graph;
+  for(const a of ["O","D","R","C","S","P"])o.graph[a]=Math.round(rnd(Z.graph[0],Z.graph[1]));
+  if(rare==="galaxy")for(const a in o.graph)o.graph[a]+=10;
+  o.graph[lean]+=O.lean;
+  for(const a of Object.keys(o.graph)){ const b=AXIS_PAIR[a]; o.graph[a]=Math.min(G.max-10,o.graph[a]);
+    const over=o.graph[a]+o.graph[b]-G.cap; if(over>0)o.graph[a===lean?b:a]-=over; }
+  // レアクラブの特色
+  if(rare==="galaxy"){ o.lv=7; o.fans=Math.round(o.fans*1.4/100)*100; o.money=Math.round(o.money*1.4); o.stad+=1; for(const k in o.fac)o.fac[k]+=1; }
+  if(rare==="oil")o.money=Math.round(o.money*3+O.oilMoney);
+  if(rare==="noble")o.fans=Math.round(o.fans*2/100)*100;
+  o.stad=clamp(o.stad,1,TUNING.biz.stad.length); for(const k in o.fac)o.fac[k]=clamp(o.fac[k],0,TUNING.biz.facCost.length);
+  o.expLv=clamp(o.lv+(rare==="rising"?-2:rare==="trad"?2:0),1,7);
+  o.target=O.target[o.expLv-1];
+  o.misP=O.misP[o.expLv-1];
+  o.name=R.name+"の"+(rare?OF_RARES.find(x=>x.id===rare).name:div+"部リーグの"+OF_SIZES.find(z=>z.id===size.id).name+"クラブ");
+  return o;
+}
+/** 3つのオファーを作る(同じ任期なら毎回同じ)。だいたい監督の格に見合い、ときどき上下する。地域は重ねない。まれにレアクラブ */
+function makeOffers(S){
+  const O=TUNING.offer, rng=mulberry32((S.seed^hashStr("offer:"+S.term))>>>0), base=mgrLv(S);
+  const regs=OF_REGIONS.map(r=>r.id), pickR=[];
+  while(pickR.length<3){ const r=regs[Math.floor(rng()*regs.length)]; if(!pickR.includes(r))pickR.push(r); }
+  const rareP=Math.min(O.rareMax,O.rareP+(S.salary||0)*O.rareSal);
+  const rareAt=rng()<rareP?Math.floor(rng()*3):-1;
+  return pickR.map((reg,i)=>{
+    const r=rng(), d=r<O.spread[0]?0:r<O.spread[0]+O.spread[1]?1:2, lv=clamp(base+(d?(rng()<0.5?-d:d):0),1,6);
+    const rare=i===rareAt?OF_RARES[Math.floor(rng()*OF_RARES.length)].id:null;
+    return mkOffer(S,rng,lv,reg,rare);
+  });
+}
+/** 届いたオファー(無ければ作る) */
+function offersOf(S){ if(!S.coffers&&!S.cprof)S.coffers=makeOffers(S); return S.coffers||[]; }
+/** オファーを選ぶ。リーグの格・ファン・資金・スタジアム・施設・成長グラフをそのクラブの状態にする */
+function pickOffer(S,W,i){
+  const o=offersOf(S)[i]; if(!o||S.cprof)return false;
+  S.cprof=o; S.coffers=null;
+  S.grade=o.grade; S.league=newLeague(S,W); S.cups=newCups();
+  S.money=o.money; S.money0=o.money;
+  if(S.biz){ S.biz.fans=o.fans; S.biz.stad=o.stad; S.biz.fac=Object.assign({},o.fac); S.biz.sp=null; spRenew(S); }
+  for(const a in o.graph)S.g.graph[a]=o.graph[a];
+  return true;
+}
+/* ---- オーナーの指令(→docs/16 §16.3) ----
+ * 大会の初戦(カップの1回戦・リーグの第1節)が終わったとき、期待の格で決まる率で「◯◯で優勝しろ」「リーグで N 位以内に入れ」。
+ * S.mis = { kind:"cup"|"lg", comp, n, cyc, st:"on", text }。達成で年俸 +、失敗で年俸 −(S.ts.misSal に貯め、S.ts.misLog に残す) */
+function misText(m){ return m.kind==="lg"?"リーグで "+m.n+"位以内に入れ":COMPS[m.comp].name+"で優勝しろ"; }
+function misEnd(S,ok,out){
+  const m=S.mis, O=TUNING.offer, lv=S.cprof&&S.cprof.expLv||1, v=Math.round((ok?O.misWin:-O.misLose)*lv);
+  S.ts.misSal=(S.ts.misSal||0)+v;
+  (S.ts.misLog||(S.ts.misLog=[])).push({ text:m.text, ok, v });
+  out.push(ok?"👔 オーナーの指令「"+m.text+"」を達成！ 年俸 +"+v+"億":"👔 オーナーの指令「"+m.text+"」は失敗… 年俸 "+v+"億");
+  S.mis=null;
+}
+function misAfterMatch(S,fx,out){
+  const m=S.mis;
+  // 進んでいる指令の決着
+  if(m){
+    if(m.kind==="cup"&&S.cups[m.comp]){ const st=S.cups[m.comp].st; if(st==="won")misEnd(S,true,out); else if(st==="out"||st==="quit")misEnd(S,false,out); }
+    else if(m.kind==="lg"&&S.league.done===14)misEnd(S,sortTable(S.league.table).indexOf("me")+1<=m.n,out);
+  }
+  // 新しい指令: 大会の初戦のあと(勝ち残っているとき)。1つずつ。任期の最後の試合では出さない
+  if(S.mis||!S.cprof||S.cprof.legacy||S.played+1>=TUNING.club.termLen)return;
+  if(fx.kind!=="league"&&fx.kind!=="cup")return;
+  if(SCHED[fx.slot][1]!==0)return;
+  if(fx.kind==="cup"&&S.cups[fx.comp].st!=="in")return;
+  if(mulberry32((S.seed^hashStr("mis:"+S.term+":"+S.played))>>>0)()>=S.cprof.misP)return;
+  const lv=S.cprof.expLv, n=lv>=6?1:lv>=4?2:4;
+  S.mis=fx.kind==="league"?{ kind:"lg", comp:"LG", n, cyc:S.cyc }:{ kind:"cup", comp:fx.comp, cyc:S.cyc };
+  S.mis.text=misText(S.mis);
+  out.push("👔 オーナーから指令: 「"+S.mis.text+"」(達成で年俸アップ、失敗でダウン)");
 }
 
 /* =========================================================================
@@ -6630,7 +6795,8 @@ function linkSign(S,a,b){
 /** 任期中の記録(称号の条件に使う) */
 function newTermStats(){
   // awake・gold … この任期に起きた覚醒・黄金線の数(ついてきた選手の★・線は数えない)/ pow0 … 任期の始めのチーム力
-  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null };
+  // prize … 獲得賞金(期待値と比べる)/ misSal・misLog … オーナーの指令の年俸の増減と記録(→docs/16 §16.3)
+  return { kpCh:0, subs:0, used:[], topW:0, psoW:0, psoL:0, frW:0, awake:0, gold:0, pow0:null, prize:0, misSal:0, misLog:[] };
 }
 
 /**
@@ -6695,12 +6861,17 @@ function facLevel(total){
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
   const T=TUNING.term, x=termFacts(S), title=TITLES.find(t=>t.ok(x));
-  const salary=Math.round(T.salaryBase+x.money*T.salaryK+title.bonus);
+  // クラブの期待(→docs/16 §16.3): 獲得賞金が期待値に届けば上乗せ。オーナーの指令の増減も足す
+  const cp=S.cprof&&!S.cprof.legacy?S.cprof:null, O=TUNING.offer;
+  const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target, bonus:0 }:null;
+  if(exp&&exp.ok)exp.bonus=O.targetSal*cp.expLv;
+  const misSal=S.ts.misSal||0;
+  const salary=Math.max(0,Math.round(T.salaryBase+x.money*T.salaryK+title.bonus+(exp?exp.bonus:0)+misSal));
   const before=facLevel(S.salary);
   S.salary+=salary;
   S.fac=facLevel(S.salary);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
-    grade:title.grade, follow:followers(S), facts:x };
+    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal };
   S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }
@@ -8813,13 +8984,13 @@ function termEndHtml(){
     '<p>覚醒 '+x.awake+'人 ・ 黄金線 '+x.gold+'本 ・ KP 変更 '+x.kpCh+'回 ・ 先発で使った選手 '+x.used+'人</p>'+
     '<div class="sal"><div><small>年俸</small><b>'+e.salary+'<i>億</i></b></div><div><small>累計</small><b>'+e.total+'<i>億</i></b></div>'+
       '<div><small>監督ランク</small><b>'+e.fac+'</b>'+(e.facUp?'<i class="up">UP</i>':'')+'</div></div>'+
-    '<p class="dim">監督ランクが上がると、特殊練習が候補に出やすくなる</p>';
+    '<p class="dim">監督ランクが上がると、特殊練習が候補に出やすくなる</p>'+termExpHtml(e);
   h+='<h4>次の任期についてくる選手</h4>'+(e.follow.length?'<ul class="fol">'+e.follow.map(id=>{
       const g=S.g.pl[id], c=CARDS[id];
       return '<li><b>'+c.no+' '+nameOf(c)+'</b> 個人'+stars(g.is)+' 特殊'+stars(g.ss)+' <small>絆 '+g.bond+'</small></li>'; }).join("")+'</ul>'
     :'<p class="dim">絆を深めた選手がいない(コミュニケーションで呼ぶと絆が深まる)</p>')+
     '<p class="dim">ついてくる選手は★と能力を保ったまま、互いの連携も残る。ほかの選手は初めから。'+
-    '次の任期はリーグの格 '+e.grade+' から</p>'+
+    '次の任期は、届いたオファー(称号と年俸で決まる)からクラブを選ぶ</p>'+
     '<button class="btn btn-main" data-act="term">次の任期へ</button></section>';
   return h;
 }
@@ -9067,6 +9238,48 @@ function titleSetHtml(){
     ids.map(id=>'<button class="sp" data-act="tset" data-v="'+id+'"><b>'+titleOf(id).name+'</b><i>'+TITLE_FX[id].desc+'</i></button>').join("")+
     '<button class="sp" data-act="tset" data-v=""><b>セットしない</b></button></section>';
 }
+/* ---- クラブオファー(→docs/16)。任期の始めに3つのクラブから選ぶ。見比べられるように、格・ファン・資金・スタジアム・施設・成長グラフ・期待を並べる ---- */
+const OF_DIV_LABEL=["1部","2部","3部"];
+const misLevelTxt=p=>p>=0.4?"多い":p>=0.25?"ふつう":"少ない";
+function offerCardHtml(o,i){
+  const R=OF_REGIONS.find(r=>r.id===o.region), rare=o.rare?OF_RARES.find(x=>x.id===o.rare):null, G=TUNING.grow.graph, v={};
+  for(const a in o.graph)v[a]=o.graph[a]/G.max;
+  const fac=["train","tact","lounge","med"].map(k=>'<span'+(R.fac===k?' class="hi"':'')+'>'+OF_FAC_NAME[k]+' <b>Lv'+o.fac[k]+'</b></span>').join("");
+  return '<article class="ofc'+(rare?' rare':'')+'">'+
+    '<header><small>'+R.name+(rare?' ・ RARE':' ・ '+OF_DIV_LABEL[o.div-1]+'リーグ')+'</small><b>'+o.name+'</b>'+
+      (rare?'<i>'+rare.desc+'</i>':'<i>'+R.name+'のクラブは'+OF_FAC_NAME[R.fac]+'が育っている</i>')+
+      '<span class="lv">格 '+o.lv+'</span></header>'+
+    '<div class="of-body">'+radarSvg([{ v, color:"#d0102f" }],{ cls:"of-radar" })+
+      '<dl><div><dt>リーグ</dt><dd>格 '+o.grade+'('+OF_DIV_LABEL[o.div-1]+')</dd></div>'+
+        '<div><dt>ファン</dt><dd>'+(o.fans/10000).toFixed(1)+'万人</dd></div>'+
+        '<div><dt>初めの資金</dt><dd>'+o.money+'億</dd></div>'+
+        '<div'+(R.fac==="stad"?' class="hi"':'')+'><dt>スタジアム</dt><dd>'+TUNING.biz.stad[o.stad-1].name+'</dd></div></dl></div>'+
+    '<p class="of-fac">'+fac+'</p>'+
+    '<p class="of-exp">期待される獲得賞金 <b>'+o.target+'億</b> ・ オーナーの指令 <b>'+misLevelTxt(o.misP)+'</b></p>'+
+    '<button class="btn btn-main" data-act="offer" data-i="'+i+'">このクラブと契約する</button></article>';
+}
+function offerHtml(){
+  const S=CL.S, list=offersOf(S);
+  return '<section class="card offers"><h3>クラブオファー <small>第'+S.term+'任期 ・ 監督の格 '+mgrLv(S)+'</small></h3>'+
+    '<p class="dim">3つのクラブから監督のオファーが届いた。クラブを選んだあと、監督契約でクラブ名とエンブレムを決める。'+
+    '大きいクラブほど設備は整っているが、期待される獲得賞金が高く、オーナーの指令も多い</p>'+
+    list.map(offerCardHtml).join("")+'</section>';
+}
+/** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+function expTileHtml(){
+  const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
+  const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100);
+  return '<section class="exp-tile"><div class="et-h"><small>'+cp.name+'</small><b>獲得賞金 '+Math.round(got)+' / '+cp.target+'億</b></div>'+
+    '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(got>=cp.target?' class="ok"':'')+'></u></i>'+
+    (S.mis?'<p class="et-mis">👔 オーナーの指令 <b>'+S.mis.text+'</b></p>':'')+'</section>';
+}
+/** 任期終了: クラブの期待と指令の結果(年俸の内訳) */
+function termExpHtml(e){
+  if(!e.exp&&!(e.mis&&e.mis.length))return "";
+  return '<h4>クラブの期待 <small>'+(e.club||"")+'</small></h4><ul class="texp">'+
+    (e.exp?'<li class="'+(e.exp.ok?'ok':'ng')+'">獲得賞金 '+e.exp.prize+' / 期待 '+e.exp.target+'億 → '+(e.exp.ok?'達成 年俸 +'+e.exp.bonus+'億':'届かず')+'</li>':'')+
+    (e.mis||[]).map(m=>'<li class="'+(m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok?'達成 ':'失敗 ')+(m.v>=0?'+':'')+m.v+'億</li>').join("")+'</ul>';
+}
 /* ---- 監督ライセンスと監督契約(→docs/10 §10.2 A) ---- */
 /** 監督ライセンス(初回だけ。あとから変えられない) */
 function licenseHtml(){
@@ -9130,13 +9343,14 @@ function homeHtml(){
   // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
   const alertBox=CL.alert?'<section class="sec"><i class="sec-ic">SEC</i><div><p>'+CL.alert+'</p></div></section>':"";
   if(!S.mgr&&!S.termOver)return alertBox+licenseHtml();
+  if(!S.cprof&&!S.termOver)return alertBox+offerHtml();          // クラブオファー(→docs/16)
   if(!S.club&&!S.termOver)return alertBox+contractHtml();
   if(!S.tsetChosen&&!S.termOver){ if(earnedTitles(S).length)return homeHeadHtml()+alertBox+titleSetHtml(); S.tsetChosen=true; }
   if(S.sec&&!S.sec.chosen&&!S.termOver)return homeHeadHtml()+alertBox+secPickHtml("秘書を選ぶ");
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -9283,6 +9497,7 @@ function onClubClick(e){
   if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)
   if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }
   if(act==="embauto"){ const c=CL.draft.c; c.emb={}; showClub(true); return; }
+  if(act==="offer"){ if(pickOffer(S,CL.W,+b.dataset.i)){ CL.msg=[S.cprof.name+" の監督に就任した。次はクラブ名とエンブレムを決める"]; save(); } showClub(true); return; }
   if(act==="contract"){ const c=CL.draft&&CL.draft.c;
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
