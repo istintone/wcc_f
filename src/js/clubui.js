@@ -353,7 +353,7 @@ function sqDetailHtml(){
 function htSetHtml(){
   // 監督能力と同じ形(→docs/14 §14.32): 閉じているときは登録中の指示をタイルで。「選ぶ」で使える指示を全部出す
   const S=CL.S, set=S.ht.set, av=htAvail(S);
-  const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b><i>'+htAxTxt(h)+'</i>'+
+  const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
   return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div><button class="lnk" data-act="htopen">閉じる</button>'

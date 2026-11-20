@@ -1549,3 +1549,14 @@ body.th-bk #club .kmod-box,body.th-bk #club .km-head{background:#11141f;color:va
 #club .tr-fx .tf-fit{display:inline-block;width:12px;height:12px;outline:2px solid var(--t-gold2,#f2c14e);box-shadow:0 0 6px rgba(242,193,78,.9)}
 #club .tr-fx .cmt{pointer-events:none}
 #club .tr-fx .cmt small .tg{color:#1f9d55;font-weight:900}
+/* ---- ハーフタイムの指示の効き(htAxHtml。→docs/14 §14.33): 上段 = 上がる(青)、下段 = 下がる(赤)。矢印1〜3本で効きの強さ ---- */
+#club .htset .ht small{grid-column:1/2}
+#club .htset .ht .hx{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:1px;text-align:right}
+#club .htset .ht .hx>span{font-family:var(--f-num);font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;line-height:1.25}
+#club .htset .ht .hx b{font-size:12px;letter-spacing:-.06em}
+#club .htset .ht .hx-up{color:#1d5fbf} #club .htset .ht .hx-dn{color:#d0102f}
+#club .htset .ht .hx-dn:not(:has(b)){color:var(--t-mute,#8b9099);font-family:inherit;font-weight:500;font-size:9.5px}
+body.th-bk #club .htset .ht .hx-up{color:#5aa0ff} body.th-bk #club .htset .ht .hx-dn{color:#ff5470}
+#club .htset .ht .hx b{color:inherit!important}
+#club .htset .ht .hx b{-webkit-text-fill-color:currentColor;background:none;font-family:Arial,sans-serif;font-weight:900}
+#club .htset .ht .hx b{font-size:13.5px;letter-spacing:-.12em;margin-left:2px}

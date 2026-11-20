@@ -135,6 +135,16 @@ const capOn=()=>$("cap").classList.contains("on");
 /** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
 const HT_AX={ O:"攻", D:"守", R:"支", C:"奪", S:"速", P:"力" };
 const htAxTxt=h=>h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"");
+/**
+ * 指示の効きを2段で(→docs/14 §14.33)。上段 = 上がる能力(青)、下段 = 下がる能力(赤)。
+ * 矢印の数は1軸あたりの効きの強さ(エンジンと同じ: 上がる = k、下がる = k × downR)で 1〜3 本
+ */
+const htArrows=v=>v>=0.9?3:v>=0.55?2:1;
+function htAxHtml(h){
+  const X=TUNING.ht, ax=t=>t.split("").map(a=>AXIS_ABBR[a]).join(" ");
+  return '<span class="hx"><span class="hx-up">'+(h.up?ax(h.up)+' <b>'+"↑".repeat(htArrows(h.k))+'</b>':'—')+'</span>'+
+    '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':'下がる能力なし')+'</span></span>';
+}
 function closeOverlay(){
   $("cap").className=""; G.capT=0;
   const fn=G.onOv; G.onOv=null;
