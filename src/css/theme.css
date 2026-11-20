@@ -1670,3 +1670,7 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 /* 盤面を大きく: ピッチは控えの列を除いた幅いっぱい(比率は SQUAD と同じ 100:150) */
 #club .cm-board .cm-pitch{width:calc(100% - 58px)}
 #club .cm-board .sqc.cmx{width:56px}
+/* チーム練習・休憩の盤面は SQUAD の盤面と同じ大きさ(SQUAD はピッチの左右に 54px の列が2つ)。札も同じ 50px */
+#club .tr-fx .cm-board .cm-pitch{width:calc(100% - 116px)}
+#club .tr-fx .cm-board .sqc.cmx{width:50px}
+#club .tr-fx .cm-board .sq-bench .sqc.cmx{width:100%}
