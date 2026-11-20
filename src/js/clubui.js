@@ -137,6 +137,25 @@ const COMM_UI={
   talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
+/**
+ * インフォバー(→docs/14 §14.41)。画面の右から滑り込み、少し置いて消える。めったに出ない大事な知らせ用
+ * (成長グラフの限界突破・黄金期の到来・ハーフタイムの指示を覚えた)。複数あれば少しずつずらして重ねる
+ */
+const INFO_BAR_RE=/^(🌟|👑|📋)/;
+function infoBar(lines){
+  if(!lines||!lines.length)return;
+  let box=document.getElementById("infoBars");
+  if(!box){ box=document.createElement("div"); box.id="infoBars"; document.body.appendChild(box); }
+  lines.forEach((t,i)=>{
+    const el=document.createElement("div");
+    el.className="ibar"+(/^👑/.test(t)?" gold":"");
+    el.innerHTML='<i>'+t.slice(0,2)+'</i><span>'+t.slice(2).trim()+'</span>';
+    el.style.animationDelay=(i*0.45)+"s";
+    box.appendChild(el);
+    setTimeout(()=>el.remove(),4200+i*450);
+  });
+  if(typeof sndUi==="function")sndUi("ok");
+}
 function msgHtml(only){
   const m=only?CL.msg.filter(x=>only.test(x)):CL.msg;   // only … この型の行だけ出す(コミュニケーションの上は大事な知らせだけ。→docs/14 §14.40)
   return m.length?'<div class="msgs">'+m.map(x=>'<span>'+x+'</span>').join("")+'</div>':"";
@@ -273,7 +292,7 @@ function prepHtml(){
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+(st==="train"||CL.strat?msgHtml():msgHtml(/^(🌟|👑|📋)/))+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
+    '<div class="cl-main prep">'+(st==="train"||CL.strat?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
@@ -1230,6 +1249,7 @@ function onClubClick(e){
     const i=CL.trSel, o=trainOptions(S)[i]; CL.trSel=null;
     CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,i,CL.int));
     CL.comm=null; CL.pick=[]; save(); showClub();
+    infoBar(CL.msg.filter(x=>INFO_BAR_RE.test(x)));   // めったに出ない大事な知らせは、横から出るインフォバーで(→docs/14 §14.41)
   }
   else if(act==="int"){ CL.int=+b.dataset.i; if(CL.int===-1)CL.trSel=null; showClub(true); }
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }

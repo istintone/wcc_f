@@ -1684,3 +1684,11 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .tr-right .tr.rest small{white-space:normal;max-width:none;text-align:left;font-size:10.5px}
 #club .rest-fx{margin-top:4px}
 #club .tr-right .trs:not(.two){grid-template-columns:1fr}
+/* ---- インフォバー(infoBar。→docs/14 §14.41): 右から滑り込み、少し置いて右へ消える ---- */
+#infoBars{position:fixed;right:0;top:96px;z-index:120;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none;max-width:92vw}
+#infoBars .ibar{display:flex;align-items:center;gap:8px;max-width:340px;padding:9px 14px 9px 12px;background:linear-gradient(90deg,#121212,#2a1016);color:#fff;
+  border-left:4px solid #e01f3d;box-shadow:0 6px 18px rgba(0,0,0,.4);font-size:12.5px;font-weight:800;line-height:1.35;
+  transform:translateX(110%);animation:ibarIn 4s cubic-bezier(.2,.9,.3,1) both}
+#infoBars .ibar i{font-style:normal;font-size:18px}
+#infoBars .ibar.gold{background:linear-gradient(90deg,#3a2a00,#8a6410);border-left-color:#ffd84a;color:#fff6d0}
+@keyframes ibarIn{0%{transform:translateX(110%)}10%{transform:translateX(0)}85%{transform:translateX(0);opacity:1}100%{transform:translateX(110%);opacity:0}}
