@@ -2100,6 +2100,24 @@ body.th-bk #club .kmod-box,body.th-bk #club .km-head{background:#11141f;color:va
 #club .kmod-box.cmp .km-swap{min-height:0;height:30px;padding:0}
 #club .kmod-box.cmp .km-cmp .btn{min-height:0;height:40px;padding:0}
 #club .kmod-box.cmp .cb-front .kc{max-height:84px}
+/* ---- CARDS のフロート: 白い縁をなくす(→docs/14 §14.29)。地はカードの裏と同じ暗い色、カードの裏は端まで。16人の札は押しやすい高さに ---- */
+#club .kmod-box,body.th-wr:not(.th-bk) #club .kmod-box,body.th-bk #club .kmod-box{padding:0 0 4px;background:#13161d;color:#eef0f4;border-top:0;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+#club .km-head,body.th-wr:not(.th-bk) #club .km-head,body.th-bk #club .km-head{margin:0;padding:4px;background:#0c0e13;color:#eef0f4;border-bottom:2px solid #e01f3d}
+#club .km-nav{background:rgba(255,255,255,.1);color:#fff} #club .km-x{background:#e01f3d;color:#fff}
+#club .kmod-box .kdet{margin:0}
+#club .kmod-box .cardback{border-radius:0;border-left:0;border-right:0}
+#club .kmod-box>.km-swap,#club .kmod-box>.hint,#club .kmod-box>.chips,#club .kmod-box>.km-note,#club .kmod-box .km-vs{margin-left:6px;margin-right:6px}
+#club .kmod-box>.km-swap{width:calc(100% - 12px)}
+#club .kmod-box .hint,#club .kmod-box .km-note{color:#c9cfdb}
+#club .kmod-box.cmp .chips{gap:4px;margin-top:4px;margin-bottom:4px}
+#club .kmod-box.cmp .chipb{height:34px;padding:0 2px;font-size:12px;font-weight:700}
+#club .kmod-box .km-cmp{border-top-color:#e01f3d}
+#club .kmod-box .km-cmp .btn{width:calc(100% - 12px);margin-left:6px;margin-right:6px}
+#club .kmod-box.cmp .km-swap{background:transparent;color:#eef0f4;border:1px solid rgba(255,255,255,.3)}
+#club .kmodal{padding:3px 3px}
+#club .kmod-box{max-height:calc(100vh - 6px);max-height:calc(100dvh - 6px)}
+#club .kmod-box.cmp .chipb{height:32px}
+#club .kmod-box.cmp .km-swap{height:26px;margin-top:5px;margin-bottom:0;clip-path:none}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
