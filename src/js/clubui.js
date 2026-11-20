@@ -142,6 +142,39 @@ const COMM_UI={
 function msgHtml(){
   return CL.msg.length?'<div class="msgs">'+CL.msg.map(x=>'<span>'+x+'</span>').join("")+'</div>':"";
 }
+/**
+ * 練習の効果の見通し(→docs/14 §14.30)。セーブの写しで練習を1回行い、今との差を返す(本物は変えない)。
+ * 返り値 { graph:練習後の成長グラフ, gold, pl:{ id:{ ind:個人の進みの増え(0〜1), sp:特殊の進みの増え } } }
+ */
+function trainPreview(S,i,lv){
+  const T=JSON.parse(JSON.stringify(S)), out={ graph:null, gold:null, pl:{} };
+  doTraining(T,i,lv);
+  out.graph=T.g.graph; out.gold=T.g.gold;
+  for(const id in S.g.pl){ const a=S.g.pl[id], b=T.g.pl[id]; if(!b)continue;
+    const di=(b.is>a.is?1:0)+indProgress(b)-indProgress(a), ds=(b.ss>a.ss?1:0)+spProgress(b)-spProgress(a);
+    out.pl[id]={ ind:Math.max(0,di), sp:Math.max(0,ds) }; }
+  return out;
+}
+/** チーム練習の下: 成長グラフ(練習後を重ねる)と、フォーメーションの盤面(誰がどれだけ伸びるか) */
+function trainEffectHtml(){
+  const S=CL.S, G=S.g.graph, R=TUNING.grow.graph, sel=CL.trSel!=null&&CL.int!==-1;
+  const pv=sel?trainPreview(S,CL.trSel,CL.int):null, cur={}, aft={};
+  for(const a in G){ cur[a]=G[a]/R.max; if(pv)aft[a]=pv.graph[a]/R.max; }
+  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#ffcf3a", fill:"#ffcf3a", op:0.18 }]:[]);
+  const diff=pv?Object.keys(G).map(a=>({ a, d:pv.graph[a]-G[a] })).filter(x=>Math.abs(x.d)>=0.05):[];
+  const chips=diff.length?diff.map(x=>'<span class="'+(x.d>0?'up':'dn')+'">'+AXIS_ABBR[x.a]+' '+(x.d>0?'+':'')+x.d.toFixed(1)+'</span>').join("")
+    :'<span class="dim">'+(sel?'成長グラフは変わらない':'練習を選ぶと、伸びる軸(黄)と下がる軸が出る')+'</span>';
+  // 盤面: 選んだ練習でよく伸びる選手(個人の進みが平均より大きい)を光らせ、札に伸びを出す
+  const vals=pv?Object.values(pv.pl).map(x=>x.ind):[], avg=vals.length?vals.reduce((s,x)=>s+x,0)/vals.length:0;
+  const fit=pv?Object.keys(pv.pl).filter(id=>pv.pl[id].ind>avg*1.15):[];
+  const info=(g,id)=>{ if(!pv)return "個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%";
+    const x=pv.pl[id]||{ ind:0, sp:0 };
+    return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
+  return '<section class="tr-fx"><div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, cls:"tf-radar" })+
+      '<div class="tf-chips"><b>成長グラフ</b>'+chips+'</div></div>'+
+    '<p class="tf-cap">'+(pv?'<i class="tf-fit"></i>得意な練習でよく伸びる選手 ・ 札は個人(特殊)能力の進みの増え':'札はいまの個人能力の★と進み')+'</p>'+
+    commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
+}
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
@@ -153,7 +186,7 @@ function trainStepHtml(){
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
       :'<div class="trs">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>');
+        '<b>'+trainLabel(o)+'</b><small>'+trainDesc(o)+'</small></button>').join("")+'</div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */

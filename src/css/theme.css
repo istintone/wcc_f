@@ -1536,3 +1536,16 @@ body.th-bk #club .kmod-box,body.th-bk #club .km-head{background:#11141f;color:va
 #club .kmod-box{max-height:calc(100vh - 6px);max-height:calc(100dvh - 6px)}
 #club .kmod-box.cmp .chipb{height:32px}
 #club .kmod-box.cmp .km-swap{height:26px;margin-top:5px;margin-bottom:0;clip-path:none}
+/* ---- チーム練習の効果の見通し(trainEffectHtml。→docs/14 §14.30) ---- */
+#club .tr-fx{margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--t-rule,#ddd)}
+#club .tr-fx .tf-g{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}
+#club .tr-fx .tf-radar{width:150px;height:auto}
+#club .tr-fx .tf-chips{display:flex;flex-wrap:wrap;gap:4px;align-content:center;font-size:12px}
+#club .tr-fx .tf-chips>b{flex-basis:100%;font-size:12.5px}
+#club .tr-fx .tf-chips span{font-family:var(--f-num);font-weight:800;padding:2px 6px;font-size:12px}
+#club .tr-fx .tf-chips span.up{background:#ffcf3a;color:#2a1a00} #club .tr-fx .tf-chips span.dn{background:#5b6170;color:#fff}
+#club .tr-fx .tf-chips span.dim{font-family:inherit;font-weight:500;padding:0;font-size:11px}
+#club .tr-fx .tf-cap{margin:6px 0 0;font-size:11px;opacity:.8;display:flex;align-items:center;gap:5px}
+#club .tr-fx .tf-fit{display:inline-block;width:12px;height:12px;outline:2px solid var(--t-gold2,#f2c14e);box-shadow:0 0 6px rgba(242,193,78,.9)}
+#club .tr-fx .cmt{pointer-events:none}
+#club .tr-fx .cmt small .tg{color:#1f9d55;font-weight:900}
