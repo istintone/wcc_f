@@ -2208,6 +2208,13 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .tr-right .trs.two .tr{height:46px}
 #club .tr-fx .cm-pitch{aspect-ratio:100/78}
 .radar text .dv{font-size:7.5px}
+/* ---- 疲れている選手は試合中と同じく暗く(→docs/14 §14.37)。SQUAD の斜線はやめた ---- */
+#club .sqc.tired::after{content:none;display:none}
+#club .sqc.tired,#club .cmt.tired{filter:saturate(.45) brightness(.82)}
+#club .rest-fx{margin-top:8px}
+#club .rest-fx .tf-cap{display:block;font-size:10.5px;margin:0 0 3px}
+#club .rest-fx .cmt small b.fw{color:#d0102f}
+#club .rest-fx .cmt small .mu{font-style:normal;color:#1f9d55;font-weight:900}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8717,7 +8724,7 @@ function commBoardHtml(ids,on,info){
   const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
   const first=CL.comm==="lounge"&&on.length?on[0]:null;   // ラウンジで1人目を選んだら、その人との線と前兆だけを見せる(→docs/07 §7.14)
   const tok=(id,st)=>{ const c=CARDS[id], g=S.g.pl[id];
-    return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
+    return '<button class="cmt '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+(g&&g.mot===0?' inj':'')+(g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+'" data-act="pick" data-id="'+id+'"'+(st||'')+'>'+
       '<b class="rl">'+c.pos+'</b><i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span>'+
       ((first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm))?'<em class="sg">！</em>':'')+(g&&g.is?'<em class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</em>':'')+
       '<small>'+info(g,id)+'</small></button>'; };
@@ -8795,6 +8802,14 @@ function trainEffectHtml(part){
   return '<section class="tr-fx">'+
     commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
 }
+/** 休憩の見通し(→docs/14 §14.37): 盤面に選手ごとの疲労(今 → 休憩のあと)。疲れている選手は暗く(試合中と同じ) */
+function restEffectHtml(){
+  const S=CL.S, T=JSON.parse(JSON.stringify(S)); doRest(T);
+  const info=(g,id)=>{ const b=T.g.pl[id]||g, f0=Math.round(g.fat*100), f1=Math.round(b.fat*100);
+    return '<b class="'+(g.fat>=TUNING.grow.int.tiredSign?'fw':'')+'">疲'+f0+'%</b>'+(f1<f0?'→'+f1:'')+(b.mot>g.mot?' <i class="mu">調子↑</i>':''); };
+  return '<section class="tr-fx rest-fx"><p class="tf-cap">暗い札 = 疲労がたまっている選手(試合では体力が減った状態で始まる)。札は疲労の 今 → 休憩のあと</p>'+
+    commBoardHtml(Object.keys(S.g.pl),[],info)+'</section>';
+}
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
@@ -8803,7 +8818,7 @@ function trainStepHtml(){
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
-      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div>'+restEffectHtml()
       :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
 }

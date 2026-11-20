@@ -1626,3 +1626,10 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .tr-right .trs.two .tr{height:46px}
 #club .tr-fx .cm-pitch{aspect-ratio:100/78}
 .radar text .dv{font-size:7.5px}
+/* ---- 疲れている選手は試合中と同じく暗く(→docs/14 §14.37)。SQUAD の斜線はやめた ---- */
+#club .sqc.tired::after{content:none;display:none}
+#club .sqc.tired,#club .cmt.tired{filter:saturate(.45) brightness(.82)}
+#club .rest-fx{margin-top:8px}
+#club .rest-fx .tf-cap{display:block;font-size:10.5px;margin:0 0 3px}
+#club .rest-fx .cmt small b.fw{color:#d0102f}
+#club .rest-fx .cmt small .mu{font-style:normal;color:#1f9d55;font-weight:900}
