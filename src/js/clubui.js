@@ -974,13 +974,15 @@ const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングス�
 /** SEASON の日程: 過去5試合と、次の試合から10試合(→docs/07 §7.16) */
 const schedComp=c=>c==="FR"?"フレンドリー":c==="LG"?"リーグ":TROPHY_SHORT[c]||COMPS[c].name;
 function schedRowHtml(r){
+  // 進行表: 番号 | 大会と段 | H/A | 相手 | 結果(勝敗の印 + スコア)。行の高さはそろえる(注記は1行で切る)
   const T=r.opp&&TEAMS[r.opp], g=r.comp==="FR"?"":COMPS[r.comp].grade;
-  const opp=T?'<span class="sd-opp">'+emblemSvg(Object.assign({ id:r.opp },T),16)+'<b>'+teamNameOf(T)+'</b></span>'
+  const opp=T?'<span class="sd-opp">'+emblemSvg(Object.assign({ id:r.opp },T),18)+'<b>'+teamNameOf(T)+'</b></span>'
     :'<span class="sd-opp none">'+(r.note||"相手は当日に決まる")+'</span>';
-  const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'
-    :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'');
-  return '<li class="sd-row'+(r.res?' past':'')+(r.next?' next':'')+'"><i class="sd-no">'+r.no+'</i>'+
-    '<span class="sd-comp">'+(g&&g!=="-"?gradeTag(g):'')+'<b>'+schedComp(r.comp)+'</b><small>'+[r.label,T?(r.home?'H':'A'):''].filter(x=>x).join(' ・ ')+'</small></span>'+
+  const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'+(r.pk?'<small class="sd-pk">'+r.pk+'</small>':'')
+    :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'<i class="sd-if">—</i>');
+  return '<li class="sd-row'+(r.res?' past':'')+(r.next?' next':'')+(r.comp==="FR"?' fr':'')+'"><i class="sd-no">'+r.no+'</i>'+
+    '<span class="sd-comp"><b>'+(g&&g!=="-"?gradeTag(g):'')+schedComp(r.comp)+'</b><small>'+(r.label||(r.comp==="FR"?"親善試合":""))+'</small></span>'+
+    '<i class="sd-ha'+(T?(r.home?' h':' a'):'')+'">'+(T?(r.home?'H':'A'):'')+'</i>'+
     opp+'<span class="sd-r">'+res+'</span></li>';
 }
 function scheduleHtml(){
@@ -988,7 +990,7 @@ function scheduleHtml(){
   const past=(S.history||[]).slice(-5).map((h,i,a)=>{
     const pso=h[5], win=h[2]>h[3]||(h[2]===h[3]&&pso&&pso[0]>pso[1]), lose=h[2]<h[3]||(h[2]===h[3]&&pso&&pso[0]<pso[1]);
     return { no:h[6]||"", comp:h[0], label:h[4]||"", opp:h[1], home:h[7]!==0, res:win?"W":lose?"L":"D",
-      sc:h[2]+"-"+h[3]+(pso?"(PK"+pso[0]+"-"+pso[1]+")":"") }; });
+      sc:h[2]+" - "+h[3], pk:pso?"PK "+pso[0]+"-"+pso[1]:"" }; });
   const fut=S.termOver?[]:upcoming(S,10).map((r,i)=>Object.assign(r,{ next:i===0 }));
   if(!past.length&&!fut.length)return "";
   return '<section class="card sched"><h3>日程 <small>過去5試合と、この先10試合 ・ 第'+S.played+'/'+TUNING.club.termLen+'試合</small></h3><ol class="sd-list">'+
