@@ -58,11 +58,14 @@ function persist(S){
 function showClub(keepScroll){
   if(typeof bgmPlay==="function")bgmPlay("club");   // 監督室の BGM(→docs/14 第4弾)
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
+  const kb=el.querySelector(".kmod-box"), ky=kb?kb.scrollTop:0;
   CL.fx=nextFixture(CL.S,CL.W);
   el.innerHTML=clubHtml();
   el.classList.add("on");
   const main=el.querySelector(".cl-main");
   if(main)main.scrollTop=keepScroll?y:0;
+  const kb2=el.querySelector(".kmod-box");
+  if(kb2){ kb2.scrollTop=keepScroll?ky:0; if(CL.kTo){ const t=kb2.querySelector(CL.kTo); if(t)kb2.scrollTop=t.offsetTop-8; CL.kTo=null; } }
   const pitch=document.getElementById("sqPitch");
   if(pitch)sqBind(pitch);
 }
@@ -550,20 +553,34 @@ function rareRowHtml(S,id){
   if(ss<5)return '<p class="rarekp lock"><b>RARE KP</b> ？？？ <small>特殊能力 ★5 で解放(いま ★'+ss+')</small></p>';
   return '<p class="rarekp"><b>RARE KP</b> '+R.name+(mv?' <small>技: '+mv.label+'</small>':'')+'<br><span class="get">KP にすると発動。スキルとスタイルが強まる</span></p>';
 }
-/** 選んだカードの詳細と、登録の入れ替え */
-function cardDetailHtml(id){
-  const S=CL.S, c=CARDS[id], st=styleOfCard(c), sk=c.skill?SKILLS[c.skill]:null, inSq=S.sq.includes(id);
-  // カードの裏の形で見せる(→docs/14 §14.14)。登録中なら育成を入れた値
-  const g=S.g.pl[id], cc=g?growCard(S,c):c;
-  let h='<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
+/** カードの裏(登録中なら育成を入れた値)。CARDS のフロートと、入れ替えの比べ合いで使う */
+function cardBackOf(id){
+  const S=CL.S, c=CARDS[id], g=S.g.pl[id], cc=g?growCard(S,c):c;
+  return '<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
     extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
       (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
-  if(inSq)h+='<p class="dim">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードを選んでこの選手と入れ替える</p>';
+}
+/**
+ * 選んだカードを画面の中央にフロートで出す(→docs/14 §14.27)。‹ › で並びの前後へ。
+ * 登録していない選手は「SQUAD と交代」を押したときだけ16人の札を出し、相手を選ぶと下にその選手の詳細を出して比べ、「入れ替える」で交代
+ */
+function cardModalHtml(id,list){
+  const S=CL.S, c=CARDS[id], inSq=S.sq.includes(id), i=list.indexOf(id);
+  const nav=(d,t)=>{ const j=i+d; return '<button class="km-nav" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+'>'+t+'</button>'; };
+  let h='<div class="kmodal" data-act="kclose"><div class="kmod-box" data-act="none">'+
+    '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
+      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+cardBackOf(id);
+  if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
   else{
-    h+='<p class="hint">登録する: 入れ替える選手を選ぶ(その選手の育成は消える)</p>'+
-      chipsHtml(S.sq,[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"控え ")+(g?"個★"+g.is:""),"swap");
+    h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
+    if(CL.kSwap){
+      h+='<p class="hint">交代させる選手を選ぶ(その選手の育成は消える)</p>'+
+        chipsHtml(S.sq,CL.kOut?[CL.kOut]:[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"控え ")+(g?"個★"+g.is:""),"kout");
+      if(CL.kOut&&S.sq.includes(CL.kOut))h+='<div class="km-cmp"><p class="km-vs"><b>'+nameOf(c)+'</b> ⇄ <b>'+cname(CL.kOut)+'</b> <small>いまの登録</small></p>'+
+        cardBackOf(CL.kOut)+'<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
+    }
   }
-  return h;
+  return h+'</div></div>';
 }
 /** コレクション(持っているカード全部。登録中のカードには印) */
 function collectionHtml(){
@@ -578,9 +595,9 @@ function collectionHtml(){
     '<div class="cfrow"><div class="tabs t5">'+["ALL","GK","DF","MF","FW"].map(k=>'<button class="tab'+(CL.cf===k?' on':'')+'" data-act="cf" data-v="'+k+'">'+
       (k==="ALL"?"全部":k)+'</button>').join("")+'</div>'+
     '<button class="tab sortb" data-act="cs" data-v="next">↕ '+({ rar:"レア", no:"No.", tot:"合計" })[CL.cs||"rar"]+'</button></div>';
-  if(CL.sel)h+=cardDetailHtml(CL.sel);
   h+=list.length?'<div class="kgrid">'+list.map(id=>cardHtml(id,"s",(CL.sel===id?" on":"")+(S.sq.includes(id)?" insq":""))).join("")+'</div>'
     :'<p class="dim">このポジションのカードはまだ無い。試合のあとに1枚ずつ出る</p>';
+  CL.kList=list;                               // フロート(cardModalHtml)の ‹ › で使う。フロートは監督室の外側に出す(clubHtml)
   return h+'</section>';
 }
 
@@ -1070,7 +1087,8 @@ function clubHtml(){
   if(CL.flow==="prep"&&!CL.S.termOver)return prepHtml();
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
-  return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml();
+  return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -1166,10 +1184,14 @@ function onClubClick(e){
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
-  else if(act==="card"){ CL.sel=CL.sel===b.dataset.id?null:b.dataset.id; showClub(true); }
+  else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
+    CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; if(nav)CL.kTo=".km-head"; showClub(true); }
+  else if(act==="kclose"){ CL.sel=null; CL.kSwap=false; CL.kOut=null; showClub(true); }
+  else if(act==="kswap"){ CL.kSwap=!CL.kSwap; CL.kOut=null; if(CL.kSwap)CL.kTo=".km-swap"; showClub(true); }
+  else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
-    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"]; CL.sel=null; save(); }
+    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"]; CL.sel=null; CL.kSwap=false; CL.kOut=null; save(); }
     showClub(true);
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
