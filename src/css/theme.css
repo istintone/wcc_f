@@ -1347,11 +1347,24 @@ body.th-wr:not(.th-bk) #scene .vs-radar p{color:var(--t-ink)}
 #scene .vs-wrap .vs-info b{white-space:normal;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #scene .vs-wrap.home{margin-top:26px}
 
-/* ---- ロッカールームの背景(→docs/14 §14.23): 照明・チームの色の帯・ユニフォームの掛かったロッカー・ベンチ・床を絵で(lockerRoomSvg) ---- */
+/* ---- ロッカールームの背景(→docs/14 §14.24): チームの色を沈めた地 + エンブレムを敷いた壁 + 大きな盾 + スラッシュ + 関係者テープ(lockerBgHtml) ---- */
 #scene.sc-lock,.th-wr #scene.sc-lock,body.th-bk #scene.sc-lock{background:#07080b!important}
 #scene.sc-lock::before{display:none}
-#scene>.lk-room{position:absolute!important;left:0;right:0;top:0;height:100%;z-index:0!important;pointer-events:none;overflow:hidden}
-#scene>.lk-room svg{display:block;width:100%;height:100%}
+#scene>.lk-room{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--lk-c) 46%,#06070a) 0%,color-mix(in srgb,var(--lk-c) 16%,#05060a) 42%,#040507 78%)}
+.lk-room>div{position:absolute}
+.lk-room .lk-tile{inset:-45%;background:var(--lk-emb) 0 0/116px 100px repeat;transform:rotate(-12deg);
+  filter:grayscale(1) brightness(1.5);opacity:.13}
+.lk-room .lk-slash{inset:0;background:
+  linear-gradient(118deg,transparent 61%,color-mix(in srgb,var(--lk-c) 70%,transparent) 61%,color-mix(in srgb,var(--lk-c) 70%,transparent) 66.5%,transparent 66.5%,
+    transparent 68%,rgba(255,255,255,.22) 68%,rgba(255,255,255,.22) 68.7%,transparent 68.7%);opacity:.55}
+.lk-room .lk-big{right:-92px;bottom:9%;width:300px;transform:rotate(-9deg);opacity:.26;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))}
+.lk-room .lk-big svg{display:block;width:100%;height:auto}
+.lk-room .lk-tape{top:0;bottom:0;left:0;width:13px;overflow:hidden;background:var(--lk-c);box-shadow:2px 0 0 rgba(255,255,255,.25),6px 0 18px rgba(0,0,0,.5)}
+.lk-room .lk-tape span{display:block;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto;padding-top:8px;
+  font:italic 800 8.5px/13px var(--f-num);letter-spacing:.3em;color:rgba(255,255,255,.88);text-shadow:0 0 1px rgba(0,0,0,.4)}
+.lk-room .lk-glow{inset:0;background:radial-gradient(ellipse 70% 38% at 50% -6%,rgba(255,244,220,.26),transparent 70%),
+  radial-gradient(ellipse 120% 90% at 50% 40%,transparent 55%,rgba(0,0,0,.65) 100%),linear-gradient(180deg,transparent 55%,rgba(0,0,0,.55))}
 #scene.sc-lock .lk-head b{text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 18px rgba(255,233,168,.45)}
 #scene.sc-lock .lk-head small{text-shadow:0 1px 2px rgba(0,0,0,.8)}
 #scene.sc-lock .lk-grow{background:rgba(5,6,10,.78)}
