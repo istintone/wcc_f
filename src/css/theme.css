@@ -1706,3 +1706,25 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .sq-info .sq-ctl{display:grid;grid-template-columns:1fr auto;gap:6px}
 #club .sq-info .sq-ctl .sq-formsel{width:100%}
 #club .graph-r .gr-wrap.nor{grid-template-columns:1fr}
+/* ---- SQUAD: レーダーに戦力を重ね、押すとフロート(→docs/14 §14.43)。フォーメーションの操作は盤面の下 ---- */
+#club .sq-gbtn{display:flex;flex-direction:column;align-items:center;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
+#club .gg-leg{display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:center;font-size:9.5px;opacity:.75;line-height:1.3}
+#club .gg-leg i{display:inline-block;width:10px;height:6px}
+#club .gg-leg i.g{background:var(--t-sub,#c8102e);opacity:.7} #club .gg-leg i.p{background:#8b9099;opacity:.6}
+#club .sq-ctl-b{display:grid;grid-template-columns:1fr auto;gap:6px;margin:6px 0 2px}
+#club .sq-ctl-b .sq-formsel{width:100%}
+#club .gg-box{padding-bottom:10px}
+#club .gg-box>*:not(.km-head){margin-left:10px;margin-right:10px}
+#club .gg-radar{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+#club .gg-radar .radar{width:220px;height:auto;color:#dfe3ea}
+#club .gg-tbl{width:calc(100% - 20px);border-collapse:collapse;font-size:13px;margin-top:6px}
+#club .gg-tbl th,#club .gg-tbl td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.12);text-align:right}
+#club .gg-tbl th:first-child{text-align:left;font-family:var(--f-num);letter-spacing:.06em}
+#club .gg-tbl tr:first-child th{font-size:11px;opacity:.7;font-weight:700}
+#club .gg-tbl td b{font-family:var(--f-num);font-size:16px}
+#club .gg-tbl td em{margin-left:4px;font-style:normal;font-family:var(--f-num);font-size:9px;font-weight:800;color:#ff6a7e}
+#club .gg-tbl tr.gd td.g b,#club .gg-tbl tr.gd td.g em{color:#f3cf6a;text-shadow:0 0 6px rgba(255,205,60,.75)}
+#club .gg-tbl td.p b{color:#c9cfdb}
+#club .gg-tbl tr.sum td.p b{color:#ffd84a;font-size:17px}
+#club .gg-box .gr-kp{font-size:12px;margin-top:8px} #club .gg-box .gr-note{color:#9aa3b5;font-size:10.5px}
+#club .gg-leg i.g{opacity:.85} #club .sq-gbtn .gg-leg{gap:2px 4px}

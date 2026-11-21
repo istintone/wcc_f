@@ -2288,6 +2288,28 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .sq-info .sq-ctl{display:grid;grid-template-columns:1fr auto;gap:6px}
 #club .sq-info .sq-ctl .sq-formsel{width:100%}
 #club .graph-r .gr-wrap.nor{grid-template-columns:1fr}
+/* ---- SQUAD: レーダーに戦力を重ね、押すとフロート(→docs/14 §14.43)。フォーメーションの操作は盤面の下 ---- */
+#club .sq-gbtn{display:flex;flex-direction:column;align-items:center;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
+#club .gg-leg{display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:center;font-size:9.5px;opacity:.75;line-height:1.3}
+#club .gg-leg i{display:inline-block;width:10px;height:6px}
+#club .gg-leg i.g{background:var(--t-sub,#c8102e);opacity:.7} #club .gg-leg i.p{background:#8b9099;opacity:.6}
+#club .sq-ctl-b{display:grid;grid-template-columns:1fr auto;gap:6px;margin:6px 0 2px}
+#club .sq-ctl-b .sq-formsel{width:100%}
+#club .gg-box{padding-bottom:10px}
+#club .gg-box>*:not(.km-head){margin-left:10px;margin-right:10px}
+#club .gg-radar{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+#club .gg-radar .radar{width:220px;height:auto;color:#dfe3ea}
+#club .gg-tbl{width:calc(100% - 20px);border-collapse:collapse;font-size:13px;margin-top:6px}
+#club .gg-tbl th,#club .gg-tbl td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.12);text-align:right}
+#club .gg-tbl th:first-child{text-align:left;font-family:var(--f-num);letter-spacing:.06em}
+#club .gg-tbl tr:first-child th{font-size:11px;opacity:.7;font-weight:700}
+#club .gg-tbl td b{font-family:var(--f-num);font-size:16px}
+#club .gg-tbl td em{margin-left:4px;font-style:normal;font-family:var(--f-num);font-size:9px;font-weight:800;color:#ff6a7e}
+#club .gg-tbl tr.gd td.g b,#club .gg-tbl tr.gd td.g em{color:#f3cf6a;text-shadow:0 0 6px rgba(255,205,60,.75)}
+#club .gg-tbl td.p b{color:#c9cfdb}
+#club .gg-tbl tr.sum td.p b{color:#ffd84a;font-size:17px}
+#club .gg-box .gr-kp{font-size:12px;margin-top:8px} #club .gg-box .gr-note{color:#9aa3b5;font-size:10.5px}
+#club .gg-leg i.g{opacity:.85} #club .sq-gbtn .gg-leg{gap:2px 4px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9097,18 +9119,23 @@ function squadHtml(){
   // 上部はチーム練習と同じ形(→docs/14 §14.42): 左に成長グラフのレーダー、右に OVR・KP・フォーメーションと最適配置
   const G=S.g.graph, R=TUNING.grow.graph, gv={}; for(const a in G)gv[a]=G[a]/R.max;
   const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst):null;
-  let h='<section class="sq-top"><div class="tf-g">'+radarSvg([{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+'</div>'+
+  const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
+  let h='<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="成長グラフと戦力を開く">'+
+      radarSvg([{ v:pv, color:"#8b9099", fill:"#8b9099", op:0.12 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
+      '<small class="gg-leg"><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長<i class="p"></i>戦力</small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span><small>'+styleAxes(kst).map(a=>AXIS_ABBR[a]).join("・")+
         (krk==="G"?' 金色':' が '+(krk==="B"?TUNING.rank.th[0]+' で A':krk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
-      '<div class="sq-ctl"><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
-      '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div></div></section>';
+      '</div></section>';
   // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
   h+='<div class="sq-3col">'+sqRolesHtml()+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+sqLinksSvg()+
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
-    '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>';
+    '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
+    // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
+    '<div class="sq-ctl sq-ctl-b"><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
+      '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
   if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
   h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
   // 連携の数・戦力グラフ
@@ -9117,7 +9144,6 @@ function squadHtml(){
     '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
     ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
-  h+=growGraphHtml(S);
   return h;
 }
 /** 自分のチームでの、そのスタイルのランク(成長グラフから。→docs/15 §15.5) */
@@ -9127,6 +9153,34 @@ const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
  * チームの成長グラフ(→docs/15)。六角形は向かい合う軸が対角。横に対ごとの値(MAX・金色)、下に KP のランク。
  * 金色が3つそろうとグラフ全体が金色
  */
+/** 戦力(盤面の11人の能力の平均。軸ごと)。6つを足すと OVR(teamPower)になる */
+function teamAxisPower(S){
+  const xi=S.sq.slice(0,11), out={ O:0, D:0, R:0, C:0, S:0, P:0 };
+  for(const id of xi){ const c=growCard(S,CARDS[id]); for(const k of STATS)out[PARAM_AXIS[k]]+=c[k]/xi.length; }
+  return out;
+}
+/**
+ * 成長グラフのフロート(→docs/14 §14.43)。SQUAD の上部のレーダーを押すと出る。
+ * 大きなレーダー(成長 + 戦力)と、軸ごとの 成長(0〜100・MAX・GOLD)/ 戦力(能力の平均。足すと OVR)
+ */
+function ggModalHtml(){
+  const S=CL.S, G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, gv={}, pv={}, pw=teamAxisPower(S);
+  for(const a in G){ gv[a]=G[a]/R.max; pv[a]=pw[a]/STAT_MAX; }
+  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
+  const row=a=>'<tr class="'+(gold[a]?'gd':'')+'"><th>'+AXIS_ABBR[a]+'</th><td class="g"><b>'+Math.round(G[a])+'</b>'+(gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</td>'+
+    '<td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
+  return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
+    '<header class="km-head"><span></span><b>成長グラフと戦力</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
+    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#8b9099", fill:"#8b9099", op:0.14 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
+      '<small class="gg-leg"><i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(練習で伸びる・KP のランクを決める) <i class="p"></i>戦力(選手の能力)</small></div>'+
+    '<table class="gg-tbl"><tr><th></th><th>成長</th><th>戦力</th></tr>'+["O","D","S","P","R","C"].map(row).join("")+
+      '<tr class="sum"><th>合計</th><td class="g"></td><td class="p"><b>OVR '+teamPower(S).toFixed(1)+'</b></td></tr></table>'+
+    (st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
+      (rk==="G"?'':' が '+(rk==="B"?TUNING.rank.th[0]+' で A':rk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'')+
+    '<p class="dim gr-note">成長: 向かい合う2軸(OFE⇄DEF・SPE⇄POW・TEC⇄STA)で器 '+graphCap(S)+' を分け合う。MAX の軸をさらに伸ばす練習で限界突破して金色に。'+
+      '戦力: 盤面の11人の能力の平均。6つを足すと OVR</p></div></div>';
+}
 function growGraphHtml(S){
   const G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, v={};
   for(const a in G)v[a]=G[a]/R.max;
@@ -9859,7 +9913,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -9959,6 +10013,8 @@ function onClubClick(e){
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
     CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; if(nav)CL.kTo=".km-head"; showClub(true); }
+  else if(act==="ggopen"){ CL.ggOpen=true; showClub(true); }
+  else if(act==="ggclose"){ CL.ggOpen=false; showClub(true); }
   else if(act==="kclose"){ CL.sel=null; CL.kSwap=false; CL.kOut=null; showClub(true); }
   else if(act==="kswap"){ CL.kSwap=!CL.kSwap; CL.kOut=null; if(CL.kSwap)CL.kTo=".km-swap"; showClub(true); }
   else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kTo=".km-cmp"; showClub(true); }
