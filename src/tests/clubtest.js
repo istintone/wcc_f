@@ -245,6 +245,23 @@ function playOne(S,W,decline,opt){
   check("Premier Div はメガクラブ(段4・5)ばかり",prem.every(x=>x>=4)&&prem.filter(x=>x===5).length>=5,prem.join(","));
 }
 
+{ // トーナメント(→docs/20): 組み合わせは出場が決まった時点で全部。勝ち上がったクラブが次の相手
+  console.log("  トーナメント");
+  const S=E.newCareer(717), W=E.worldOf(S); E.drawCup(S,W,"PRE"); const c=S.cups.PRE, R0=c.br.rounds[0];
+  check("勝ち抜き戦(3ラウンド)は8クラブの山を抽選の時点で全部組む",R0.length===4&&new Set(R0.flatMap(p=>[p.a,p.b])).size===8&&R0[0].a==="me"&&c.opp[0]===R0[0].b);
+  E.brAdvance(S,"PRE",0,true,[2,1]);
+  const R1=c.br.rounds[1], mine=R1.find(p=>p.a==="me"||p.b==="me");
+  check("自分が勝つと、ほかの試合も決まり、隣の山の勝者が次の相手",R1.length===2&&R0.every(p=>p.w)&&mine&&c.opp[1]===(mine.a==="me"?mine.b:mine.a)&&c.opp[1]===R0[1].w);
+  E.brAdvance(S,"PRE",1,false,[0,1]);
+  check("負けると残りのラウンドも決めて山を最後まで埋める",c.br.rounds.length===3&&c.br.rounds[2][0].w,c.br.rounds.map(r=>r.length).join("-"));
+  const T=E.newCareer(718), TW=E.worldOf(T); E.drawCup(T,TW,"ICC"); const ic=T.cups.ICC;
+  check("グループ戦のある大会は、もう1つのグループも作る",ic.grp.clubs.length===3&&ic.grp2.clubs.length===4&&ic.opp[0]===ic.grp.clubs[0]);
+  ["me"].concat(ic.grp.clubs).forEach((k,i)=>{ ic.grp.table[k].pts=10-i*3; });
+  E.brAfterGroups(T,"ICC",true);
+  const sf=ic.br.rounds[0];
+  check("ICC: グループの1位は相手グループの2位と準決勝",sf.length===2&&sf[0].a==="me"&&ic.grp2.clubs.includes(sf[0].b)&&ic.opp[3]===sf[0].b);
+}
+
 // ---------- ⑤ 棄権と保存 ----------
 console.log("⑤ 棄権と保存");
 {

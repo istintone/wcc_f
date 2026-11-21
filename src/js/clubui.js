@@ -1281,9 +1281,34 @@ function seasonHtml(){
     CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot, ok=entryOk(S,id);
       const txt=c.st==="wait"?(past?"出場なし":ok?"出場できる":"条件待ち"):stTxt[c.st];
       const cond=c.st==="wait"&&!past&&!ok&&ENTRY_NEED[id]?'<small class="cond">'+ENTRY_NEED[id]+'</small>':'';
-      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+COMPS[id].name+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
+      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+COMPS[id].name+'</button>':COMPS[id].name)+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
+}
+/* ---- トーナメント表(→docs/20)。SEASON の大会の一覧から開く。組み合わせが決まった時点で全部見える ---- */
+function bracketModalHtml(){
+  const S=CL.S, id=CL.brView, cup=S.cups[id], comp=COMPS[id]; if(!cup||!cup.rmap)return "";
+  const sh=c=>c==="me"?myTeam(S).short:c&&TEAMS[c]?TEAMS[c].short:"—";
+  const em=c=>c==="me"?emblemSvg(myTeam(S),16):c&&TEAMS[c]?emblemSvg(Object.assign({ id:c },TEAMS[c]),16):'<i class="bt-q">?</i>';
+  const row=(c,sc,w,dec)=>'<div class="bt'+(c==="me"?' me':'')+(dec&&w===c?' win':dec&&c?' lose':'')+'"'+(c&&c!=="me"?' data-act="oppview" data-id="'+c+'"':'')+'>'+
+    em(c)+'<b>'+sh(c)+'</b><i>'+(sc!=null?sc:'')+'</i></div>';
+  const nr=Math.max(...cup.rmap)+1, rounds=[];
+  for(let r=0;r<nr;r++){
+    const lab=(comp.stages[cup.rmap.indexOf(r)]||["",""])[1].replace(/ 第\d試合$/,"");
+    let P=cup.br.rounds[r];
+    if(!P){ const prev=rounds.length?rounds[rounds.length-1].P.length:(comp.adv===2?4:2); P=new Array(Math.max(1,prev/2)).fill(0).map(()=>({ a:null, b:null })); }
+    rounds.push({ lab, P });
+  }
+  const grpT=(g,lab)=>{ if(!g)return ""; const o=sortTable(g.table);
+    return '<div class="bg"><h5>'+lab+'</h5>'+o.map((c,i)=>'<div class="bt'+(c==="me"?' me':'')+(i<(comp.adv||1)?' win':'')+'"'+(c!=="me"?' data-act="oppview" data-id="'+c+'"':'')+'>'+
+      '<i class="rk">'+(i+1)+'</i>'+em(c)+'<b>'+sh(c)+'</b><i>'+g.table[c].pts+'点</i></div>').join("")+'</div>'; };
+  return '<div class="kmodal" data-act="brclose"><div class="kmod-box br-box" data-act="none">'+
+    '<header class="km-head"><span></span><b>'+comp.name+'</b><small>'+gradeTag(comp.grade)+'</small><span></span><button class="km-x" data-act="brclose" aria-label="閉じる">×</button></header>'+
+    '<div class="br-body">'+
+      (cup.grp?'<div class="br-grps">'+grpT(cup.grp,"グループ A")+grpT(cup.grp2,"グループ B")+'</div>':'')+
+      '<div class="br-cols">'+rounds.map(R=>'<div class="br-col"><h5>'+R.lab+'</h5><div class="br-ps">'+R.P.map(p=>
+        '<div class="bp'+(p.a==="me"||p.b==="me"?' mine':'')+'">'+row(p.a,p.sc?p.sc[0]:null,p.w,!!p.w)+row(p.b,p.sc?p.sc[1]:null,p.w,!!p.w)+(p.pk?'<small class="pk">PK</small>':'')+'</div>').join("")+'</div></div>').join("")+'</div>'+
+      '<p class="dim br-note">クラブを押すと、その SQUAD を見られる</p></div></div></div>';
 }
 /* ---- トロフィーの棚(→docs/14 §14.20): 全大会のトロフィーを並べ、獲得したものだけ光らせる ---- */
 const TROPHY_ORDER=["ICC","CT","JT","LGP","CONTI","CSC","LG1","W4","KINGS","NSC","LG2","ENT","PRE"];      // 格の高い順。リーグは Div ごと(→docs/19)
@@ -1337,7 +1362,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"&&CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -1382,7 +1407,7 @@ function onClubClick(e){
   if(act!=="strat")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
-  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; showClub(); return; }
+  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; CL.brView=null; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
@@ -1423,6 +1448,8 @@ function onClubClick(e){
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }
+  if(act==="bracket"){ CL.brView=b.dataset.v; showClub(true); return; }
+  if(act==="brclose"){ CL.brView=null; showClub(true); return; }
   if(act==="oppview"){ CL.oppView=b.dataset.id; CL.oppSel=null; showClub(true); return; }
   if(act==="oppvclose"){ CL.oppView=null; CL.oppSel=null; showClub(true); return; }
   if(act==="oppclose"){ CL.oppSel=null; showClub(true); return; }

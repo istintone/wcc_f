@@ -1922,3 +1922,28 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .opp-vbox .ov-body{padding:8px 8px 6px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212)}
 body.th-bk #club .opp-vbox .ov-body{background:#11141f;color:var(--n-ink)}
 #club .opp-vbox .scout-board{margin-bottom:0}
+/* ---- トーナメント表(bracketModalHtml。→docs/20) ---- */
+#club .br-body{padding:8px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212);overflow-x:auto}
+body.th-bk #club .br-body{background:#11141f;color:var(--n-ink)}
+#club .br-grps{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+#club .br-body h5{margin:0 0 4px;font-size:11px;font-weight:900;letter-spacing:.06em;opacity:.75}
+#club .br-cols{display:flex;gap:8px;align-items:stretch;min-width:min-content}
+#club .br-col{flex:1 1 0;min-width:100px;display:flex;flex-direction:column;justify-content:space-around}
+#club .br-col h5{margin-bottom:6px}
+#club .br-col .bp{margin:4px 0;padding:3px;border:1px solid var(--t-rule,#ccc);background:var(--t-card,#fff);position:relative}
+#club .br-col .bp.mine{border-color:var(--t-sub,#c8102e);box-shadow:inset 3px 0 0 var(--t-sub,#c8102e)}
+#club .bt{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:4px;padding:2px 3px;font-size:11.5px;cursor:pointer}
+#club .bt svg{width:16px;height:16px}
+#club .bg .bt{grid-template-columns:12px 18px minmax(0,1fr) auto}
+#club .bt b{font-family:var(--f-num);font-weight:800;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+#club .bt i{font-style:normal;font-family:var(--f-num);font-weight:800}
+#club .bt .rk{opacity:.6;font-size:10px}
+#club .bt.me b{color:var(--t-sub,#c8102e)}
+#club .bt.win{background:rgba(232,177,28,.2)} #club .bt.win b{font-weight:900}
+#club .bt.lose{opacity:.5}
+#club .bt-q{display:inline-block;width:16px;text-align:center;opacity:.5;font-style:normal}
+#club .bp .pk{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8.5px;font-weight:800;opacity:.7}
+#club .bg{border:1px solid var(--t-rule,#ccc);background:var(--t-card,#fff);padding:4px}
+#club .br-note{margin:8px 0 0;font-size:10.5px}
+#club .br-col{justify-content:flex-start}
+#club .br-ps{flex:1;display:flex;flex-direction:column;justify-content:space-around}

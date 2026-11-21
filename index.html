@@ -2504,6 +2504,31 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .opp-vbox .ov-body{padding:8px 8px 6px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212)}
 body.th-bk #club .opp-vbox .ov-body{background:#11141f;color:var(--n-ink)}
 #club .opp-vbox .scout-board{margin-bottom:0}
+/* ---- トーナメント表(bracketModalHtml。→docs/20) ---- */
+#club .br-body{padding:8px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212);overflow-x:auto}
+body.th-bk #club .br-body{background:#11141f;color:var(--n-ink)}
+#club .br-grps{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+#club .br-body h5{margin:0 0 4px;font-size:11px;font-weight:900;letter-spacing:.06em;opacity:.75}
+#club .br-cols{display:flex;gap:8px;align-items:stretch;min-width:min-content}
+#club .br-col{flex:1 1 0;min-width:100px;display:flex;flex-direction:column;justify-content:space-around}
+#club .br-col h5{margin-bottom:6px}
+#club .br-col .bp{margin:4px 0;padding:3px;border:1px solid var(--t-rule,#ccc);background:var(--t-card,#fff);position:relative}
+#club .br-col .bp.mine{border-color:var(--t-sub,#c8102e);box-shadow:inset 3px 0 0 var(--t-sub,#c8102e)}
+#club .bt{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:4px;padding:2px 3px;font-size:11.5px;cursor:pointer}
+#club .bt svg{width:16px;height:16px}
+#club .bg .bt{grid-template-columns:12px 18px minmax(0,1fr) auto}
+#club .bt b{font-family:var(--f-num);font-weight:800;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+#club .bt i{font-style:normal;font-family:var(--f-num);font-weight:800}
+#club .bt .rk{opacity:.6;font-size:10px}
+#club .bt.me b{color:var(--t-sub,#c8102e)}
+#club .bt.win{background:rgba(232,177,28,.2)} #club .bt.win b{font-weight:900}
+#club .bt.lose{opacity:.5}
+#club .bt-q{display:inline-block;width:16px;text-align:center;opacity:.5;font-style:normal}
+#club .bp .pk{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8.5px;font-weight:800;opacity:.7}
+#club .bg{border:1px solid var(--t-rule,#ccc);background:var(--t-card,#fff);padding:4px}
+#club .br-note{margin:8px 0 0;font-size:10.5px}
+#club .br-col{justify-content:flex-start}
+#club .br-ps{flex:1;display:flex;flex-direction:column;justify-content:space-around}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -5699,7 +5724,13 @@ function entryOk(S,id){
   return false;
 }
 function cupRng(S,id,tag){ return mulberry32((S.seed^hashStr(id+":"+S.term+":"+S.cyc+":"+tag))>>>0); }
-/** 大会の相手を決める。勝ち進むほど強い相手が出る */
+/**
+ * 大会の相手を決める(→docs/20)。**出場が決まった時点で、トーナメントの山を全部決める**(本家と同じく組み合わせが見える)。
+ *   勝ち抜き戦だけの大会: 2^ラウンド数 のクラブで山を組む。自分の山は弱い側、反対の山は強い側(勝ち進むほど強い相手)
+ *   グループ戦のある大会(W4・ICC): 自分のグループ(4クラブ)ともう1つのグループ(4クラブ)。グループのあと勝ち抜き戦
+ * 自分以外の試合は、自分の試合が終わったときに計算で決める(simCpu)。勝ち上がったクラブが次の相手になる
+ * cup.br = { rounds:[[{ a, b, sc:[a,b], w }...]...] }、cup.grp2 = もう1つのグループ、cup.rmap = 試合の番号 → ラウンド(グループは -1)
+ */
 function drawCup(S,W,id){
   const comp=COMPS[id], cup=S.cups[id], rng=cupRng(S,id,"draw");
   const pool=W.clubs.filter(c=>comp.tiers.includes(tierOf(c))).sort((a,b)=>tierOf(a)-tierOf(b)||(a<b?-1:1));
@@ -5707,19 +5738,76 @@ function drawCup(S,W,id){
     const i=clamp(Math.floor(q*pool.length+(rng()-0.5)*2),0,pool.length-1);
     return pool.length?pool.splice(i,1)[0]:W.clubs[Math.floor(rng()*W.clubs.length)];
   };
-  const st=comp.stages, n=st.length;
-  cup.opp=[];
+  const st=comp.stages, n=st.length, map=[]; let nr=0;
+  for(let i=0;i<n;i++){ const t=st[i][0]; map.push(t==="grp"?-1:t==="leg2"?nr-1:nr++); }
+  cup.rmap=map; cup.opp=new Array(n).fill(null); cup.br={ rounds:[] };
+  const zero=()=>({ p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 });
   if(st[0][0]==="grp"){
     const g=[take(0.3),take(0.5),take(0.7)], table={};
-    ["me"].concat(g).forEach(c=>table[c]={ p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 });
+    ["me"].concat(g).forEach(c=>table[c]=zero());
     cup.grp={ clubs:g, table };
-  }
-  for(let i=0;i<n;i++){
-    if(st[i][0]==="grp")cup.opp.push(cup.grp.clubs[i]);
-    else if(st[i][0]==="leg2")cup.opp.push(cup.opp[i-1]);
-    else cup.opp.push(take(n>1?0.2+0.75*i/(n-1):0.6));
+    const g2=[take(0.35),take(0.55),take(0.75),take(0.9)], t2={};
+    g2.forEach(c=>t2[c]=zero());
+    cup.grp2={ clubs:g2, table:t2 };
+    for(let i=0;i<n;i++)if(map[i]<0)cup.opp[i]=g[i];
+  }else{
+    const size=1<<nr, others=[];
+    for(let k=0;k<size-1;k++)others.push(take(size>2?0.12+0.85*k/(size-2):0.6));   // 弱い順
+    const slots=["me"].concat(others), r0=[];
+    for(let k=0;k<size;k+=2)r0.push({ a:slots[k], b:slots[k+1] });
+    cup.br.rounds.push(r0);
+    brSetOpp(cup,0);
   }
   cup.st="in"; cup.leg=null;
+}
+/** ラウンド r の自分の相手を、そのラウンドの試合(2試合制なら両方)に入れる */
+function brSetOpp(cup,r){
+  const P=cup.br.rounds[r]||[], mine=P.find(p=>p.a==="me"||p.b==="me");
+  if(!mine)return;
+  const o=mine.a==="me"?mine.b:mine.a;
+  cup.rmap.forEach((rr,i)=>{ if(rr===r)cup.opp[i]=o; });
+}
+/** ラウンド r が2試合制か */
+const brTwoLeg=(comp,cup,r)=>comp.stages.some((s,i)=>cup.rmap[i]===r&&s[0]==="leg1");
+/** 自分以外の1試合(2試合制なら合計)。引き分けは PK 戦の代わりにたねで決める */
+function brSim(S,id,r,k,p,two){
+  const seed=x=>(S.seed^hashStr("br:"+id+":"+S.term+":"+S.cyc+":"+r+":"+k+":"+x))>>>0;
+  let [a,b]=simCpu(p.a,p.b,seed(1));
+  if(two){ const s2=simCpu(p.b,p.a,seed(2)); a+=s2[1]; b+=s2[0]; }
+  p.sc=[a,b]; p.w=a>b?p.a:b>a?p.b:(mulberry32(seed(3))()<0.5?p.a:p.b);
+  if(a===b)p.pk=true;
+}
+/**
+ * 自分のラウンド r が終わった(through … 勝ち抜けたか、sc … 自分から見た [得点, 失点])。ほかの試合を決めて、次のラウンドの組み合わせを作る。
+ * 負けたら、残りのラウンドも決めて山を最後まで埋める
+ */
+function brAdvance(S,id,r,through,sc){
+  const comp=COMPS[id], cup=S.cups[id], br=cup.br; if(!br||!br.rounds[r])return;
+  for(let rr=r;rr<br.rounds.length;rr++){
+    const P=br.rounds[rr], two=brTwoLeg(comp,cup,rr);
+    P.forEach((p,k)=>{ if(p.w)return;
+      if(p.a==="me"||p.b==="me"){
+        if(rr!==r)return;
+        const o=p.a==="me"?p.b:p.a; p.w=through?"me":o; p.sc=p.a==="me"?sc.slice():[sc[1],sc[0]];
+      }else brSim(S,id,rr,k,p,two);
+    });
+    if(P.length>1&&!br.rounds[rr+1]){
+      const nx=[]; for(let k=0;k<P.length;k+=2)nx.push({ a:P[k].w, b:P[k+1].w });
+      br.rounds.push(nx);
+    }
+    if(rr===r&&through){ brSetOpp(cup,rr+1); break; }    // 勝ち抜けたら、次のラウンドは自分の試合のあとで
+    // 負けたら残りも続けて決める(自分の居ない山)
+  }
+}
+/** グループ戦が終わった: もう1つのグループを決め、勝ち抜き戦の組み合わせを作る(W4 = 両組の1位で決勝 / ICC = 1位と相手組の2位で準決勝) */
+function brAfterGroups(S,id,meThrough){
+  const comp=COMPS[id], cup=S.cups[id], g2=cup.grp2; if(!g2)return;
+  const c=g2.clubs, pairs=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+  pairs.forEach(([i,j],k)=>{ const r=simCpu(c[i],c[j],(S.seed^hashStr("g2:"+id+":"+S.term+":"+S.cyc+":"+k))>>>0); addTable(g2.table,c[i],c[j],r[0],r[1]); });
+  const A=sortTable(cup.grp.table), B=sortTable(g2.table);
+  cup.br.rounds=[comp.adv===2?[{ a:A[0], b:B[1] },{ a:B[0], b:A[1] }]:[{ a:A[0], b:B[0] }]];
+  if(meThrough)brSetOpp(cup,0);
+  else brAdvance(S,id,0,false,[0,0]);
 }
 /**
  * 次の試合。kind: league / cup / friendly
@@ -5836,6 +5924,7 @@ function applyResult(S,W,fx,res){
         through=rank<=comp.adv;
         out.push(comp.name+" グループ "+rank+"位 → "+(through?"突破":"敗退"));
         if(!through)cup.st="out";
+        if(cup.grp2)brAfterGroups(S,fx.comp,through);      // もう1つのグループと勝ち抜き戦の組み合わせ(→docs/20)
       }else through=true;
     }else if(type==="leg1"){
       cup.leg=[hg,ag]; through=true;
@@ -5849,6 +5938,7 @@ function applyResult(S,W,fx,res){
       if(fx.agg)out.push("2試合合計 "+th+" - "+ta+(res.pso?"(PK "+res.pso[0]+"-"+res.pso[1]+")":""));
       if(!through){ cup.st="out"; out.push(comp.name+" 敗退"); }
       else if(!last)out.push(comp.name+" "+fx.label+" 突破");
+      if(cup.br&&cup.rmap)brAdvance(S,fx.comp,cup.rmap[ix],through,[th,ta]);   // ほかの試合と次の組み合わせ(→docs/20)
     }
     if(through&&last){
       cup.st="won"; got+=prize(pw*C.prize.titleK);
@@ -6391,7 +6481,7 @@ function upcoming(S,n){
     if(cup.st==="in"){
       // 前の段を勝ち抜けば(グループの途中と2試合制の第2試合は、勝ち負けにかかわらず戦う)
       const ifWin=k>0&&type!=="grp"&&type!=="leg2"&&ix>0;
-      out.push({ no, comp:cid, label, kind:"cup", opp:cup.opp[ix]||null, home:type!=="leg2", ifWin }); continue;
+      out.push({ no, comp:cid, label, kind:"cup", opp:cup.opp[ix]||null, home:type!=="leg2", ifWin, note:cup.opp[ix]?"":"勝ち上がり次第" }); continue;
     }
     if(cup.st==="wait"&&(ix===0?entryOk(S,cid):enter.has(cid))){ enter.add(cid);   // 出られる大会は、2戦目からも「勝ち進めば」で見せる
       out.push({ no, comp:cid, label, kind:"cup", opp:null, home:type!=="leg2", note:ix===0?"出場できる(相手は抽選)":"相手は抽選", ifWin:ix>0&&type!=="grp"&&type!=="leg2" }); continue; }
@@ -10256,9 +10346,34 @@ function seasonHtml(){
     CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot, ok=entryOk(S,id);
       const txt=c.st==="wait"?(past?"出場なし":ok?"出場できる":"条件待ち"):stTxt[c.st];
       const cond=c.st==="wait"&&!past&&!ok&&ENTRY_NEED[id]?'<small class="cond">'+ENTRY_NEED[id]+'</small>':'';
-      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+COMPS[id].name+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
+      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+COMPS[id].name+'</button>':COMPS[id].name)+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
+}
+/* ---- トーナメント表(→docs/20)。SEASON の大会の一覧から開く。組み合わせが決まった時点で全部見える ---- */
+function bracketModalHtml(){
+  const S=CL.S, id=CL.brView, cup=S.cups[id], comp=COMPS[id]; if(!cup||!cup.rmap)return "";
+  const sh=c=>c==="me"?myTeam(S).short:c&&TEAMS[c]?TEAMS[c].short:"—";
+  const em=c=>c==="me"?emblemSvg(myTeam(S),16):c&&TEAMS[c]?emblemSvg(Object.assign({ id:c },TEAMS[c]),16):'<i class="bt-q">?</i>';
+  const row=(c,sc,w,dec)=>'<div class="bt'+(c==="me"?' me':'')+(dec&&w===c?' win':dec&&c?' lose':'')+'"'+(c&&c!=="me"?' data-act="oppview" data-id="'+c+'"':'')+'>'+
+    em(c)+'<b>'+sh(c)+'</b><i>'+(sc!=null?sc:'')+'</i></div>';
+  const nr=Math.max(...cup.rmap)+1, rounds=[];
+  for(let r=0;r<nr;r++){
+    const lab=(comp.stages[cup.rmap.indexOf(r)]||["",""])[1].replace(/ 第\d試合$/,"");
+    let P=cup.br.rounds[r];
+    if(!P){ const prev=rounds.length?rounds[rounds.length-1].P.length:(comp.adv===2?4:2); P=new Array(Math.max(1,prev/2)).fill(0).map(()=>({ a:null, b:null })); }
+    rounds.push({ lab, P });
+  }
+  const grpT=(g,lab)=>{ if(!g)return ""; const o=sortTable(g.table);
+    return '<div class="bg"><h5>'+lab+'</h5>'+o.map((c,i)=>'<div class="bt'+(c==="me"?' me':'')+(i<(comp.adv||1)?' win':'')+'"'+(c!=="me"?' data-act="oppview" data-id="'+c+'"':'')+'>'+
+      '<i class="rk">'+(i+1)+'</i>'+em(c)+'<b>'+sh(c)+'</b><i>'+g.table[c].pts+'点</i></div>').join("")+'</div>'; };
+  return '<div class="kmodal" data-act="brclose"><div class="kmod-box br-box" data-act="none">'+
+    '<header class="km-head"><span></span><b>'+comp.name+'</b><small>'+gradeTag(comp.grade)+'</small><span></span><button class="km-x" data-act="brclose" aria-label="閉じる">×</button></header>'+
+    '<div class="br-body">'+
+      (cup.grp?'<div class="br-grps">'+grpT(cup.grp,"グループ A")+grpT(cup.grp2,"グループ B")+'</div>':'')+
+      '<div class="br-cols">'+rounds.map(R=>'<div class="br-col"><h5>'+R.lab+'</h5><div class="br-ps">'+R.P.map(p=>
+        '<div class="bp'+(p.a==="me"||p.b==="me"?' mine':'')+'">'+row(p.a,p.sc?p.sc[0]:null,p.w,!!p.w)+row(p.b,p.sc?p.sc[1]:null,p.w,!!p.w)+(p.pk?'<small class="pk">PK</small>':'')+'</div>').join("")+'</div></div>').join("")+'</div>'+
+      '<p class="dim br-note">クラブを押すと、その SQUAD を見られる</p></div></div></div>';
 }
 /* ---- トロフィーの棚(→docs/14 §14.20): 全大会のトロフィーを並べ、獲得したものだけ光らせる ---- */
 const TROPHY_ORDER=["ICC","CT","JT","LGP","CONTI","CSC","LG1","W4","KINGS","NSC","LG2","ENT","PRE"];      // 格の高い順。リーグは Div ごと(→docs/19)
@@ -10312,7 +10427,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"&&CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -10357,7 +10472,7 @@ function onClubClick(e){
   if(act!=="strat")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
-  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; showClub(); return; }
+  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; CL.brView=null; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
@@ -10398,6 +10513,8 @@ function onClubClick(e){
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }
+  if(act==="bracket"){ CL.brView=b.dataset.v; showClub(true); return; }
+  if(act==="brclose"){ CL.brView=null; showClub(true); return; }
   if(act==="oppview"){ CL.oppView=b.dataset.id; CL.oppSel=null; showClub(true); return; }
   if(act==="oppvclose"){ CL.oppView=null; CL.oppSel=null; showClub(true); return; }
   if(act==="oppclose"){ CL.oppSel=null; showClub(true); return; }

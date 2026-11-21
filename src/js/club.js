@@ -228,7 +228,13 @@ function entryOk(S,id){
   return false;
 }
 function cupRng(S,id,tag){ return mulberry32((S.seed^hashStr(id+":"+S.term+":"+S.cyc+":"+tag))>>>0); }
-/** 大会の相手を決める。勝ち進むほど強い相手が出る */
+/**
+ * 大会の相手を決める(→docs/20)。**出場が決まった時点で、トーナメントの山を全部決める**(本家と同じく組み合わせが見える)。
+ *   勝ち抜き戦だけの大会: 2^ラウンド数 のクラブで山を組む。自分の山は弱い側、反対の山は強い側(勝ち進むほど強い相手)
+ *   グループ戦のある大会(W4・ICC): 自分のグループ(4クラブ)ともう1つのグループ(4クラブ)。グループのあと勝ち抜き戦
+ * 自分以外の試合は、自分の試合が終わったときに計算で決める(simCpu)。勝ち上がったクラブが次の相手になる
+ * cup.br = { rounds:[[{ a, b, sc:[a,b], w }...]...] }、cup.grp2 = もう1つのグループ、cup.rmap = 試合の番号 → ラウンド(グループは -1)
+ */
 function drawCup(S,W,id){
   const comp=COMPS[id], cup=S.cups[id], rng=cupRng(S,id,"draw");
   const pool=W.clubs.filter(c=>comp.tiers.includes(tierOf(c))).sort((a,b)=>tierOf(a)-tierOf(b)||(a<b?-1:1));
@@ -236,19 +242,76 @@ function drawCup(S,W,id){
     const i=clamp(Math.floor(q*pool.length+(rng()-0.5)*2),0,pool.length-1);
     return pool.length?pool.splice(i,1)[0]:W.clubs[Math.floor(rng()*W.clubs.length)];
   };
-  const st=comp.stages, n=st.length;
-  cup.opp=[];
+  const st=comp.stages, n=st.length, map=[]; let nr=0;
+  for(let i=0;i<n;i++){ const t=st[i][0]; map.push(t==="grp"?-1:t==="leg2"?nr-1:nr++); }
+  cup.rmap=map; cup.opp=new Array(n).fill(null); cup.br={ rounds:[] };
+  const zero=()=>({ p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 });
   if(st[0][0]==="grp"){
     const g=[take(0.3),take(0.5),take(0.7)], table={};
-    ["me"].concat(g).forEach(c=>table[c]={ p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 });
+    ["me"].concat(g).forEach(c=>table[c]=zero());
     cup.grp={ clubs:g, table };
-  }
-  for(let i=0;i<n;i++){
-    if(st[i][0]==="grp")cup.opp.push(cup.grp.clubs[i]);
-    else if(st[i][0]==="leg2")cup.opp.push(cup.opp[i-1]);
-    else cup.opp.push(take(n>1?0.2+0.75*i/(n-1):0.6));
+    const g2=[take(0.35),take(0.55),take(0.75),take(0.9)], t2={};
+    g2.forEach(c=>t2[c]=zero());
+    cup.grp2={ clubs:g2, table:t2 };
+    for(let i=0;i<n;i++)if(map[i]<0)cup.opp[i]=g[i];
+  }else{
+    const size=1<<nr, others=[];
+    for(let k=0;k<size-1;k++)others.push(take(size>2?0.12+0.85*k/(size-2):0.6));   // 弱い順
+    const slots=["me"].concat(others), r0=[];
+    for(let k=0;k<size;k+=2)r0.push({ a:slots[k], b:slots[k+1] });
+    cup.br.rounds.push(r0);
+    brSetOpp(cup,0);
   }
   cup.st="in"; cup.leg=null;
+}
+/** ラウンド r の自分の相手を、そのラウンドの試合(2試合制なら両方)に入れる */
+function brSetOpp(cup,r){
+  const P=cup.br.rounds[r]||[], mine=P.find(p=>p.a==="me"||p.b==="me");
+  if(!mine)return;
+  const o=mine.a==="me"?mine.b:mine.a;
+  cup.rmap.forEach((rr,i)=>{ if(rr===r)cup.opp[i]=o; });
+}
+/** ラウンド r が2試合制か */
+const brTwoLeg=(comp,cup,r)=>comp.stages.some((s,i)=>cup.rmap[i]===r&&s[0]==="leg1");
+/** 自分以外の1試合(2試合制なら合計)。引き分けは PK 戦の代わりにたねで決める */
+function brSim(S,id,r,k,p,two){
+  const seed=x=>(S.seed^hashStr("br:"+id+":"+S.term+":"+S.cyc+":"+r+":"+k+":"+x))>>>0;
+  let [a,b]=simCpu(p.a,p.b,seed(1));
+  if(two){ const s2=simCpu(p.b,p.a,seed(2)); a+=s2[1]; b+=s2[0]; }
+  p.sc=[a,b]; p.w=a>b?p.a:b>a?p.b:(mulberry32(seed(3))()<0.5?p.a:p.b);
+  if(a===b)p.pk=true;
+}
+/**
+ * 自分のラウンド r が終わった(through … 勝ち抜けたか、sc … 自分から見た [得点, 失点])。ほかの試合を決めて、次のラウンドの組み合わせを作る。
+ * 負けたら、残りのラウンドも決めて山を最後まで埋める
+ */
+function brAdvance(S,id,r,through,sc){
+  const comp=COMPS[id], cup=S.cups[id], br=cup.br; if(!br||!br.rounds[r])return;
+  for(let rr=r;rr<br.rounds.length;rr++){
+    const P=br.rounds[rr], two=brTwoLeg(comp,cup,rr);
+    P.forEach((p,k)=>{ if(p.w)return;
+      if(p.a==="me"||p.b==="me"){
+        if(rr!==r)return;
+        const o=p.a==="me"?p.b:p.a; p.w=through?"me":o; p.sc=p.a==="me"?sc.slice():[sc[1],sc[0]];
+      }else brSim(S,id,rr,k,p,two);
+    });
+    if(P.length>1&&!br.rounds[rr+1]){
+      const nx=[]; for(let k=0;k<P.length;k+=2)nx.push({ a:P[k].w, b:P[k+1].w });
+      br.rounds.push(nx);
+    }
+    if(rr===r&&through){ brSetOpp(cup,rr+1); break; }    // 勝ち抜けたら、次のラウンドは自分の試合のあとで
+    // 負けたら残りも続けて決める(自分の居ない山)
+  }
+}
+/** グループ戦が終わった: もう1つのグループを決め、勝ち抜き戦の組み合わせを作る(W4 = 両組の1位で決勝 / ICC = 1位と相手組の2位で準決勝) */
+function brAfterGroups(S,id,meThrough){
+  const comp=COMPS[id], cup=S.cups[id], g2=cup.grp2; if(!g2)return;
+  const c=g2.clubs, pairs=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+  pairs.forEach(([i,j],k)=>{ const r=simCpu(c[i],c[j],(S.seed^hashStr("g2:"+id+":"+S.term+":"+S.cyc+":"+k))>>>0); addTable(g2.table,c[i],c[j],r[0],r[1]); });
+  const A=sortTable(cup.grp.table), B=sortTable(g2.table);
+  cup.br.rounds=[comp.adv===2?[{ a:A[0], b:B[1] },{ a:B[0], b:A[1] }]:[{ a:A[0], b:B[0] }]];
+  if(meThrough)brSetOpp(cup,0);
+  else brAdvance(S,id,0,false,[0,0]);
 }
 /**
  * 次の試合。kind: league / cup / friendly
@@ -365,6 +428,7 @@ function applyResult(S,W,fx,res){
         through=rank<=comp.adv;
         out.push(comp.name+" グループ "+rank+"位 → "+(through?"突破":"敗退"));
         if(!through)cup.st="out";
+        if(cup.grp2)brAfterGroups(S,fx.comp,through);      // もう1つのグループと勝ち抜き戦の組み合わせ(→docs/20)
       }else through=true;
     }else if(type==="leg1"){
       cup.leg=[hg,ag]; through=true;
@@ -378,6 +442,7 @@ function applyResult(S,W,fx,res){
       if(fx.agg)out.push("2試合合計 "+th+" - "+ta+(res.pso?"(PK "+res.pso[0]+"-"+res.pso[1]+")":""));
       if(!through){ cup.st="out"; out.push(comp.name+" 敗退"); }
       else if(!last)out.push(comp.name+" "+fx.label+" 突破");
+      if(cup.br&&cup.rmap)brAdvance(S,fx.comp,cup.rmap[ix],through,[th,ta]);   // ほかの試合と次の組み合わせ(→docs/20)
     }
     if(through&&last){
       cup.st="won"; got+=prize(pw*C.prize.titleK);
@@ -920,7 +985,7 @@ function upcoming(S,n){
     if(cup.st==="in"){
       // 前の段を勝ち抜けば(グループの途中と2試合制の第2試合は、勝ち負けにかかわらず戦う)
       const ifWin=k>0&&type!=="grp"&&type!=="leg2"&&ix>0;
-      out.push({ no, comp:cid, label, kind:"cup", opp:cup.opp[ix]||null, home:type!=="leg2", ifWin }); continue;
+      out.push({ no, comp:cid, label, kind:"cup", opp:cup.opp[ix]||null, home:type!=="leg2", ifWin, note:cup.opp[ix]?"":"勝ち上がり次第" }); continue;
     }
     if(cup.st==="wait"&&(ix===0?entryOk(S,cid):enter.has(cid))){ enter.add(cid);   // 出られる大会は、2戦目からも「勝ち進めば」で見せる
       out.push({ no, comp:cid, label, kind:"cup", opp:null, home:type!=="leg2", note:ix===0?"出場できる(相手は抽選)":"相手は抽選", ifWin:ix>0&&type!=="grp"&&type!=="leg2" }); continue; }
