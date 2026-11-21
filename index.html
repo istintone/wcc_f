@@ -2481,6 +2481,10 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #scene .res-div.stay{background:linear-gradient(90deg,#8a6414,#e2b84a);color:#2a1a00}
 #club .tbl.lgdiv tr.up td:first-child{box-shadow:inset 3px 0 0 #1f9d55}
 #club .tbl.lgdiv tr.down td:first-child{box-shadow:inset 3px 0 0 #c8102e}
+/* 疲労の段で暗さを変える(4〜8% / 8〜14% / 14% 以上。→docs/14 §14.57) */
+#club .sqc.tired.t1{filter:saturate(.6) brightness(.9)}
+#club .sqc.tired.t2{filter:saturate(.45) brightness(.78)}
+#club .sqc.tired.t3{filter:saturate(.3) brightness(.64)}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9292,7 +9296,8 @@ function sqTokenHtml(id,i,on,o){
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+    // 疲れているほど暗く(3段。→docs/14 §14.57)
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+

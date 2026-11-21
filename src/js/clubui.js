@@ -340,7 +340,8 @@ function sqTokenHtml(id,i,on,o){
     pos=' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%;--cc:'+col+'"'; }
   else pos=' style="--cc:'+col+'"';
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired':'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+    // 疲れているほど暗く(3段。→docs/14 §14.57)
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+

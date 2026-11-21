@@ -1899,3 +1899,7 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #scene .res-div.stay{background:linear-gradient(90deg,#8a6414,#e2b84a);color:#2a1a00}
 #club .tbl.lgdiv tr.up td:first-child{box-shadow:inset 3px 0 0 #1f9d55}
 #club .tbl.lgdiv tr.down td:first-child{box-shadow:inset 3px 0 0 #c8102e}
+/* 疲労の段で暗さを変える(4〜8% / 8〜14% / 14% 以上。→docs/14 §14.57) */
+#club .sqc.tired.t1{filter:saturate(.6) brightness(.9)}
+#club .sqc.tired.t2{filter:saturate(.45) brightness(.78)}
+#club .sqc.tired.t3{filter:saturate(.3) brightness(.64)}
