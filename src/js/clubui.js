@@ -1021,16 +1021,16 @@ function scoutReport(S,fx,def){
   const lines=[];
   // チームの色(強い2つの軸)
   const key=[hi[0],hi[1]].sort().join(""), sty=AX_STYLE[key]||AX_STYLE[[hi[1],hi[0]].join("")]||"まとまった戦い";
-  lines.push(sty+"が得意("+AXIS_ABBR[hi[0]]+" と "+AXIS_ABBR[hi[1]]+" が高い)なチームです。");
+  lines.push(sty+"が得意なチームです。");
   // こちらが上回る軸
   const adv=ax.filter(a=>mpw[a]>opw[a]+0.3).sort((a,b)=>(mpw[b]-opw[b])-(mpw[a]-opw[a]))[0];
-  lines.push(adv?AX_WORD[adv]+"("+AXIS_ABBR[adv]+")はこちらのほうが上なので、"+AX_ADVICE[adv]+"。"
+  lines.push(adv?AX_WORD[adv]+"はこちらのほうが上なので、"+AX_ADVICE[adv]+"。"
     :"どの面でも相手が一枚上手のようです。KP と指示で揺さぶりましょう。");
   lines.push("相手監督は"+(PERS_DESC[def.pers]||"")+"。");
   // KP のスタイル(何をしてくるか)
   if(st){ const g=String(st.get||"").split(/[。、]/)[0];
-    lines.push(st.scope==="team"?"相手はチームで「"+g+"」戦い方("+st.name+")をしてきそうです。"
-      :"相手の "+nm(kc)+" の"+g+"("+st.name+")に警戒しましょう。");
+    lines.push(st.scope==="team"?"相手はチームで「"+g+"」戦い方をしてきそうです。"
+      :"相手の "+nm(kc)+" の"+g+"に警戒しましょう。");
     if(def.rareOpp&&rareOfCard(kc))lines.push(nm(kc)+" は特別な力を秘めているようです。目を離さないでください。"); }
   if(atk||dfn)lines.push((atk?"攻めは "+nm(atk):"")+(atk&&dfn?"、":"")+(dfn?"守りは "+nm(dfn):"")+" がチームの柱のようです。");
   const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
