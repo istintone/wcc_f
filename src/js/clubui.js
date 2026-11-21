@@ -990,6 +990,16 @@ function axisPowerOf(cards){
   return out;
 }
 const cardTotal=c=>STATS.reduce((s,k)=>s+c[k],0);
+/**
+ * 相手の CAP とキッカー(→docs/18 §18.3)。試合と同じ決め方: CAP はキャプテンの適性が一番高い選手(同じなら年長。engine.js の buildTeam)、
+ * キッカーは指名が無いので、その場の一番うまい選手(engine.js の spKicker を、試合前の能力で)
+ */
+function oppRoles(def){
+  const xi=def.xi.map(s=>s.card), fld=xi.filter(c=>c.pos!=="GK");
+  const best=f=>fld.slice().sort((a,b)=>f(b)-f(a))[0]||null;
+  const cap=xi.slice().sort((a,b)=>capApt(b)-capApt(a)||b.age-a.age)[0];
+  return { cap:cap&&cap.id, kp:def.kp, pk:(best(c=>c.off*1.2+c.tec)||{}).id, fk:(best(c=>c.tec*1.2+c.off*0.8)||{}).id, ck:(best(c=>c.tec+c.pow*0.6)||{}).id };
+}
 /** 秘書の報告(相手の情報を整理した数行) */
 function scoutReport(S,fx,def){
   const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
@@ -1003,6 +1013,10 @@ function scoutReport(S,fx,def){
   lines.push(teamNameOf(t)+"は強さ"+"★".repeat(tier)+"のクラブです。陣形は "+t.form+"、監督は"+pers.name+"型で、"+(PERS_DESC[def.pers]||"")+"タイプです。");
   if(st)lines.push("KP は "+kc.no+" "+nameOf(kc)+" の「"+st.name+"」でランク "+rk+"。"+(def.rareOpp&&rareOfCard(kc)?"レアKP が発動するおそれがあります。":""));
   const keys=[atk,dfn].filter(Boolean);
+  const OR=oppRoles(def), nm=id=>id&&CARDS[id]?CARDS[id].no+" "+nameOf(CARDS[id]):"—";
+  // 同じ選手が蹴るものはまとめる(「PK・FK は 9 ◯◯、CK は 10 ◯◯」)
+  const kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
+  lines.push("キャプテンは "+nm(OR.cap)+"。セットプレーは "+Object.keys(kick).map(id=>kick[id].join("・")+" は "+nm(id)).join("、")+" が蹴りそうです。");
   if(keys.length)lines.push("要注意は "+keys.map(c=>c.pos+" "+c.no+" "+nameOf(c)+"(合計 "+Math.round(cardTotal(c))+")").join("、")+" です。");
   lines.push("相手は "+AXIS_ABBR[hi[0]]+"・"+AXIS_ABBR[hi[1]]+" が強く、"+AXIS_ABBR[lo[0]]+" が手薄です。"+
     (mpw[lo[0]]>opw[lo[0]]?"こちらは "+AXIS_ABBR[lo[0]]+" で上回っています。":""));
@@ -1010,15 +1024,15 @@ function scoutReport(S,fx,def){
   return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
-function oppTokenHtml(c,h,x,kp,on){
+function oppTokenHtml(c,h,x,OR,on){
   const pos=on?(h<=0.06?"GK":posAt(h,x)):c.roles[0], a=aptOf(c,pos), p=on?sqPos(h,x):null;
   return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
     (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
     '<i class="no">'+c.no+'</i><b class="rl '+aptClass(a)+'">'+pos+'</b><span class="nm">'+nameOf(c)+'</span>'+
-    (kp?'<span class="rtags"><i class="t kp">KP</i></span>':'')+'<small class="if">計'+Math.round(cardTotal(c))+'</small></button>';
+    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'<small class="if">計'+Math.round(cardTotal(c))+'</small></button>';
 }
 function scoutStepHtml(){
-  const S=CL.S, fx=CL.fx, def=makeTeamDef(fx.opp,true), t=TEAMS[fx.opp], R=scoutReport(S,fx,def), se=secOf(S);
+  const S=CL.S, fx=CL.fx, def=makeTeamDef(fx.opp,true), t=TEAMS[fx.opp], R=scoutReport(S,fx,def), se=secOf(S), OR=oppRoles(def);
   const v1={}, v2={}; for(const a in R.opw){ v1[a]=R.opw[a]/STAT_MAX; v2[a]=R.mpw[a]/STAT_MAX; }
   const team=Object.assign({ id:fx.opp },t);
   return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+
@@ -1029,8 +1043,8 @@ function scoutStepHtml(){
       '<div class="sq-ovr"><small>OVR</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
       (R.st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(R.kc)+'</b><span>'+R.st.name+' '+rankChip(R.rk)+'</span></p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
-      def.xi.map(s=>oppTokenHtml(s.card,s.h,s.x,s.card.id===def.kp,true)).join("")+'</div>'+
-      '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,false,false)).join("")+'</div></div>';
+      def.xi.map(s=>oppTokenHtml(s.card,s.h,s.x,OR,true)).join("")+'</div>'+
+      '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
 }
 /** 相手の選手のカードの裏(フロート) */
 function oppCardModalHtml(){
