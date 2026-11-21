@@ -2407,6 +2407,12 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .tr-fx .cm-board .sq-bench{gap:2px;padding:4px 2px}
 #club .tr-fx .cm-board .sq-bench .sqc.cmx{height:52px;margin-bottom:9px;grid-template-rows:13px 16px 11px 1fr}
 #club .rest-fx .cm-board .sq-bench .sqc.cmx{margin-bottom:4px}
+/* ---- チーム練習の効果: ピンク寄りの赤で脈打つように光る(→docs/14 §14.53) ---- */
+#club .tr-fx .sqc.cmx.on{outline:3px solid #ff3d6e;animation:fxGlow 1.1s ease-in-out infinite alternate}
+@keyframes fxGlow{from{box-shadow:0 0 4px rgba(255,61,110,.45)}to{box-shadow:0 0 14px 3px rgba(255,61,110,.95)}}
+.radar text.hu,body.th-bk .radar text.hu,.th-navy .radar text.hu{fill:#ff3d6e;animation:fxTxt 1.1s ease-in-out infinite alternate}
+.radar text .dv.u,body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ff3d6e}
+@keyframes fxTxt{from{filter:drop-shadow(0 0 1px rgba(255,61,110,.5))}to{filter:drop-shadow(0 0 4px rgba(255,61,110,1))}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8996,7 +9002,7 @@ function trainEffectHtml(part){
   const S=CL.S, G=S.g.graph, R=TUNING.grow.graph, sel=CL.trSel!=null&&CL.int!==-1;
   const pv=sel?trainPreview(S,CL.trSel,CL.int):null, cur={}, aft={};
   for(const a in G){ cur[a]=G[a]/R.max; if(pv)aft[a]=pv.graph[a]/R.max; }
-  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#e01f3d", fill:"#e01f3d", op:0.16 }]:[]);
+  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#ff3d6e", fill:"#ff3d6e", op:0.18 }]:[]);
   const diff=pv?Object.keys(G).map(a=>({ a, d:pv.graph[a]-G[a] })).filter(x=>Math.abs(x.d)>=0.05):[];
   const chips=diff.length?diff.map(x=>'<span class="'+(x.d>0?'up':'dn')+'">'+AXIS_ABBR[x.a]+' '+(x.d>0?'+':'')+x.d.toFixed(1)+'</span>').join("")
     :'<span class="dim">'+(sel?'成長グラフは変わらない':'練習を選ぶと、伸びる軸(黄)と下がる軸が出る')+'</span>';
