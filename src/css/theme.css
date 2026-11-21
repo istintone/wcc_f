@@ -1831,3 +1831,8 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 .radar text.hu,body.th-bk .radar text.hu,.th-navy .radar text.hu{fill:#ff3d6e;animation:fxTxt 1.1s ease-in-out infinite alternate}
 .radar text .dv.u,body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ff3d6e}
 @keyframes fxTxt{from{filter:drop-shadow(0 0 1px rgba(255,61,110,.5))}to{filter:drop-shadow(0 0 4px rgba(255,61,110,1))}}
+/* ---- 試合の盤面のカード: 白い縁を出さない(上の帯を角まで。ほかの盤面と同じ →docs/14 §14.54) ---- */
+.th-wr .cd{border:0;border-radius:2px}
+.th-wr .cd .rl{border-radius:2px 2px 0 0;margin:0;width:100%}
+.th-wr .cd.hasball{box-shadow:0 0 0 2px var(--t-gold2),0 2px 4px rgba(0,0,0,.4)}
+.th-wr .cd.iskp{box-shadow:0 0 0 2px var(--t-sub),0 2px 4px rgba(0,0,0,.4)}

@@ -27,7 +27,8 @@ function mkCard(card){
   el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
     '<b class="kpm">KP</b><b class="ycm"></b>'+
-    (card.gs?'<b class="gsm'+(card.gs>=5?' aw':'')+'">★'+card.gs+'</b>':'')+(card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
+    // 個人能力の★は試合では出さない(→docs/14 §14.54)
+    (card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
   return el;
 }
 
