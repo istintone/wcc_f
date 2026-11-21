@@ -139,6 +139,8 @@ function sceneResult(M,last,go){
       '<div class="rn"><b class="cnt" data-v="'+H.score+'">0</b><i>-</i><b class="cnt" data-v="'+A.score+'">0</b></div>'+
       '<div class="rs">'+emblemSvg(A,40)+'<b>'+A.short+'</b></div></div>'+
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
+    // リーグの最終節: 昇格・降格・残留の知らせ(→docs/19)
+    ((last&&last.lines||[]).filter(x=>/^(⬆|⬇|🛡|➡) /.test(x)).map(x=>'<div class="res-div '+(/^⬆/.test(x)?'up':/^⬇/.test(x)?'down':'stay')+'"><b>'+x.slice(2)+'</b></div>').join(""))+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     mv+                                            // MVP は上の段(得点者の下。→docs/14)
     stHtml+rtHtml+

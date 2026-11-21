@@ -129,7 +129,24 @@ const tierOf=id=>TEAMS[id].tier||3;
 
 /* ---------- セーブの形 ---------- */
 
+/* ---------- Div 制(→docs/19) ----------
+ * リーグの格 1〜3 = 2nd Div < 1st Div < Premier Div。周の最終節で昇格(上位 promoteRank)・降格(relegateRank 以下)を決め、次の周から反映 */
+const DIV_NAME=["","2nd Div","1st Div","Premier Div"];
+const divName=g=>DIV_NAME[g]||DIV_NAME[1];
+/** リーグの表示名を今の Div に合わせる(画面のあちこちが COMPS.LG.name を使う) */
+function setLeagueName(S){ if(COMPS.LG)COMPS.LG.name="レギュラーリーグ "+divName(S.grade); }
+/** 相手の定義。Premier Div のリーグ戦では、相手は育成レベル最大(全軸が高く、KP の軸は金色) */
+function oppDefOf(S,fx){
+  const d=makeTeamDef(fx.opp,true);
+  if(fx.kind==="league"&&S.grade>=3){
+    const v=TUNING.club.premierGraph, st=d.kp&&CARDS[d.kp]?styleOfCard(CARDS[d.kp]):null;
+    d.graph={ O:v, D:v, R:v, C:v, S:v, P:v, gold:{} };
+    if(st)for(const a of styleAxes(st)){ d.graph[a]=TUNING.grow.graph.max; d.graph.gold[a]=true; }
+  }
+  return d;
+}
 function newLeague(S,W){
+  setLeagueName(S);
   const want=TUNING.club.leagueTiers[S.grade-1].slice(), rng=mulberry32((S.seed^hashStr("lg"+S.term+":"+S.cyc))>>>0);
   const pool=W.clubs.slice(), ids=[];
   for(const t of want){
@@ -285,7 +302,7 @@ function playerDef(S){
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
 function fixtureMatch(S,fx){
-  return { home:playerDef(S), away:makeTeamDef(fx.opp,true),
+  return { home:playerDef(S), away:oppDefOf(S,fx),
     seed:(S.seed^hashStr("m:"+S.term+":"+S.played))>>>0,
     opts:{ ko:fx.ko, agg:fx.agg } };
 }
@@ -325,7 +342,12 @@ function applyResult(S,W,fx,res){
     out.push("リーグ "+rank+"位("+L.table.me.pts+"点)");
     if(L.done===14){
       got+=prize(C.prize.leagueRank[rank-1]||0);
-      if(rank===1){ S.titles.push({ term:S.term, cyc:S.cyc, comp:"LG" }); out.push("🏆 レギュラーリーグ 優勝"); }
+      if(rank===1){ S.titles.push({ term:S.term, cyc:S.cyc, comp:"LG", div:S.grade }); out.push("🏆 "+COMPS.LG.name+" 優勝"); }
+      // 昇格・降格(次の周から。最終節の結果で知らせる →docs/19)
+      const C2=TUNING.club, top=C2.leagueTiers.length;
+      if(rank<=C2.promoteRank&&S.grade<top){ S.divMove=1; out.push("⬆ 昇格！ 次の周から "+divName(S.grade+1)); }
+      else if(rank>=C2.relegateRank&&S.grade>1){ S.divMove=-1; out.push("⬇ 降格… 次の周は "+divName(S.grade-1)); }
+      else{ S.divMove=0; out.push(S.grade>=top?"🛡 "+divName(S.grade)+" 残留":"➡ "+divName(S.grade)+" に残る"); }
     }
   }else if(fx.kind==="cup"){
     const cup=S.cups[fx.comp], comp=COMPS[fx.comp], ix=SCHED[fx.slot][1], last=ix===comp.stages.length-1;
@@ -412,13 +434,14 @@ function endCycle(S,W,out){
   const won=CUP_IDS.filter(id=>S.cups[id].st==="won");
   if(rank===1)won.push("LG");
   S.prev={ rank, won };
-  if(rank<=TUNING.club.promoteRank&&S.grade<TUNING.club.leagueTiers.length){
-    S.grade++; out.push("リーグの格が上がった(格 "+S.grade+")");
+  if(S.divMove<0&&S.grade>1){ S.grade--; if(S.biz)S.biz.fans=Math.max(TUNING.biz.fansMin,S.biz.fans-Math.round(TUNING.biz.fansPromo/2)); }
+  if(S.divMove>0&&S.grade<TUNING.club.leagueTiers.length){
+    S.grade++; out.push(divName(S.grade)+" に昇格した");
     if(S.biz){ S.biz.fans+=TUNING.biz.fansPromo; const nx=TUNING.biz.stad[S.biz.stad], disc=nx?Math.round(nx.cost*TUNING.biz.chanceK):0;
       if(!S.biz.offer&&nx&&S.money>=disc)S.biz.offer={ lv:S.biz.stad+1, cost:disc, why:"昇格" }; }
   }
   if(S.mis)misEnd(S,false,out);                 // 周をまたいだ指令は失敗(出られなかった・棄権した)
-  S.cyc++; S.slot=0;
+  S.divMove=0; S.cyc++; S.slot=0;
   S.league=newLeague(S,W); S.cups=newCups();
   if(S.biz&&S.played+1<TUNING.club.termLen)spRenew(S);   // リーグの1周ごとにスポンサーを選び直す(任期の最後は除く)
 }
@@ -495,6 +518,7 @@ function migrate(S){
   if(S.last&&S.last.card&&!CARDS[S.last.card])S.last.card=null;
   S.g=S.g?migrateGrowth(S.g,S.sq):newGrowth(S.sq);
   // クラブオファー(→docs/16)。途中の任期(クラブを決めたあと)は前の作りのまま続ける
+  setLeagueName(S);
   if(S.cprof===undefined){ S.cprof=S.club?{ legacy:true }:null; S.coffers=null; S.mis=null; }
   if(!S.ts)S.ts=newTermStats();
   if(S.ts.awake===undefined){ S.ts.awake=null; S.ts.gold=null; S.ts.pow0=null; }   // 途中の任期は前の数え方のまま
@@ -820,7 +844,7 @@ function mkOffer(S,rng,lv,reg,rare){
   o.expLv=clamp(o.lv+(rare==="rising"?-2:rare==="trad"?2:0),1,7);
   o.target=O.target[o.expLv-1];
   o.misP=O.misP[o.expLv-1];
-  o.name=R.name+"の"+(rare?OF_RARES.find(x=>x.id===rare).name:div+"部リーグの"+OF_SIZES.find(z=>z.id===size.id).name+"クラブ");
+  o.name=R.name+"の"+(rare?OF_RARES.find(x=>x.id===rare).name:divName(4-div)+" の"+OF_SIZES.find(z=>z.id===size.id).name+"クラブ");
   return o;
 }
 /** 3つのオファーを作る(同じ任期なら毎回同じ)。だいたい監督の格に見合い、ときどき上下する。地域は重ねない。まれにレアクラブ */

@@ -160,12 +160,13 @@ const TUNING={
   //   tierStat    … 相手クラブの強さの段(1〜5)ごとの、能力のひな形からのずれ
   //   statNoise   … 能力のばらつき / linkBase … 連携の線の本数の下限(段のぶん増える)
   //   leagueTiers … リーグの格(1〜3)ごとの、同じリーグに入る7クラブの段
-  //   promoteRank … 周の終わりにこの順位以内なら、リーグの格が上がる
+  //   promoteRank … 周の終わりにこの順位以内なら、リーグの格(Div)が上がる / relegateRank … この順位以下なら下がる(→docs/19)
+  //   premierGraph … Premier Div の相手の成長グラフ(育成レベル最大。KP の軸は金色)
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
   //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
   club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
-         leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[3,3,4,4,4,5,5]], promoteRank:2,
+         leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[4,4,5,5,5,5,5]], promoteRank:2, relegateRank:7, premierGraph:95,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
          historyMax:120 },

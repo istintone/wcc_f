@@ -232,6 +232,19 @@ function playOne(S,W,decline,opt){
   check("古いセーブ(途中の任期)は、オファーを出さずに続ける",M.cprof&&M.cprof.legacy===true);
 }
 
+{ // Div 制(→docs/19): 最終節で昇格・降格を知らせ、周の終わりに反映。優勝は Div ごと
+  console.log("  Div 制");
+  const S=E.newCareer(515), W=E.worldOf(S); S.grade=2; S.league=E.newLeague(S,W); S.cups=E.newCups();
+  let lines=[], n=0; const on=S.sq.slice(0,11);
+  // 最終節はその周の最後の試合(結果のあと次の周に切り替わる)ので、知らせの行で見る
+  while(S.cyc===1&&n<80){ const fx=E.nextFixture(S,W); const r=E.applyResult(S,W,fx,{ hg:0, ag:3, played:on, onPitch:on, starters:on }); if(r.some(x=>/^(⬆|⬇|🛡|➡) /.test(x)))lines=r; n++; }
+  check("最下位で終えた最終節に降格の知らせ",lines.some(x=>/^⬇ 降格/.test(x)),lines.filter(x=>/^(⬆|⬇|🛡|➡)/.test(x)).join(" "));
+  check("周の終わりに 2nd Div へ下がる",S.grade===1&&E.COMPS.LG.name.includes("2nd Div"),E.COMPS.LG.name);
+  const T=E.newCareer(516), TW=E.worldOf(T); T.grade=3; T.league=E.newLeague(T,TW);
+  const prem=T.league.clubs.filter(c=>c!=="me").map(c=>E.tierOf(c));
+  check("Premier Div はメガクラブ(段4・5)ばかり",prem.every(x=>x>=4)&&prem.filter(x=>x===5).length>=5,prem.join(","));
+}
+
 // ---------- ⑤ 棄権と保存 ----------
 console.log("⑤ 棄権と保存");
 {
