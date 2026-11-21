@@ -26,17 +26,26 @@ const r2=v=>Math.round(v*100)/100;
 
 /* ---------- 位置 → 役割 → 適性 ---------- */
 
-function roleAt(h,x){
-  const Z=TUNING.zone, wide=x<Z.wide||x>100-Z.wide;
-  if(h<Z.dfH)return wide?"SB":"CB";
-  if(h>=Z.fwH)return wide?"WG":"CF";
-  if(wide)return "SMF";
+/** 位置 → 細かいポジション(→docs/17)。x が小さいほど左(自陣から見て) */
+function posAt(h,x){
+  const Z=TUNING.zone, L=x<Z.wide, R=x>100-Z.wide;
+  if(h<Z.dfH)return L?"LSB":R?"RSB":"CB";
+  if(h>=Z.fwH)return L?"LWG":R?"RWG":h>=Z.cfH?"CF":"ST";
+  if(L)return "LMF"; if(R)return "RMF";
   return h<Z.dmfH?"DMF":h>=Z.omfH?"OMF":"CMF";
 }
+/** 位置 → 試合の動きを決める役割(左右を束ねる。ST は CF) */
+function roleAt(h,x){ return baseRole(posAt(h,x)); }
+/**
+ * 役割の適性。role は細かいポジションでも束ねた役割でもよい。
+ * 得意な役割 = own / 同じ役割の反対側・CF⇔ST = side / 同じポジション = group / 隣 = near / DF⇔FW = far
+ */
 function aptOf(card,role){
   const A=TUNING.apt;
   if(role==="GK"||card.pos==="GK")return (role==="GK"&&card.pos==="GK")?A.own:A.gk;
   if(card.roles.includes(role))return A.own;
+  const b=baseRole(role);
+  if(card.roles.some(r=>baseRole(r)===b))return role===b?A.own:A.side;
   const g=GROUP_OF[role];
   if(g===card.pos)return A.group;
   const o={ DF:0, MF:1, FW:2 };
@@ -73,8 +82,9 @@ function gkOut(gk){
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
   p.h=q.h; p.x=q.x;
-  p.role=p.gk?"GK":roleAt(p.h,p.x);
-  p.apt=aptOf(p.c,p.role);
+  p.pos=p.gk?"GK":posAt(p.h,p.x);            // 細かいポジション(表示と適性)
+  p.role=baseRole(p.pos);
+  p.apt=aptOf(p.c,p.pos);
 }
 /** 効果の入れ物。数値は倍率(1=何も無い)、cov と range だけ加算 */
 const FX0=()=>({ chs:[], defs:[], shot:1, mid:1, aerial:1, fk:1, ck:1, pkK:1, blk:1, gk:1, pk:1,
@@ -510,7 +520,7 @@ function coachStep(M,t){
     const tired=outfield(T).filter(p=>p.inj||p.stam<K.subAt).sort((a,b)=>(b.inj?1:0)-(a.inj?1:0)||a.stam-b.stam)[0];
     if(!tired)continue;
     const cand=T.bench.filter(c=>c.pos===tired.c.pos)
-      .sort((a,b)=>aptOf(b,tired.role)-aptOf(a,tired.role))[0];
+      .sort((a,b)=>aptOf(b,tired.pos)-aptOf(a,tired.pos))[0];
     if(cand){ const was=tired.kp; doSub(M,T,tired.id,cand.id,t); if(was)coachKp(M,T,T.posture,t); }
   }
 }
@@ -566,10 +576,10 @@ function coachAim(T,D){
 }
 /** 適性を落とさない範囲で、基準の位置から狙いへ寄せる */
 function safeTarget(p,tgt){
-  const a0=aptOf(p.c,roleAt(p.b.h,p.b.x));
+  const a0=aptOf(p.c,posAt(p.b.h,p.b.x));
   for(const f of [1,0.66,0.33]){
     const q=clampPos(false,p.b.h+(tgt.h-p.b.h)*f,p.b.x+(tgt.x-p.b.x)*f);
-    if(aptOf(p.c,roleAt(q.h,q.x))>=a0)return q;
+    if(aptOf(p.c,posAt(q.h,q.x))>=a0)return q;
   }
   return p.b;
 }

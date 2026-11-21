@@ -145,7 +145,7 @@ function bindFieldDrag(el,id,gk){
     const raw=bdInv(e.clientX-d.gx,e.clientY-d.gy-lift), q=clampPos(gk,raw.h,raw.x), h=q.h, x=q.x;
     const [l,t]=bdPos(h,x);
     el.style.left=l+"%"; el.style.top=t+"%";
-    const role=gk?"GK":roleAt(h,x);
+    const role=gk?"GK":posAt(h,x);   // 細かいポジション(→docs/17)
     setCardLook(el,role,aptOf(CARDS[id],role));
     drawLinks(G.M);
     orderMatch(G.M,"H",{ type:"move", id, h, x });

@@ -44,7 +44,8 @@ def pseudo_birth(pid, age):
     return start + datetime.timedelta(days=h % 365)
 
 
-ROLES = {"GK", "CB", "SB", "DMF", "CMF", "OMF", "SMF", "WG", "CF"}
+# 細かいポジション(→docs/17)。左右の無い SB・SMF・WG も読めるが、書き出す前に左右付きにする(tools/squads.local.txt はすでに左右付き)
+ROLES = {"GK", "CB", "LSB", "RSB", "DMF", "CMF", "OMF", "LMF", "RMF", "ST", "CF", "LWG", "RWG", "SB", "SMF", "WG"}
 FORMS = {"4-3-3", "4-4-2", "4-2-3-1", "3-5-2"}
 
 # カタカナの行。母音 a i u e o の順

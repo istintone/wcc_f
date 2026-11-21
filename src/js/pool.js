@@ -25,7 +25,7 @@ const REAL_IDS=REAL_CLUBS.map(c=>c[0]);
 const POOL=(()=>{
   const C=TUNING.pack, out=[];
   for(const r of REAL_ROWS){
-    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[rl[0]];
+    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[baseRole(rl[0])];
     const st={};
     const off=(grade-C.gradeBase)*C.gradeK;      // 格 → 能力のずれ
     STATS.forEach((k,i)=>{ const v=g.st[i]; st[k]=v+(v<=6?off*C.lowK:off); });
@@ -172,7 +172,7 @@ function slotValue(S,id,role){
 }
 /** 登録16人から、いまの陣形に最適な11人と並びを決める。いちばん値の高い組から順に埋める。KP は先発に残れば引き継ぐ */
 function autoSquad(S){
-  const f=FORMS[S.form]||FORMS[TEAMS.azr.form], roles=f.map((p,i)=>i===0?"GK":roleAt(p[0],p[1]));
+  const f=FORMS[S.form]||FORMS[TEAMS.azr.form], roles=f.map((p,i)=>i===0?"GK":posAt(p[0],p[1]));
   const pairs=[];
   for(const id of S.sq)roles.forEach((r,i)=>pairs.push({ id, i, v:slotValue(S,id,r) }));
   pairs.sort((a,b)=>b.v-a.v);

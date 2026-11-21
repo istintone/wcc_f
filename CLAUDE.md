@@ -57,6 +57,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | ハーフタイムの指示を変える | 名前は `data.js` の `HT_PHRASE` / `HT_BASIC`、数値は `TUNING.ht`、覚える・登録は `grow.js` の `htOf` / `htAvail` / `toggleHt`、効き目は `engine.js` の `htPlan` と `refreshFx`、画面は `main.js`(字幕のボタン)と `clubui.js` の `htSetHtml`(準備の「戦略方針」に出す) → `enginetest.js` の ⑪。正本は docs/10 §10.8 |
 | チームの成長グラフ(器・限界突破・黄金期)と KP のランク(B/A/S/G)を変える | 数値は `TUNING.grow.graph` と `TUNING.rank`、対角と2軸の KP は `data.js` の `AXIS_PAIR` / `STYLES` の `axes`、仕組みは `grow.js` の `graphAdd` / `graphBreak`、ランクは `engine.js` の `styleRank`、画面は `clubui.js` の `growGraphHtml` → `clubtest.js` の ⑥。正本は docs/15 |
 | クラブオファー(3択・地域と規模と部・レアクラブ)・クラブの期待(獲得賞金)・オーナーの指令を変える | 数値は `TUNING.offer`、仕組みは `club.js` の末尾(`makeOffers` / `mkOffer` / `pickOffer` / `misAfterMatch`)、年俸は `term.js` の `endTerm`、画面は `clubui.js` の `offerHtml` / `expTileHtml` / `termExpHtml` → `clubtest.js` ④。正本は docs/16 |
+| ポジション(左右・CF と ST)・適性を変える | 区切りと適性は `TUNING.zone` / `TUNING.apt`、細かいポジションと束ねは `data.js` の `GROUP_OF` / `BASE_ROLE`、位置からの判定は `engine.js` の `posAt` / `roleAt` / `aptOf`。実在選手は `tools/squads.local.txt`。正本は docs/17 |
 | 育成の数値を変える | `data.js` の `TUNING.grow` → `clubtest.js` の ⑥。仕組みは `grow.js`、設計の正本は docs/05 §5.3〜5.6 |
 | 特殊練習を直す | `tools/train_source.txt` → `python tools/gen_trainings.py`(`trainings.js` は生成物。手で編集しない) |
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |

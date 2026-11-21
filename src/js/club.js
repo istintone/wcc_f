@@ -97,14 +97,16 @@ function genWorld(seed){
   };
   GEN_TIERS.forEach((tier,ci)=>{
     const id="c"+String(ci+1).padStart(2,"0"), nm=GEN_CLUB[ci], form=pick(GEN_FORM), slots=FORMS[form];
-    const roles=slots.map((s,i)=>i===0?"GK":roleAt(s[0],s[1])).concat(GEN_BENCH);
+    // 細かいポジション(→docs/17)。控えの SMF は左右をたねで
+    const roles=slots.map((s,i)=>i===0?"GK":posAt(s[0],s[1])).concat(GEN_BENCH.map(r=>LR_ROLE[r]?LR_ROLE[r][rng()<0.5?0:1]:r));
     const cards=roles.map((role,i)=>{
-      const g=GEN_ROLE[role], off=C.tierStat[tier-1];
+      const g=GEN_ROLE[baseRole(role)], off=C.tierStat[tier-1];
       const age=18+Math.floor(rng()*17), ageOff=age<=21?-0.8:age>=31?0.4:0;
       const st=g.st.map((v,k)=>clamp(Math.round(v+(v<=6?off*0.3:off+ageOff)+(rng()*2-1)*C.statNoise),1,STAT_MAX));
       const cid=id+"p"+String(i+1).padStart(2,"0");
-      const two=role==="CMF"?["CMF",rng()<0.5?"DMF":"OMF"]:role==="SMF"?["SMF","WG"]:role==="WG"?["WG","SMF"]
-        :role==="OMF"?["OMF","CMF"]:role==="DMF"?["DMF","CMF"]:[role];
+      const sd=/^L/.test(role)?"L":"R";
+      const two=role==="CMF"?["CMF",rng()<0.5?"DMF":"OMF"]:baseRole(role)==="SMF"?[role,sd+"WG"]:baseRole(role)==="WG"?[role,sd+"MF"]
+        :role==="OMF"?["OMF","CMF"]:role==="DMF"?["DMF","CMF"]:role==="ST"?["ST","CF"]:role==="CF"?["CF","ST"]:[role];
       CARDS[cid]={ id:cid, no:GEN_NO[i], name:name(), pos:g.pos, roles:two,
         off:st[0], def:st[1], tec:st[2], pow:st[3], spd:st[4], sta:st[5], skill:pick(g.sk), age };
       return cid;

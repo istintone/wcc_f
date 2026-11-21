@@ -316,7 +316,7 @@ const sqInv=(l,t)=>({ x:(l-7)/0.86, h:(95-t)/90 });
 const APT_MARK=a=>a>=TUNING.apt.own?"◎":a>=TUNING.apt.group?"○":a>=TUNING.apt.near?"△":"×";
 /** 位置での役割と適性 */
 function sqRole(id,i,h,x){
-  const role=i===0?"GK":roleAt(h,x), a=aptOf(CARDS[id],role);
+  const role=i===0?"GK":posAt(h,x), a=aptOf(CARDS[id],role);   // 細かいポジション(→docs/17)
   return { role, a, cls:aptClass(a), mark:APT_MARK(a) };
 }
 /** カード左上の役割の札(→docs/14 §14.56)。CAP・KP・PK・FK・CK の順に下へ積む。KP は盤面にいるときだけ。キッカーは指名したときだけ */

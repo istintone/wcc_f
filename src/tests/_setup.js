@@ -4,7 +4,7 @@ const fs=require("fs"), path=require("path");
 const ENGINE_FILES=["data.js","trainings.js","realcards.js","rarekp.js","engine.js","club.js","pool.js","grow.js","term.js","emblem-art.js","emblem.js"];
 const EXPORTS=["TUNING","CARDS","RARE_KP","RARE_MOVES","rareOf","rareOfCard","capApt","setRole","autoSquad","slotValue","persOfClub","COACH_PERS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","SKILLS","AXIS_LABEL","AXIS_ABBR","AXIS_PAIR","PARAM_AXIS","styleAxes","styleRank","graphAdd","graphCap","graphGoldN","mkOffer","makeOffers","pickOffer","offersOf","mgrLv","OF_REGIONS","OF_RARES","misText",
   "createMatch","stepMatch","orderMatch","finishMatch","simulateMatch",
-  "makeTeamDef","roleAt","aptOf","matchMin","teamOf",
+  "makeTeamDef","roleAt","posAt","baseRole","aptOf","matchMin","teamOf",
   "COMPS","CUP_IDS","SCHED","genWorld","newCareer","worldOf","nextFixture","fixtureMatch","declineCup",
   "applyResult","newTerm","playerDef","TRAIN_SP","STATS","MOT_LABEL","LOUNGE_BEST",
   "trainOptions","trainLabel","trainDesc","doTraining","doLounge","doMeeting","doIndTrain","doTalk","skipComm","loungeInfo","meetInfo",

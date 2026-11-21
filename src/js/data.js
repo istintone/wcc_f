@@ -16,9 +16,10 @@ const TUNING={
   // 時計。1ステップ = 1アクション。前後半それぞれ stepsPerHalf + アディショナル
   clock:{ stepsPerHalf:110, at1:[1,5], at2:[3,9] },
   // カードの位置 → 役割(→docs/02 §2.3)
-  zone:{ dfH:0.36, fwH:0.68, wide:27, dmfH:0.47, omfH:0.58 },
-  // 役割の適性。own=得意な役割 / group=同じポジション / near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
-  apt:{ own:1.0, group:0.90, near:0.76, far:0.62, gk:0.35 },
+  //   cfH … FW の高さのうち、ここより前が CF、後ろが ST(→docs/17。左右の端は高さにかかわらず LWG / RWG)
+  zone:{ dfH:0.36, fwH:0.68, wide:27, dmfH:0.47, omfH:0.58, cfH:0.80 },
+  // 役割の適性。own=得意な役割 / side=同じ役割の反対の足・CF⇔ST(→docs/17)/ group=同じポジション / near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
+  apt:{ own:1.0, side:0.95, group:0.90, near:0.76, far:0.62, gk:0.35 },
   // 盤面でカードを置ける範囲
   board:{ minH:0.14, maxH:0.94, minX:5, maxX:95, gkH:0.05 },
   // GK(→docs/02 §2.3a)。ペナルティエリアの中だけ動かせる。
@@ -319,7 +320,18 @@ const TUNING={
     capKick:3200, capHalf:4200, capEnd:2400 }
 };
 
-const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW" };
+const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW",
+  LSB:"DF", RSB:"DF", LMF:"MF", RMF:"MF", LWG:"FW", RWG:"FW", ST:"FW" };
+/**
+ * 細かいポジション(→docs/17。pftb にならう)。カードの「得意な役割」と盤面の表示はこちら。
+ *   LWG CF  RWG / LWG ST RWG / LMF OMF RMF / LMF CMF RMF / LMF DMF RMF / LSB CB RSB / GK
+ * 試合の動き(手札など)は、これを束ねた役割(baseRole: SB・SMF・WG。ST は CF)で決める
+ */
+const BASE_ROLE={ LSB:"SB", RSB:"SB", LMF:"SMF", RMF:"SMF", LWG:"WG", RWG:"WG", ST:"CF" };
+const baseRole=r=>BASE_ROLE[r]||r;
+const LR_ROLE={ SB:["LSB","RSB"], SMF:["LMF","RMF"], WG:["LWG","RWG"] };
+/** 左右の無い役割(SB・SMF・WG)を、side("L"|"R")の側にする */
+const sidedRoles=(roles,side)=>roles.map(r=>LR_ROLE[r]?LR_ROLE[r][side==="R"?1:0]:r);
 
 /**
  * 役割ごとの手札(3枚ずつ)。「その選手がボールを持ったときに何をするか」。
@@ -709,6 +721,15 @@ const TEAMS={
         links:[["a10","a11",3],["a08","a11",2],["a08","a10",1],["a07","a08",2],["a06","a02",2],
                ["a09","a05",2],["a03","a04",3],["a06","a10",1],["a09","a11",2]] }
 };
+
+// 架空のカード(CARD_ROWS)の SB・SMF・WG は、所属クラブの既定の陣形で置かれる側(控えは id のたね)で左右に分ける(→docs/17)
+for(const t of Object.values(TEAMS)){
+  const f=FORMS[t.form];
+  t.xi.concat(t.bench).forEach((id,i)=>{ const c=CARDS[id]; if(!c||!c.roles.some(r=>LR_ROLE[r]))return;
+    const x=i<11?f[i][1]:null, side=x!=null&&x!==50?(x<50?"L":"R"):(hashStr("side:"+id)%2?"R":"L");
+    c.roles=sidedRoles(c.roles,side); });
+}
+for(const c of Object.values(CARDS))if(c.roles.some(r=>LR_ROLE[r]))c.roles=sidedRoles(c.roles,hashStr("side:"+c.id)%2?"R":"L");
 
 /**
  * 表示の差し替え層。実名パックや画像はここへ流し込む(→docs/01 §1.4)。

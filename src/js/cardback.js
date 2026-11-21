@@ -7,17 +7,19 @@
      カードの裏   … 番号・名前・得意な役割・ピッチの適性マップ・能力・スキル・KP・キャプテンシー
    ========================================================================= */
 
-const APT_FILL={ own:["#2fb26a",0.5], group:["#d4a843",0.32], near:["#9aa3b5",0.16] };
+const APT_FILL={ own:["#2fb26a",0.5], side:["#2fb26a",0.26], group:["#d4a843",0.32], near:["#9aa3b5",0.16] };
 /** 役割の区分(h … 0 = 自ゴール 〜 1、x … 0 〜 100)。roleAt の境目と同じ */
 function aptZones(card){
   const Z=TUNING.zone, A=TUNING.apt, out=[];
-  const rows=[[0.15,Z.dfH,"CB","SB"],[Z.dfH,Z.dmfH,"DMF","SMF"],[Z.dmfH,Z.omfH,"CMF","SMF"],[Z.omfH,Z.fwH,"OMF","SMF"],[Z.fwH,0.97,"CF","WG"]];
-  const lv=role=>{ const a=aptOf(card,role); return a>=A.own?"own":a>=A.group?"group":a>=A.near?"near":null; };
+  // 細かいポジション(→docs/17)。[下, 上, 中央, 左, 右]
+  const rows=[[0.15,Z.dfH,"CB","LSB","RSB"],[Z.dfH,Z.dmfH,"DMF","LMF","RMF"],[Z.dmfH,Z.omfH,"CMF","LMF","RMF"],[Z.omfH,Z.fwH,"OMF","LMF","RMF"],
+    [Z.fwH,Z.cfH,"ST","LWG","RWG"],[Z.cfH,0.97,"CF","LWG","RWG"]];
+  const lv=role=>{ const a=aptOf(card,role); return a>=A.own?"own":a>=A.side?"side":a>=A.group?"group":a>=A.near?"near":null; };
   if(card.pos==="GK")out.push({ h0:0.02, h1:0.15, x0:30, x1:70, role:"GK", lv:"own" });
-  else for(const [h0,h1,mid,side] of rows){
-    out.push({ h0, h1, x0:0, x1:Z.wide, role:side, lv:lv(side) });
+  else for(const [h0,h1,mid,l,r] of rows){
+    out.push({ h0, h1, x0:0, x1:Z.wide, role:l, lv:lv(l) });
     out.push({ h0, h1, x0:Z.wide, x1:100-Z.wide, role:mid, lv:lv(mid) });
-    out.push({ h0, h1, x0:100-Z.wide, x1:100, role:side, lv:lv(side) });
+    out.push({ h0, h1, x0:100-Z.wide, x1:100, role:r, lv:lv(r) });
   }
   return out;
 }
