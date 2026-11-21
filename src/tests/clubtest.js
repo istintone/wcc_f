@@ -647,8 +647,13 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   // 称号: 条件の順番どおりに決まる
   { const T=E.newCareer(1), f=E.termFacts(T);
     const pick=x=>E.TITLES.find(t=>t.ok(Object.assign({},f,x))).name;
-    check("称号は条件どおり(負け越し → 迷将 / 覚醒8人 → 覚醒工場 / S3つ+勝率7割 → レジェンド)",
-      pick({ w:30, l:40 })==="迷将"&&pick({ awake:8, w:50, l:30 })==="覚醒工場"&&pick({ awake:8, w:30, l:50 })!=="覚醒工場"&&pick({ sWins:3, wr:0.72 })==="レジェンド");
+    check("称号は条件どおり(負け越し → 迷将 / 両方 ★5 が5人 → 覚醒工場 / S3つ+勝率7割 → レジェンド)",
+      pick({ w:30, l:40 })==="迷将"&&pick({ dual:5, w:50, l:30 })==="覚醒工場"&&pick({ dual:4, w:50, l:30 })!=="覚醒工場"&&pick({ sWins:3, wr:0.72 })==="レジェンド");
+    // 取りにくい称号が先。一度取った称号は後回し(→docs/21 §21.5)
+    const both=Object.assign({},f,{ dual:5, w:50, l:30, used:12 });
+    const P=(career)=>E.pickTitle(Object.assign({},T,{ career }),both).name;
+    check("取りにくい称号が先(覚醒工場と生え抜きの両方を満たせば覚醒工場)・一度取った称号は後回し",
+      P([])==="覚醒工場"&&P([{ title:"factory" }])==="生え抜き"&&P([{ title:"factory" },{ title:"native" }])==="覚醒工場",P([])+" / "+P([{ title:"factory" }]));
     check("どれにも当てはまらなければ新米監督",pick({ w:40, l:40 })==="新米監督"); }
   check("施設は累計の年俸で上がる(0億 → 1 / 640億 → 5)",E.facLevel(0)===1&&E.facLevel(200)===3&&E.facLevel(640)===5);
 }
