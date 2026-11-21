@@ -1788,3 +1788,8 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .sq-mbox .voice{background:rgba(255,255,255,.06);color:#dfe3ea;border-left-color:#e8b11c}
 #club .sq-mbox .voice b{color:#f3cf6a}
 #club .sq-mbox .kdet{margin:6px -8px}
+/* SQUAD: 成長・戦力の凡例はレーダーの左下に「名前の行 + 色の行」(→docs/14 §14.49) */
+#club .sq-gbtn .gg-leg2{position:absolute;left:0;bottom:0;display:grid;grid-template-columns:auto auto;column-gap:7px;row-gap:2px;justify-items:center;font-size:9.5px;font-weight:700;line-height:1.1;color:var(--t-ink,#121212)}
+#club .sq-gbtn .gg-leg2 i{display:block;width:20px;height:5px;border-radius:1px}
+#club .sq-gbtn .gg-leg2 i.g{opacity:.85} #club .sq-gbtn .gg-leg2 i.p{background:#5e6470;opacity:.7}
+body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3ea}
