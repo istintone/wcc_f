@@ -1692,3 +1692,17 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #infoBars .ibar i{font-style:normal;font-size:18px}
 #infoBars .ibar.gold{background:linear-gradient(90deg,#3a2a00,#8a6410);border-left-color:#ffd84a;color:#fff6d0}
 @keyframes ibarIn{0%{transform:translateX(110%)}10%{transform:translateX(0)}85%{transform:translateX(0);opacity:1}100%{transform:translateX(110%);opacity:0}}
+/* ---- SQUAD の上部をチーム練習と同じ形に(→docs/14 §14.42): 左にレーダー、右に OVR・KP・フォーメーション ---- */
+#club .sq-top{display:grid;grid-template-columns:136px minmax(0,1fr);gap:8px;align-items:center;margin-bottom:6px}
+#club .sq-top .tf-radar{width:136px;height:auto}
+#club .sq-info{display:flex;flex-direction:column;gap:5px;min-width:0}
+#club .sq-info .sq-ovr{display:flex;align-items:baseline;gap:6px}
+#club .sq-kp{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:baseline;margin:0;font-size:12px;line-height:1.3}
+#club .sq-kp i{grid-row:1/3;align-self:center;font-style:normal;font-family:var(--f-num);font-size:10px;font-weight:800;padding:1px 5px;background:var(--t-gold,#b8892c);color:#fff}
+#club .sq-kp b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sq-kp span{grid-column:2;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sq-kp small{grid-column:1/3;font-size:10px;opacity:.7}
+#club .sq-kp.none{display:block;font-size:11px;opacity:.7}
+#club .sq-info .sq-ctl{display:grid;grid-template-columns:1fr auto;gap:6px}
+#club .sq-info .sq-ctl .sq-formsel{width:100%}
+#club .graph-r .gr-wrap.nor{grid-template-columns:1fr}
