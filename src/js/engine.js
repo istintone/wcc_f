@@ -121,7 +121,7 @@ function makeTeamDef(teamId,cpu){
   return { id:t.id, name:t.name, short:t.short, color:t.color, cpu:!!cpu,
     kp:t.kp||null, links:t.links||[],
     graph, setplay:0,
-    rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手のレアKP は強さの段で発動(→docs/11 §11.2)
+    rareOpp:cpu&&(t.tier||0)>=TUNING.rare.oppTier,     // 相手の KP の「特殊能力 ★5 相当」(強さの段5。→docs/11 §11.2・docs/21 §21.5)
     pers:t.pers||persOfClub(t.id),                   // 相手監督の性格(→docs/13 §13.5)
     xi:t.xi.map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] })),
     bench:t.bench.map(id=>CARDS[id]) };
@@ -155,8 +155,9 @@ const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&
 /** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
 function rareOf(p,T){
   const R=p&&p.kp?rareOfCard(p.c):null, st=R?styleOfCard(p.c):null;
-  // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。相手は強さの段で
-  return R&&(((p.c.ss||0)>=5&&st&&styleRank(T,st)==="G")||T.rareOpp)?R:null;
+  // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。
+  // 相手も同じ条件(対称。→docs/21 §21.5): 育成の無い相手は、強さの段5か Premier Div のリーグ戦(育成レベル最大)を「★5 相当」とみなす
+  return R&&((p.c.ss||0)>=5||T.rareOpp)&&st&&styleRank(T,st)==="G"?R:null;
 }
 /** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
 const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };

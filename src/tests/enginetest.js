@@ -485,6 +485,9 @@ console.log("⑧ スタミナ(消耗が見えること・交代が効くこと)"
     d.xi=d.xi.map(s=>s.card.id===t.kp?Object.assign({},s,{ card:Object.assign({},s.card,{ ss:5 }) }):s);
     const M=E.createMatch(d,E.makeTeamDef("ros",true),1); E.stepMatch(M);
     check("KP が ★5 でも、ランク G(必要な軸が金色)でなければレアKP は出ない",!M.home.rare&&M.home.rank!=="G","ランク "+M.home.rank); }
+  { const t=clubs[0], d=E.makeTeamDef(t.id,true); d.rareOpp=true; d.graph={ O:40, D:40, R:40, C:40, S:40, P:40, gold:{} };
+    const M=E.createMatch(E.makeTeamDef("ros",true),d,1); E.stepMatch(M);
+    check("相手も同じ条件: ★5 相当でも、ランク G でなければレアKP は出ない(対称)",!M.away.rare,"ランク "+M.away.rank); }
 }
 // ⑬ キャプテンとキッカーの任命(→docs/12)。キャプテンは軽い上積み、指名したキッカーが蹴る
 {

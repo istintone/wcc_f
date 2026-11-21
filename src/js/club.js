@@ -142,6 +142,7 @@ function oppDefOf(S,fx){
     const v=TUNING.club.premierGraph, st=d.kp&&CARDS[d.kp]?styleOfCard(CARDS[d.kp]):null;
     d.graph={ O:v, D:v, R:v, C:v, S:v, P:v, gold:{} };
     if(st)for(const a of styleAxes(st)){ d.graph[a]=TUNING.grow.graph.max; d.graph.gold[a]=true; }
+    d.rareOpp=true;                                   // 育成レベル最大 = KP の特殊能力も ★5 相当(→docs/21 §21.5)
   }
   return d;
 }
