@@ -1075,7 +1075,7 @@ function oppViewModalHtml(){
   const S=CL.S, id=CL.oppView; if(!id||!TEAMS[id])return "";
   const inLg=S.league&&S.league.clubs.includes(id), def=oppDefOf(S,{ opp:id, kind:inLg?"league":"cup" });
   return '<div class="kmodal" data-act="oppvclose"><div class="kmod-box opp-vbox" data-act="none">'+
-    '<header class="km-head"><span></span><b>'+teamNameOf(TEAMS[id])+'</b><small>相手の SQUAD</small><span></span><button class="km-x" data-act="oppvclose" aria-label="閉じる">×</button></header>'+
+    '<header class="km-head"><span></span><b>'+teamNameOf(TEAMS[id])+'</b><small></small><span></span><button class="km-x" data-act="oppvclose" aria-label="閉じる">×</button></header>'+
     '<div class="ov-body">'+oppSquadHtml(S,id,def,false)+'</div></div></div>';
 }
 /** 相手の選手のカードの裏(フロート) */
