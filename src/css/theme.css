@@ -1776,3 +1776,15 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .sq-pitch .lk-tg:not(.off){background:rgba(255,255,255,.55)}
 #club .sq-pitch .lk-tg i{background:#1f6b3d} #club .sq-pitch .lk-tg.off i{background:rgba(255,255,255,.8)}
 #club .sq-pitch .sq-lkrow .lklg i{opacity:.8}
+/* ---- SQUAD の選手のフロート(sqModalHtml。→docs/14 §14.48): 暗い窓に合わせる ---- */
+#club .sq-mbox .sq-det{margin:0;padding:6px 8px 4px;background:none;border:0;box-shadow:none;color:#eef0f4}
+#club .sq-mbox .sd-top{color:#eef0f4} #club .sq-mbox .sd-top>b,#club .sq-mbox .sd-top>.no{display:none}
+#club .sq-mbox .sd-top small{color:#9aa3b5}
+#club .sq-mbox .sd-row{color:#dfe3ea} #club .sq-mbox .sd-row span{color:#dfe3ea}
+#club .sq-mbox .sd-row .st5{color:#f3cf6a}
+#club .sq-mbox .sd-row em{background:rgba(255,255,255,.15)}
+#club .sq-mbox .sd-row .fat{color:#c9cfdb} #club .sq-mbox .sd-row .fat.warn{color:#ff6a7e}
+#club .sq-mbox .sd-act .sd-rk{color:#eef0f4}
+#club .sq-mbox .voice{background:rgba(255,255,255,.06);color:#dfe3ea;border-left-color:#e8b11c}
+#club .sq-mbox .voice b{color:#f3cf6a}
+#club .sq-mbox .kdet{margin:6px -8px}

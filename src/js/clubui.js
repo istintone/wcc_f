@@ -149,7 +149,8 @@ function infoBar(lines){
   lines.forEach((t,i)=>{
     const el=document.createElement("div");
     el.className="ibar"+(/^👑/.test(t)?" gold":"");
-    el.innerHTML='<i>'+t.slice(0,2)+'</i><span>'+t.slice(2).trim()+'</span>';
+    const m=/^(\p{Extended_Pictographic}\uFE0F?)\s*/u.exec(t);
+    el.innerHTML='<i>'+(m?m[1]:'ℹ')+'</i><span>'+(m?t.slice(m[0].length):t)+'</span>';
     el.style.animationDelay=(i*0.45)+"s";
     box.appendChild(el);
     setTimeout(()=>el.remove(),4200+i*450);
@@ -362,9 +363,18 @@ function sqLinksSvg(){
   return h+'</svg>';
 }
 /** 選んでいる選手の板(役割と適性・育成・KP にする) */
+/** SQUAD で選んだ選手の詳細(→docs/14 §14.48)。CARDS と同じく画面の中央にフロート。‹ › で登録16人の前後へ */
+function sqModalHtml(){
+  const S=CL.S, id=CL.sqSel; if(!id||!CARDS[id])return "";
+  const i=S.sq.indexOf(id), c=CARDS[id];
+  const nav=(d,t)=>{ const j=S.sq[i+d]; return '<button class="km-nav" data-act="sqnav" data-id="'+(j||"")+'"'+(j?'':' disabled')+'>'+t+'</button>'; };
+  return '<div class="kmodal" data-act="sqclose"><div class="kmod-box sq-mbox" data-act="none">'+
+    '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i+1)+' / '+S.sq.length+'</small>'+nav(1,"›")+
+      '<button class="km-x" data-act="sqclose" aria-label="閉じる">×</button></header>'+sqDetailHtml()+'</div></div>';
+}
 function sqDetailHtml(){
   const S=CL.S, id=CL.sqSel;
-  if(!id)return '';   // 操作の案内は出さない(→docs/14 §14.45)
+  if(!id)return '';
   const c=CARDS[id], g=S.g.pl[id], i=S.sq.indexOf(id), on=i<11, G0=TUNING.grow;
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c);
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
@@ -376,11 +386,10 @@ function sqDetailHtml(){
       (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
-    cardBackHtml(growCard(S,c),{ ss:g.ss })+                    // 能力・適性のマップ・スキルはカードの裏で(→docs/14 §14.14)
+    cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
     '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
-      '<button class="ghost" data-act="sqpick" data-id="'+id+'">選択をやめる</button></div>'+
-    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p>'+
-    '<p class="sq-hint">入れ替えるときは、カードを引っ張って相手に重ねる</p></div>';
+      '</div>'+
+    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p></div>';
 }
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
@@ -421,8 +430,7 @@ function squadHtml(){
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
-  if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
-  h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
+  // 選手の詳細はフロート(sqModalHtml)、任命の案内と結果はインフォバー(→docs/14 §14.48)
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   return h;
 }
@@ -511,7 +519,7 @@ function sqRolesHtml(){
 function sqPick(id){
   const S=CL.S;
   if(CL.roleSel){
-    if(S.sq.indexOf(id)<11){ CL.roleMsg=setRole(S,CL.roleSel,id); CL.roleSel=null; persist(S); }
+    if(S.sq.indexOf(id)<11){ const m=setRole(S,CL.roleSel,id); CL.roleSel=null; persist(S); showClub(true); infoBar(m); return; }
     showClub(true); return;
   }
   CL.sqSel=CL.sqSel===id?null:id;              // タップは選ぶだけ。入れ替えはカードを引っ張る(試合と同じ。→docs/14 §14.12)
@@ -1203,7 +1211,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -1303,6 +1311,8 @@ function onClubClick(e){
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
     CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; if(nav)CL.kTo=".km-head"; showClub(true); }
+  else if(act==="sqclose"){ CL.sqSel=null; showClub(true); }
+  else if(act==="sqnav"){ if(b.dataset.id){ CL.sqSel=b.dataset.id; CL.kTo=".km-head"; showClub(true); } }
   else if(act==="kpopen"){ CL.kpOpen=true; showClub(true); }
   else if(act==="kpclose"){ CL.kpOpen=false; showClub(true); }
   else if(act==="kppick"){ const id=b.dataset.id; S.kp=id; CL.kpOpen=false; save(); showClub(true); if(rareOn(S,id))cutIn(CARDS[id],"H"); }
@@ -1320,9 +1330,10 @@ function onClubClick(e){
   else if(act==="sqpick")sqPick(b.dataset.id);
   else if(act==="sqform"){ setForm(S,b.dataset.v); CL.sqSel=null; save(); showClub(true); }
   else if(act==="sqauto"){ autoSquad(S); CL.sqSel=null; CL.msg=[]; save(); showClub(true); sndUi("ok"); }
-  else if(act==="sqrole"){ const k=b.dataset.v; CL.sqSel=null; CL.roleMsg=null;
-    if(CL.roleSel===k){ if(S.roles[k])CL.roleMsg=setRole(S,k,null); CL.roleSel=null; save(); }   // もう一度押すと解く
-    else CL.roleSel=k;
+  else if(act==="sqrole"){ const k=b.dataset.v; CL.sqSel=null; CL.roleMsg=null; let ib=null;
+    if(CL.roleSel===k){ if(S.roles[k])ib=setRole(S,k,null); CL.roleSel=null; save(); }   // もう一度押すと解く
+    else{ CL.roleSel=k; ib=["👆 "+ROLE_LABEL[k]+" にする選手をピッチでタップ(もう一度 "+ROLE_LABEL[k]+" を押すと"+(k==="cap"?"任命を解く":"自動に戻す")+")"]; }
+    setTimeout(()=>infoBar(ib),0);
     showClub(true); }
   else if(act==="sqkp"){ const id=b.dataset.id; S.kp=id; save(); showClub(true);
     if(rareOn(S,id))cutIn(CARDS[id],"H");   // レアKP が発動する選手を KP にした(→docs/11)
