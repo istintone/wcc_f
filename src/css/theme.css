@@ -1806,3 +1806,14 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .sq-bench .sqc,#club .cm-board .sq-bench .sqc.cmx{margin-bottom:14px}
 #club .sq-3col .sq-bench,#club .cm-board .sq-bench{gap:4px}
 #club .sqc .srow.aw i,#club .sqc .srow.aw i.on{color:#ff4f86;text-shadow:0 0 3px rgba(255,80,140,.95),0 0 1px #fff}
+/* ★の色をビビッドに(縁取りで芝・白の札の上でも目立つ)。SQUAD の「覚醒」トグル(→docs/14 §14.51) */
+#club .sqc .srow{font-size:8.5px;line-height:8px}
+#club .sqc .srow.is i.on{color:#ffe600;text-shadow:0 0 1px #5a4300,0 0 2px rgba(0,0,0,.7)}
+#club .sqc .srow.ss i.on{color:#1ab2ff;text-shadow:0 0 1px #003a5c,0 0 2px rgba(0,0,0,.7)}
+#club .sq-pitch .sq-lkrow>small+.lk-tg+small{margin-left:8px}
+#club .sqc .srow.aw i,#club .sqc .srow.aw i.on{color:#ff4f86;text-shadow:0 0 3px rgba(255,80,140,.95),0 0 1px #fff}
+#club .sq-pitch .sq-lkrow{align-items:flex-end}
+#club .sq-pitch .sq-lkrow .tgs{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:auto}
+#club .sq-pitch .sq-lkrow .tgs>span{display:flex;align-items:center;gap:4px}
+#club .sq-pitch .sq-lkrow .tgs small{font-size:9px;color:rgba(255,255,255,.75);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+#club .sq-pitch .sq-lkrow .tgs .lk-tg{margin-left:0}

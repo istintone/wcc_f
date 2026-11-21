@@ -338,7 +338,7 @@ function sqTokenHtml(id,i,on,o){
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
-    (g&&(o?o.stars:"both")?'<span class="stars">'+((o?o.stars:"both")!=="ss"?starRow(g.is,"is"):'')+((o?o.stars:"both")!=="is"?starRow(g.ss,"ss"):'')+'</span>':'')+
+    (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
     (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+
     (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
@@ -428,7 +428,8 @@ function squadHtml(){
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+
     // 連携線の見方とトグルは、ピッチの緑の部分の下に重ねる(→docs/14 §14.47)
     '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
-      '<small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></div>'+'</div>'+
+      '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
+      '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
     '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
@@ -1319,6 +1320,7 @@ function onClubClick(e){
   else if(act==="kpopen"){ CL.kpOpen=true; showClub(true); }
   else if(act==="kpclose"){ CL.kpOpen=false; showClub(true); }
   else if(act==="kppick"){ const id=b.dataset.id; S.kp=id; CL.kpOpen=false; save(); showClub(true); if(rareOn(S,id))cutIn(CARDS[id],"H"); }
+  else if(act==="sttoggle"){ CL.noStars=!CL.noStars; showClub(true); }
   else if(act==="lktoggle"){ CL.noLinks=!CL.noLinks; showClub(true); }
   else if(act==="ggopen"){ CL.ggOpen=true; showClub(true); }
   else if(act==="ggclose"){ CL.ggOpen=false; showClub(true); }
