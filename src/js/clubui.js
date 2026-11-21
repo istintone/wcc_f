@@ -319,6 +319,12 @@ function sqRole(id,i,h,x){
   const role=i===0?"GK":roleAt(h,x), a=aptOf(CARDS[id],role);
   return { role, a, cls:aptClass(a), mark:APT_MARK(a) };
 }
+/** カード左上の役割の札(→docs/14 §14.56)。CAP・KP・PK・FK・CK の順に下へ積む。KP は盤面にいるときだけ。キッカーは指名したときだけ */
+const ROLE_TAG_ORDER=[["cap","CAP"],["kp","KP"],["pk","PK"],["fk","FK"],["ck","CK"]];
+function roleTagsHtml(S,id,on){
+  const r=S.roles||{}, t=ROLE_TAG_ORDER.filter(([k])=>k==="kp"?S.kp===id&&on:r[k]===id);
+  return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':'';
+}
 /** 札の下の★の列(→docs/14 §14.50)。kind … "is"(個人・黄)/ "ss"(特殊・青)。★5 は全部をピンク寄りの赤で光らせる */
 const starRow=(n,kind)=>'<span class="srow '+kind+(n>=5?' aw':'')+'">'+[0,1,2,3,4].map(k=>'<i'+(k<n?' class="on"':'')+'>★</i>').join("")+'</span>';
 /**
@@ -339,8 +345,7 @@ function sqTokenHtml(id,i,on,o){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
-    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+
+    roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */

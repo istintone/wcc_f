@@ -2439,6 +2439,18 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .cm-board .sq-bench .sqc.cmx .no{font-size:13px;line-height:14px}
 #club .cm-board .sq-bench .sqc.cmx .if{line-height:1}
 #club .cm-board .sq-bench .sqc.cmx .mt{top:2px}
+/* ---- 役割の札(CAP・KP・PK・FK・CK)はカードの左上に縦に積む(→docs/14 §14.56) ---- */
+.rtags{position:absolute;left:-7px;top:-7px;z-index:6;display:flex;flex-direction:column;align-items:flex-start;gap:1px;pointer-events:none}
+.rtags .t{display:block;font-style:normal;font-family:var(--f-num);font-size:8px;font-weight:800;letter-spacing:.04em;line-height:11px;padding:0 3px;color:#fff;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.rtags .t.cap{background:#b8892c} .rtags .t.kp{background:#d0102f} .rtags .t.pk,.rtags .t.fk,.rtags .t.ck{background:#1b1e26}
+#club .sqc .kpb,#club .sqc .capb{display:none}
+/* 試合のカード: 該当する札だけ出す。前の KP・C の印はやめる */
+.cd{overflow:visible}
+.cd .rtags .t{display:none}
+.cd.iscap .rtags .t.cap,.cd.iskp .rtags .t.kp,.cd.ispk .rtags .t.pk,.cd.isfk .rtags .t.fk,.cd.isck .rtags .t.ck{display:block}
+.cd .kpm,.cd.iskp .kpm{display:none}
+.cd.iscap::after{content:none;display:none}
+#club .sqc:has(.rtags){z-index:3} #club .sqc.drag{z-index:7}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8626,7 +8638,7 @@ function mkCard(card){
   el.dataset.id=card.id;
   el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
-    '<b class="kpm">KP</b><b class="ycm"></b>'+
+    '<span class="rtags"><i class="t cap">CAP</i><i class="t kp">KP</i><i class="t pk">PK</i><i class="t fk">FK</i><i class="t ck">CK</i></span><b class="ycm"></b>'+   // 役割の札は左上に縦に(→docs/14 §14.56)
     // 個人能力の★は試合では出さない(→docs/14 §14.54)
     (card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
   return el;
@@ -8716,6 +8728,7 @@ function syncBoard(M){
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
     el.classList.toggle("iscap",!!M.home.roles&&p.id===M.home.roles.cap);
+    for(const k of ["pk","fk","ck"])el.classList.toggle("is"+k,!!M.home.roles&&p.id===M.home.roles[k]);
     el.classList.toggle("booked",p.yc>0);
     el.classList.toggle("inj",!!p.inj);
   }
@@ -9168,6 +9181,12 @@ function sqRole(id,i,h,x){
   const role=i===0?"GK":roleAt(h,x), a=aptOf(CARDS[id],role);
   return { role, a, cls:aptClass(a), mark:APT_MARK(a) };
 }
+/** カード左上の役割の札(→docs/14 §14.56)。CAP・KP・PK・FK・CK の順に下へ積む。KP は盤面にいるときだけ。キッカーは指名したときだけ */
+const ROLE_TAG_ORDER=[["cap","CAP"],["kp","KP"],["pk","PK"],["fk","FK"],["ck","CK"]];
+function roleTagsHtml(S,id,on){
+  const r=S.roles||{}, t=ROLE_TAG_ORDER.filter(([k])=>k==="kp"?S.kp===id&&on:r[k]===id);
+  return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':'';
+}
 /** 札の下の★の列(→docs/14 §14.50)。kind … "is"(個人・黄)/ "ss"(特殊・青)。★5 は全部をピンク寄りの赤で光らせる */
 const starRow=(n,kind)=>'<span class="srow '+kind+(n>=5?' aw':'')+'">'+[0,1,2,3,4].map(k=>'<i'+(k<n?' class="on"':'')+'>★</i>').join("")+'</span>';
 /**
@@ -9188,8 +9207,7 @@ function sqTokenHtml(id,i,on,o){
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
-    (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
-    (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+
+    roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */

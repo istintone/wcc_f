@@ -26,7 +26,7 @@ function mkCard(card){
   el.dataset.id=card.id;
   el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
-    '<b class="kpm">KP</b><b class="ycm"></b>'+
+    '<span class="rtags"><i class="t cap">CAP</i><i class="t kp">KP</i><i class="t pk">PK</i><i class="t fk">FK</i><i class="t ck">CK</i></span><b class="ycm"></b>'+   // 役割の札は左上に縦に(→docs/14 §14.56)
     // 個人能力の★は試合では出さない(→docs/14 §14.54)
     (card.gm!=null?'<b class="mtm m'+card.gm+'"></b>':'');
   return el;
@@ -116,6 +116,7 @@ function syncBoard(M){
     el.classList.toggle("hasball",p.id===hold);
     el.classList.toggle("iskp",p.id===kp);
     el.classList.toggle("iscap",!!M.home.roles&&p.id===M.home.roles.cap);
+    for(const k of ["pk","fk","ck"])el.classList.toggle("is"+k,!!M.home.roles&&p.id===M.home.roles[k]);
     el.classList.toggle("booked",p.yc>0);
     el.classList.toggle("inj",!!p.inj);
   }
