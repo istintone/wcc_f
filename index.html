@@ -2418,6 +2418,27 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 .th-wr .cd .rl{border-radius:2px 2px 0 0;margin:0;width:100%}
 .th-wr .cd.hasball{box-shadow:0 0 0 2px var(--t-gold2),0 2px 4px rgba(0,0,0,.4)}
 .th-wr .cd.iskp{box-shadow:0 0 0 2px var(--t-sub),0 2px 4px rgba(0,0,0,.4)}
+/* ---- カードの縦横比をすべての盤面で 5:6 に、調子の〇は右上に(→docs/14 §14.55) ---- */
+#club .sq-3col .sq-pitch .sqc{width:48px;height:58px}
+#club .sq-3col .sq-bench .sqc{width:40px;height:48px;align-self:center;grid-template-rows:13px 16px 1fr}
+#club .sq-3col .sq-bench .sqc .no{font-size:14px;line-height:16px} #club .sq-3col .sq-bench .sqc .rl{height:13px;line-height:13px;font-size:9px}
+#club .sq-3col .sq-bench .sqc .nm{font-size:7.5px}
+#club .sqc.cmx,#club .tr-fx .cm-board .sqc.cmx{width:50px;height:60px}
+#club .cm-board .cm-pitch .sqc.cmx{width:56px;height:67px}
+#club .tr-fx .cm-board .cm-pitch .sqc.cmx{width:50px;height:60px}
+#club .cm-board .sq-bench .sqc.cmx{width:44px;height:53px;align-self:center}
+#club .tr-fx .cm-board .sq-bench .sqc.cmx{width:40px;height:48px}
+#club .cm-board .sq-bench .sqc.cmx .nm,#club .cm-board .sq-bench .sqc.cmx .if{font-size:7.5px}
+.th-wr .cd,.cd{width:44px;height:53px;margin:-26.5px 0 0 -22px}
+#bench .cd{flex:0 0 44px}
+/* 調子の〇は右上 */
+#club .sqc .mt,#club .sqc.cmx .mt{left:auto;right:3px;top:3px;bottom:auto;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
+.cd .mtm{right:3px;top:3px;left:auto;bottom:auto}
+#club .cm-board .sq-bench .sqc.cmx,#club .tr-fx .cm-board .sq-bench .sqc.cmx{flex:none;min-height:0;overflow:visible;grid-template-rows:12px 14px 10px 1fr}
+#club .cm-board .sq-bench .sqc.cmx .rl{height:12px;line-height:12px;font-size:8.5px}
+#club .cm-board .sq-bench .sqc.cmx .no{font-size:13px;line-height:14px}
+#club .cm-board .sq-bench .sqc.cmx .if{line-height:1}
+#club .cm-board .sq-bench .sqc.cmx .mt{top:2px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
