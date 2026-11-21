@@ -223,7 +223,7 @@ function trainStepHtml(){
 const chatFace=id=>{ const c=CARDS[id], src=c&&typeof artSrc==="function"?artSrc(c,"stand"):null;
   return '<i class="cf pl">'+(src?'<img src="'+src+'" alt="">':'<b>'+(c?c.no:"")+'</b>')+'</i>'; };
 const chatPl=(id,t,first)=>'<div class="cm pl'+(first?' first':'')+'">'+(first?chatFace(id):'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+cname(id)+'</small>':'')+'<p>'+t+'</p></div></div>';
-const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf se"></i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
+const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf se">'+(secArt(secOf(CL.S).id)?'<img src="'+secArt(secOf(CL.S).id)+'" alt="">':'')+'</i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
 const chatMe=t=>'<div class="cm me"><p>'+t+'</p></div>';
 const chatNote=t=>'<div class="cn">'+t+'</div>';
 /** いま開いているやりとり(選手を選んだら)と、答えたあとの結果 */
@@ -242,15 +242,15 @@ function commChatHtml(){
   let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+"」",true)+chatNote("信頼度: "+TRUST_LABEL[trustLv(S.g.pl[x])])).join(""), acts="";
   if(CL.comm==="lounge"){
     const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
-    log+=chatSec(cname(who[0])+" と "+cname(who[1])+"、いまは「"+LINK_LABEL[f.lv]+"」"+(f.gold?"(黄金線の兆し)":"")+"です。",true)+
+    log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:LINK_LABEL[f.lv]+(f.gold?"(黄金線の兆し)":"") }),true)+
       chatSec(f.hint+"。<br><span class=\"dim\">"+who.map(x=>cname(x)+" "+aniTxt(CARDS[x])+" ・ "+natTxt(CARDS[x])).join("<br>")+"</span>"+
         (bo.length?"<br><span class=\"bonus\">"+bo.map(t=>BONUS_LABEL[t]).join("・")+" ― 連携が付きやすい</span>":""),false);
     acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
   }else if(CL.comm==="meet"){
     const f=meetInfo(S,id);
     log+=chatSec("特殊能力 "+stars(f.ss)+" ・ 経験 "+Math.min(Math.floor(f.se),f.need)+"/"+f.need+"。"+
-      (f.near.length?"周りで "+f.near.map(cname).join("・")+" も聞いています。":""),true);
-    if(f.ready){ log+=chatSec("★突破の話を切り出してきました。性格は「"+f.pers+"」です。",false);
+      (f.near.length?secSay(S,"chNear",{ n:f.near.map(cname).join("・") }):""),true);
+    if(f.ready){ log+=chatSec(secSay(S,"chReady",{ p:f.pers }),false);
       acts=f.choices.map((t,i)=>'<button class="cr" data-act="meet" data-i="'+i+'">'+t+'</button>').join(""); }
     else acts='<button class="cr" data-act="meet" data-i="0">戦術の話をする</button>';
   }else if(CL.comm==="ind"){
@@ -259,7 +259,7 @@ function commChatHtml(){
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
-    log+=chatSec("いま <b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b> ・ 疲労 "+Math.round(p.fat*100)+"%です。",true);
+    log+=chatSec(secSay(S,"chMot",{ m:"<b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b>", f:Math.round(p.fat*100) }),true);
     acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
@@ -889,10 +889,10 @@ function secNeeded(S){
 /** 秘書の一言 */
 function secHtml(){
   const S=CL.S, se=secOf(S);
-  let h='<section class="sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><p>'+secLine(S)+'</p></div></section>';
+  let h='<section class="sec">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'</b><p>'+secLine(S)+'</p></div></section>';
   // 監督室の短い会話(親密度のイベント)
   const ev=S.sec&&S.sec.ev!=null?SEC_EVENTS[S.sec.ev]:null;
-  if(ev&&!S.termOver)h+='<section class="sec sec-ev"><i class="sec-ic">TALK</i><div><b class="sec-nm">'+se.name+'</b><p>「'+ev.q+'」</p>'+
+  if(ev&&!S.termOver)h+='<section class="sec sec-ev">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'<em class="sec-tag">TALK</em></b><p>「'+secEvQ(S,ev)+'」</p>'+
     '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="secev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
   return h;
 }
@@ -900,9 +900,11 @@ function secHtml(){
 function secClubHtml(){
   const S=CL.S, se=secOf(S), b=secBond(S), lv=secLv(S), t=TUNING.sec.lv;
   if(CL.secOpen)return secPickHtml("秘書を替える");
-  return '<section class="card"><h3>秘書 <small><button class="lnk" data-act="secopen">替える</button></small></h3>'+
+  const f=secArt(se.id,"full");
+  return '<section class="card sec-card"><h3>秘書 <small><button class="lnk" data-act="secopen">替える</button></small></h3>'+
+    '<div class="sc-row">'+(f?'<img class="sp-full" src="'+f+'" alt="">':'')+'<div>'+
     '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
-    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p></section>';
+    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p><p class="sc-say">「'+secSay(S,"next")+'」</p></div></div></section>';
 }
 /* ---- スタジアムと施設(→docs/05 §5.13) ---- */
 /** スタジアムの絵(夜)。段が上がるほどスタンドが高く広く、照明塔と屋根が付く(独自の意匠 →docs/14 第3弾) */
@@ -939,9 +941,9 @@ function stadiumSvg(lv){
 /** HOME の改修の知らせ(秘書の言葉で)。払うか見送るか */
 function stadOfferHtml(){
   const S=CL.S, o=S.biz&&S.biz.offer; if(!o||S.termOver)return "";
-  const nx=TUNING.biz.stad[o.lv-1], why=o.why==="資金"?"資金がたまりました。":o.why+"で、クラブの評価が上がっています。";
-  return '<section class="sec stad-offer"><i class="sec-ic">STADIUM</i><div><b class="sec-nm">'+secOf(S).name+'</b>'+
-    '<p>'+why+'スタジアムを「'+nx.name+'」(収容 '+(nx.cap/10000).toFixed(1)+'万人)に改修しませんか。費用は '+o.cost+'億です'+(o.why!=="資金"?'(今なら割引)':'')+'。</p>'+
+  const nx=TUNING.biz.stad[o.lv-1], why=o.why==="資金"?secSay(S,"stadMoney"):secSay(S,"stadRep",{ r:o.why });
+  return '<section class="sec stad-offer">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">STADIUM</em></b>'+
+    '<p>'+why+secSay(S,"stad",{ nm:nx.name, cap:(nx.cap/10000).toFixed(1), c:o.cost, d:o.why!=="資金"?"(今なら割引)":"" })+'</p>'+
     stadiumSvg(o.lv)+
     '<div class="sec-ch"><button class="btn ch" data-act="stad" data-v="1"'+(S.money<o.cost?' disabled':'')+'>改修する(資金 '+S.money.toFixed(0)+'億)</button>'+
     '<button class="btn ch" data-act="stad" data-v="0">見送る</button></div></div></section>';
@@ -998,16 +1000,16 @@ const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"�
 /* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
 /* ---- 視察(→docs/18)。コミュニケーションと戦略方針のあいだ。秘書が相手の SQUAD を整理して伝える ---- */
 // 監督の型を、秘書の言い回しで(→docs/18 §18.4)
-const PERS_DESC={ steady:"いつもの戦い方を崩さない、手堅い監督のようです", quick:"試合の流れを読むのが得意な監督のようです",
-  stubborn:"自分たちのやり方を最後まで貫く監督のようです", attack:"同点でも終盤は攻めてくる、強気な監督のようです",
-  careful:"リードするとすぐに守りを固める、慎重な監督のようです" };
+const PERS_DESC={ steady:"いつもの戦い方を崩さない、手堅い人", quick:"試合の流れを読むのが得意な人",
+  stubborn:"自分たちのやり方を最後まで貫く人", attack:"同点でも終盤は攻めてくる、強気な人",
+  careful:"リードするとすぐに守りを固める、慎重な人" };
 // 強い2つの軸の組 → チームの色(たとえ)
 const AX_STYLE={ OS:"速い攻撃", OP:"力強い攻撃", OR:"技術で崩す攻撃", OC:"前から奪って攻める", DP:"体を張った堅い守り", CD:"粘り強く奪う守備",
   RS:"素早いパス回し", CR:"ボールを持つ時間が長い戦い", CS:"よく走り回る", CP:"球際の強さ", DS:"戻りの速い守り", DR:"落ち着いた組み立て",
   OD:"攻守のバランス", PS:"体の強さと速さ", PR:"技術と強さ", DO:"攻守のバランス" };
 const AX_WORD={ O:"攻める力", D:"守る力", R:"ボールを持つ力", C:"奪う力", S:"速さ", P:"強さ" };
-const AX_ADVICE={ O:"積極的にいきましょう", D:"落ち着いて守りから入りましょう", R:"ボールを持って主導権を握りましょう",
-  C:"前から奪いにいきましょう", S:"スピードで振り切りましょう", P:"競り合いで勝負しましょう" };
+const AX_ADVICE={ O:"積極的に攻める", D:"落ち着いて守りから入る", R:"ボールを持って主導権を握る",
+  C:"前から奪いにいく", S:"スピードで振り切る", P:"競り合いで勝負する" };
 /** 軸ごとの戦力(先発の能力の平均。足すと OVR)。cards … 先発11枚 */
 function axisPowerOf(cards){
   const out={ O:0, D:0, R:0, C:0, S:0, P:0 };
@@ -1037,21 +1039,20 @@ function scoutReport(S,fx,def){
   const lines=[];
   // チームの色(強い2つの軸)
   const key=[hi[0],hi[1]].sort().join(""), sty=AX_STYLE[key]||AX_STYLE[[hi[1],hi[0]].join("")]||"まとまった戦い";
-  lines.push(sty+"が得意なチームです。");
+  const say=(k,v)=>lines.push(secSay(S,k,v));
+  say("scStyle",{ s:sty });
   // こちらが上回る軸
   const adv=ax.filter(a=>mpw[a]>opw[a]+0.3).sort((a,b)=>(mpw[b]-opw[b])-(mpw[a]-opw[a]))[0];
-  lines.push(adv?AX_WORD[adv]+"はこちらのほうが上なので、"+AX_ADVICE[adv]+"。"
-    :"どの面でも相手が一枚上手のようです。KP と指示で揺さぶりましょう。");
-  lines.push("相手監督は"+(PERS_DESC[def.pers]||"")+"。");
+  if(adv)say("scAdv",{ w:AX_WORD[adv], a:AX_ADVICE[adv] }); else say("scNoAdv");
+  say("scPers",{ p:PERS_DESC[def.pers]||PERS_DESC.steady });
   // KP のスタイル(何をしてくるか)
   if(st){ const g=String(st.get||"").split(/[。、]/)[0];
-    lines.push(st.scope==="team"?"相手はチームで「"+g+"」戦い方をしてきそうです。"
-      :"相手の "+nm(kc)+" の"+g+"に警戒しましょう。");
-    if(def.rareOpp&&rareOfCard(kc))lines.push(nm(kc)+" は特別な力を秘めているようです。目を離さないでください。"); }
-  if(atk||dfn)lines.push((atk?"攻めは "+nm(atk):"")+(atk&&dfn?"、":"")+(dfn?"守りは "+nm(dfn):"")+" がチームの柱のようです。");
+    if(st.scope==="team")say("scKpTeam",{ g }); else say("scKpOne",{ n:nm(kc), g });
+    if(def.rareOpp&&rareOfCard(kc))say("scRare",{ n:nm(kc) }); }
+  if(atk||dfn)say("scPillar",{ x:(atk?"攻めは "+nm(atk):"")+(atk&&dfn?"、":"")+(dfn?"守りは "+nm(dfn):"") });
   const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
-  lines.push("まとめ役は "+nm(CARDS[OR.cap])+"。セットプレーは "+Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、")+" が蹴りそうです。");
-  lines.push(ovM>=ovO+2?"全体の力はこちらが上回っています。落ち着いていけば勝てるはずです。":ovO>=ovM+2?"格上の相手です。粘り強く、チャンスを待ちましょう。":"力は互角です。細かい采配が勝負を分けそうです。");
+  say("scRoles",{ c:nm(CARDS[OR.cap]), k:Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、") });
+  say(ovM>=ovO+2?"scUp":ovO>=ovM+2?"scDown":"scEven");
   return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
@@ -1099,7 +1100,7 @@ function scoutRepModalHtml(){
   const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S);
   return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox" data-act="none">'+
     '<header class="km-head"><span></span><b>視察レポート</b><small>'+teamNameOf(TEAMS[fx.opp])+'</small><span></span><button class="km-x" data-act="screpclose" aria-label="閉じる">×</button></header>'+
-    '<section class="sec scout-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section></div></div>';
+    '<section class="sec scout-sec">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section></div></div>';
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";
@@ -1204,13 +1205,18 @@ const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
   none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
   laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
+/** 秘書の顔(→docs/05 §5.12。絵は tools/gen_sec_art.py が pftb から取り込む)。id を省くといまの秘書 */
+const secArt=(id,k)=>typeof SEC_ART!=="undefined"&&SEC_ART[id]?SEC_ART[id][k||"face"]:null;
+const secAv=(S,id)=>{ const a=secArt(id||secOf(S).id); return '<i class="sec-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'; };
 /** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
 function secPickHtml(title){
   const S=CL.S;
   return '<section class="card secpick"><h3>'+title+' <small>能力の差はなく、口調だけが違う</small></h3>'+SECS.map(x=>{
     const b=S.sec.bond[x.id]||0, t=TUNING.sec.lv; let lv=0; while(lv<t.length&&b>=t[lv])lv++;
-    return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
-      '<i>「'+SEC_LINES[x.id].hello+'」</i></button>'; }).join("")+'</section>';
+    const f=secArt(x.id,"full");
+    return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'">'+(f?'<img class="sp-full" src="'+f+'" alt="">':'')+
+      '<span class="sp-tx"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
+      '<i>「'+SEC_LINES[x.id].hello+'」</i></span></button>'; }).join("")+'</section>';
 }
 /** クラブ新聞の紙面(ヨーロッパのタブロイド紙風)。i … S.paper の番号 */
 function paperHtml(i){

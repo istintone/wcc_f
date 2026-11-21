@@ -214,7 +214,7 @@ function sceneLocker(M,last,RT,go){
   sceneShow("sc-lock",
     lockerBgHtml(H)+
     '<div class="lk-head"><b>LOCKER ROOM</b><small>'+H.short+' '+H.score+' - '+A.score+' '+A.short+(pso?' (PK '+pso[0]+'-'+pso[1]+')':'')+'</small></div>'+
-    '<div class="lk-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+secOf(CL.S).name+'</b><p>'+secSay(CL.S,res.toLowerCase())+'</p>'+
+    '<div class="lk-sec">'+(typeof secAv==="function"?secAv(CL.S):'<i class="sec-ic">SEC</i>')+'<div><b class="sec-nm">'+secOf(CL.S).name+'</b><p>'+secSay(CL.S,res.toLowerCase())+'</p>'+
       (rl.length?'<ul>'+rl.map(x=>'<li>'+x+'</li>').join("")+'</ul>':'')+'</div></div>'+
     sps.map((sp,i)=>'<div class="lk-pl" style="animation-delay:'+(0.4+i*0.45)+'s">'+
       '<div class="lk-card">'+cardHtml(sp.id,"s")+'</div>'+

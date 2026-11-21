@@ -48,7 +48,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 相手クラブの作り方を変える | `club.js` の `genWorld` と `GEN_*`、強さは `data.js` の `TUNING.club` |
 | ケガを変える | 起きる率・能力の落ち方・治り方は `data.js` の `TUNING.inj`。判定は `engine.js` の `injCheck`、試合のあとは `grow.js` の `afterMatchGrowth` → `clubtest.js`。正本は docs/05 §5.4・docs/08 §8.8 |
 | 連携の相性・付きやすさ(動物占い・国籍・クラブ)を変える | 動物と群れは `data.js` の `ANIMALS` / `aniOfDate` / `aniCompat`、ボーナスは `TUNING.grow.link.bonus`、判定は `grow.js` の `compatOf` / `linkBonusK` / `linkCap`。実在選手の国籍・生年月日は `tools/squads.local.txt` → `gen_cards.py`。正本は docs/05 §5.5 |
-| 秘書(口調・親密度・会話・フォロー)を変える | `grow.js` の末尾(`SECS` / `SEC_LINES` / `SEC_EVENTS` / `secFollow`)と `TUNING.sec`、画面は `clubui.js` の `secHtml` / `secPickHtml` / `secClubHtml`。正本は docs/05 §5.12 |
+| 秘書(口調・親密度・会話・フォロー)を変える | `grow.js` の末尾(`SECS` / `SEC_LINES` / `SEC_EVENTS` / `secFollow`)と `TUNING.sec`、画面は `clubui.js` の `secHtml` / `secPickHtml` / `secClubHtml` / `secAv`。絵は `python tools/gen_sec_art.py` → `src/js/art-sec.js`(生成物)。正本は docs/05 §5.12 |
 | 経営(資金・ファン・入場料・スタジアム改修・施設)を変える | 数値は `data.js` の `TUNING.biz`、仕組みは `club.js` の末尾(`bizAfterMatch` / `answerStadium` / `buildFac`)、施設の効き目は `grow.js` の `facK` を掛けている所。画面は `clubui.js` の `stadOfferHtml` / `bizClubHtml` / `stadiumSvg`。正本は docs/05 §5.13 |
 | スポンサー(業種×☆のマスタ・候補・収入・ミッションと報酬の効果)を変える | マスタは `club.js` の `SP_IND`、数値は `TUNING.biz.sp`、仕組みは `club.js` の末尾(`spOffers` / `signSponsor` / `spRenew` / `spAfterMatch` / `spBoost`)、画面は `clubui.js` の `spPickHtml` / `spTileHtml`。正本は docs/05 §5.14 |
 | ブラッシュアップ会議の結論と進み具合を見る | docs/09(4つの観点の総評・4段の進め方・やったこと・判断が要ること) |

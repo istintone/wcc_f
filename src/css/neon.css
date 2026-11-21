@@ -352,3 +352,5 @@ body.th-bk #club .tro i{background:var(--n-red);box-shadow:var(--n-glow)}
 
 body.th-bk #club .tro small{font-size:10px}
 body.th-bk #ticker::before{background:var(--n-red);box-shadow:var(--n-glow)}
+body.th-bk #club .sec-av,body.th-bk .lk-sec .sec-av{box-shadow:0 0 0 2px var(--n-gold),0 0 12px rgba(255,209,102,.35)}
+body.th-bk #club .sec .sec-tag{background:var(--n-gold);color:#1a1200}

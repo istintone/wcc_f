@@ -1968,3 +1968,17 @@ body.th-wl #club .nx-go2 .go{background:linear-gradient(100deg,var(--w-red3),var
 #club .en-cup>svg,#club .en-cup>span,#club .en-cup>i{flex:0 0 auto;width:54px;height:54px}
 #club .en-cup b{display:block;font-size:15px;font-weight:900}
 #club .en-cup small{display:block;font-size:11px;opacity:.75;margin-top:2px}
+
+/* 秘書の顔(→docs/05 §5.12)。吹き出しの左・ロッカー・視察レポート */
+#club .sec-av,.lk-sec .sec-av{flex:0 0 auto;width:44px;height:44px;border-radius:50%;overflow:hidden;background:linear-gradient(160deg,#3a3f52,#1c2030);
+  box-shadow:0 0 0 2px var(--t-gold,#e9c76b)}
+#club .sec-av img,.lk-sec .sec-av img{display:block;width:100%;height:100%;image-rendering:pixelated}
+#club .sec .sec-tag{font-style:normal;margin-left:6px;padding:0 4px;font-family:var(--f-num);font-size:9px;letter-spacing:.12em;background:var(--t-black,#121212);color:var(--t-gold2,#e9c76b)}
+#club .cf.se img{width:100%;height:100%;image-rendering:pixelated}
+#club .cf.se:has(img){background:linear-gradient(160deg,#5b3d93,#2a1d4a)}
+#club .secpick .sp{display:flex;align-items:flex-end;gap:10px;padding:6px 12px 0 4px;overflow:hidden}
+#club .secpick .sp .sp-full{flex:0 0 auto;width:62px;height:auto;margin-bottom:-26px;image-rendering:pixelated}
+#club .secpick .sp .sp-tx{flex:1;min-width:0;padding-bottom:9px}
+#club .sec-card .sc-row{display:flex;gap:10px;align-items:flex-start;overflow:hidden}
+#club .sec-card .sp-full{flex:0 0 auto;width:72px;height:auto;margin-bottom:-30px;image-rendering:pixelated}
+#club .sec-card .sc-say{font-size:12px;margin-top:4px}
