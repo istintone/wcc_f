@@ -19,4 +19,4 @@
 
 ## 22.3 実装
 
-`club.js` の `skipSlot`(枠を進め、周を越えたら `endCycle`)/ `upcoming`(試合番号)、`term.js` の `endTerm`(指令の打ち切り)、`clubui.js` の `skipHtml`。テストは `clubtest.js` ④ の「日程」
+`club.js` の `skipSlot`(枠を進め、周を越えたら `endCycle`)/ `upcoming`(試合番号)、`term.js` の `endTerm`(指令の打ち切り)、`clubui.js` の `nextTileHtml`(フレンドリーの札の「節をスキップ」)。テストは `clubtest.js` ④ の「日程」

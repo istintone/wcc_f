@@ -303,7 +303,6 @@ function prepHtml(){
         :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="scoutback">‹ コミュニケーションに戻る</button>':'')
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
             :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
-      (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
@@ -824,7 +823,10 @@ function homeHeadHtml(){
 function nextTileHtml(){
   const S=CL.S, fx=CL.fx, comp=COMPS[fx.comp], t=TEAMS[fx.opp], kp=CARDS[t.kp], st=styleOfCard(kp);
   const go=S.g.step==="train"?"準備をはじめる":"準備のつづき";
-  return '<section class="tile next" data-act="go">'+
+  // カップの1戦目: エントリーか棄権を選ぶまで準備に入れない(準備を始めたあとの古いセーブはそのまま対戦へ)
+  if(fx.ask&&S.g.step==="train")return entryTileHtml();
+  const fr=fx.kind==="friendly"&&fx.missed&&S.g.step==="train";   // フレンドリー: 節を飛ばせる(→docs/22)
+  return '<section class="tile next'+(fr?' two':'')+'"'+(fr?'':' data-act="go"')+'>'+
     '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b><em>'+(fx.label||"")+'</em><i>第'+fx.no+'試合</i></div>'+
     '<p class="nx-hype">'+hypeOf(S,fx)+'</p>'+
     '<div class="nx-vs"><div class="me">'+emblemSvg(myTeam(CL.S),46)+'<b>'+myTeam(CL.S).short+'</b></div>'+
@@ -835,12 +837,20 @@ function nextTileHtml(){
       (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ 同点なら PK':'')+'</p>'+
     (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
-    '<div class="nx-go"><span>'+go+'</span></div></section>';
+    (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">節をスキップ<small>試合なし ・ 任期は減らない</small></button></div>'
+      :'<div class="nx-go"><span>'+go+'</span></div>')+'</section>';
 }
-/** 出ない・出られないカップの枠なら「休んで節を進める」(試合なし・任期の試合は減らない。→docs/22) */
-function skipHtml(){
-  const fx=CL.fx; if(!fx||fx.kind!=="friendly"||!fx.missed)return "";
-  return '<button class="btn btn-sub nx-skip" data-act="skipslot">この枠は休んで節を進める<small>試合なし ・ 任期の試合は減らない</small></button>';
+/** カップのエントリー受付(1戦目の前。→docs/20 §20.4)。エントリーすると対戦の札、棄権するとフレンドリーの札に変わる */
+function entryTileHtml(){
+  const S=CL.S, fx=CL.fx, comp=COMPS[fx.comp], st=comp.stages;
+  const flow=st.map(x=>x[1].replace(/ 第\d試合$/,"")).filter((x,i,a)=>a.indexOf(x)===i).join(" → ");
+  return '<section class="tile next two entry">'+
+    '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b><em>エントリー受付</em><i>第'+fx.no+'試合</i></div>'+
+    '<p class="nx-hype">出場の権利を得た。出るか、見送るか。</p>'+
+    '<div class="en-cup">'+trophyIconSvg(fx.comp,false)+'<div><b>'+comp.name+'</b><small>'+flow+'(全'+st.length+'試合)</small>'+
+      '<small>組み合わせはエントリーで発表</small></div></div>'+
+    formHtml(S)+
+    '<div class="nx-go2"><button class="go" data-act="cupenter">エントリー</button><button class="sk" data-act="decline">棄権<small>大会の枠はフレンドリーに</small></button></div></section>';
 }
 /** 試合の結果の印(W/D/L) */
 const wdlOf=a=>{ const d=a.hg-a.ag, w=d>0||(d===0&&a.pso&&a.pso[0]>a.pso[1]), l=d<0||(d===0&&a.pso&&a.pso[0]<a.pso[1]); return w?"W":l?"L":"D"; };
@@ -1229,7 +1239,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+skipHtml()+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -1286,7 +1296,7 @@ function seasonHtml(){
     CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot, ok=entryOk(S,id);
       const txt=c.st==="wait"?(past?"出場なし":ok?"出場できる":"条件待ち"):stTxt[c.st];
       const cond=c.st==="wait"&&!past&&!ok&&ENTRY_NEED[id]?'<small class="cond">'+ENTRY_NEED[id]+'</small>':'';
-      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+COMPS[id].name+'</button>':COMPS[id].name)+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
+      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap&&c.st!=="quit"?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+COMPS[id].name+'</button>':COMPS[id].name)+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
 }
@@ -1444,6 +1454,7 @@ function onClubClick(e){
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
+  if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
   if(act==="skipslot"){ const r=skipSlot(S,CL.W); if(r){ save(); showClub(true); infoBar(r); } return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; CL.scout=false; CL.oppSel=null; showClub(); return; }
@@ -1463,7 +1474,7 @@ function onClubClick(e){
   if(act==="screpclose"){ CL.scoutRep=false; showClub(true); return; }
   if(act==="stratback"){ CL.strat=false; CL.scout=true; CL.mabOpen=false; CL.htOpen=false; showClub(); return; }
   if(act==="play"){ CL.strat=false; CL.scout=false; CL.mabOpen=false; CL.htOpen=false; startFixture(); }
-  else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
+  else if(act==="decline"){ const nm=COMPS[CL.fx.comp].name; declineCup(S,CL.fx.comp); save(); showClub(true); infoBar([nm+" は棄権した。この大会の枠はフレンドリーマッチになる"]); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
   else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)
   else if(act==="trgo"&&CL.trSel!=null){

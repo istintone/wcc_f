@@ -333,7 +333,7 @@ function nextFixture(S,W){
     const type=comp.stages[ix][0];
     return Object.assign(base,{ kind:"cup", comp:cid, label:comp.stages[ix][1], opp:cup.opp[ix],
       home:type!=="leg2", ko:type==="ko"||type==="leg2", agg:type==="leg2"?cup.leg:null,
-      type, canDecline:true });
+      type, canDecline:true, ask:ix===0&&!cup.ent });   // ask … 1戦目で、まだエントリーを選んでいない(→docs/20 §20.4)
   }
   // 出られない・負けた・棄権した枠はフレンドリーマッチ
   const rng=mulberry32((S.seed^hashStr("fr:"+S.term+":"+S.played))>>>0);
@@ -345,6 +345,8 @@ function nextFixture(S,W){
 }
 /** カップを棄権する。その大会の残りの枠はフレンドリーマッチになる */
 function declineCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].st="quit"; }
+/** カップにエントリーする(1戦目の前に HOME で選ぶ。→docs/20 §20.4) */
+function enterCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].ent=true; }
 
 /** 自分のクラブの定義。前の試合の最後の配置と KP を引き継ぐ(カードは盤面に置いたまま) */
 function playerDef(S){

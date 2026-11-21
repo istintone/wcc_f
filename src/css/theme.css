@@ -1950,3 +1950,21 @@ body.th-bk #club .br-body{background:#11141f;color:var(--n-ink)}
 /* 出ないカップの枠を休んで節を進める(→docs/22) */
 #club .nx-skip{display:flex;flex-direction:column;align-items:center;width:100%;margin:6px 0 2px;padding:6px 10px;min-height:0;font-size:13px}
 #club .nx-skip small{font-size:10px;opacity:.75;font-weight:500}
+
+/* HOME の次の試合: 左右2つのボタン(エントリー / 棄権、準備をはじめる / 節をスキップ。→docs/20 §20.4) */
+#club .tile.next.two{cursor:default}
+#club .tile.next.two:active{transform:none}
+#club .nx-go2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 14px 0}
+#club .nx-go2 button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50px;padding:6px 8px;border:0;cursor:pointer;
+  font:inherit;font-size:15px;font-weight:900;letter-spacing:.06em;clip-path:polygon(4% 0,100% 0,96% 100%,0 100%)}
+#club .nx-go2 .go{color:#fff;background:linear-gradient(90deg,var(--t-sub2),var(--t-sub) 40%,var(--t-sub3))}
+#club .nx-go2 .sk{color:var(--t-ink);background:rgba(127,127,127,.16)}
+#club .nx-go2 small{font-size:9.5px;font-weight:500;letter-spacing:0;opacity:.75;margin-top:2px}
+#club .nx-go2 button:active{transform:scale(.97)}
+body.th-bk #club .nx-go2 .go{background:linear-gradient(100deg,var(--n-red3),var(--n-red) 45%,var(--n-red2));box-shadow:var(--n-glow2)}
+body.th-bk #club .nx-go2 .sk{color:#fff;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--n-line2)}
+body.th-wl #club .nx-go2 .go{background:linear-gradient(100deg,var(--w-red3),var(--w-red) 45%,var(--w-red2))}
+#club .en-cup{display:flex;align-items:center;gap:12px;margin:10px 14px 0}
+#club .en-cup>svg,#club .en-cup>span,#club .en-cup>i{flex:0 0 auto;width:54px;height:54px}
+#club .en-cup b{display:block;font-size:15px;font-weight:900}
+#club .en-cup small{display:block;font-size:11px;opacity:.75;margin-top:2px}

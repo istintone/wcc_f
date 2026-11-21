@@ -279,6 +279,9 @@ console.log("⑤ 棄権と保存");
   const S=E.newCareer(77), W=E.worldOf(S);
   const fx=E.nextFixture(S,W);
   check("最初の試合はプレシーズンカップの1回戦",fx.kind==="cup"&&fx.comp==="PRE"&&fx.ko&&fx.canDecline,fx.comp+" "+fx.label);
+  check("1戦目はエントリー受付(選ぶまで ask)",fx.ask===true,String(fx.ask));
+  { const S2=E.newCareer(77), W2=E.worldOf(S2); E.nextFixture(S2,W2); E.enterCup(S2,"PRE"); const fe=E.nextFixture(S2,W2);
+    check("エントリーすると対戦の札(ask が消える)",fe.kind==="cup"&&!fe.ask,String(fe.ask)); }
   E.declineCup(S,"PRE");
   const f2x=E.nextFixture(S,W);
   check("棄権するとフレンドリーマッチになる",f2x.kind==="friendly"&&f2x.missed==="PRE",f2x.kind+"("+f2x.why+")");
