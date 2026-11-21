@@ -2452,6 +2452,19 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 .cd.iscap::after{content:none;display:none}
 #club .sqc:has(.rtags){z-index:3} #club .sqc.drag{z-index:7}
 .rtags .t{font-size:9.5px;line-height:13px;padding:0 4px} .rtags{left:-8px;top:-8px}
+/* ---- 視察(scoutStepHtml。→docs/18) ---- */
+#club .steps.s4 span{font-size:9.5px;padding:5px 4px;gap:3px;letter-spacing:-.02em}
+#club .scout-sec{margin:4px 0 8px}
+#club .scout-sec ul{margin:4px 0 0;padding:0 0 0 14px;font-size:12px;line-height:1.55}
+#club .scout-sec li{margin:1px 0}
+#club .sc-team{display:flex;align-items:center;gap:6px;min-width:0}
+#club .sc-team b{display:block;font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sc-team small{display:block;font-size:10.5px;opacity:.75}
+#club .scout-board .sqc.opp .if{color:#5e6470}
+#club .scout-board .sqc.opp{cursor:pointer}
+#club .scout-top .tf-g{position:relative}
+#club .scout-top .gg-leg2{position:absolute;left:0;bottom:0;display:grid;grid-template-columns:auto auto;column-gap:7px;row-gap:2px;justify-items:center;font-size:9.5px;font-weight:700;line-height:1.1}
+#club .scout-top .gg-leg2 i{display:block;width:20px;height:5px;border-radius:1px} #club .scout-top .gg-leg2 i.p{background:#5e6470;opacity:.7}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9133,7 +9146,7 @@ function commChatHtml(){
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
       '</div><div class="ch-acts">'+(commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
-        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">戦略方針へ</button>')+'</div></div>';
+        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">視察へ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
@@ -9185,23 +9198,24 @@ function commStepHtml(){
  */
 function prepHtml(){
   const S=CL.S, fx=CL.fx, st=S.g.step, comp=COMPS[fx.comp];
-  // 準備は3段: チーム練習 → コミュニケーション → 戦略方針(監督能力を選ぶ)→ キックオフ(→docs/14)
-  const no=st==="train"?1:CL.strat?3:2;
+  // 準備は4段: チーム練習 → コミュニケーション → 視察(相手の SQUAD。→docs/18)→ 戦略方針 → キックオフ(→docs/14)
+  const no=st==="train"?1:CL.strat?4:CL.scout?3:2;
   let h='<header class="prep-top"><button class="x" data-act="home">×</button>'+
-    '<div class="steps">'+["チーム練習","コミュニケーション","戦略方針"].map((t,i)=>
+    '<div class="steps s4">'+["チーム練習","コミュニケーション","視察","戦略方針"].map((t,i)=>
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
-    '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():commStepHtml())+'</div>'+
+    '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():CL.scout?scoutStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<span class="dim">練習と強さを選んで決定する</span>')
-        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="stratback">‹ コミュニケーションに戻る</button>':'')
-        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに戦略方針へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="strat">戦略方針へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">戦略方針へ</button>'))+
+        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+'<button class="lnk" data-act="stratback">‹ 視察に戻る</button>'
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="scoutback">‹ コミュニケーションに戻る</button>':'')
+        :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
+            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
-    '</footer>';
+    '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'');
   return h;
 }
 /* ---- SQUAD: 既定の陣形(→docs/07 §7.10) ----
@@ -9877,7 +9891,66 @@ function bizClubHtml(){
 const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"・ケガが治る率 +"+Math.round(TUNING.biz.medHeal[lv]*100)+"%"
   :"経験 ×"+TUNING.biz.facK[lv];
 /* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
-/** ③ 戦略方針: 監督能力を選ぶ(→docs/14) */
+/* ---- 視察(→docs/18)。コミュニケーションと戦略方針のあいだ。秘書が相手の SQUAD を整理して伝える ---- */
+const PERS_DESC={ steady:"いつもの戦い方を崩さない", quick:"試合の流れを見てすぐに手を打ってくる", stubborn:"自分たちのやり方を最後まで貫く",
+  attack:"同点でも終盤は前に出てくる", careful:"リードするとすぐに守りを固める" };
+/** 軸ごとの戦力(先発の能力の平均。足すと OVR)。cards … 先発11枚 */
+function axisPowerOf(cards){
+  const out={ O:0, D:0, R:0, C:0, S:0, P:0 };
+  for(const c of cards)for(const k of STATS)out[PARAM_AXIS[k]]+=c[k]/cards.length;
+  return out;
+}
+const cardTotal=c=>STATS.reduce((s,k)=>s+c[k],0);
+/** 秘書の報告(相手の情報を整理した数行) */
+function scoutReport(S,fx,def){
+  const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
+  const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length, ovM=teamPower(S);
+  const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]), lo=hi.slice().reverse();
+  const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const pick=(f,g)=>xi.filter(f).sort((a,b)=>g(b)-g(a))[0];
+  const atk=pick(c=>c.pos!=="GK"&&c.pos!=="DF",c=>c.off*1.2+c.tec+c.spd), dfn=pick(c=>c.pos==="DF"||c.pos==="GK",c=>c.def*1.2+c.pow);
+  const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady;
+  const lines=[];
+  lines.push(teamNameOf(t)+"は強さ"+"★".repeat(tier)+"のクラブです。陣形は "+t.form+"、監督は"+pers.name+"型で、"+(PERS_DESC[def.pers]||"")+"タイプです。");
+  if(st)lines.push("KP は "+kc.no+" "+nameOf(kc)+" の「"+st.name+"」でランク "+rk+"。"+(def.rareOpp&&rareOfCard(kc)?"レアKP が発動するおそれがあります。":""));
+  const keys=[atk,dfn].filter(Boolean);
+  if(keys.length)lines.push("要注意は "+keys.map(c=>c.pos+" "+c.no+" "+nameOf(c)+"(合計 "+Math.round(cardTotal(c))+")").join("、")+" です。");
+  lines.push("相手は "+AXIS_ABBR[hi[0]]+"・"+AXIS_ABBR[hi[1]]+" が強く、"+AXIS_ABBR[lo[0]]+" が手薄です。"+
+    (mpw[lo[0]]>opw[lo[0]]?"こちらは "+AXIS_ABBR[lo[0]]+" で上回っています。":""));
+  lines.push("総合力は 相手 "+ovO.toFixed(1)+" / こちら "+ovM.toFixed(1)+"。"+(ovM>=ovO+2?"力では上です。油断しなければ勝てます。":ovO>=ovM+2?"格上です。KP と指示で崩しましょう。":"ほぼ互角です。"));
+  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
+}
+/** 相手の札(SQUAD の作り。押すとカードの裏) */
+function oppTokenHtml(c,h,x,kp,on){
+  const pos=on?(h<=0.06?"GK":posAt(h,x)):c.roles[0], a=aptOf(c,pos), p=on?sqPos(h,x):null;
+  return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
+    (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
+    '<i class="no">'+c.no+'</i><b class="rl '+aptClass(a)+'">'+pos+'</b><span class="nm">'+nameOf(c)+'</span>'+
+    (kp?'<span class="rtags"><i class="t kp">KP</i></span>':'')+'<small class="if">計'+Math.round(cardTotal(c))+'</small></button>';
+}
+function scoutStepHtml(){
+  const S=CL.S, fx=CL.fx, def=makeTeamDef(fx.opp,true), t=TEAMS[fx.opp], R=scoutReport(S,fx,def), se=secOf(S);
+  const v1={}, v2={}; for(const a in R.opw){ v1[a]=R.opw[a]/STAT_MAX; v2[a]=R.mpw[a]/STAT_MAX; }
+  const team=Object.assign({ id:fx.opp },t);
+  return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+
+    '<section class="sec scout-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section>'+
+    '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
+      '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
+      '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(R.tier)+' ・ '+t.form+' ・ 監督 '+R.pers.name+'型</small></div></div>'+
+      '<div class="sq-ovr"><small>OVR</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
+      (R.st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(R.kc)+'</b><span>'+R.st.name+' '+rankChip(R.rk)+'</span></p>':'')+'</div></section>'+
+    '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
+      def.xi.map(s=>oppTokenHtml(s.card,s.h,s.x,s.card.id===def.kp,true)).join("")+'</div>'+
+      '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,false,false)).join("")+'</div></div>';
+}
+/** 相手の選手のカードの裏(フロート) */
+function oppCardModalHtml(){
+  const c=CARDS[CL.oppSel]; if(!c)return "";
+  return '<div class="kmodal" data-act="oppclose"><div class="kmod-box" data-act="none">'+
+    '<header class="km-head"><span></span><b>'+c.no+' '+nameOf(c)+'</b><small>相手</small><span></span><button class="km-x" data-act="oppclose" aria-label="閉じる">×</button></header>'+
+    '<div class="kdet back">'+cardBackHtml(c,{ ss:0, front:cardHtml(c.id,"s") })+'</div></div></div>';
+}
+/** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
   return '<div class="step-h"><b>戦略方針</b><small>この試合で使う監督能力とハーフタイムの指示を選ぶ。選んだまま次の試合にも引き継ぐ</small></div>'+mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
@@ -10168,7 +10241,7 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
-  if(act==="chatgo"){ CL.chat=null; CL.strat=true; CL.mabOpen=false; showClub(); return; }   // 最後の1回の結果を見てから戦略方針へ
+  if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
@@ -10196,13 +10269,17 @@ function onClubClick(e){
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
-  if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; showClub(); return; }
+  if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="strat"){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
-    CL.armPlay=false; CL.strat=true; CL.mabOpen=false; CL.chat=null; CL.pick=[]; showClub(); return;
+    CL.armPlay=false; CL.scout=true; CL.strat=false; CL.chat=null; CL.pick=[]; showClub(); return;   // コミュニケーションのあとは視察(→docs/18)
   }
-  if(act==="stratback"){ CL.strat=false; CL.mabOpen=false; CL.htOpen=false; showClub(); return; }
-  if(act==="play"){ CL.strat=false; CL.mabOpen=false; CL.htOpen=false; startFixture(); }
+  if(act==="scoutgo"){ CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
+  if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
+  if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }
+  if(act==="oppclose"){ CL.oppSel=null; showClub(true); return; }
+  if(act==="stratback"){ CL.strat=false; CL.scout=true; CL.mabOpen=false; CL.htOpen=false; showClub(); return; }
+  if(act==="play"){ CL.strat=false; CL.scout=false; CL.mabOpen=false; CL.htOpen=false; startFixture(); }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
   else if(act==="term"){ startNextTerm(S,CL.W); CL.msg=[]; save(); showClub(); }
   else if(act==="train"){ const i=+b.dataset.i; CL.trSel=CL.trSel===i?null:i; showClub(true); }   // 選ぶだけ。決定は下のボタン(→docs/14)

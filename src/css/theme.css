@@ -1870,3 +1870,16 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 .cd.iscap::after{content:none;display:none}
 #club .sqc:has(.rtags){z-index:3} #club .sqc.drag{z-index:7}
 .rtags .t{font-size:9.5px;line-height:13px;padding:0 4px} .rtags{left:-8px;top:-8px}
+/* ---- 視察(scoutStepHtml。→docs/18) ---- */
+#club .steps.s4 span{font-size:9.5px;padding:5px 4px;gap:3px;letter-spacing:-.02em}
+#club .scout-sec{margin:4px 0 8px}
+#club .scout-sec ul{margin:4px 0 0;padding:0 0 0 14px;font-size:12px;line-height:1.55}
+#club .scout-sec li{margin:1px 0}
+#club .sc-team{display:flex;align-items:center;gap:6px;min-width:0}
+#club .sc-team b{display:block;font-size:13.5px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sc-team small{display:block;font-size:10.5px;opacity:.75}
+#club .scout-board .sqc.opp .if{color:#5e6470}
+#club .scout-board .sqc.opp{cursor:pointer}
+#club .scout-top .tf-g{position:relative}
+#club .scout-top .gg-leg2{position:absolute;left:0;bottom:0;display:grid;grid-template-columns:auto auto;column-gap:7px;row-gap:2px;justify-items:center;font-size:9.5px;font-weight:700;line-height:1.1}
+#club .scout-top .gg-leg2 i{display:block;width:20px;height:5px;border-radius:1px} #club .scout-top .gg-leg2 i.p{background:#5e6470;opacity:.7}
