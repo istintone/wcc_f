@@ -2498,6 +2498,12 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-map svg{width:104px}
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-st{grid-template-columns:22px minmax(0,1fr) 22px;gap:3px}
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-st b{font-size:12px}
+/* ---- SEASON から見る相手の SQUAD(oppViewModalHtml。→docs/18 §18.5) ---- */
+#club .lnk.oppv{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;text-decoration:underline;text-decoration-color:rgba(127,127,127,.5);text-underline-offset:2px;cursor:pointer}
+#club .sd-opp.oppv{cursor:pointer} #club .sd-opp.oppv b{text-decoration:underline;text-decoration-color:rgba(127,127,127,.45);text-underline-offset:2px}
+#club .opp-vbox .ov-body{padding:8px 8px 6px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212)}
+body.th-bk #club .opp-vbox .ov-body{background:#11141f;color:var(--n-ink)}
+#club .opp-vbox .scout-board{margin-bottom:0}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10016,20 +10022,36 @@ function oppTokenHtml(c,h,x,OR,on){
     '<i class="no">'+c.no+'</i><b class="rl '+aptClass(a)+'">'+pos+'</b><span class="nm">'+nameOf(c)+'</span>'+
     (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'<small class="if">計'+Math.round(cardTotal(c))+'</small></button>';
 }
-function scoutStepHtml(){
-  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), t=TEAMS[fx.opp], R=scoutReport(S,fx,def), se=secOf(S), OR=oppRoles(def);
-  const v1={}, v2={}; for(const a in R.opw){ v1[a]=R.opw[a]/STAT_MAX; v2[a]=R.mpw[a]/STAT_MAX; }
-  const team=Object.assign({ id:fx.opp },t);
-  return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+
-
-    '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
+/**
+ * 相手の SQUAD(→docs/18 §18.5)。上部(レーダー・名前・★・陣形・監督・OVR・KP)と盤面(先発・控え。札を押すとカードの裏)。
+ * rep … 視察レポートのボタンを出すか(視察の画面だけ)
+ */
+function oppSquadHtml(S,oppId,def,rep){
+  const t=TEAMS[oppId], OR=oppRoles(def), xi=def.xi.map(x=>x.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
+  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length, kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, v1={}, v2={};
+  for(const a in opw){ v1[a]=opw[a]/STAT_MAX; v2[a]=mpw[a]/STAT_MAX; }
+  const team=Object.assign({ id:oppId },t);
+  return '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
-      '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(R.tier)+' ・ '+t.form+' ・ 監督 '+R.pers.name+'型</small></div></div>'+
-      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+R.ovO.toFixed(1)+'</b><button class="btn btn-main sc-rep" data-act="screp">視察レポート</button></div>'+
-      (R.st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(R.kc)+'</b><span>'+R.st.name+' '+rankChip(R.rk)+'</span></p>':'')+'</div></section>'+
+      '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
+      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
+      (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
-      def.xi.map(s=>oppTokenHtml(s.card,s.h,s.x,OR,true)).join("")+'</div>'+
+      def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
+}
+function scoutStepHtml(){
+  const S=CL.S, fx=CL.fx;
+  return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
+}
+/** SEASON から見る相手の SQUAD(フロート。視察レポートは出さない)。リーグの相手は、Premier Div なら育成レベル最大で */
+function oppViewModalHtml(){
+  const S=CL.S, id=CL.oppView; if(!id||!TEAMS[id])return "";
+  const inLg=S.league&&S.league.clubs.includes(id), def=oppDefOf(S,{ opp:id, kind:inLg?"league":"cup" });
+  return '<div class="kmodal" data-act="oppvclose"><div class="kmod-box opp-vbox" data-act="none">'+
+    '<header class="km-head"><span></span><b>'+teamNameOf(TEAMS[id])+'</b><small>相手の SQUAD</small><span></span><button class="km-x" data-act="oppvclose" aria-label="閉じる">×</button></header>'+
+    '<div class="ov-body">'+oppSquadHtml(S,id,def,false)+'</div></div></div>';
 }
 /** 相手の選手のカードの裏(フロート) */
 /** 視察レポート(秘書の報告)のフロート */
@@ -10191,7 +10213,7 @@ const schedComp=c=>c==="FR"?"フレンドリー":c==="LG"?"リーグ":TROPHY_SHO
 function schedRowHtml(r){
   // 進行表: 番号 | 大会と段 | H/A | 相手 | 結果(勝敗の印 + スコア)。行の高さはそろえる(注記は1行で切る)
   const T=r.opp&&TEAMS[r.opp], g=r.comp==="FR"?"":COMPS[r.comp].grade;
-  const opp=T?'<span class="sd-opp">'+emblemSvg(Object.assign({ id:r.opp },T),18)+'<b>'+teamNameOf(T)+'</b></span>'
+  const opp=T?'<span class="sd-opp oppv" data-act="oppview" data-id="'+r.opp+'">'+emblemSvg(Object.assign({ id:r.opp },T),18)+'<b>'+teamNameOf(T)+'</b></span>'
     :'<span class="sd-opp none">'+(r.note||"相手は当日に決まる")+'</span>';
   const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'+(r.pk?'<small class="sd-pk">'+r.pk+'</small>':'')
     :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'<i class="sd-if">—</i>');
@@ -10223,7 +10245,7 @@ function seasonHtml(){
       if(!keep(i)){ if(gap)return ""; gap=true; return '<tr class="gap"><td colspan="8">…</td></tr>'; }
       gap=false;
       const zc=(i+1<=TUNING.club.promoteRank&&S.grade<3?' up':'')+(i+1>=TUNING.club.relegateRank&&S.grade>1?' down':'');   // 昇格・降格の圏内(→docs/19)
-      return '<tr class="'+(id==="me"?'me':'')+zc+'"><td>'+(i+1)+'</td><td class="nm2">'+clubName(id)+'</td><td>'+r.p+
+      return '<tr class="'+(id==="me"?'me':'')+zc+'"><td>'+(i+1)+'</td><td class="nm2">'+(id==="me"?clubName(id):'<button class="lnk oppv" data-act="oppview" data-id="'+id+'">'+clubName(id)+'</button>')+'</td><td>'+r.p+
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
     '</table><button class="lnk more" data-act="fulltable">'+(CL.fullTable?'畳む':'全部見る')+'</button></section>';
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
@@ -10290,7 +10312,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"&&CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -10335,7 +10357,7 @@ function onClubClick(e){
   if(act!=="strat")CL.armPlay=false;
   if(onSettingsClick(act,b))return;
   if(act==="comm")CL.chat=null;
-  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; showClub(); return; }
+  if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
@@ -10376,6 +10398,8 @@ function onClubClick(e){
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }
+  if(act==="oppview"){ CL.oppView=b.dataset.id; CL.oppSel=null; showClub(true); return; }
+  if(act==="oppvclose"){ CL.oppView=null; CL.oppSel=null; showClub(true); return; }
   if(act==="oppclose"){ CL.oppSel=null; showClub(true); return; }
   if(act==="screp"){ CL.scoutRep=true; showClub(true); return; }
   if(act==="screpclose"){ CL.scoutRep=false; showClub(true); return; }

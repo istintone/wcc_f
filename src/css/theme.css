@@ -1916,3 +1916,9 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-map svg{width:104px}
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-st{grid-template-columns:22px minmax(0,1fr) 22px;gap:3px}
 #club .kmod-box:not(.cmp) .cb-body.wf .cb-st b{font-size:12px}
+/* ---- SEASON から見る相手の SQUAD(oppViewModalHtml。→docs/18 §18.5) ---- */
+#club .lnk.oppv{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;text-decoration:underline;text-decoration-color:rgba(127,127,127,.5);text-underline-offset:2px;cursor:pointer}
+#club .sd-opp.oppv{cursor:pointer} #club .sd-opp.oppv b{text-decoration:underline;text-decoration-color:rgba(127,127,127,.45);text-underline-offset:2px}
+#club .opp-vbox .ov-body{padding:8px 8px 6px;background:var(--t-paper,#f4f1ea);color:var(--t-ink,#121212)}
+body.th-bk #club .opp-vbox .ov-body{background:#11141f;color:var(--n-ink)}
+#club .opp-vbox .scout-board{margin-bottom:0}
