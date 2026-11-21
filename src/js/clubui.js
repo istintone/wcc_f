@@ -311,8 +311,12 @@ function prepHtml(){
  * ドラッグで動かす / 2枚タップで入れ替え(控えとも)/ 陣形の選択で一括で並べ直す */
 const SQ_FORMS=Object.keys(FORMS);
 /** 盤面の座標 h(0=自ゴール…1)・x(0…100) ⇔ ピッチ上の % */
-const sqPos=(h,x)=>({ l:7+x*0.86, t:95-h*90 });
-const sqInv=(l,t)=>({ x:(l-7)/0.86, h:(95-t)/90 });
+// 縦は2本の直線: 自陣の下 1/4(h 0〜0.25)を広めに取り、キーパーとセンターバックの札が重ならないようにする(→docs/14 §14.59)
+const SQ_Y=[[0,95],[0.25,64],[1,6]];
+const sqT=h=>{ const [a,b,c]=SQ_Y, [p,q]=h<=b[0]?[a,b]:[b,c]; return p[1]+(h-p[0])*(q[1]-p[1])/(q[0]-p[0]); };
+const sqH=t=>{ const [a,b,c]=SQ_Y, [p,q]=t>=b[1]?[a,b]:[b,c]; return p[0]+(t-p[1])*(q[0]-p[0])/(q[1]-p[1]); };
+const sqPos=(h,x)=>({ l:7+x*0.86, t:sqT(h) });
+const sqInv=(l,t)=>({ x:(l-7)/0.86, h:sqH(t) });
 const APT_MARK=a=>a>=TUNING.apt.own?"◎":a>=TUNING.apt.group?"○":a>=TUNING.apt.near?"△":"×";
 /** 位置での役割と適性 */
 function sqRole(id,i,h,x){
