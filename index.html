@@ -3142,8 +3142,8 @@ const TUNING={
   // カードの位置 → 役割(→docs/02 §2.3)
   //   cfH … FW の高さのうち、ここより前が CF、後ろが ST(→docs/17。左右の端は高さにかかわらず LWG / RWG)
   zone:{ dfH:0.36, fwH:0.68, wide:27, dmfH:0.47, omfH:0.58, cfH:0.80 },
-  // 役割の適性。own=得意な役割 / side=同じ役割の反対の足・CF⇔ST(→docs/17)/ group=同じポジション / near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
-  apt:{ own:1.0, side:0.95, group:0.90, near:0.76, far:0.62, gk:0.35 },
+  // 役割の適性。own=得意な役割 / group=同じポジション(左右の反対側・CF⇔ST もここ。→docs/17)/ near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
+  apt:{ own:1.0, group:0.90, near:0.76, far:0.62, gk:0.35 },
   // 盤面でカードを置ける範囲
   board:{ minH:0.14, maxH:0.94, minX:5, maxX:95, gkH:0.05 },
   // GK(→docs/02 §2.3a)。ペナルティエリアの中だけ動かせる。
@@ -4310,14 +4310,14 @@ function posAt(h,x){
 function roleAt(h,x){ return baseRole(posAt(h,x)); }
 /**
  * 役割の適性。role は細かいポジションでも束ねた役割でもよい。
- * 得意な役割 = own / 同じ役割の反対側・CF⇔ST = side / 同じポジション = group / 隣 = near / DF⇔FW = far
+ * 得意な役割 = own / 同じポジション = group(反対側・CF⇔ST もここ。両側が得意な選手は両方を得意な役割に持つ)/ 隣 = near / DF⇔FW = far
  */
 function aptOf(card,role){
   const A=TUNING.apt;
   if(role==="GK"||card.pos==="GK")return (role==="GK"&&card.pos==="GK")?A.own:A.gk;
   if(card.roles.includes(role))return A.own;
   const b=baseRole(role);
-  if(card.roles.some(r=>baseRole(r)===b))return role===b?A.own:A.side;
+  if(role===b&&card.roles.some(r=>baseRole(r)===b))return A.own;   // 束ねた役割で聞かれたとき(左右は問わない)
   const g=GROUP_OF[role];
   if(g===card.pos)return A.group;
   const o={ DF:0, MF:1, FW:2 };
@@ -8259,14 +8259,14 @@ function logoSvg(anim){
      カードの裏   … 番号・名前・得意な役割・ピッチの適性マップ・能力・スキル・KP・キャプテンシー
    ========================================================================= */
 
-const APT_FILL={ own:["#2fb26a",0.5], side:["#2fb26a",0.26], group:["#d4a843",0.32], near:["#9aa3b5",0.16] };
+const APT_FILL={ own:["#2fb26a",0.5], group:["#d4a843",0.32], near:["#9aa3b5",0.16] };
 /** 役割の区分(h … 0 = 自ゴール 〜 1、x … 0 〜 100)。roleAt の境目と同じ */
 function aptZones(card){
   const Z=TUNING.zone, A=TUNING.apt, out=[];
   // 細かいポジション(→docs/17)。[下, 上, 中央, 左, 右]
   const rows=[[0.15,Z.dfH,"CB","LSB","RSB"],[Z.dfH,Z.dmfH,"DMF","LMF","RMF"],[Z.dmfH,Z.omfH,"CMF","LMF","RMF"],[Z.omfH,Z.fwH,"OMF","LMF","RMF"],
     [Z.fwH,Z.cfH,"ST","LWG","RWG"],[Z.cfH,0.97,"CF","LWG","RWG"]];
-  const lv=role=>{ const a=aptOf(card,role); return a>=A.own?"own":a>=A.side?"side":a>=A.group?"group":a>=A.near?"near":null; };
+  const lv=role=>{ const a=aptOf(card,role); return a>=A.own?"own":a>=A.group?"group":a>=A.near?"near":null; };
   if(card.pos==="GK")out.push({ h0:0.02, h1:0.15, x0:30, x1:70, role:"GK", lv:"own" });
   else for(const [h0,h1,mid,l,r] of rows){
     out.push({ h0, h1, x0:0, x1:Z.wide, role:l, lv:lv(l) });

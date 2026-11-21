@@ -38,14 +38,14 @@ function posAt(h,x){
 function roleAt(h,x){ return baseRole(posAt(h,x)); }
 /**
  * 役割の適性。role は細かいポジションでも束ねた役割でもよい。
- * 得意な役割 = own / 同じ役割の反対側・CF⇔ST = side / 同じポジション = group / 隣 = near / DF⇔FW = far
+ * 得意な役割 = own / 同じポジション = group(反対側・CF⇔ST もここ。両側が得意な選手は両方を得意な役割に持つ)/ 隣 = near / DF⇔FW = far
  */
 function aptOf(card,role){
   const A=TUNING.apt;
   if(role==="GK"||card.pos==="GK")return (role==="GK"&&card.pos==="GK")?A.own:A.gk;
   if(card.roles.includes(role))return A.own;
   const b=baseRole(role);
-  if(card.roles.some(r=>baseRole(r)===b))return role===b?A.own:A.side;
+  if(role===b&&card.roles.some(r=>baseRole(r)===b))return A.own;   // 束ねた役割で聞かれたとき(左右は問わない)
   const g=GROUP_OF[role];
   if(g===card.pos)return A.group;
   const o={ DF:0, MF:1, FW:2 };

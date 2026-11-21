@@ -30,12 +30,13 @@ wcc_f も同じ形: カードの `pos` がメイン、`roles`(得意な役割)�
 | | 適性 | 例 |
 |---|---|---|
 | 得意な役割 | own 1.00 | RWG の選手を RWG に |
-| **同じ役割の反対側・CF⇔ST** | **side 0.95**(新しい段) | RWG の選手を LWG に / CF の選手を ST に |
-| 同じポジション | group 0.90 | RWG の選手を CF に |
+| 同じポジション | group 0.90 | RWG の選手を LWG・CF に / CF の選手を ST に |
 | 隣のポジション | near 0.76 | |
 | DF⇔FW | far 0.62 | |
 
-- 盤面の役割の札の文字色・SQUAD の ◎○△×・カードの裏の適性マップ(反対側は薄い緑)に出る
+- **反対側の段は作らない**(決定 2026-11-21)。0.95 では差が小さく采配に出ないため。反対側の起用は「同じポジション」と同じ
+- **片側だけ得意か、両側が得意かは選手の個性**: 両側が得意な選手は、得意な役割に両方(例 `LWG/RWG`)を持つ
+- 盤面の役割の札の文字色・SQUAD の ◎○△×・カードの裏の適性マップに出る
 - 試合の動き(手札など)は、左右を束ねた役割で決める(`baseRole`: LSB・RSB → SB、LMF・RMF → SMF、LWG・RWG → WG、ST → CF)。動きは変えず、適性だけが変わる
 
 ## 17.4 選手データ
@@ -48,7 +49,7 @@ wcc_f も同じ形: カードの `pos` がメイン、`roles`(得意な役割)�
 
 | やること | 場所 |
 |---|---|
-| 区切り・適性の段 | `TUNING.zone.cfH`・`TUNING.apt.side` |
+| 区切り | `TUNING.zone.cfH` |
 | 細かいポジション・束ね | `data.js` の `GROUP_OF` / `BASE_ROLE` / `baseRole` / `LR_ROLE` / `sidedRoles` |
 | 位置 → ポジション・適性 | `engine.js` の `posAt` / `roleAt`(束ね)/ `aptOf`。選手は `p.pos`(細かい)と `p.role`(束ね) |
 | 表示 | 盤面(`board.js`・`clubui.js` の `sqRole`)、カードの裏の適性マップ(`cardback.js` の `aptZones`) |

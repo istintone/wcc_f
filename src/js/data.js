@@ -18,8 +18,8 @@ const TUNING={
   // カードの位置 → 役割(→docs/02 §2.3)
   //   cfH … FW の高さのうち、ここより前が CF、後ろが ST(→docs/17。左右の端は高さにかかわらず LWG / RWG)
   zone:{ dfH:0.36, fwH:0.68, wide:27, dmfH:0.47, omfH:0.58, cfH:0.80 },
-  // 役割の適性。own=得意な役割 / side=同じ役割の反対の足・CF⇔ST(→docs/17)/ group=同じポジション / near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
-  apt:{ own:1.0, side:0.95, group:0.90, near:0.76, far:0.62, gk:0.35 },
+  // 役割の適性。own=得意な役割 / group=同じポジション(左右の反対側・CF⇔ST もここ。→docs/17)/ near=隣 / far=DF↔FW / gk=GKとフィールドの取り違え
+  apt:{ own:1.0, group:0.90, near:0.76, far:0.62, gk:0.35 },
   // 盤面でカードを置ける範囲
   board:{ minH:0.14, maxH:0.94, minX:5, maxX:95, gkH:0.05 },
   // GK(→docs/02 §2.3a)。ペナルティエリアの中だけ動かせる。
