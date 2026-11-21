@@ -96,11 +96,12 @@ function chipsHtml(ids,on,info,act){
  * コミュニケーションの相手を選ぶ盤面(本家と同じくフォーメーションのまま。→docs/08 §8.12)。
  * 先発は SQUAD の既定の位置、控えは下の列。駒には次の★までの進みなど(info)を添える
  */
-function commBoardHtml(ids,on,info){
+function commBoardHtml(ids,on,info,stars){
   const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
   const first=CL.comm==="lounge"&&on.length?on[0]:null;   // ラウンジで1人目を選んだら、その人との線と前兆だけを見せる(→docs/07 §7.14)
   const o=id=>{ const g=S.g.pl[id];
-    return { act:"pick", info:info(g,id), hi:on.includes(id), sign:first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm) }; };
+    return { act:"pick", info:info(g,id), hi:on.includes(id), sign:first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm),
+      stars:stars!==undefined?stars:CL.comm==="ind"?"is":CL.comm==="meet"?"ss":null }; };
   const bench=S.sq.slice(11).filter(id=>ids.includes(id));
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     (first&&L[first]&&xi.includes(first)?loungeLinksSvg(first,xi.filter(id=>ids.includes(id)),L):'')+
@@ -195,7 +196,7 @@ function trainEffectHtml(part){
   if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, delta, cls:"tf-radar" })+'</div>';
   if(part==="chips")return '<div class="tf-chips">'+chips+(pv?'<span class="tf-leg"><i class="tf-fit"></i>よく伸びる選手</span>':'')+'</div>';
   return '<section class="tr-fx">'+
-    commBoardHtml(Object.keys(S.g.pl),fit,info)+'</section>';
+    commBoardHtml(Object.keys(S.g.pl),fit,info,"is")+'</section>';
 }
 /** 休憩の見通し(→docs/14 §14.37): 盤面に選手ごとの疲労(今 → 休憩のあと)。疲れている選手は暗く(試合中と同じ) */
 function restEffectHtml(){
@@ -203,7 +204,7 @@ function restEffectHtml(){
   const info=(g,id)=>{ const b=T.g.pl[id]||g, f0=Math.round(g.fat*100), f1=Math.round(b.fat*100);
     return '<b class="'+(g.fat>=TUNING.grow.int.tiredSign?'fw':'')+'">疲'+f0+'%</b>'+(f1<f0?'→'+f1:'')+(b.mot>g.mot?' <i class="mu">調子↑</i>':''); };
   return '<section class="tr-fx rest-fx">'+
-    commBoardHtml(Object.keys(S.g.pl),[],info)+'</section>';
+    commBoardHtml(Object.keys(S.g.pl),[],info,null)+'</section>';
 }
 /** ① チーム練習 */
 function trainStepHtml(){
@@ -318,9 +319,12 @@ function sqRole(id,i,h,x){
   const role=i===0?"GK":roleAt(h,x), a=aptOf(CARDS[id],role);
   return { role, a, cls:aptClass(a), mark:APT_MARK(a) };
 }
+/** 札の下の★の列(→docs/14 §14.50)。kind … "is"(個人・黄)/ "ss"(特殊・青)。★5 は全部をピンク寄りの赤で光らせる */
+const starRow=(n,kind)=>'<span class="srow '+kind+(n>=5?' aw':'')+'">'+[0,1,2,3,4].map(k=>'<i'+(k<n?' class="on"':'')+'>★</i>').join("")+'</span>';
 /**
  * 盤面の札(SQUAD の作り)。o を渡すとコミュニケーション・チーム練習の盤面用(→docs/14 §14.38):
- *   o = { act:押したときの動き, info:下の段の小さな情報(HTML), hi:光らせる, sign:「！」を付ける }。引っ張りはしない
+ *   o = { act:押したときの動き, info:下の段の小さな情報(HTML), hi:光らせる, sign:「！」を付ける, stars:"both"|"is"|"ss"|null }。引っ張りはしない。
+ *   ★の列は SQUAD(o なし)では個人と特殊の両方
  */
 function sqTokenHtml(id,i,on,o){
   const S=CL.S, c=CARDS[id], g=S.g.pl[id], col=cardColor(c);
@@ -334,7 +338,7 @@ function sqTokenHtml(id,i,on,o){
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
-    (g&&g.is?'<i class="gs'+(g.is>=5?' aw':'')+'">★'+g.is+'</i>':'')+
+    (g&&(o?o.stars:"both")?'<span class="stars">'+((o?o.stars:"both")!=="ss"?starRow(g.is,"is"):'')+((o?o.stars:"both")!=="is"?starRow(g.ss,"ss"):'')+'</span>':'')+
     (S.kp===id&&on?'<i class="kpb">KP</i>':'')+   // 兆しの印は出さない(SQUAD では突破は関係ない →docs/14 §14.14)
     (S.roles&&S.roles.cap===id?'<i class="capb">C</i>':'')+
     (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
