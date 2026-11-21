@@ -415,8 +415,7 @@ function squadHtml(){
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
       '<small class="gg-leg2"><span>成長</span><span>戦力</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><i class="p"></i></small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
-      (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span><small>'+styleAxes(kst).map(a=>AXIS_ABBR[a]).join("・")+
-        (krk==="G"?' 金色':' が '+(krk==="B"?TUNING.rank.th[0]+' で A':krk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
+      (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
   // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
   h+='<div class="sq-3col">'+sqRolesHtml()+
