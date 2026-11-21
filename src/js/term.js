@@ -77,6 +77,8 @@ function facLevel(total){
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
   const T=TUNING.term, x=termFacts(S), title=TITLES.find(t=>t.ok(x));
+  // 任期の終わりで決着しなかった指令は「打ち切り」(年俸は動かない。→docs/22)
+  if(S.mis){ (S.ts.misLog||(S.ts.misLog=[])).push({ text:S.mis.text, ok:null, v:0 }); S.mis=null; }
   // クラブの期待(→docs/16 §16.3): 獲得賞金が期待値に届けば上乗せ。オーナーの指令の増減も足す
   const cp=S.cprof&&!S.cprof.legacy?S.cprof:null, O=TUNING.offer;
   const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target, bonus:0 }:null;

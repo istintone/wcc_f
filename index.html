@@ -2529,6 +2529,9 @@ body.th-bk #club .br-body{background:#11141f;color:var(--n-ink)}
 #club .br-note{margin:8px 0 0;font-size:10.5px}
 #club .br-col{justify-content:flex-start}
 #club .br-ps{flex:1;display:flex;flex-direction:column;justify-content:space-around}
+/* 出ないカップの枠を休んで節を進める(→docs/22) */
+#club .nx-skip{display:flex;flex-direction:column;align-items:center;width:100%;margin:6px 0 2px;padding:6px 10px;min-height:0;font-size:13px}
+#club .nx-skip small{font-size:10px;opacity:.75;font-weight:500}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -5989,7 +5992,18 @@ function applyResult(S,W,fx,res){
   if(S.played>=C.termLen&&!S.termOver){ S.termOver=true; endTerm(S); }
   return out;
 }
-/** 1周(43試合)の終わり。前の周の成績を残し、リーグと大会を作り直す */
+/**
+ * 出ない・出られないカップの枠を飛ばして、節を進める(→docs/22)。試合はしない・任期の試合は減らない。
+ * 周の終わりを越えたら、周の切り替え(昇格・降格の反映など)もする。返り値は知らせの行(飛ばせなければ null)
+ */
+function skipSlot(S,W){
+  const fx=nextFixture(S,W); if(!fx||fx.kind!=="friendly"||!fx.missed)return null;
+  const out=["⏭ "+COMPS[fx.missed].name+" の枠を休んで、節を進めた"];
+  S.slot++;
+  if(S.slot>=SCHED.length)endCycle(S,W,out);
+  return out;
+}
+/** 1周(43枠)の終わり。前の周の成績を残し、リーグと大会を作り直す */
 function endCycle(S,W,out){
   const rank=sortTable(S.league.table).indexOf("me")+1;
   const won=CUP_IDS.filter(id=>S.cups[id].st==="won");
@@ -6469,7 +6483,7 @@ function misAfterMatch(S,fx,out){
 function upcoming(S,n){
   const out=[], enter=new Set();
   for(let k=0;k<n;k++){
-    const no=S.played+1+k; if(no>TUNING.club.termLen)break;
+    const no=0;
     const slot=S.slot+k, wrap=slot>=SCHED.length, sl=slot%SCHED.length, cid=SCHED[sl][0], ix=SCHED[sl][1];
     const comp=COMPS[cid], label=cid==="LG"?"第"+(ix+1)+"節":comp.stages[ix][1];
     if(wrap){ out.push({ no, comp:cid, label, kind:cid==="LG"?"league":"cup", opp:null, home:true, note:"次の周(相手は未定)" }); continue; }
@@ -6489,7 +6503,10 @@ function upcoming(S,n){
     out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true,
       note:cup.st==="wait"?comp.name+"は条件待ち":cup.st==="in"?"":comp.name+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
   }
-  return out;
+  // 試合番号は、リーグと出場するカップにだけ振る(飛ばせる枠は試合を使わないかもしれない。→docs/22)。任期の終わりを越える分は出さない
+  let c=S.played; const res=[];
+  for(const r of out){ if(r.kind==="friendly"){ r.no="・"; r.note=(r.note?r.note+" ・ ":"")+"休んで節を進められる"; } else{ if(++c>TUNING.club.termLen)break; r.no=c; } res.push(r); }
+  return res;
 }
 
 /* =========================================================================
@@ -7534,6 +7551,8 @@ function facLevel(total){
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
   const T=TUNING.term, x=termFacts(S), title=TITLES.find(t=>t.ok(x));
+  // 任期の終わりで決着しなかった指令は「打ち切り」(年俸は動かない。→docs/22)
+  if(S.mis){ (S.ts.misLog||(S.ts.misLog=[])).push({ text:S.mis.text, ok:null, v:0 }); S.mis=null; }
   // クラブの期待(→docs/16 §16.3): 獲得賞金が期待値に届けば上乗せ。オーナーの指令の増減も足す
   const cp=S.cprof&&!S.cprof.legacy?S.cprof:null, O=TUNING.offer;
   const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target, bonus:0 }:null;
@@ -9818,7 +9837,7 @@ function termEndHtml(){
       return '<li><b>'+c.no+' '+nameOf(c)+'</b> 個人'+stars(g.is)+' 特殊'+stars(g.ss)+' <small>絆 '+g.bond+'</small></li>'; }).join("")+'</ul>'
     :'<p class="dim">絆を深めた選手がいない(コミュニケーションで呼ぶと絆が深まる)</p>')+
     '<p class="dim">ついてくる選手は★と能力を保ったまま、互いの連携も残る。ほかの選手は初めから。'+
-    '次の任期は、届いたオファー(称号と年俸で決まる)からクラブを選ぶ</p>'+
+    '次の任期は、届いたオファー(称号と年俸で決まる)からクラブを選ぶ。途中のリーグとカップは任期の終わりで打ち切り</p>'+
     '<button class="btn btn-main" data-act="term">次の任期へ</button></section>';
   return h;
 }
@@ -9901,6 +9920,11 @@ function nextTileHtml(){
     (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
     '<div class="nx-go"><span>'+go+'</span></div></section>';
+}
+/** 出ない・出られないカップの枠なら「休んで節を進める」(試合なし・任期の試合は減らない。→docs/22) */
+function skipHtml(){
+  const fx=CL.fx; if(!fx||fx.kind!=="friendly"||!fx.missed)return "";
+  return '<button class="btn btn-sub nx-skip" data-act="skipslot">この枠は休んで節を進める<small>試合なし ・ 任期の試合は減らない</small></button>';
 }
 /** 試合の結果の印(W/D/L) */
 const wdlOf=a=>{ const d=a.hg-a.ag, w=d>0||(d===0&&a.pso&&a.pso[0]>a.pso[1]), l=d<0||(d===0&&a.pso&&a.pso[0]<a.pso[1]); return w?"W":l?"L":"D"; };
@@ -10217,7 +10241,7 @@ function termExpHtml(e){
   if(!e.exp&&!(e.mis&&e.mis.length))return "";
   return '<h4>クラブの期待 <small>'+(e.club||"")+'</small></h4><ul class="texp">'+
     (e.exp?'<li class="'+(e.exp.ok?'ok':'ng')+'">獲得賞金 '+e.exp.prize+' / 期待 '+e.exp.target+'億 → '+(e.exp.ok?'達成 年俸 +'+e.exp.bonus+'億':'届かず')+'</li>':'')+
-    (e.mis||[]).map(m=>'<li class="'+(m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok?'達成 ':'失敗 ')+(m.v>=0?'+':'')+m.v+'億</li>').join("")+'</ul>';
+    (e.mis||[]).map(m=>'<li class="'+(m.ok===null?'':m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok===null?'任期の終わりで打ち切り':(m.ok?'達成 ':'失敗 ')+(m.v>=0?'+':'')+m.v+'億')+'</li>').join("")+'</ul>';
 }
 /* ---- 監督ライセンスと監督契約(→docs/10 §10.2 A) ---- */
 /** 監督ライセンス(初回だけ。あとから変えられない) */
@@ -10289,7 +10313,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+skipHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -10322,7 +10346,7 @@ function scheduleHtml(){
   if(!past.length&&!fut.length)return "";
   return '<section class="card sched"><h3>日程 <small>過去5試合と、この先10試合 ・ 第'+S.played+'/'+TUNING.club.termLen+'試合</small></h3><ol class="sd-list">'+
     past.map(schedRowHtml).join("")+fut.map(schedRowHtml).join("")+'</ol>'+
-    '<p class="dim">カップの相手は出場が決まったときに抽選。出られない大会の枠はフレンドリーマッチになる</p></section>';
+    '<p class="dim">カップの相手は出場が決まったときに抽選。出ない・出られない大会の枠は、フレンドリーマッチか、休んで節を進められる(・の行。任期の試合は減らない)</p></section>';
 }
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
@@ -10504,6 +10528,7 @@ function onClubClick(e){
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
+  if(act==="skipslot"){ const r=skipSlot(S,CL.W); if(r){ save(); showClub(true); infoBar(r); } return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="strat"){

@@ -1947,3 +1947,6 @@ body.th-bk #club .br-body{background:#11141f;color:var(--n-ink)}
 #club .br-note{margin:8px 0 0;font-size:10.5px}
 #club .br-col{justify-content:flex-start}
 #club .br-ps{flex:1;display:flex;flex-direction:column;justify-content:space-around}
+/* 出ないカップの枠を休んで節を進める(→docs/22) */
+#club .nx-skip{display:flex;flex-direction:column;align-items:center;width:100%;margin:6px 0 2px;padding:6px 10px;min-height:0;font-size:13px}
+#club .nx-skip small{font-size:10px;opacity:.75;font-weight:500}

@@ -61,6 +61,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 視察(準備の3段目。相手の SQUAD と秘書の報告)を変える | `clubui.js` の `scoutStepHtml` / `scoutReport` / `oppTokenHtml`。正本は docs/18 |
 | レギュラーリーグの Div 制(2nd・1st・Premier、昇格・降格、Div ごとのトロフィー)を変える | `TUNING.club.leagueTiers` / `promoteRank` / `relegateRank` / `premierGraph`、`club.js` の `divName` / `oppDefOf` / `applyResult`(第14節)/ `endCycle`。正本は docs/19 |
 | カップ戦のトーナメント(抽選・山・勝ち上がり・トーナメント表)を変える | `club.js` の `drawCup` / `brAdvance` / `brAfterGroups`、画面は `clubui.js` の `bracketModalHtml`。正本は docs/20 |
+| 日程(節)・カップの枠を休む・任期の打ち切りを変える | `club.js` の `skipSlot` / `upcoming` / `endCycle`、`term.js` の `endTerm`、画面は `clubui.js` の `skipHtml`。正本は docs/22 |
 | 育成の数値を変える | `data.js` の `TUNING.grow` → `clubtest.js` の ⑥。仕組みは `grow.js`、設計の正本は docs/05 §5.3〜5.6 |
 | 特殊練習を直す | `tools/train_source.txt` → `python tools/gen_trainings.py`(`trainings.js` は生成物。手で編集しない) |
 | 称号・年俸・引き継ぎを変える | `term.js` の `TITLES` と `data.js` の `TUNING.term` → `clubtest.js`。正本は docs/05 §5.8 |

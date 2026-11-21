@@ -262,6 +262,17 @@ function playOne(S,W,decline,opt){
   check("ICC: グループの1位は相手グループの2位と準決勝",sf.length===2&&sf[0].a==="me"&&ic.grp2.clubs.includes(sf[0].b)&&ic.opp[3]===sf[0].b);
 }
 
+{ // 日程(→docs/22): 出ない・出られないカップの枠は休んで節を進められる(任期の試合は減らない)。リーグは飛ばせない
+  console.log("  日程");
+  const S=E.newCareer(919), W=E.worldOf(S), on=S.sq.slice(0,11);
+  let fx=E.nextFixture(S,W); while(fx.kind!=="league"){ E.applyResult(S,W,fx,{ hg:0, ag:1, played:on, onPitch:on, starters:on }); fx=E.nextFixture(S,W); }
+  check("リーグの節は飛ばせない",E.skipSlot(S,W)===null);
+  let n=0; fx=E.nextFixture(S,W);
+  while(!(fx.kind==="friendly"&&fx.missed)&&n<50){ E.applyResult(S,W,fx,{ hg:0, ag:1, played:on, onPitch:on, starters:on }); fx=E.nextFixture(S,W); n++; }
+  const p0=S.played, s0=S.slot, r=E.skipSlot(S,W);
+  check("出ないカップの枠は休める(節は進み、試合数は増えない)",!!r&&S.played===p0&&S.slot===s0+1,r&&r[0]);
+}
+
 // ---------- ⑤ 棄権と保存 ----------
 console.log("⑤ 棄権と保存");
 {

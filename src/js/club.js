@@ -493,7 +493,18 @@ function applyResult(S,W,fx,res){
   if(S.played>=C.termLen&&!S.termOver){ S.termOver=true; endTerm(S); }
   return out;
 }
-/** 1周(43試合)の終わり。前の周の成績を残し、リーグと大会を作り直す */
+/**
+ * 出ない・出られないカップの枠を飛ばして、節を進める(→docs/22)。試合はしない・任期の試合は減らない。
+ * 周の終わりを越えたら、周の切り替え(昇格・降格の反映など)もする。返り値は知らせの行(飛ばせなければ null)
+ */
+function skipSlot(S,W){
+  const fx=nextFixture(S,W); if(!fx||fx.kind!=="friendly"||!fx.missed)return null;
+  const out=["⏭ "+COMPS[fx.missed].name+" の枠を休んで、節を進めた"];
+  S.slot++;
+  if(S.slot>=SCHED.length)endCycle(S,W,out);
+  return out;
+}
+/** 1周(43枠)の終わり。前の周の成績を残し、リーグと大会を作り直す */
 function endCycle(S,W,out){
   const rank=sortTable(S.league.table).indexOf("me")+1;
   const won=CUP_IDS.filter(id=>S.cups[id].st==="won");
@@ -973,7 +984,7 @@ function misAfterMatch(S,fx,out){
 function upcoming(S,n){
   const out=[], enter=new Set();
   for(let k=0;k<n;k++){
-    const no=S.played+1+k; if(no>TUNING.club.termLen)break;
+    const no=0;
     const slot=S.slot+k, wrap=slot>=SCHED.length, sl=slot%SCHED.length, cid=SCHED[sl][0], ix=SCHED[sl][1];
     const comp=COMPS[cid], label=cid==="LG"?"第"+(ix+1)+"節":comp.stages[ix][1];
     if(wrap){ out.push({ no, comp:cid, label, kind:cid==="LG"?"league":"cup", opp:null, home:true, note:"次の周(相手は未定)" }); continue; }
@@ -993,5 +1004,8 @@ function upcoming(S,n){
     out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true,
       note:cup.st==="wait"?comp.name+"は条件待ち":cup.st==="in"?"":comp.name+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
   }
-  return out;
+  // 試合番号は、リーグと出場するカップにだけ振る(飛ばせる枠は試合を使わないかもしれない。→docs/22)。任期の終わりを越える分は出さない
+  let c=S.played; const res=[];
+  for(const r of out){ if(r.kind==="friendly"){ r.no="・"; r.note=(r.note?r.note+" ・ ":"")+"休んで節を進められる"; } else{ if(++c>TUNING.club.termLen)break; r.no=c; } res.push(r); }
+  return res;
 }
