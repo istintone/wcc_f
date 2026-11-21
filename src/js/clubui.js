@@ -180,7 +180,7 @@ function trainEffectHtml(part){
   const S=CL.S, G=S.g.graph, R=TUNING.grow.graph, sel=CL.trSel!=null&&CL.int!==-1;
   const pv=sel?trainPreview(S,CL.trSel,CL.int):null, cur={}, aft={};
   for(const a in G){ cur[a]=G[a]/R.max; if(pv)aft[a]=pv.graph[a]/R.max; }
-  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#ffcf3a", fill:"#ffcf3a", op:0.18 }]:[]);
+  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#e01f3d", fill:"#e01f3d", op:0.16 }]:[]);
   const diff=pv?Object.keys(G).map(a=>({ a, d:pv.graph[a]-G[a] })).filter(x=>Math.abs(x.d)>=0.05):[];
   const chips=diff.length?diff.map(x=>'<span class="'+(x.d>0?'up':'dn')+'">'+AXIS_ABBR[x.a]+' '+(x.d>0?'+':'')+x.d.toFixed(1)+'</span>').join("")
     :'<span class="dim">'+(sel?'成長グラフは変わらない':'練習を選ぶと、伸びる軸(黄)と下がる軸が出る')+'</span>';

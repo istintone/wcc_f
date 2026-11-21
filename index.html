@@ -2399,6 +2399,14 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .sq-pitch .sq-lkrow .tgs>span{display:flex;align-items:center;gap:4px}
 #club .sq-pitch .sq-lkrow .tgs small{font-size:9px;color:rgba(255,255,255,.75);text-shadow:0 1px 1px rgba(0,0,0,.25)}
 #club .sq-pitch .sq-lkrow .tgs .lk-tg{margin-left:0}
+/* ---- チーム練習の効果は赤で(選んだ練習の赤とそろえる。金色は限界突破・黄金と紛らわしいため →docs/14 §14.52) ---- */
+.radar text.hu,body.th-bk .radar text.hu,.th-navy .radar text.hu{fill:#e01f3d;filter:drop-shadow(0 0 2px rgba(224,31,61,.75))}
+.radar text .dv.u,body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#e01f3d}
+#club .tr-fx .sqc.cmx.on{outline:3px solid #e01f3d;box-shadow:0 0 12px rgba(224,31,61,.75)}
+/* チーム練習・休憩の控えは★1段(か無し)なので詰めて、ピッチの高さに収める */
+#club .tr-fx .cm-board .sq-bench{gap:2px;padding:4px 2px}
+#club .tr-fx .cm-board .sq-bench .sqc.cmx{height:52px;margin-bottom:9px;grid-template-rows:13px 16px 11px 1fr}
+#club .rest-fx .cm-board .sq-bench .sqc.cmx{margin-bottom:4px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8988,7 +8996,7 @@ function trainEffectHtml(part){
   const S=CL.S, G=S.g.graph, R=TUNING.grow.graph, sel=CL.trSel!=null&&CL.int!==-1;
   const pv=sel?trainPreview(S,CL.trSel,CL.int):null, cur={}, aft={};
   for(const a in G){ cur[a]=G[a]/R.max; if(pv)aft[a]=pv.graph[a]/R.max; }
-  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#ffcf3a", fill:"#ffcf3a", op:0.18 }]:[]);
+  const sets=[{ v:cur, color:teamColor(myTeam(S)), op:0.3 }].concat(pv?[{ v:aft, color:"#e01f3d", fill:"#e01f3d", op:0.16 }]:[]);
   const diff=pv?Object.keys(G).map(a=>({ a, d:pv.graph[a]-G[a] })).filter(x=>Math.abs(x.d)>=0.05):[];
   const chips=diff.length?diff.map(x=>'<span class="'+(x.d>0?'up':'dn')+'">'+AXIS_ABBR[x.a]+' '+(x.d>0?'+':'')+x.d.toFixed(1)+'</span>').join("")
     :'<span class="dim">'+(sel?'成長グラフは変わらない':'練習を選ぶと、伸びる軸(黄)と下がる軸が出る')+'</span>';
