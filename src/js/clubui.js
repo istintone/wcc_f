@@ -403,7 +403,7 @@ function squadHtml(){
   const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst):null;
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="成長グラフと戦力を開く">'+
-      radarSvg([{ v:pv, color:"#8b9099", fill:"#8b9099", op:0.12 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
+      radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
       '<small class="gg-leg"><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長<i class="p"></i>戦力</small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span><small>'+styleAxes(kst).map(a=>AXIS_ABBR[a]).join("・")+
@@ -413,11 +413,12 @@ function squadHtml(){
   h+='<div class="sq-3col">'+sqRolesHtml()+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+(CL.noLinks?'':sqLinksSvg())+
-    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
+    on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+
+    // 連携線の見方とトグルは、ピッチの緑の部分の下に重ねる(→docs/14 §14.47)
+    '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
+      '<small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></div>'+'</div>'+
     '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
-    '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
-      '<small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></div>'+
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
   if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
@@ -461,7 +462,7 @@ function ggModalHtml(){
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
     '<header class="km-head"><span></span><b>成長グラフと戦力</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
     (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
-    '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#8b9099", fill:"#8b9099", op:0.14 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
+    '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#9aa1ad", fill:"#9aa1ad", op:0.2 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
       '<small class="gg-leg"><i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(練習で伸びる・KP のランクを決める) <i class="p"></i>戦力(選手の能力)</small></div>'+
     '<table class="gg-tbl"><tr><th></th><th>成長</th><th>戦力</th></tr>'+["O","D","S","P","R","C"].map(row).join("")+
       '<tr class="sum"><th>合計</th><td class="g"></td><td class="p"><b>OVR '+teamPower(S).toFixed(1)+'</b></td></tr></table>'+
