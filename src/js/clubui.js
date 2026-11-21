@@ -411,19 +411,16 @@ function squadHtml(){
   // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
   h+='<div class="sq-3col">'+sqRolesHtml()+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
-    '<i class="pm ga top"></i><i class="pm ga bot"></i>'+sqLinksSvg()+
+    '<i class="pm ga top"></i><i class="pm ga bot"></i>'+(CL.noLinks?'':sqLinksSvg())+
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
     '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
-    '<div class="sq-ctl sq-ctl-b"><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
+    '<div class="sq-lkrow"><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button><small>連携線</small>'+
+      '<span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span></div>'+
+    '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP '+(S.kp&&CARDS[S.kp]?'<b>'+CARDS[S.kp].no+'</b>':'—')+'</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
   if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
   h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
-  // 連携の数・戦力グラフ
-  const lv=[0,0,0,0]; Object.values(S.g.links).forEach(l=>lv[l.lv]++);
-  h+='<details class="card fold"><summary><h3>連携 <small>薄線 '+lv[1]+' ・ 太線 '+lv[2]+' ・ 黄金線 '+lv[3]+' ・ 線の見方</small></h3></summary><p class="lklg"><span><i class="l1"></i>薄線 '+lv[1]+'</span>'+
-    '<span><i class="l2"></i>太線 '+lv[2]+'</span><span><i class="l3"></i>黄金線 '+lv[3]+'</span><span><i class="omen"></i>黄金線の兆し</span><span><i class="soon"></i>次の段が近い(選手を選ぶと出る)</span>'+
-    ' <small>セットプレイ +'+Math.round(S.g.set*100)+'%</small></p></details>';
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   return h;
 }
@@ -434,6 +431,16 @@ const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
  * チームの成長グラフ(→docs/15)。六角形は向かい合う軸が対角。横に対ごとの値(MAX・金色)、下に KP のランク。
  * 金色が3つそろうとグラフ全体が金色
  */
+/** KP を選ぶフロート(→docs/14 §14.44)。先発でスタイルを持つ選手と、いまのランク。押すと KP にして閉じる */
+function kpModalHtml(){
+  const S=CL.S, xi=S.sq.slice(0,11).filter(id=>styleOfCard(CARDS[id]));
+  const rows=xi.map(id=>{ const c=CARDS[id], st=styleOfCard(c), rk=myStyleRank(S,st), g=S.g.pl[id];
+    return '<button class="kp-row'+(S.kp===id?' on':'')+'" data-act="kppick" data-id="'+id+'"><i class="no">'+c.no+'</i><span><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ 特★'+(g?g.ss:0)+(rareOn(S,id)?' ・ <em>RARE</em>':'')+'</small></span>'+
+      '<span class="st"><b>'+st.name+'</b><small>'+(st.scope==="team"?"全体":"個人")+' ・ '+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+'</small></span>'+rankChip(rk)+'</button>'; }).join("");
+  return '<div class="kmodal" data-act="kpclose"><div class="kmod-box kp-box" data-act="none">'+
+    '<header class="km-head"><span></span><b>KP を選ぶ</b><small>先発 '+xi.length+'人</small><span></span><button class="km-x" data-act="kpclose" aria-label="閉じる">×</button></header>'+
+    '<div class="kp-list">'+(rows||'<p class="dim">スタイルを持つ先発の選手がいない</p>')+'</div></div></div>';
+}
 /** 戦力(盤面の11人の能力の平均。軸ごと)。6つを足すと OVR(teamPower)になる */
 function teamAxisPower(S){
   const xi=S.sq.slice(0,11), out={ O:0, D:0, R:0, C:0, S:0, P:0 };
@@ -651,7 +658,7 @@ function cardHtml(id,size,extra){
     '</div>';
 }
 /** その選手のレアKP が、いま KP にすれば発動するか(★5) */
-const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5;
+const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5&&myStyleRank(S,styleOfCard(CARDS[id]))==="G";   // 発動は ★5 かつランク G(→docs/15 §15.6)
 /** カードの詳細に出すレアKP の行。★4以下のあいだは伏せる */
 function rareRowHtml(S,id){
   const R=rareOfCard(CARDS[id]); if(!R)return "";
@@ -1194,7 +1201,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
     :CL.tab==="club"?clubTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -1294,6 +1301,10 @@ function onClubClick(e){
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
     CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; if(nav)CL.kTo=".km-head"; showClub(true); }
+  else if(act==="kpopen"){ CL.kpOpen=true; showClub(true); }
+  else if(act==="kpclose"){ CL.kpOpen=false; showClub(true); }
+  else if(act==="kppick"){ const id=b.dataset.id; S.kp=id; CL.kpOpen=false; save(); showClub(true); if(rareOn(S,id))cutIn(CARDS[id],"H"); }
+  else if(act==="lktoggle"){ CL.noLinks=!CL.noLinks; showClub(true); }
   else if(act==="ggopen"){ CL.ggOpen=true; showClub(true); }
   else if(act==="ggclose"){ CL.ggOpen=false; showClub(true); }
   else if(act==="kclose"){ CL.sel=null; CL.kSwap=false; CL.kOut=null; showClub(true); }

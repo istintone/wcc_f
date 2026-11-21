@@ -1728,3 +1728,24 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .gg-tbl tr.sum td.p b{color:#ffd84a;font-size:17px}
 #club .gg-box .gr-kp{font-size:12px;margin-top:8px} #club .gg-box .gr-note{color:#9aa3b5;font-size:10.5px}
 #club .gg-leg i.g{opacity:.85} #club .sq-gbtn .gg-leg{gap:2px 4px}
+/* ---- SQUAD: 連携線のトグルと線の見方(盤面の下に1行)・KP ボタンと KP のフロート(→docs/14 §14.44) ---- */
+#club .sq-lkrow{display:flex;align-items:center;gap:6px;margin:5px 2px 0;font-size:10.5px}
+#club .sq-lkrow>small{font-weight:700;opacity:.8}
+#club .lk-tg{position:relative;flex:none;width:34px;height:18px;padding:0;border:0;border-radius:9px;background:#1f8a4c;cursor:pointer}
+#club .lk-tg i{position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+#club .lk-tg.off{background:#9aa0aa} #club .lk-tg.off i{left:18px}
+#club .sq-lkrow .lklg{gap:2px 8px;font-size:10px;margin-left:auto;opacity:.85}
+#club .sq-lkrow .lklg i{width:14px;margin-right:2px}
+#club .sq-ctl-b{grid-template-columns:auto 1fr auto}
+#club .sq-kpb{height:38px!important;min-height:0;padding:0 12px;display:inline-flex;align-items:center;gap:5px;font-family:var(--f-num);font-weight:800}
+#club .sq-kpb b{font-size:16px;color:var(--t-gold2,#b8892c)}
+#club .kp-list{display:flex;flex-direction:column;gap:5px;padding:8px}
+#club .kp-row{display:grid;grid-template-columns:30px minmax(0,1fr) minmax(0,1.1fr) auto;gap:6px;align-items:center;width:100%;padding:7px 8px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.04);color:#eef0f4;text-align:left;cursor:pointer;font:inherit}
+#club .kp-row.on{border-color:#e8b11c;box-shadow:inset 3px 0 0 #e8b11c;background:rgba(232,177,28,.1)}
+#club .kp-row .no{font-style:normal;font-family:var(--f-num);font-size:18px;font-weight:700;text-align:center}
+#club .kp-row span{display:flex;flex-direction:column;min-width:0}
+#club .kp-row span b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .kp-row span small{font-size:10px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .kp-row span small em{font-style:normal;color:#b99bff;font-weight:900}
+#club .kp-row .rk{font-size:13px;min-width:22px}
