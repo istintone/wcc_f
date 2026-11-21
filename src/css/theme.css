@@ -1749,3 +1749,6 @@ body.th-bk .radar text .dv.u,.th-navy .radar text .dv.u{fill:#ffcf3a}
 #club .kp-row span small{font-size:10px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #club .kp-row span small em{font-style:normal;color:#b99bff;font-weight:900}
 #club .kp-row .rk{font-size:13px;min-width:22px}
+#club .sq-lkrow .lklg{margin-left:0;margin-right:auto}
+#club .sq-ctl-b .sq-kpb,#club .sq-ctl-b .sq-auto,#club .sq-ctl-b .sq-formsel{height:38px!important;min-height:0!important;margin:0!important;box-sizing:border-box;align-self:stretch}
+#club .sq-kpb{font-family:inherit;font-size:13px;white-space:nowrap}

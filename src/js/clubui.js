@@ -364,7 +364,7 @@ function sqLinksSvg(){
 /** 選んでいる選手の板(役割と適性・育成・KP にする) */
 function sqDetailHtml(){
   const S=CL.S, id=CL.sqSel;
-  if(!id)return '<p class="sq-hint">カードを引っ張って位置を動かす ・ ほかの選手に重ねると入れ替え(控えからも)・ タップで選手の詳細と KP</p>';
+  if(!id)return '';   // 操作の案内は出さない(→docs/14 §14.45)
   const c=CARDS[id], g=S.g.pl[id], i=S.sq.indexOf(id), on=i<11, G0=TUNING.grow;
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c);
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
@@ -397,11 +397,12 @@ function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
   fillLayout(S);
   const on=S.sq.slice(0,11), bench=S.sq.slice(11);
+  // いちばん上に HOME と同じ見出し(クラブ名・エンブレム。チームの画面を撮るとき用 →docs/14 §14.45)
   // 上部はチーム練習と同じ形(→docs/14 §14.42): 左に成長グラフのレーダー、右に OVR・KP・フォーメーションと最適配置
   const G=S.g.graph, R=TUNING.grow.graph, gv={}; for(const a in G)gv[a]=G[a]/R.max;
   const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst):null;
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
-  let h='<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="成長グラフと戦力を開く">'+
+  let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="成長グラフと戦力を開く">'+
       radarSvg([{ v:pv, color:"#8b9099", fill:"#8b9099", op:0.12 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
       '<small class="gg-leg"><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長<i class="p"></i>戦力</small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
@@ -415,9 +416,9 @@ function squadHtml(){
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+'</div>'+
     '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
-    '<div class="sq-lkrow"><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button><small>連携線</small>'+
-      '<span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span></div>'+
-    '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP '+(S.kp&&CARDS[S.kp]?'<b>'+CARDS[S.kp].no+'</b>':'—')+'</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
+    '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
+      '<small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></div>'+
+    '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
   if(CL.roleMsg&&CL.roleMsg.length)h+='<p class="sq-rmsg">'+CL.roleMsg.join("<br>")+'</p>';
   h+=CL.roleSel?'<p class="sq-hint on">'+ROLE_LABEL[CL.roleSel]+' にする選手をピッチでタップ ・ もう一度 '+ROLE_LABEL[CL.roleSel]+' を押すと'+(CL.roleSel==="cap"?'任命を解く':'自動に戻す')+'</p>':sqDetailHtml();
