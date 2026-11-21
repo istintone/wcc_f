@@ -2485,6 +2485,14 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .sqc.tired.t1{filter:saturate(.6) brightness(.9)}
 #club .sqc.tired.t2{filter:saturate(.45) brightness(.78)}
 #club .sqc.tired.t3{filter:saturate(.3) brightness(.64)}
+/* ---- カードの詳細: 表面とポジションの図を大きく、能力のバーを短く(→docs/14 §14.58)。比べるとき(.cmp)は前の詰めた形のまま ---- */
+#club .kmod-box:not(.cmp) .cardback .cb-body.wf{grid-template-columns:112px 84px minmax(0,1fr);gap:8px;align-items:start}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-map svg{width:84px}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-map small{font-size:11px;font-weight:800;color:#dfe3ea;margin-top:4px}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-sts{gap:3px}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-st{grid-template-columns:24px minmax(0,1fr) 24px;gap:3px}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-st i{font-size:9.5px;letter-spacing:.02em}
+#club .kmod-box:not(.cmp) .cb-body.wf .cb-st b{font-size:12.5px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
