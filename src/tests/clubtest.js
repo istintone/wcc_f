@@ -294,7 +294,7 @@ console.log("⑤ 棄権と保存");
   const a=playOne(S,W), b=playOne(L,LW);
   check("読み込んだあとの続きが、読み込まなかった場合と同じ",
     a.fx.opp===b.fx.opp&&a.M.home.score===b.M.home.score&&a.M.away.score===b.M.away.score&&JSON.stringify(S)===JSON.stringify(L));
-  check("配置と KP が次の試合に引き継がれる",Object.keys(S.layout).length===11&&!!S.kp);
+  check("配置と KP が次の試合に引き継がれる",Object.keys(S.layout).length>=10&&!!S.kp,"配置 "+Object.keys(S.layout).length+"人(退場があれば10人)");
   box.v="{壊れたデータ"; check("壊れたセーブは無視する",E.loadCareer(box)===null);
   // 読めないセーブは上書きせず退避する(→clubui.js initCareer)
   const ms=E.memStore(); ms.setItem(E.SAVE_KEY,"{壊れたデータ");

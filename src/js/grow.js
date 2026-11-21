@@ -540,15 +540,16 @@ function afterMatchGrowth(S,fx,res){
     linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
   settleLinks(S,out);
+  // フレンドリーマッチの勝利で開花: **その試合に出場していれば**(途中出場・途中交代も可。スーパーサブの KP も。→docs/21 §21.5)
   if(fx.kind==="friendly"&&res.win){
-    for(const id of on){
+    for(const id of played){
       const g=S.g.pl[id];
       if(g.q&&rng()<I.awakeP)awaken(S,id,rng,out);
       if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
     }
     // 黄金線は1試合に1本まで(兆しのある組のうち、たねで1つ選ぶ)
     const cand=Object.keys(S.g.links).filter(k=>{ const l=S.g.links[k], p=k.split("|");
-      return l.gold&&l.lv===2&&on.includes(p[0])&&on.includes(p[1]); });
+      return l.gold&&l.lv===2&&played.includes(p[0])&&played.includes(p[1]); });
     if(cand.length&&rng()<L.goldP){
       const k=cand[Math.floor(rng()*cand.length)], l=S.g.links[k], p=k.split("|");
       l.lv=3; l.gold=false;
