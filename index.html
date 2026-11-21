@@ -2465,6 +2465,15 @@ body.th-bk #club .sq-gbtn .gg-leg2,.th-navy #club .sq-gbtn .gg-leg2{color:#dfe3e
 #club .scout-top .tf-g{position:relative}
 #club .scout-top .gg-leg2{position:absolute;left:0;bottom:0;display:grid;grid-template-columns:auto auto;column-gap:7px;row-gap:2px;justify-items:center;font-size:9.5px;font-weight:700;line-height:1.1}
 #club .scout-top .gg-leg2 i{display:block;width:20px;height:5px;border-radius:1px} #club .scout-top .gg-leg2 i.p{background:#5e6470;opacity:.7}
+/* 視察レポートのボタン(OVR の右)とフロート(→docs/18 §18.4) */
+#club .sc-ovr{display:flex;align-items:center;gap:8px}
+#club .sc-ovr .sc-rep{margin-left:auto;height:34px!important;min-height:0;padding:0 10px;font-size:12px;white-space:nowrap}
+#club .sc-rbox .scout-sec{margin:8px;background:#fffdf7;color:#121212}
+#club .sc-rbox .scout-sec ul{font-size:12.5px;line-height:1.65}
+#club .scout-board .cm-pitch{width:calc(100% - 116px)!important}
+#club .scout-board .cm-pitch .sqc.cmx{width:50px;height:60px}
+#club .sc-ovr .sc-rep{width:auto;max-width:none;flex:none;padding:0 12px;font-size:11.5px;clip-path:none;border-radius:2px}
+#club .sq-info{overflow:hidden}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9215,7 +9224,7 @@ function prepHtml(){
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
             :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
       (fx.canDecline?'<button class="lnk" data-act="decline">この大会を棄権する</button>':'')+
-    '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'');
+    '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
 /* ---- SQUAD: 既定の陣形(→docs/07 §7.10) ----
@@ -9892,8 +9901,17 @@ const facEffTxt=(k,lv)=>k==="med"?"疲労の残り ×"+TUNING.biz.medFat[lv]+"�
   :"経験 ×"+TUNING.biz.facK[lv];
 /* ---- 監督能力(→docs/10 §10.2 C)。準備の画面の下で、1試合に3つまでセットする ---- */
 /* ---- 視察(→docs/18)。コミュニケーションと戦略方針のあいだ。秘書が相手の SQUAD を整理して伝える ---- */
-const PERS_DESC={ steady:"いつもの戦い方を崩さない", quick:"試合の流れを見てすぐに手を打ってくる", stubborn:"自分たちのやり方を最後まで貫く",
-  attack:"同点でも終盤は前に出てくる", careful:"リードするとすぐに守りを固める" };
+// 監督の型を、秘書の言い回しで(→docs/18 §18.4)
+const PERS_DESC={ steady:"いつもの戦い方を崩さない、手堅い監督のようです", quick:"試合の流れを読むのが得意な監督のようです",
+  stubborn:"自分たちのやり方を最後まで貫く監督のようです", attack:"同点でも終盤は攻めてくる、強気な監督のようです",
+  careful:"リードするとすぐに守りを固める、慎重な監督のようです" };
+// 強い2つの軸の組 → チームの色(たとえ)
+const AX_STYLE={ OS:"速い攻撃", OP:"力強い攻撃", OR:"技術で崩す攻撃", OC:"前から奪って攻める", DP:"体を張った堅い守り", CD:"粘り強く奪う守備",
+  RS:"素早いパス回し", CR:"ボールを持つ時間が長い戦い", CS:"よく走り回る", CP:"球際の強さ", DS:"戻りの速い守り", DR:"落ち着いた組み立て",
+  OD:"攻守のバランス", PS:"体の強さと速さ", PR:"技術と強さ", DO:"攻守のバランス" };
+const AX_WORD={ O:"攻める力", D:"守る力", R:"ボールを持つ力", C:"奪う力", S:"速さ", P:"強さ" };
+const AX_ADVICE={ O:"積極的にいきましょう", D:"落ち着いて守りから入りましょう", R:"ボールを持って主導権を握りましょう",
+  C:"前から奪いにいきましょう", S:"スピードで振り切りましょう", P:"競り合いで勝負しましょう" };
 /** 軸ごとの戦力(先発の能力の平均。足すと OVR)。cards … 先発11枚 */
 function axisPowerOf(cards){
   const out={ O:0, D:0, R:0, C:0, S:0, P:0 };
@@ -9911,27 +9929,33 @@ function oppRoles(def){
   const cap=xi.slice().sort((a,b)=>capApt(b)-capApt(a)||b.age-a.age)[0];
   return { cap:cap&&cap.id, kp:def.kp, pk:(best(c=>c.off*1.2+c.tec)||{}).id, fk:(best(c=>c.tec*1.2+c.off*0.8)||{}).id, ck:(best(c=>c.tec+c.pow*0.6)||{}).id };
 }
-/** 秘書の報告(相手の情報を整理した数行) */
+/** 秘書の報告(相手の情報を整理した数行)。数字は出さず、たとえで伝える(→docs/18 §18.4) */
 function scoutReport(S,fx,def){
   const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
   const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length, ovM=teamPower(S);
-  const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]), lo=hi.slice().reverse();
+  const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]);
   const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
   const pick=(f,g)=>xi.filter(f).sort((a,b)=>g(b)-g(a))[0];
   const atk=pick(c=>c.pos!=="GK"&&c.pos!=="DF",c=>c.off*1.2+c.tec+c.spd), dfn=pick(c=>c.pos==="DF"||c.pos==="GK",c=>c.def*1.2+c.pow);
-  const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady;
+  const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, nm=c=>c?c.no+" "+nameOf(c):"—";
   const lines=[];
-  lines.push(teamNameOf(t)+"は強さ"+"★".repeat(tier)+"のクラブです。陣形は "+t.form+"、監督は"+pers.name+"型で、"+(PERS_DESC[def.pers]||"")+"タイプです。");
-  if(st)lines.push("KP は "+kc.no+" "+nameOf(kc)+" の「"+st.name+"」でランク "+rk+"。"+(def.rareOpp&&rareOfCard(kc)?"レアKP が発動するおそれがあります。":""));
-  const keys=[atk,dfn].filter(Boolean);
-  const OR=oppRoles(def), nm=id=>id&&CARDS[id]?CARDS[id].no+" "+nameOf(CARDS[id]):"—";
-  // 同じ選手が蹴るものはまとめる(「PK・FK は 9 ◯◯、CK は 10 ◯◯」)
-  const kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
-  lines.push("キャプテンは "+nm(OR.cap)+"。セットプレーは "+Object.keys(kick).map(id=>kick[id].join("・")+" は "+nm(id)).join("、")+" が蹴りそうです。");
-  if(keys.length)lines.push("要注意は "+keys.map(c=>c.pos+" "+c.no+" "+nameOf(c)+"(合計 "+Math.round(cardTotal(c))+")").join("、")+" です。");
-  lines.push("相手は "+AXIS_ABBR[hi[0]]+"・"+AXIS_ABBR[hi[1]]+" が強く、"+AXIS_ABBR[lo[0]]+" が手薄です。"+
-    (mpw[lo[0]]>opw[lo[0]]?"こちらは "+AXIS_ABBR[lo[0]]+" で上回っています。":""));
-  lines.push("総合力は 相手 "+ovO.toFixed(1)+" / こちら "+ovM.toFixed(1)+"。"+(ovM>=ovO+2?"力では上です。油断しなければ勝てます。":ovO>=ovM+2?"格上です。KP と指示で崩しましょう。":"ほぼ互角です。"));
+  // チームの色(強い2つの軸)
+  const key=[hi[0],hi[1]].sort().join(""), sty=AX_STYLE[key]||AX_STYLE[[hi[1],hi[0]].join("")]||"まとまった戦い";
+  lines.push(sty+"が得意("+AXIS_ABBR[hi[0]]+" と "+AXIS_ABBR[hi[1]]+" が高い)なチームです。");
+  // こちらが上回る軸
+  const adv=ax.filter(a=>mpw[a]>opw[a]+0.3).sort((a,b)=>(mpw[b]-opw[b])-(mpw[a]-opw[a]))[0];
+  lines.push(adv?AX_WORD[adv]+"("+AXIS_ABBR[adv]+")はこちらのほうが上なので、"+AX_ADVICE[adv]+"。"
+    :"どの面でも相手が一枚上手のようです。KP と指示で揺さぶりましょう。");
+  lines.push("相手監督は"+(PERS_DESC[def.pers]||"")+"。");
+  // KP のスタイル(何をしてくるか)
+  if(st){ const g=String(st.get||"").split(/[。、]/)[0];
+    lines.push(st.scope==="team"?"相手はチームで「"+g+"」戦い方("+st.name+")をしてきそうです。"
+      :"相手の "+nm(kc)+" の"+g+"("+st.name+")に警戒しましょう。");
+    if(def.rareOpp&&rareOfCard(kc))lines.push(nm(kc)+" は特別な力を秘めているようです。目を離さないでください。"); }
+  if(atk||dfn)lines.push((atk?"攻めは "+nm(atk):"")+(atk&&dfn?"、":"")+(dfn?"守りは "+nm(dfn):"")+" がチームの柱のようです。");
+  const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
+  lines.push("まとめ役は "+nm(CARDS[OR.cap])+"。セットプレーは "+Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、")+" が蹴りそうです。");
+  lines.push(ovM>=ovO+2?"全体の力はこちらが上回っています。落ち着いていけば勝てるはずです。":ovO>=ovM+2?"格上の相手です。粘り強く、チャンスを待ちましょう。":"力は互角です。細かい采配が勝負を分けそうです。");
   return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
@@ -9947,17 +9971,24 @@ function scoutStepHtml(){
   const v1={}, v2={}; for(const a in R.opw){ v1[a]=R.opw[a]/STAT_MAX; v2[a]=R.mpw[a]/STAT_MAX; }
   const team=Object.assign({ id:fx.opp },t);
   return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+
-    '<section class="sec scout-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section>'+
+
     '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(R.tier)+' ・ '+t.form+' ・ 監督 '+R.pers.name+'型</small></div></div>'+
-      '<div class="sq-ovr"><small>OVR</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
+      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+R.ovO.toFixed(1)+'</b><button class="btn btn-main sc-rep" data-act="screp">視察レポート</button></div>'+
       (R.st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(R.kc)+'</b><span>'+R.st.name+' '+rankChip(R.rk)+'</span></p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(s=>oppTokenHtml(s.card,s.h,s.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
 }
 /** 相手の選手のカードの裏(フロート) */
+/** 視察レポート(秘書の報告)のフロート */
+function scoutRepModalHtml(){
+  const S=CL.S, fx=CL.fx, def=makeTeamDef(fx.opp,true), R=scoutReport(S,fx,def), se=secOf(S);
+  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox" data-act="none">'+
+    '<header class="km-head"><span></span><b>視察レポート</b><small>'+teamNameOf(TEAMS[fx.opp])+'</small><span></span><button class="km-x" data-act="screpclose" aria-label="閉じる">×</button></header>'+
+    '<section class="sec scout-sec"><i class="sec-ic">SEC</i><div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section></div></div>';
+}
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";
   return '<div class="kmodal" data-act="oppclose"><div class="kmod-box" data-act="none">'+
@@ -10288,10 +10319,12 @@ function onClubClick(e){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
     CL.armPlay=false; CL.scout=true; CL.strat=false; CL.chat=null; CL.pick=[]; showClub(); return;   // コミュニケーションのあとは視察(→docs/18)
   }
-  if(act==="scoutgo"){ CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
+  if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }
   if(act==="oppclose"){ CL.oppSel=null; showClub(true); return; }
+  if(act==="screp"){ CL.scoutRep=true; showClub(true); return; }
+  if(act==="screpclose"){ CL.scoutRep=false; showClub(true); return; }
   if(act==="stratback"){ CL.strat=false; CL.scout=true; CL.mabOpen=false; CL.htOpen=false; showClub(); return; }
   if(act==="play"){ CL.strat=false; CL.scout=false; CL.mabOpen=false; CL.htOpen=false; startFixture(); }
   else if(act==="decline"){ declineCup(S,CL.fx.comp); CL.msg=["棄権した。この枠はフレンドリーマッチになる"]; save(); showClub(true); }
