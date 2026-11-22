@@ -872,3 +872,38 @@ const TRAITS={
 for(const k in TRAITS){ const [name,pos,grp,stat]=TRAITS[k];
   TAGS["t_"+k]={ name, scope:"player", kind:"trait", pol:1, dur:null, pos, grp, stat,
     desc:"特性("+pos.join("・")+" で出たとき): "+stat.map(x=>x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・")).join("、")+" +"+TUNING.tag.stat[stat[0].k] }; }
+
+/* ---- コンビ(→docs/23 §23.3b)----
+ * 条件: メンバーの全員のあいだが黄金線 + 全員の信頼度が combo.trust 以上 + その軸が成長グラフで金色 + ポジションの型が合う(特別なコンビは決められたカードの組)
+ * 効き目: メンバーが**全員先発**のとき、メンバーの能力が上がる(型 = 中、特別 = 大)。1人が入れるコンビは1つ、チームに combo.max まで。付いたら任期の終わりまで */
+TUNING.tag.combo={ trust:2, max:2 };
+// 型の枠: 細かいポジションの集まり
+const COMBO_SLOT={ MF:["DMF","CMF","OMF","LMF","RMF"], DM:["DMF","CMF"], DMF:["DMF"], CMF:["CMF"], OS:["OMF","ST"], CB:["CB"], DF:["CB","LSB","RSB"],
+  FW:["CF","ST"], ATK:["LWG","RWG","OMF","ST","CF"], MA:["DMF","CMF","OMF","LMF","RMF","LWG","RWG","ST","CF"], GK:["GK"] };
+// [id, 名前, 枠(人数ぶん), 軸(どれか1つが金色), 能力]。上から順に探す(人数の多いもの・決めの細かいものが先)
+const COMBO_TYPES=[
+  ["soukan",  "創造の艦隊",           ["MA","MA","MA","MA","MA"], ["R"],     [{ st:["tec","off"], k:"m" }]],
+  ["aun",     "阿吽のパスルート",     ["DMF","CMF","OS"],         ["R"],     [{ st:["off","tec"], k:"s" }]],
+  ["shihai",  "支配のトライアングル", ["MF","MF","MF"],           ["R"],     [{ st:["tec"], k:"m" }]],
+  ["koushu",  "攻守連動の絆",         ["DM","DM","DM"],           ["D"],     [{ st:["def","sta"], k:"s" }]],
+  ["delta",   "デルタプレス",         ["MF","MF","MF"],           ["D"],     [{ st:["def"], k:"m" }]],
+  ["kekkai",  "結界のトライアングル", ["DMF","CB","CB"],          ["D"],     [{ st:["def"], k:"m" }]],
+  ["sanju",   "ゴール前の三銃士",     ["GK","CB","CB"],           ["D"],     [{ st:["def","pow"], k:"s" }]],
+  ["curtain", "鉄のカーテン",         ["DF","DF","DF"],           ["D"],     [{ st:["def"], k:"m" }]],
+  ["makai",   "魔の三角地帯",         ["DF","DF","DF"],           ["C"],     [{ st:["sta","def"], k:"s" }]],
+  ["akuma",   "悪魔の三重奏",         ["ATK","ATK","ATK"],        ["R"],     [{ st:["off","tec"], k:"s" }]],
+  ["kyougeki","挟撃",                 ["CB","CB"],                ["D"],     [{ st:["def"], k:"m" }]],
+  ["dlock",   "ダブルロック",         ["CB","CB"],                ["O","P"], [{ st:["def","pow"], k:"s" }]],
+  ["tagp",    "タッグパートナー",     ["DF","DF"],                ["P"],     [{ st:["pow"], k:"m" }]],
+  ["twin",    "ツインタワー",         ["FW","FW"],                ["O","P"], [{ st:["pow","off"], k:"s" }]],
+  ["dimpact", "ダブルインパクト",     ["FW","FW"],                ["O"],     [{ st:["off"], k:"m" }]],
+  ["dream",   "ドリームライン",       ["ATK","ATK"],              ["R"],     [{ st:["tec","spd"], k:"s" }]],
+  ["ishin",   "以心伝心の絆",         ["MF","FW"],                ["R"],     [{ st:["tec","off"], k:"s" }]]
+];
+const AX_STAT={ O:"off", D:"def", S:"spd", P:"pow", R:"tec", C:"sta" };
+/** コンビの定義(型と特別)を1つの形に: { id, name, n, slots | ids, axes, stat, special } */
+const COMBOS={};
+for(const [id,name,slots,axes,stat] of COMBO_TYPES)COMBOS["k_"+id]={ id:"k_"+id, name, n:slots.length, slots, axes, stat };
+if(typeof SPECIAL_COMBOS!=="undefined")for(const c of SPECIAL_COMBOS)
+  COMBOS[c.id]={ id:c.id, name:c.name, n:c.ids.length, ids:c.ids, axes:[c.ax], stat:[{ st:[AX_STAT[c.ax]], k:"l" }], special:true };
+const comboDesc=C=>(C.special?"特別なコンビ":"コンビ")+"(全員が先発のとき): "+C.stat.map(x=>x.st.map(s=>STAT_LABEL[s]).join("・")+" +"+TUNING.tag.stat[x.k]).join("、");

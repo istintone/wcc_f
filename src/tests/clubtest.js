@@ -825,5 +825,32 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     S4.coll[y.id]=1; E.swapSquad(S4,S4.sq[15],y.id);
     check("若手が加わると「ROOKIE」(絶好調で始まる)",(S4.g.pl[y.id].tags||[]).some(t=>t.id==="rookie")&&S4.g.pl[y.id].mot===4); }
 }
+// コンビ(→docs/23 §23.3b): 黄金線 + 信頼 + 軸の金色 + ポジションの型 / 特別なカードの組
+{
+  console.log("\n■ コンビ");
+  const mk=()=>{ const S=E.newCareer(4242); E.fillLayout(S); return S; };
+  const link=(S,ids)=>{ for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++)S.g.links[[ids[i],ids[j]].sort().join("|")]={ lv:3, exp:0, gold:false }; };
+  { const S=mk(), xi=S.sq.slice(0,11), role=E.xiRoles(S), mf=xi.filter(id=>/MF/.test(role[id])), o=[];
+    mf.forEach(id=>{ S.g.pl[id].bond=99; }); link(S,mf); S.g.gold={ R:true }; E.comboCheck(S,o);
+    const c=S.g.combos[0], d=E.playerDef(S,{ kind:"friendly" });
+    check("MF 3人が黄金線・信頼・TEC の金色でコンビになる(全員先発のとき能力が上がる)",!!c&&c.ids.length===3&&d.xi.find(s=>s.card.id===mf[0]).card.tec>E.growCard(S,E.CARDS[mf[0]]).tec,c&&E.COMBOS[c.id].name);
+    S.sq=[S.sq[0]].concat(S.sq.slice(1).filter(x=>x!==mf[0]),[mf[0]]); const d2=E.playerDef(S,{ kind:"friendly" }), m2=d2.xi.find(s=>s.card.id===mf[1]);
+    check("メンバーが1人でも先発にいなければ、コンビの能力は乗らない",!m2||m2.card.tec===E.growCard(S,E.CARDS[mf[1]]).tec); }
+  { const S=mk(), xi=S.sq.slice(0,11), role=E.xiRoles(S), mf=xi.filter(id=>/MF/.test(role[id])), o=[];
+    mf.forEach(id=>{ S.g.pl[id].bond=99; }); link(S,mf); S.g.gold={ O:true }; E.comboCheck(S,o);
+    check("軸が金色でなければ(TEC の代わりに OFE)、MF の支配系のコンビは付かない",!(S.g.combos||[]).some(c=>/^k_(aun|shihai|soukan)/.test(c.id))); }
+  { const S=mk(), xi=S.sq.slice(0,11), role=E.xiRoles(S), mf=xi.filter(id=>/MF/.test(role[id])), o=[];
+    link(S,mf); S.g.gold={ R:true }; E.comboCheck(S,o);
+    check("信頼度が足りなければ付かない",!(S.g.combos||[]).length); }
+  { const S=E.newCareer(1), sp=E.SPECIAL_COMBOS[0], o=[];
+    S.sq=[S.sq[0]].concat(sp.ids,S.sq.slice(1).filter(x=>!sp.ids.includes(x))).slice(0,16); sp.ids.forEach(id=>{ S.coll[id]=1; });
+    S.layout={}; E.fillLayout(S); S.g=E.newGrowth(S.sq); sp.ids.forEach(id=>{ S.g.pl[id].bond=99; }); link(S,sp.ids); S.g.gold={ [sp.ax]:true };
+    E.comboCheck(S,o);
+    check("特別なコンビ: 決められたカードの組がそろうと、型より強いコンビ(+3)",(S.g.combos||[]).some(c=>c.id===sp.id)&&E.COMBOS[sp.id].stat[0].k==="l",sp.name); }
+  { const S=E.newCareer(2), od=E.oppDefOf(S,{ opp:"CAT", kind:"cup" });
+    check("相手: 特別なコンビのカードがそろっていれば、そのコンビが効く",(od.combos||[]).some(c=>E.COMBOS[c.id].special),(od.combos||[]).map(c=>E.COMBOS[c.id].name).join(",")); }
+  { const S=mk(); S.g.combos=[{ id:"k_kyougeki", ids:[S.sq[2],S.sq[3]] }];
+    check("コンビは任期の終わりで消える(新しい育成は空)",!(E.newGrowth(S.sq).combos||[]).length); }
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

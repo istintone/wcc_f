@@ -938,6 +938,7 @@ function tagsAfterMatch(S,fx,res,out){
   if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
   nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
+  comboCheck(S,out);                            // コンビ(→docs/23 §23.3b)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -949,12 +950,17 @@ function teamTagsView(S){
   if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
     f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
   for(const id in fac)v.push({ id, left:fac[id].n+"試合", desc:"スポンサーの報酬: "+fac[id].eff.join("・") });
-  return v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
+  const out=v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
+  for(const c of g.combos||[]){ const C=COMBOS[c.id]; if(C)out.splice(out.filter(x=>x.title).length,0,{ id:"cb:"+c.id, name:C.name, pol:1, combo:true, left:"任期中",
+    desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(C) }); }
+  return out;
 }
 /** 選手のタグ(見せる用)。第3段から付く */
 function playerTagsView(S,id){
-  const g=S.g&&S.g.pl[id]; if(!g||!g.tags)return [];
-  return g.tags.filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" }));
+  const g=S.g&&S.g.pl[id]; if(!g)return [];
+  const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
+    desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
+  return cb.concat((g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -1103,13 +1109,16 @@ function answerProposal(S,i){
  * 称号と選手のタグの能力の上乗せを、試合に渡すカードに足す(写しを作る。1つの能力は statCap、MVP がいれば statCapX まで)。
  * S … 自チームのとき(選手のタグ・特性も足す)。fx … 決勝の判定
  */
-function applyTagStats(def,tagIds,S,fx){
+function applyTagStats(def,tagIds,S,fx,combos){
   const T=TUNING.tag, xiIds=def.xi.map(s=>s.card.id), nat=nationOf(xiIds), fin=isFinal(fx);
+  // コンビ: メンバーが全員先発のとき、メンバーに(→docs/23 §23.3b)
+  const cmb={}; for(const c of combos||(S&&S.g.combos)||[])if(COMBOS[c.id]&&c.ids.every(x=>xiIds.includes(x)))c.ids.forEach(x=>{ (cmb[x]=cmb[x]||[]).push(COMBOS[c.id]); });
   const team=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
   const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
   const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
     const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k]; };
     for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
+    if(start)for(const C of cmb[c.id]||[])for(const x of C.stat)put(x);
     if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
       if(P.kind==="trait"&&!(start&&role&&P.pos.includes(role)))continue;
       if(P.capX)cap=T.statCapX;
@@ -1120,4 +1129,64 @@ function applyTagStats(def,tagIds,S,fx){
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));
   return def;
+}
+
+/* ---- コンビ(→docs/23 §23.3b) ---- */
+/** 先発のポジション(盤面の位置。無ければ陣形の枠) */
+function xiRoles(S){
+  const f=FORMS[S.form]||[], r={};
+  S.sq.slice(0,11).forEach((id,i)=>{ const l=(S.layout&&S.layout[id])||f[i]; r[id]=i===0?"GK":l?posAt(l[0],l[1]):null; });
+  return r;
+}
+/** ids の並びを、型の枠に1人ずつ当てられるか(人数は5人まで。順列で試す) */
+function fitSlots(ids,slots,role){
+  const go=(k,used)=>{ if(k===slots.length)return true;
+    for(let i=0;i<ids.length;i++)if(!used[i]&&role[ids[i]]&&COMBO_SLOT[slots[k]].includes(role[ids[i]])){ used[i]=true; if(go(k+1,used))return true; used[i]=false; }
+    return false; };
+  return go(0,[]);
+}
+/**
+ * コンビを探す。xi … 先発の id、role … id → ポジション、linked(a,b) … 2人がつながっているか、axOk(axes) … 軸が金色か、have … すでにあるコンビ
+ * 特別なコンビ → 型のコンビ(人数の多い順)。1人は1つのコンビまで、全部で max まで
+ */
+function findCombos(xi,role,linked,axOk,have,max){
+  const res=(have||[]).slice(), used=new Set(res.flatMap(c=>c.ids));
+  const clique=ids=>ids.every((a,i)=>ids.slice(i+1).every(b=>linked(a,b)));
+  const free=()=>xi.filter(id=>!used.has(id));
+  const take=(C,ids)=>{ res.push({ id:C.id, ids }); ids.forEach(x=>used.add(x)); };
+  for(const C of Object.values(COMBOS).filter(c=>c.special)){
+    if(res.length>=max)break; if(res.some(r=>r.id===C.id))continue;
+    if(C.ids.every(x=>xi.includes(x)&&!used.has(x))&&clique(C.ids)&&axOk(C.axes))take(C,C.ids.slice());
+  }
+  const kinds=Object.values(COMBOS).filter(c=>!c.special).sort((a,b)=>b.n-a.n);
+  const pick=(pool,n,from,cur,C)=>{ if(cur.length===n)return clique(cur)&&fitSlots(cur,C.slots,role)?cur.slice():null;
+    for(let i=from;i<pool.length;i++){ if(cur.length&&!cur.every(a=>linked(a,pool[i])))continue; cur.push(pool[i]); const r=pick(pool,n,i+1,cur,C); if(r)return r; cur.pop(); }
+    return null; };
+  for(const C of kinds){
+    if(res.length>=max)break; if(res.some(r=>r.id===C.id)||!axOk(C.axes))continue;
+    const pool=free().filter(id=>role[id]&&C.slots.some(s=>COMBO_SLOT[s].includes(role[id])));
+    if(pool.length<C.n)continue;
+    const got=pick(pool,C.n,0,[],C); if(got)take(C,got);
+  }
+  return res;
+}
+/** 試合のあとにコンビができたか見る(自チーム)。黄金線 + 信頼 + 軸の金色 + 型 */
+function comboCheck(S,out){
+  const T=TUNING.tag.combo, xi=S.sq.slice(0,11), have=S.g.combos||(S.g.combos=[]);
+  if(have.length>=T.max)return;
+  const trust=id=>S.g.pl[id]&&trustLv(S.g.pl[id])>=T.trust;
+  const linked=(a,b)=>trust(a)&&trust(b)&&linkOf(S,a,b).lv>=3;
+  const res=findCombos(xi,xiRoles(S),linked,ax=>ax.some(a=>S.g.gold[a]),have,T.max);
+  for(const c of res.slice(have.length)){
+    const C=COMBOS[c.id]; have.push(c);
+    out.push("🏷 "+c.ids.map(x=>nameOf(CARDS[x])).join("・")+" のコンビ「"+C.name+"」が生まれた ― "+comboDesc(C));
+  }
+}
+/** 相手のコンビ: 特別なコンビはカードがそろえば。型のコンビは段4以上・Premier の相手が、黄金線と金色(強い側の軸)を持つとみなして */
+function oppCombos(def,strong,gold){
+  const xi=def.xi.map(s=>s.card.id), role={};
+  def.xi.forEach((s,i)=>{ role[s.card.id]=i===0?"GK":posAt(s.h,s.x); });
+  const sp=findCombos(xi,role,()=>true,()=>true,[],TUNING.tag.combo.max).filter(c=>COMBOS[c.id].special);
+  if(!strong)return sp;
+  return findCombos(xi,role,()=>true,ax=>ax.some(a=>gold[a]),sp,TUNING.tag.combo.max);
 }

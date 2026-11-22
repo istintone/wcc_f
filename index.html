@@ -2642,6 +2642,9 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 #club .pt-row{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 #club .pt-row .tg{padding:4px 8px}
 #club .ch-acts:has(.prop) .cr:not(.prop){background:rgba(127,127,127,.2);color:inherit;box-shadow:none;font-weight:700}
+/* コンビのタグ(→docs/23 §23.3b): 青緑 */
+#club .tg.cmb{background:linear-gradient(100deg,#0d6e6e,#2fc4b2 55%,#18a090);color:#04201d}
+#club .pt-row .tg.cmb{color:#04201d}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -3314,6 +3317,9 @@ body.th-wl #ovTitle{font-size:32px;letter-spacing:.1em}
 window.addEventListener("error",e=>{ document.documentElement.dataset.boot="err: "+(e.message||"?"); });
 </script>
 <script>
+/* 生成物。手で編集しない。 python tools/gen_combos.py が tools/combo_source.txt から書き出す(→docs/23 §23.3b)。 */
+const SPECIAL_COMBOS=[{"id": "sp01", "name": "若き指揮者たち", "ids": ["cat06", "cat07", "cat08"], "ax": "R"}, {"id": "sp02", "name": "閃光の三叉槍", "ids": ["cat09", "cat10", "cat11"], "ax": "O"}, {"id": "sp03", "name": "若き防壁", "ids": ["cat03", "cat04"], "ax": "D"}, {"id": "sp04", "name": "双璧", "ids": ["nld03", "nld04"], "ax": "D"}, {"id": "sp05", "name": "北風の三角錐", "ids": ["nld06", "nld07", "nld08"], "ax": "R"}, {"id": "sp06", "name": "巨塔の壁", "ids": ["msd03", "msd04"], "ax": "P"}, {"id": "sp07", "name": "三槍の舞", "ids": ["msd08", "msd09", "msd11"], "ax": "O"}, {"id": "sp08", "name": "鉄の中盤", "ids": ["mdb06", "mdb07", "mdb08"], "ax": "D"}, {"id": "sp09", "name": "疾風の三騎", "ids": ["mdb09", "mdb10", "mdb11"], "ax": "S"}, {"id": "sp10", "name": "三重の城壁", "ids": ["mib02", "mib03", "mib04"], "ax": "D"}, {"id": "sp11", "name": "双頭の竜", "ids": ["mib10", "mib11"], "ax": "O"}, {"id": "sp12", "name": "調律の三角形", "ids": ["par06", "par07", "par08"], "ax": "R"}, {"id": "sp13", "name": "王の矛", "ids": ["mur08", "mur09", "mur11"], "ax": "O"}, {"id": "sp14", "name": "鋼と閃き", "ids": ["mcb08", "mcb10"], "ax": "O"}];
+
 "use strict";
 /* =========================================================================
    wcc_f — データと数値
@@ -4188,6 +4194,41 @@ const TRAITS={
 for(const k in TRAITS){ const [name,pos,grp,stat]=TRAITS[k];
   TAGS["t_"+k]={ name, scope:"player", kind:"trait", pol:1, dur:null, pos, grp, stat,
     desc:"特性("+pos.join("・")+" で出たとき): "+stat.map(x=>x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・")).join("、")+" +"+TUNING.tag.stat[stat[0].k] }; }
+
+/* ---- コンビ(→docs/23 §23.3b)----
+ * 条件: メンバーの全員のあいだが黄金線 + 全員の信頼度が combo.trust 以上 + その軸が成長グラフで金色 + ポジションの型が合う(特別なコンビは決められたカードの組)
+ * 効き目: メンバーが**全員先発**のとき、メンバーの能力が上がる(型 = 中、特別 = 大)。1人が入れるコンビは1つ、チームに combo.max まで。付いたら任期の終わりまで */
+TUNING.tag.combo={ trust:2, max:2 };
+// 型の枠: 細かいポジションの集まり
+const COMBO_SLOT={ MF:["DMF","CMF","OMF","LMF","RMF"], DM:["DMF","CMF"], DMF:["DMF"], CMF:["CMF"], OS:["OMF","ST"], CB:["CB"], DF:["CB","LSB","RSB"],
+  FW:["CF","ST"], ATK:["LWG","RWG","OMF","ST","CF"], MA:["DMF","CMF","OMF","LMF","RMF","LWG","RWG","ST","CF"], GK:["GK"] };
+// [id, 名前, 枠(人数ぶん), 軸(どれか1つが金色), 能力]。上から順に探す(人数の多いもの・決めの細かいものが先)
+const COMBO_TYPES=[
+  ["soukan",  "創造の艦隊",           ["MA","MA","MA","MA","MA"], ["R"],     [{ st:["tec","off"], k:"m" }]],
+  ["aun",     "阿吽のパスルート",     ["DMF","CMF","OS"],         ["R"],     [{ st:["off","tec"], k:"s" }]],
+  ["shihai",  "支配のトライアングル", ["MF","MF","MF"],           ["R"],     [{ st:["tec"], k:"m" }]],
+  ["koushu",  "攻守連動の絆",         ["DM","DM","DM"],           ["D"],     [{ st:["def","sta"], k:"s" }]],
+  ["delta",   "デルタプレス",         ["MF","MF","MF"],           ["D"],     [{ st:["def"], k:"m" }]],
+  ["kekkai",  "結界のトライアングル", ["DMF","CB","CB"],          ["D"],     [{ st:["def"], k:"m" }]],
+  ["sanju",   "ゴール前の三銃士",     ["GK","CB","CB"],           ["D"],     [{ st:["def","pow"], k:"s" }]],
+  ["curtain", "鉄のカーテン",         ["DF","DF","DF"],           ["D"],     [{ st:["def"], k:"m" }]],
+  ["makai",   "魔の三角地帯",         ["DF","DF","DF"],           ["C"],     [{ st:["sta","def"], k:"s" }]],
+  ["akuma",   "悪魔の三重奏",         ["ATK","ATK","ATK"],        ["R"],     [{ st:["off","tec"], k:"s" }]],
+  ["kyougeki","挟撃",                 ["CB","CB"],                ["D"],     [{ st:["def"], k:"m" }]],
+  ["dlock",   "ダブルロック",         ["CB","CB"],                ["O","P"], [{ st:["def","pow"], k:"s" }]],
+  ["tagp",    "タッグパートナー",     ["DF","DF"],                ["P"],     [{ st:["pow"], k:"m" }]],
+  ["twin",    "ツインタワー",         ["FW","FW"],                ["O","P"], [{ st:["pow","off"], k:"s" }]],
+  ["dimpact", "ダブルインパクト",     ["FW","FW"],                ["O"],     [{ st:["off"], k:"m" }]],
+  ["dream",   "ドリームライン",       ["ATK","ATK"],              ["R"],     [{ st:["tec","spd"], k:"s" }]],
+  ["ishin",   "以心伝心の絆",         ["MF","FW"],                ["R"],     [{ st:["tec","off"], k:"s" }]]
+];
+const AX_STAT={ O:"off", D:"def", S:"spd", P:"pow", R:"tec", C:"sta" };
+/** コンビの定義(型と特別)を1つの形に: { id, name, n, slots | ids, axes, stat, special } */
+const COMBOS={};
+for(const [id,name,slots,axes,stat] of COMBO_TYPES)COMBOS["k_"+id]={ id:"k_"+id, name, n:slots.length, slots, axes, stat };
+if(typeof SPECIAL_COMBOS!=="undefined")for(const c of SPECIAL_COMBOS)
+  COMBOS[c.id]={ id:c.id, name:c.name, n:c.ids.length, ids:c.ids, axes:[c.ax], stat:[{ st:[AX_STAT[c.ax]], k:"l" }], special:true };
+const comboDesc=C=>(C.special?"特別なコンビ":"コンビ")+"(全員が先発のとき): "+C.stat.map(x=>x.st.map(s=>STAT_LABEL[s]).join("・")+" +"+TUNING.tag.stat[x.k]).join("、");
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -5891,8 +5932,12 @@ function oppDefOf(S,fx){
     d.rareOpp=true;                                   // 育成レベル最大 = KP の特殊能力も ★5 相当(→docs/21 §21.5)
   }
   // 相手の称号(→docs/23 §23.7 の 4): 段4・5のクラブと Premier Div の相手はクラブの称号、先発が同じ国籍なら国の称号も
-  d.titles=oppTitleIds(d,tierOf(fx.opp)>=4||d.rareOpp);
-  return applyTitleStats(d,d.titles);
+  const strong=tierOf(fx.opp)>=4||d.rareOpp;
+  d.titles=oppTitleIds(d,strong);
+  // 相手のコンビ(→docs/23 §23.7 の 4): 特別なコンビはカードがそろえば、型は強い相手だけ(強い側の軸を金色とみなす)
+  const ct=d.titles.find(t=>/^c_/.test(t)), gold={}; if(ct)for(const a of ct.slice(2))gold[a]=true;
+  d.combos=oppCombos(d,strong,gold);
+  return applyTagStats(d,d.titles,null,fx,d.combos);
 }
 function newLeague(S,W){
   setLeagueName(S);
@@ -7889,6 +7934,7 @@ function tagsAfterMatch(S,fx,res,out){
   if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
   nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
+  comboCheck(S,out);                            // コンビ(→docs/23 §23.3b)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -7900,12 +7946,17 @@ function teamTagsView(S){
   if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
     f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
   for(const id in fac)v.push({ id, left:fac[id].n+"試合", desc:"スポンサーの報酬: "+fac[id].eff.join("・") });
-  return v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
+  const out=v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
+  for(const c of g.combos||[]){ const C=COMBOS[c.id]; if(C)out.splice(out.filter(x=>x.title).length,0,{ id:"cb:"+c.id, name:C.name, pol:1, combo:true, left:"任期中",
+    desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(C) }); }
+  return out;
 }
 /** 選手のタグ(見せる用)。第3段から付く */
 function playerTagsView(S,id){
-  const g=S.g&&S.g.pl[id]; if(!g||!g.tags)return [];
-  return g.tags.filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" }));
+  const g=S.g&&S.g.pl[id]; if(!g)return [];
+  const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
+    desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
+  return cb.concat((g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -8054,13 +8105,16 @@ function answerProposal(S,i){
  * 称号と選手のタグの能力の上乗せを、試合に渡すカードに足す(写しを作る。1つの能力は statCap、MVP がいれば statCapX まで)。
  * S … 自チームのとき(選手のタグ・特性も足す)。fx … 決勝の判定
  */
-function applyTagStats(def,tagIds,S,fx){
+function applyTagStats(def,tagIds,S,fx,combos){
   const T=TUNING.tag, xiIds=def.xi.map(s=>s.card.id), nat=nationOf(xiIds), fin=isFinal(fx);
+  // コンビ: メンバーが全員先発のとき、メンバーに(→docs/23 §23.3b)
+  const cmb={}; for(const c of combos||(S&&S.g.combos)||[])if(COMBOS[c.id]&&c.ids.every(x=>xiIds.includes(x)))c.ids.forEach(x=>{ (cmb[x]=cmb[x]||[]).push(COMBOS[c.id]); });
   const team=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
   const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
   const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
     const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k]; };
     for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
+    if(start)for(const C of cmb[c.id]||[])for(const x of C.stat)put(x);
     if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
       if(P.kind==="trait"&&!(start&&role&&P.pos.includes(role)))continue;
       if(P.capX)cap=T.statCapX;
@@ -8071,6 +8125,66 @@ function applyTagStats(def,tagIds,S,fx){
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));
   return def;
+}
+
+/* ---- コンビ(→docs/23 §23.3b) ---- */
+/** 先発のポジション(盤面の位置。無ければ陣形の枠) */
+function xiRoles(S){
+  const f=FORMS[S.form]||[], r={};
+  S.sq.slice(0,11).forEach((id,i)=>{ const l=(S.layout&&S.layout[id])||f[i]; r[id]=i===0?"GK":l?posAt(l[0],l[1]):null; });
+  return r;
+}
+/** ids の並びを、型の枠に1人ずつ当てられるか(人数は5人まで。順列で試す) */
+function fitSlots(ids,slots,role){
+  const go=(k,used)=>{ if(k===slots.length)return true;
+    for(let i=0;i<ids.length;i++)if(!used[i]&&role[ids[i]]&&COMBO_SLOT[slots[k]].includes(role[ids[i]])){ used[i]=true; if(go(k+1,used))return true; used[i]=false; }
+    return false; };
+  return go(0,[]);
+}
+/**
+ * コンビを探す。xi … 先発の id、role … id → ポジション、linked(a,b) … 2人がつながっているか、axOk(axes) … 軸が金色か、have … すでにあるコンビ
+ * 特別なコンビ → 型のコンビ(人数の多い順)。1人は1つのコンビまで、全部で max まで
+ */
+function findCombos(xi,role,linked,axOk,have,max){
+  const res=(have||[]).slice(), used=new Set(res.flatMap(c=>c.ids));
+  const clique=ids=>ids.every((a,i)=>ids.slice(i+1).every(b=>linked(a,b)));
+  const free=()=>xi.filter(id=>!used.has(id));
+  const take=(C,ids)=>{ res.push({ id:C.id, ids }); ids.forEach(x=>used.add(x)); };
+  for(const C of Object.values(COMBOS).filter(c=>c.special)){
+    if(res.length>=max)break; if(res.some(r=>r.id===C.id))continue;
+    if(C.ids.every(x=>xi.includes(x)&&!used.has(x))&&clique(C.ids)&&axOk(C.axes))take(C,C.ids.slice());
+  }
+  const kinds=Object.values(COMBOS).filter(c=>!c.special).sort((a,b)=>b.n-a.n);
+  const pick=(pool,n,from,cur,C)=>{ if(cur.length===n)return clique(cur)&&fitSlots(cur,C.slots,role)?cur.slice():null;
+    for(let i=from;i<pool.length;i++){ if(cur.length&&!cur.every(a=>linked(a,pool[i])))continue; cur.push(pool[i]); const r=pick(pool,n,i+1,cur,C); if(r)return r; cur.pop(); }
+    return null; };
+  for(const C of kinds){
+    if(res.length>=max)break; if(res.some(r=>r.id===C.id)||!axOk(C.axes))continue;
+    const pool=free().filter(id=>role[id]&&C.slots.some(s=>COMBO_SLOT[s].includes(role[id])));
+    if(pool.length<C.n)continue;
+    const got=pick(pool,C.n,0,[],C); if(got)take(C,got);
+  }
+  return res;
+}
+/** 試合のあとにコンビができたか見る(自チーム)。黄金線 + 信頼 + 軸の金色 + 型 */
+function comboCheck(S,out){
+  const T=TUNING.tag.combo, xi=S.sq.slice(0,11), have=S.g.combos||(S.g.combos=[]);
+  if(have.length>=T.max)return;
+  const trust=id=>S.g.pl[id]&&trustLv(S.g.pl[id])>=T.trust;
+  const linked=(a,b)=>trust(a)&&trust(b)&&linkOf(S,a,b).lv>=3;
+  const res=findCombos(xi,xiRoles(S),linked,ax=>ax.some(a=>S.g.gold[a]),have,T.max);
+  for(const c of res.slice(have.length)){
+    const C=COMBOS[c.id]; have.push(c);
+    out.push("🏷 "+c.ids.map(x=>nameOf(CARDS[x])).join("・")+" のコンビ「"+C.name+"」が生まれた ― "+comboDesc(C));
+  }
+}
+/** 相手のコンビ: 特別なコンビはカードがそろえば。型のコンビは段4以上・Premier の相手が、黄金線と金色(強い側の軸)を持つとみなして */
+function oppCombos(def,strong,gold){
+  const xi=def.xi.map(s=>s.card.id), role={};
+  def.xi.forEach((s,i)=>{ role[s.card.id]=i===0?"GK":posAt(s.h,s.x); });
+  const sp=findCombos(xi,role,()=>true,()=>true,[],TUNING.tag.combo.max).filter(c=>COMBOS[c.id].special);
+  if(!strong)return sp;
+  return findCombos(xi,role,()=>true,ax=>ax.some(a=>gold[a]),sp,TUNING.tag.combo.max);
 }
 
 /* =========================================================================
@@ -10794,7 +10908,8 @@ function oppSquadHtml(S,oppId,def,rep){
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
       '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
       (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
-      ((def.titles||[]).length?'<p class="opp-ttl">'+def.titles.map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
+      ((def.titles||[]).length||(def.combos||[]).length?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
+        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
@@ -10878,13 +10993,13 @@ function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); ret
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
 function teamTagsHtml(){
   const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";
-  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
+  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";

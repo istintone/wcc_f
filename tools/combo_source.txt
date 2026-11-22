@@ -1,0 +1,18 @@
+# 特別なコンビ(→docs/23 §23.3b)。python tools/gen_combos.py で src/js/combos.js に書き出す。
+# 1行1組: カードの id(空白区切り。2〜5枚) | コンビの名前 | 軸(O 攻め / D 守り / S 速さ / P 強さ / R 支配 / C 奪取)
+# 名前は架空。**実在の選手・クラブ・代表を指す名前は使わない**。
+# 本家のコンビKP と同じく、メンバーのあいだの黄金線・信頼度・その軸の金色がそろうと付く(型のコンビより一段強い)。
+cat06 cat07 cat08 | 若き指揮者たち | R
+cat09 cat10 cat11 | 閃光の三叉槍 | O
+cat03 cat04 | 若き防壁 | D
+nld03 nld04 | 双璧 | D
+nld06 nld07 nld08 | 北風の三角錐 | R
+msd03 msd04 | 巨塔の壁 | P
+msd08 msd09 msd11 | 三槍の舞 | O
+mdb06 mdb07 mdb08 | 鉄の中盤 | D
+mdb09 mdb10 mdb11 | 疾風の三騎 | S
+mib02 mib03 mib04 | 三重の城壁 | D
+mib10 mib11 | 双頭の竜 | O
+par06 par07 par08 | 調律の三角形 | R
+mur08 mur09 mur11 | 王の矛 | O
+mcb08 mcb10 | 鋼と閃き | O

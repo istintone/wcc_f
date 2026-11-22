@@ -2043,3 +2043,6 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 #club .pt-row{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 #club .pt-row .tg{padding:4px 8px}
 #club .ch-acts:has(.prop) .cr:not(.prop){background:rgba(127,127,127,.2);color:inherit;box-shadow:none;font-weight:700}
+/* コンビのタグ(→docs/23 §23.3b): 青緑 */
+#club .tg.cmb{background:linear-gradient(100deg,#0d6e6e,#2fc4b2 55%,#18a090);color:#04201d}
+#club .pt-row .tg.cmb{color:#04201d}

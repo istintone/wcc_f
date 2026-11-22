@@ -145,8 +145,12 @@ function oppDefOf(S,fx){
     d.rareOpp=true;                                   // 育成レベル最大 = KP の特殊能力も ★5 相当(→docs/21 §21.5)
   }
   // 相手の称号(→docs/23 §23.7 の 4): 段4・5のクラブと Premier Div の相手はクラブの称号、先発が同じ国籍なら国の称号も
-  d.titles=oppTitleIds(d,tierOf(fx.opp)>=4||d.rareOpp);
-  return applyTitleStats(d,d.titles);
+  const strong=tierOf(fx.opp)>=4||d.rareOpp;
+  d.titles=oppTitleIds(d,strong);
+  // 相手のコンビ(→docs/23 §23.7 の 4): 特別なコンビはカードがそろえば、型は強い相手だけ(強い側の軸を金色とみなす)
+  const ct=d.titles.find(t=>/^c_/.test(t)), gold={}; if(ct)for(const a of ct.slice(2))gold[a]=true;
+  d.combos=oppCombos(d,strong,gold);
+  return applyTagStats(d,d.titles,null,fx,d.combos);
 }
 function newLeague(S,W){
   setLeagueName(S);
