@@ -3125,6 +3125,13 @@ body[class] #pad .tac.lf::after{inset:6px 3px 6px 6px!important} body[class] #pa
 /* 三角は点いたら赤(→docs/14 §14.103) */
 body[class] #pad .tac:not(.md).on::after{background:linear-gradient(180deg,#ff6a7e,#e8202e 55%,#a50e25)!important}
 body[class] #pad .tac:not(.md).on{filter:drop-shadow(0 0 4px rgba(240,42,72,1)) drop-shadow(0 0 8px rgba(240,42,72,.8))!important}
+/* 左右から突き出したパネル(→docs/14 §14.104): 下の端も丸め、赤い線が曲がって画面の横の端へ抜ける。画面の下端からは少し浮かせる */
+body[class] #pad .cross,body[class] #pad .act{bottom:calc(env(safe-area-inset-bottom) + 6px)!important;height:92px!important;
+  border-bottom:3px solid #c8102e!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.38),inset 0 1px 0 #fff,inset 0 -2px 0 #111,inset 0 -3.5px 0 #e9c76b!important}
+body[class] #pad .cross{border-radius:0 26px 26px 0!important;padding-top:5px!important;grid-template-columns:repeat(3,26px)!important;grid-template-rows:repeat(3,26px)!important}
+body[class] #pad .act{border-radius:26px 0 0 26px!important;padding-bottom:9px!important}
+body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 58px)!important}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
