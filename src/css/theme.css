@@ -2400,3 +2400,39 @@ body[class] #pad .btn-shoot{font-size:8px!important} body[class] #pad .btn-keepe
 body[class] #pad .btn-shoot,body[class] #pad .btn-keeper{box-shadow:0 0 0 2.5px #0b0b0b,0 3px 0 2.5px #0b0b0b,inset 0 3px 0 rgba(255,255,255,.45),inset 0 -4px 0 rgba(0,0,0,.25)!important}
 body[class] #pad .mid{right:40px!important;bottom:calc(env(safe-area-inset-bottom) + 51px)!important}
 body[class] #pad .cross{padding-top:17px!important}
+/* 操作パネルを TOP 画面の意匠で(→docs/14 §14.99): 白い紙の地にドット、斜めの赤い帯 + 黒い帯と金の細線、斜体の刻印。ボタンは赤・黒・金 */
+body[class] #pad .cross,body[class] #pad .act{overflow:hidden;border:0!important;
+  background:
+    radial-gradient(rgba(0,0,0,.09) 1px,transparent 1.3px) 0 0/6px 6px,
+    linear-gradient(115deg,transparent 0 62%,rgba(200,16,46,.07) 62% 74%,transparent 74%),
+    linear-gradient(180deg,#faf8f4,#ece7df)!important;
+  box-shadow:0 -4px 16px rgba(0,0,0,.38),inset 0 1px 0 #fff!important}
+body[class] #pad .cross{border-right:3px solid #c8102e!important}
+body[class] #pad .act{border-left:3px solid #c8102e!important}
+/* 斜めの帯: 赤(刻印入り)→ 黒 → 金の細線。左右で向きを鏡に(中央へ上がる) */
+body[class] #pad .cross::before,body[class] #pad .act::before{display:block!important;position:absolute;top:-6px!important;height:20px;left:-12px!important;right:-12px!important;z-index:0;
+  padding:7px 0 0 22px;box-sizing:border-box;font-family:var(--f-num);font-style:italic;font-weight:700;font-size:8px!important;letter-spacing:.3em!important;color:#fff!important;opacity:1!important;
+  background:linear-gradient(90deg,#a50e25,#f02a48);transform:skewY(-7deg);transform-origin:0 0}
+body[class] #pad .act::before{padding:7px 22px 0 0;text-align:right;background:linear-gradient(270deg,#a50e25,#f02a48);transform:skewY(7deg);transform-origin:100% 0}
+body[class] #pad .cross::after,body[class] #pad .act::after{display:block!important;content:""!important;position:absolute;top:13px!important;left:-12px!important;right:-12px!important;height:4px!important;z-index:0;
+  background:#111!important;opacity:1!important;border-bottom:1.5px solid #e9c76b;transform:skewY(-7deg);transform-origin:0 0}
+body[class] #pad .act::after{transform:skewY(7deg);transform-origin:100% 0}
+body[class] #pad .cross>*,body[class] #pad .act>*{position:relative;z-index:1}
+body[class] #pad .cross{padding-top:21px!important}
+/* 十字: 黒い腕に白い字、中央は赤い □。点いた腕は赤、点いたプレスは金 */
+body[class] #pad .tac{color:#fff!important;background:linear-gradient(180deg,#3a3c44,#16171b 60%,#0b0b0d)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)!important}
+body[class] #pad .tac.md{color:#fff!important;background:linear-gradient(180deg,#f02a48,#c8102e 55%,#8f0a1f)!important;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.25)!important}
+body[class] #pad .tac.on{color:#fff!important;background:linear-gradient(180deg,#ff5a6e,#e8202e 55%,#a50e25)!important;box-shadow:0 0 10px rgba(240,42,72,.9)!important}
+body[class] #pad .tac.md.on{color:#2a1d00!important;background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c)!important;box-shadow:0 0 0 2px #fff,0 0 12px rgba(233,199,107,.95)!important}
+/* 右の丸: SHOOT 赤・KEEPER 黒・KP 金。白い縁で紙の地から浮かせる */
+body[class] #pad .btn-shoot,body[class] #pad .btn-keeper,body[class] #pad .mid .btn-kp{border:0!important;font-style:italic!important;letter-spacing:.06em!important;
+  box-shadow:0 0 0 2.5px #fff,0 3px 8px 2px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.35)!important}
+body[class] #pad .btn-shoot{color:#fff!important;background:radial-gradient(circle at 50% 30%,#ff6a7e,#e8202e 55%,#8f0a1f)!important}
+body[class] #pad .btn-keeper{color:#fff!important;background:radial-gradient(circle at 50% 30%,#5a5c66,#1d1e23 60%,#09090b)!important}
+body[class] #pad .mid .btn-kp{color:#2a1d00!important;background:radial-gradient(circle at 50% 30%,#fff6d0,#e9c76b 55%,#a8791f)!important}
+body[class] #pad .btn-shoot.armed,body[class] #pad .btn-keeper.on,body[class] #pad .mid .btn-kp.on{color:#2a1d00!important;background:radial-gradient(circle at 50% 30%,#fffbe8,#ffe08a 55%,#e9b10a)!important;
+  box-shadow:0 0 0 2.5px #fff,0 0 16px 4px rgba(255,214,110,.95)!important}
+body[class] #pad .btn-keeper.on{color:#2a1d00!important}
+body[class] #pad .cross::before,body[class] #pad .act::before{top:3px!important;height:16px;padding-top:4px}
+body[class] #pad .cross::after,body[class] #pad .act::after{top:19px!important;height:3px!important}
+body[class] #pad .cross{padding-top:23px!important;grid-template-rows:24px 26px 24px!important}
