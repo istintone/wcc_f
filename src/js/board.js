@@ -53,9 +53,11 @@ function fitBoard(){
   const P=TUNING.play, deck=document.getElementById("deck");
   if(!BD.board||!deck)return;
   const dh=deck.clientHeight, dw=deck.clientWidth; if(!dh||!dw)return;
-  // ピッチは縦長の比率を保つ(筐体の盤面と同じ)。幅が余れば、控えの列と合わせて中央に寄せる
-  const bw=BD.bench?BD.bench.offsetWidth:52, w=Math.min(dw-bw,Math.round(dh*P.boardAspect));
-  BD.board.style.flex="0 0 "+w+"px";
+  // ピッチは縦長の比率を保つ(筐体の盤面と同じ)。**ピッチを画面の中央に**: 左にも控えの列と同じ幅の余白を取る(→docs/14 §14.96)
+  // 高さは比率で決めて上に寄せ、下に空いた分は十字・SHOOT の置き場にする
+  const bw=BD.bench?BD.bench.offsetWidth:52, w=Math.min(dw-2*bw,Math.round(dh*P.boardAspect)), bh=Math.min(dh,Math.round(w/P.boardAspect));
+  BD.board.style.flex="0 0 "+w+"px"; BD.board.style.height=bh+"px"; BD.board.style.marginLeft=bw+"px";
+  if(BD.bench)BD.bench.style.height=bh+"px";
   const k=clamp(Math.min(dh/P.cardRef,w/(P.cardRef*P.boardAspect)),P.cardMin,P.cardMax);
   deck.style.setProperty("--k",k.toFixed(3));
 }

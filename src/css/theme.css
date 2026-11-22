@@ -2329,3 +2329,5 @@ body[class] #pad .btn-shoot.armed,body[class] #pad .btn-keeper.on{color:#2a1d00!
 body[class] #pad .btn-shoot:active,body[class] #pad .btn-keeper:active{transform:translateY(3px)}
 body[class] #pad .btn-kp{background:#16130e!important;color:#f2c14e!important;border:1.5px solid #c99a2a!important;clip-path:none!important;font-family:var(--f-num);font-style:normal!important}
 body[class] #pad .btn-kp.on{background:#f2c14e!important;color:#2a1d00!important;border-color:#fff3b0!important}
+/* ピッチを画面の中央に(→docs/14 §14.96): 盤面と控えの列は上に寄せ、下はボタンの置き場 */
+#deck{align-items:flex-start!important}
