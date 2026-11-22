@@ -2111,3 +2111,10 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #cap .ht-bubble .htb{text-align:left;padding:6px 8px;font-size:12.5px}
 #cap .ht-bubble small{display:block;margin:5px 0 0 2px;font-size:9.5px;color:#666}
 #club .mgr-card .mg-full{width:96px;margin-bottom:-46px}
+/* 顔の丸をそろえる(→docs/14 §14.70): 選手・秘書・監督とも、同じ大きさの立ち絵(300×357)を同じ切り方・同じ地で */
+#club .cf.pl,#club .sec-av,.lk-sec .sec-av,#club .mg-av,#club .tag-ev .pl-av{background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)}
+#club .sec-av,.lk-sec .sec-av,#club .mg-av{display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+#club .sec-av img,.lk-sec .sec-av img,#club .mg-av img,#club .tag-ev .pl-av img{flex:0 0 auto;width:190%!important;height:auto!important;margin-top:-2%;transform:none!important;object-fit:initial!important;image-rendering:pixelated}
+#club .cf.sp{visibility:hidden;box-shadow:none!important}
+#club .cf.pl img,#club .cf.pl.se img,#club .cf.pl.mg img{flex:0 0 auto;width:190%!important;height:auto!important;margin-top:-2%}
+#club .cf.pl.se,#club .cf.pl.mg,#club .cf.pl.se:has(img){background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)!important}

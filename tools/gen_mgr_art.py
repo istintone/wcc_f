@@ -11,7 +11,7 @@
   bust … バストアップ(頭から胸まで。幅220)。ハーフタイムの指示の演出
   face … 顔(96×96)。チャットの監督の発言
 
-**本体に入れるのは mob01(一般的な監督)だけ**。mg01・mg02 は実在の監督の似顔絵なので入れない(実名を本体に入れない決まりと同じ扱い)。
+いまは**仮置き**で mg01 の8人(実在の監督の似顔絵。オーナーの指示 2026-11-22)。公開版にも入るので、正式な絵ができたら差し替える。
 """
 import base64
 import io
@@ -23,7 +23,7 @@ from PIL import Image
 ROOT = pathlib.Path(__file__).parent.parent
 SRC = ROOT.parent / "pftb" / "src" / "assets" / "manager"
 OUT = ROOT / "src" / "js" / "art-mgr.js"
-NAMES = ["mob01" + c for c in "acdefgh"]   # mob01b は実在のスポーツブランドのロゴが入っているので外す
+NAMES = ["mg01" + c for c in "abcdefgh"]   # 2026-11-22 オーナーの指示で仮置き: mg01 の8人(実在の監督の似顔絵。正式な絵ができたら差し替える)
 
 
 def enc(im, q=84):
@@ -54,7 +54,7 @@ def main():
         f1, f2, f3 = enc(full), enc(bust), enc(face)
         total += len(f1) + len(f2) + len(f3)
         rows.append('  { full:"%s",\n    bust:"%s",\n    face:"%s" }' % (f1, f2, f3))
-    js = ["/* 生成物。手で編集しない。 python tools/gen_mgr_art.py が pftb の監督の絵(一般的な監督 mob01)から書き出す。 */",
+    js = ["/* 生成物。手で編集しない。 python tools/gen_mgr_art.py が pftb の監督の絵(仮置き: mg01)から書き出す。 */",
           "const MGR_ART=[", ",\n".join(rows), "];", ""]
     OUT.write_bytes("\n".join(js).encode("utf-8"))
     print("ok", OUT.name, len(rows), "人 %.1fKB" % (total / 1024))

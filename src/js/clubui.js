@@ -223,8 +223,8 @@ function trainStepHtml(){
 const chatFace=id=>{ const c=CARDS[id], src=c&&typeof artSrc==="function"?artSrc(c,"stand"):null;
   return '<i class="cf pl">'+(src?'<img src="'+src+'" alt="">':'<b>'+(c?c.no:"")+'</b>')+'</i>'; };
 const chatPl=(id,t,first)=>'<div class="cm pl'+(first?' first':'')+'">'+(first?chatFace(id):'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+cname(id)+'</small>':'')+'<p>'+t+'</p></div></div>';
-const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf se">'+(secArt(secOf(CL.S).id)?'<img src="'+secArt(secOf(CL.S).id)+'" alt="">':'')+'</i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
-const chatMe=t=>{ const f=CL.S&&CL.S.mgr?mgrArt(CL.S.mgr.av,"face"):null; return '<div class="cm me"><p>'+t+'</p>'+(f?'<i class="cf mg"><img src="'+f+'" alt=""></i>':'')+'</div>'; };
+const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf pl se">'+(secArt(secOf(CL.S).id,"full")?'<img src="'+secArt(secOf(CL.S).id,"full")+'" alt="">':'')+'</i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
+const chatMe=t=>{ const f=CL.S&&CL.S.mgr?mgrArt(CL.S.mgr.av,"full"):null; return '<div class="cm me"><p>'+t+'</p>'+(f?'<i class="cf pl mg"><img src="'+f+'" alt=""></i>':'')+'</div>'; };
 const chatNote=t=>'<div class="cn">'+t+'</div>';
 /** いま開いているやりとり(選手を選んだら)と、答えたあとの結果 */
 function commChatHtml(){
@@ -1246,11 +1246,11 @@ const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾",
 const mgrArt=(av,k)=>typeof MGR_ART!=="undefined"&&MGR_ART.length?MGR_ART[Math.min(MGR_ART.length-1,Math.max(0,av|0))][k||"face"]:null;
 /** アバターを選ぶ列(顔を並べる) */
 function mgrAvPickHtml(cur,act){
-  return typeof MGR_ART==="undefined"?"":'<div class="mg-avs">'+MGR_ART.map((x,i)=>'<button class="mg-av'+(i===cur?' on':'')+'" data-act="'+act+'" data-v="'+i+'"><img src="'+x.face+'" alt=""></button>').join("")+'</div>';
+  return typeof MGR_ART==="undefined"?"":'<div class="mg-avs">'+MGR_ART.map((x,i)=>'<button class="mg-av'+(i===cur?' on':'')+'" data-act="'+act+'" data-v="'+i+'"><img src="'+x.full+'" alt=""></button>').join("")+'</div>';
 }
 /** 秘書の顔(→docs/05 §5.12。絵は tools/gen_sec_art.py が pftb から取り込む)。id を省くといまの秘書 */
 const secArt=(id,k)=>typeof SEC_ART!=="undefined"&&SEC_ART[id]?SEC_ART[id][k||"face"]:null;
-const secAv=(S,id)=>{ const a=secArt(id||secOf(S).id); return '<i class="sec-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'; };
+const secAv=(S,id)=>{ const a=secArt(id||secOf(S).id,"full"); return '<i class="sec-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'; };   // 顔の丸は立ち絵を選手と同じ切り方で(→docs/14 §14.70)
 /** 秘書を選ぶ(任期の始め・CLUB の設定)。口調の見本と、その秘書との親密度を出す */
 function secPickHtml(title){
   const S=CL.S;
