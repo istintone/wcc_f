@@ -2,7 +2,7 @@
 // 並びは build.py の JS_FILES のうち DOM に触らない8つと同じにする。
 const fs=require("fs"), path=require("path");
 const ENGINE_FILES=["combos.js","uniques.js","data.js","trainings.js","realcards.js","rarekp.js","engine.js","club.js","pool.js","grow.js","term.js","emblem-art.js","emblem.js"];
-const EXPORTS=["TUNING","CARDS","RARE_KP","RARE_MOVES","rareOf","rareOfCard","capApt","setRole","autoSquad","slotValue","persOfClub","COACH_PERS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","SKILLS","AXIS_LABEL","AXIS_ABBR","AXIS_PAIR","PARAM_AXIS","styleAxes","styleRank","graphAdd","graphCap","graphGoldN","mkOffer","makeOffers","pickOffer","offersOf","mgrLv","OF_REGIONS","OF_RARES","misText",
+const EXPORTS=["TUNING","CARDS","RARE_KP","RARE_MOVES","rareOf","rareOfCard","capApt","setRole","autoSquad","slotValue","persOfClub","COACH_PERS","TEAMS","FORMS","CHANNELS","STAT_MAX","STYLES","SKILLS","AXIS_LABEL","AXIS_ABBR","AXIS_PAIR","PARAM_AXIS","styleAxes","styleRank","graphAdd","graphCap","graphGoldN","mkOffer","makeOffers","pickOffer","offersOf","mgrLv","OF_REGIONS","OF_COUNTRIES","countryOf","leagueOf","OF_RARES","misText",
   "createMatch","stepMatch","orderMatch","finishMatch","simulateMatch",
   "makeTeamDef","roleAt","posAt","baseRole","aptOf","matchMin","teamOf",
   "COMPS","CUP_IDS","SCHED","genWorld","newCareer","worldOf","nextFixture","fixtureMatch","declineCup","enterCup",

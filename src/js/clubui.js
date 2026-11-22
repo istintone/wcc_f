@@ -1151,11 +1151,11 @@ function offerCardHtml(o,i){
   for(const a in o.graph)v[a]=o.graph[a]/G.max;
   const fac=["train","tact","lounge","med"].map(k=>'<span'+(R.fac===k?' class="hi"':'')+'>'+OF_FAC_NAME[k]+' <b>Lv'+o.fac[k]+'</b></span>').join("");
   return '<article class="ofc'+(rare?' rare':'')+'">'+
-    '<header><small>'+R.name+(rare?' ・ RARE':' ・ '+OF_DIV_LABEL[o.div-1])+'</small><b>'+o.name+'</b>'+
+    '<header><small>'+R.name+' ・ '+(leagueOf(o)||'')+(rare?' ・ RARE':' ・ '+OF_DIV_LABEL[o.div-1])+'</small><b>'+o.name+'</b>'+
       (rare?'<i>'+rare.desc+'</i>':'<i>'+R.name+'のクラブは'+OF_FAC_NAME[R.fac]+'が育っている</i>')+
       '<span class="lv">GRADE '+o.lv+'</span></header>'+
     '<div class="of-body">'+radarSvg([{ v, color:"#d0102f" }],{ cls:"of-radar" })+
-      '<dl><div><dt>リーグ</dt><dd>'+OF_DIV_LABEL[o.div-1]+'</dd></div>'+
+      '<dl><div><dt>リーグ</dt><dd>'+(countryOf(o)?countryOf(o)+' ':'')+OF_DIV_LABEL[o.div-1]+'</dd></div>'+
         '<div><dt>ファン</dt><dd>'+(o.fans/10000).toFixed(1)+'万人</dd></div>'+
         '<div><dt>初めの資金</dt><dd>'+o.money+'億</dd></div>'+
         '<div'+(R.fac==="stad"?' class="hi"':'')+'><dt>スタジアム</dt><dd>'+TUNING.biz.stad[o.stad-1].name+'</dd></div></dl></div>'+
@@ -1228,11 +1228,11 @@ function contractHtml(edit){
   const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
   const hues=EMB_CLASSIC.map(id=>embHueById(id));
   return '<section class="card contract">'+(edit?'<h3>クラブの設定 <small>名前・エンブレムなどを変える</small></h3>':'<h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>')+
-    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+embEsc(c.town)+' ・ '+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
+    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
       (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
     '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
     '<label>略称(英字3字・スコアに出る)<input data-f="cshort" maxlength="3" value="'+embEsc(c.short)+'" placeholder="'+clubAbbr(name)+'"></label>'+
-    '<div class="ce-row"><i>ホームタウン</i>'+TOWNS.map(t=>'<button class="ce'+(c.town===t?' on':'')+'" data-act="ctown" data-v="'+t+'">'+t+'</button>').join("")+'</div>'+
+    // ホームタウンは今は選ばない(2026-11-22 オーナー。データは残す →docs/14 §14.71)
     '<div class="ce-row"><i>クラブの色</i>'+hues.map(h=>'<button class="ce sw'+(c.color===h.hex?' on':'')+'" data-act="ccolor" data-v="'+h.hex+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
     '<h4>エンブレム</h4>'+
     row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
@@ -1415,7 +1415,7 @@ function clubInfoHtml(){
   if(CL.clubEdit)return contractHtml(true);
   const T=myTeam(S);
   return '<section class="card club-card"><h3>クラブ <small>'+(S.cprof&&S.cprof.name?S.cprof.name:'第'+S.term+'任期')+'</small></h3>'+
-    '<div class="cc-top">'+emblemSvg(T,72)+'<div><b>'+embEsc(T.name)+'</b><small>'+embEsc(T.short)+(c&&c.town?' ・ '+embEsc(c.town):'')+'</small>'+
+    '<div class="cc-top">'+emblemSvg(T,72)+'<div><b>'+embEsc(T.name)+'</b><small>'+embEsc(T.short)+' ・ '+(leagueOf(S.cprof)?leagueOf(S.cprof)+' ':'')+divName(S.grade)+'</small>'+
       '<button class="lnk" data-act="cedit">クラブを編集する</button></div></div></section>';
 }
 function clubTabHtml(){
