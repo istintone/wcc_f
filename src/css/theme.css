@@ -2091,7 +2091,7 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 /* 監督室の中身は縮めない(スポンサーの候補など長い中身が来ても、次の試合の札などが潰れないように。→docs/14 §14.68) */
 #club .cl-main>*{flex-shrink:0}
 /* 監督のアバター(→docs/14 §14.69) */
-#club .mg-avs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:6px 0}
+#club .mg-avs{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:6px 0}
 #club .mg-av{padding:0;border:2px solid transparent;border-radius:50%;overflow:hidden;background:#2a2f3c;aspect-ratio:1;cursor:pointer}
 #club .mg-av img{display:block;width:100%;height:100%;image-rendering:pixelated}
 #club .mg-av.on{border-color:var(--t-sub,#c8102e);box-shadow:0 0 0 2px rgba(200,16,46,.25)}

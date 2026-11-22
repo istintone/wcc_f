@@ -11,7 +11,7 @@
   bust … バストアップ(頭から胸まで。幅220)。ハーフタイムの指示の演出
   face … 顔(96×96)。チャットの監督の発言
 
-いまは**仮置き**で mg01 の8人(実在の監督の似顔絵。オーナーの指示 2026-11-22)。公開版にも入るので、正式な絵ができたら差し替える。
+いまは**仮置き**で mg01・mg02 の16人(実在の監督の似顔絵。オーナーの指示 2026-11-22)。公開版にも入るので、正式な絵ができたら差し替える。
 """
 import base64
 import io
@@ -23,7 +23,7 @@ from PIL import Image
 ROOT = pathlib.Path(__file__).parent.parent
 SRC = ROOT.parent / "pftb" / "src" / "assets" / "manager"
 OUT = ROOT / "src" / "js" / "art-mgr.js"
-NAMES = ["mg01" + c for c in "abcdefgh"]   # 2026-11-22 オーナーの指示で仮置き: mg01 の8人(実在の監督の似顔絵。正式な絵ができたら差し替える)
+NAMES = ["mg01" + c for c in "abcdefgh"] + ["mg02" + c for c in "abcdefgh"]   # mg02 も追加(2026-11-22)   # 2026-11-22 オーナーの指示で仮置き: mg01 の8人(実在の監督の似顔絵。正式な絵ができたら差し替える)
 
 
 def enc(im, q=84):
