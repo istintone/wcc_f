@@ -2739,6 +2739,21 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .sp-rare{display:inline-block;margin-right:6px;padding:1px 7px;font-style:normal;font-family:var(--f-num);font-size:10px;font-weight:800;letter-spacing:.12em;color:#2a1a00;background:linear-gradient(100deg,#b8860b,#f6d36b,#d9a520)}
 #club .rw.oil b{color:#8a5d00}
 
+/* COACHING NOTE(→docs/23 §23.10) */
+#club .note .nt-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+#club .note .nt-cat{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border:1px solid var(--t-rule,#ddd);background:var(--t-card,#fff);color:inherit;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+#club .note .nt-cat small{font-size:10px;font-weight:600;opacity:.7}
+#club .note .nt-cat.on{border-color:var(--t-sub,#c8102e);box-shadow:inset 0 -3px 0 var(--t-sub,#c8102e)}
+#club .note .nt-list{list-style:none;margin:8px 0 0;padding:0}
+#club .note .nt-list li{padding:7px 2px;border-top:1px dashed var(--t-rule,#ddd)}
+#club .note .nt-list .tg{cursor:default}
+#club .note .nt-at{margin-left:6px;font-size:10px;opacity:.65}
+#club .note .nt-list p{margin:3px 0 0;font-size:11.5px;line-height:1.5}
+#club .note .nt-list p i{display:inline-block;min-width:44px;margin-right:4px;font-style:normal;font-size:10px;font-weight:800;opacity:.6}
+#club .note .nt-un .tg{background:#d7d7d7;color:#777}
+#club .note .nt-un small{margin-left:6px;font-size:10px;opacity:.6}
+#club .note div.nt-un{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px}#club .note div.nt-un small{width:100%;font-size:10.5px;opacity:.65}#club .note div.nt-un .tg{padding:2px 7px;cursor:default}#club .note div.nt-un .tg b{font-size:10px}
+
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
    参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
@@ -4384,6 +4399,31 @@ const TAG_EVENTS=[
   { k:"bday",   q:"今日は {n} の誕生日です。",                             p:true, ch:[["みんなで祝う",{ player:"birthday" }],["普段どおり",{}]] },
   { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] }
 ];
+
+/* ---- COACHING NOTE(→docs/23 §23.10)----
+ * 見つけたタグを任期をまたいで覚える手帳。付き方(how)と効き目(desc)を見せて、プレイヤーの知識とスキルを育てる。
+ * 汎用・条件の固有の付き方はここに書く。称号・特性・カードの固有・コンビは決まりから文を作る(noteHow) */
+const NOTE_HOW={
+  golden:"成長グラフの金色が3つそろう(黄金期)",
+  momentum:"3連勝する", slump:"3連敗する",
+  promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
+  facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
+  facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",
+  oil:"まれに現れるレアスポンサー(王族の投資ファンド)と契約する",
+  camp:"出来事「合宿の申し出」を受ける", boom:"出来事「協賛の増額」を受ける", broke:"スタジアムの改修で資金が費用の半分を切る",
+  fever:"ファンが 1万・3万・6万・10万人を越える", crowded:"カップの試合が3つ続く", afterglow:"大会で優勝する",
+  injRes:"同じ選手を任期の中で5回ケアする", injProne:"同じ選手が任期の中で2回ケガをする",
+  rebel:"出場なしが15試合続く / 出来事「移籍の噂」を放っておく", growth:"23歳以下の選手の★が上がる / 出来事で話を聞く・自主練に付き合う",
+  rookie:"23歳以下の選手を SQUAD に加える", veteran:"31歳以上の選手を SQUAD に加える",
+  bandiera:"任期の中でチームでいちばん早く70試合に出場する", supersub:"途中出場で2得点する", ace:"先発で10得点する",
+  pillar:"キャプテンとして30試合先発する", mvp:"格 S・A の大会の決勝で MVP になる", strat:"試合の最後の KP として10勝する",
+  iron:"20試合続けて先発する", waiting:"出場なしが10試合続く", burst:"「出番待ち」の選手を出場させる",
+  scorer:"2試合続けて得点する", bigstage:"決勝で得点する",
+  gossip:"出来事「協賛の増額」の広告に出る / 週刊誌の件を本人に任せる", mood:"出来事でロッカールームの盛り上げ役を任せる", birthday:"出来事で誕生日を祝う",
+  kami:"20歳以下で能力の合計がチームの頂点の選手が、10試合以上出場する", prince:"TEC がチームでいちばん高い攻撃の選手が、50試合以上出場する",
+  crybaby:"高いレアリティの選手に、反抗期・ゴシップ・出番待ちが2回付く", academy:"21歳以下の選手が覚醒する"
+};
+const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"] ];
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -6538,6 +6578,7 @@ function loadCareer(store){
 function migrate(S){
   if(!S.sq)S.sq=startSquad();
   if(!S.coll)S.coll=newCollection();
+  if(!S.note)S.note={};                         // COACHING NOTE(→docs/23 §23.10)。任期をまたいで残る
   // カードの一覧が変わって存在しなくなったカードを外す(登録の空きは初めの16枚で埋める)
   for(const id of Object.keys(S.coll))if(!CARDS[id])delete S.coll[id];
   const spare=startSquad().filter(id=>!S.sq.includes(id));
@@ -8110,6 +8151,7 @@ function addTeamTag(S,id,out,quiet){
     out.push("🏷 「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1);
   }
   L.push({ id, n:tagDur(T) });
+  noteTag(S,id);                                // COACHING NOTE(→docs/23 §23.10)
   if(T.fx&&T.fx.motLock==="on")motLockApply(S);
   if(!quiet)out.push("🏷 チームに「"+T.name+"」 ― "+T.desc);
 }
@@ -8138,6 +8180,7 @@ function tagsAfterMatch(S,fx,res,out){
   autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
+  noteSeen(S);                                  // 見えているタグも手帳に
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -8226,6 +8269,7 @@ function addPlayerTag(S,id,tid,out){
       out.push("🏷 "+nm+" の「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1); }
   }
   L.push({ id:tid, n:tagDur(T) });
+  noteTag(S,tid);                               // COACHING NOTE
   if(T.onAdd==="mot4"&&g.mot>0)g.mot=4;
   if(tid==="rebel"||tid==="gossip"||tid==="waiting")pCnt(g).bad=(pCnt(g).bad||0)+1;   // クライベイビーの判定
   out.push("🏷 "+nm+" に「"+T.name+"」 ― "+T.desc);
@@ -8382,7 +8426,7 @@ function comboCheck(S,out){
   const linked=(a,b)=>trust(a)&&trust(b)&&linkOf(S,a,b).lv>=3;
   const res=findCombos(xi,xiRoles(S),linked,ax=>ax.some(a=>S.g.gold[a]),have,T.max);
   for(const c of res.slice(have.length)){
-    const C=COMBOS[c.id]; have.push(c);
+    const C=COMBOS[c.id]; have.push(c); noteTag(S,"cb:"+c.id);
     out.push("🏷 "+c.ids.map(x=>nameOf(CARDS[x])).join("・")+" のコンビ「"+C.name+"」が生まれた ― "+comboDesc(C));
   }
 }
@@ -8445,6 +8489,47 @@ function answerTagEvent(S,i){
   if(R.fat&&id){ const g=S.g.pl[id]; g.fat=clamp(g.fat+R.fat,0,TUNING.grow.int.fatMax); }
   if(!out.length)out.push("いつもどおりに戻った");
   return out;
+}
+
+/* ---- COACHING NOTE(→docs/23 §23.10) ---- */
+/** 手帳に書く(初めてなら記録する。数も数える)。id … タグの id か "cb:コンビの id" */
+function noteTag(S,id){
+  if(!S||!id)return;
+  const N=S.note||(S.note={});
+  if(!N[id])N[id]={ term:S.term, at:S.played, n:0 };
+  N[id].n++;
+}
+/** 手帳の区分 */
+function noteCat(id){
+  if(/^cb:/.test(id))return "combo";
+  const T=TAGS[id]; if(!T)return null;
+  return T.kind==="title"?"title":T.kind==="trait"?"trait":T.kind==="unique"?"unique":T.scope==="team"?"team":"player";
+}
+/** 付き方の文 */
+function noteHow(id){
+  if(/^cb:/.test(id)){ const C=COMBOS[id.slice(3)]; if(!C)return "";
+    const ax=C.axes.map(a=>AXIS_ABBR[a]).join(" か ");
+    return C.special?"決められた選手の組("+C.ids.map(x=>nameOf(CARDS[x])).join("・")+")が全員先発で黄金線・信頼でつながり、"+ax+" が金色"
+      :C.slots.length+"人("+C.slots.map(s=>COMBO_SLOT[s].join("/")).join(" + ")+")が黄金線・信頼でつながり、"+ax+" が金色"; }
+  const T=TAGS[id]; if(!T)return "";
+  if(NOTE_HOW[id])return NOTE_HOW[id];
+  if(T.sub==="nation")return "先発の11人をすべて "+(NAT_NAME[T.nat]||T.nat)+" の選手にして戦い続ける";
+  if(T.sub==="club")return "黄金期に、金色の3軸が "+id.slice(2).split("").map(a=>AXIS_ABBR[a]).join("・");
+  if(T.kind==="trait")return "選手からの提案で選ぶ / "+T.pos.join("・")+" で好採点(7.0 以上)が5試合続く";
+  if(T.card)return "このカードを手に入れる(初めから持っている)";
+  return "";
+}
+/** 手帳に載る全部の id(区分ごと) */
+function noteAll(){
+  const out={}; for(const [k] of NOTE_CAT)out[k]=[];
+  for(const id in TAGS){ const c=noteCat(id); if(c)out[c].push(id); }
+  for(const id in COMBOS)out.combo.push("cb:"+id);
+  return out;
+}
+/** 試合のあとに、見えているタグ(施設充実・オイルマネー・カードの固有)も手帳に書く */
+function noteSeen(S){
+  for(const t of teamTagsView(S))if(TAGS[t.id])noteTag(S,t.id);
+  for(const id of S.sq)if(TAGS["u_"+id])noteTag(S,"u_"+id);
 }
 
 /* =========================================================================
@@ -11316,6 +11401,25 @@ function offerHtml(){
     list.map(offerCardHtml).join("")+'</section>';
 }
 /** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+/**
+ * COACHING NOTE(→docs/23 §23.10): 見つけたタグの付き方と効き目。任期をまたいで残る。区分を押すと開く
+ */
+function noteHtml(){
+  const S=CL.S, N=S.note||{}, all=noteAll(), tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
+  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:TAGS[id].name;
+  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):TAGS[id].desc;
+  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].pol<0?'dn':'up';
+  let h='<section class="card note"><h3>COACHING NOTE <small>見つけたタグ '+got+' / '+tot+' ・ 任期をまたいで残る</small></h3>'+
+    '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
+      return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
+  if(CL.noteCat&&all[CL.noteCat]){
+    const L=all[CL.noteCat], got2=L.filter(id=>N[id]), un=L.length-got2.length;
+    h+='<ul class="nt-list">'+got2.map(id=>'<li><span class="tg '+cls(id)+'"><b>'+nameOfId(id)+'</b></span><small class="nt-at">第'+N[id].term+'任期で発見 ・ '+N[id].n+'回</small>'+
+        '<p><i>付き方</i>'+noteHow(id)+'</p><p><i>効き目</i>'+descOf(id)+'</p></li>').join("")+'</ul>'+
+      (un?'<div class="nt-un"><small>まだ見つけていない '+un+'</small>'+'<span class="tg"><b>???</b></span>'.repeat(un)+'</div>':'<p class="dim">この区分はすべて見つけた</p>');
+  }
+  return h+'</section>';
+}
 /** 黄金期の行(タグ「黄金期到来」の残り) */
 function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); return t?'<p class="gr-golden">👑 黄金期 ・ あと '+t.n+' 試合 全員が絶好調</p>':''; }
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
@@ -11599,7 +11703,7 @@ function managerTabHtml(){
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
       '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+S.salary+'</b><small>累計年俸(億)</small></div></div>'+
       (earned.length?'<p class="dim">取った称号: '+earned.map(id=>titleOf(id).name).join(" / ")+'</p>':'')+'</section>'+
-    trophyShelfHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
+    trophyShelfHtml()+noteHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
 }
 function tabbarHtml(){
   const S=CL.S;
@@ -11679,6 +11783,7 @@ function onClubClick(e){
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
+  if(act==="notecat"){ CL.noteCat=CL.noteCat===b.dataset.v?null:b.dataset.v; showClub(true); return; }
   if(act==="medit"){ CL.mEdit=!CL.mEdit; if(CL.draft)CL.draft.mname=null; showClub(true); return; }
   if(act==="mrename"){ const nm=CL.draft&&CL.draft.mname!=null?CL.draft.mname:S.mgr&&S.mgr.name; if(renameManager(S,nm)){ CL.mEdit=false; CL.draft.mname=null; save(); } else infoBar(["監督名を入れてください"]); showClub(true); return; }
   if(act==="licav"){ (CL.draft||(CL.draft={})).av=+b.dataset.v; showClub(true); return; }

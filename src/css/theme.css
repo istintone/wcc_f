@@ -2139,3 +2139,18 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .spo.rare{background:linear-gradient(120deg,#fff8e1,#fbe7a6 45%,#fff3cf 70%,#f3d27a);box-shadow:0 0 0 2px #d9a520,0 0 18px rgba(217,165,32,.45)}
 #club .sp-rare{display:inline-block;margin-right:6px;padding:1px 7px;font-style:normal;font-family:var(--f-num);font-size:10px;font-weight:800;letter-spacing:.12em;color:#2a1a00;background:linear-gradient(100deg,#b8860b,#f6d36b,#d9a520)}
 #club .rw.oil b{color:#8a5d00}
+
+/* COACHING NOTE(→docs/23 §23.10) */
+#club .note .nt-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+#club .note .nt-cat{display:flex;flex-direction:column;align-items:center;padding:6px 4px;border:1px solid var(--t-rule,#ddd);background:var(--t-card,#fff);color:inherit;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+#club .note .nt-cat small{font-size:10px;font-weight:600;opacity:.7}
+#club .note .nt-cat.on{border-color:var(--t-sub,#c8102e);box-shadow:inset 0 -3px 0 var(--t-sub,#c8102e)}
+#club .note .nt-list{list-style:none;margin:8px 0 0;padding:0}
+#club .note .nt-list li{padding:7px 2px;border-top:1px dashed var(--t-rule,#ddd)}
+#club .note .nt-list .tg{cursor:default}
+#club .note .nt-at{margin-left:6px;font-size:10px;opacity:.65}
+#club .note .nt-list p{margin:3px 0 0;font-size:11.5px;line-height:1.5}
+#club .note .nt-list p i{display:inline-block;min-width:44px;margin-right:4px;font-style:normal;font-size:10px;font-weight:800;opacity:.6}
+#club .note .nt-un .tg{background:#d7d7d7;color:#777}
+#club .note .nt-un small{margin-left:6px;font-size:10px;opacity:.6}
+#club .note div.nt-un{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px}#club .note div.nt-un small{width:100%;font-size:10.5px;opacity:.65}#club .note div.nt-un .tg{padding:2px 7px;cursor:default}#club .note div.nt-un .tg b{font-size:10px}

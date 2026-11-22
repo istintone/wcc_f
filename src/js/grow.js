@@ -918,6 +918,7 @@ function addTeamTag(S,id,out,quiet){
     out.push("🏷 「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1);
   }
   L.push({ id, n:tagDur(T) });
+  noteTag(S,id);                                // COACHING NOTE(→docs/23 §23.10)
   if(T.fx&&T.fx.motLock==="on")motLockApply(S);
   if(!quiet)out.push("🏷 チームに「"+T.name+"」 ― "+T.desc);
 }
@@ -946,6 +947,7 @@ function tagsAfterMatch(S,fx,res,out){
   autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
+  noteSeen(S);                                  // 見えているタグも手帳に
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -1034,6 +1036,7 @@ function addPlayerTag(S,id,tid,out){
       out.push("🏷 "+nm+" の「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1); }
   }
   L.push({ id:tid, n:tagDur(T) });
+  noteTag(S,tid);                               // COACHING NOTE
   if(T.onAdd==="mot4"&&g.mot>0)g.mot=4;
   if(tid==="rebel"||tid==="gossip"||tid==="waiting")pCnt(g).bad=(pCnt(g).bad||0)+1;   // クライベイビーの判定
   out.push("🏷 "+nm+" に「"+T.name+"」 ― "+T.desc);
@@ -1190,7 +1193,7 @@ function comboCheck(S,out){
   const linked=(a,b)=>trust(a)&&trust(b)&&linkOf(S,a,b).lv>=3;
   const res=findCombos(xi,xiRoles(S),linked,ax=>ax.some(a=>S.g.gold[a]),have,T.max);
   for(const c of res.slice(have.length)){
-    const C=COMBOS[c.id]; have.push(c);
+    const C=COMBOS[c.id]; have.push(c); noteTag(S,"cb:"+c.id);
     out.push("🏷 "+c.ids.map(x=>nameOf(CARDS[x])).join("・")+" のコンビ「"+C.name+"」が生まれた ― "+comboDesc(C));
   }
 }
@@ -1253,4 +1256,45 @@ function answerTagEvent(S,i){
   if(R.fat&&id){ const g=S.g.pl[id]; g.fat=clamp(g.fat+R.fat,0,TUNING.grow.int.fatMax); }
   if(!out.length)out.push("いつもどおりに戻った");
   return out;
+}
+
+/* ---- COACHING NOTE(→docs/23 §23.10) ---- */
+/** 手帳に書く(初めてなら記録する。数も数える)。id … タグの id か "cb:コンビの id" */
+function noteTag(S,id){
+  if(!S||!id)return;
+  const N=S.note||(S.note={});
+  if(!N[id])N[id]={ term:S.term, at:S.played, n:0 };
+  N[id].n++;
+}
+/** 手帳の区分 */
+function noteCat(id){
+  if(/^cb:/.test(id))return "combo";
+  const T=TAGS[id]; if(!T)return null;
+  return T.kind==="title"?"title":T.kind==="trait"?"trait":T.kind==="unique"?"unique":T.scope==="team"?"team":"player";
+}
+/** 付き方の文 */
+function noteHow(id){
+  if(/^cb:/.test(id)){ const C=COMBOS[id.slice(3)]; if(!C)return "";
+    const ax=C.axes.map(a=>AXIS_ABBR[a]).join(" か ");
+    return C.special?"決められた選手の組("+C.ids.map(x=>nameOf(CARDS[x])).join("・")+")が全員先発で黄金線・信頼でつながり、"+ax+" が金色"
+      :C.slots.length+"人("+C.slots.map(s=>COMBO_SLOT[s].join("/")).join(" + ")+")が黄金線・信頼でつながり、"+ax+" が金色"; }
+  const T=TAGS[id]; if(!T)return "";
+  if(NOTE_HOW[id])return NOTE_HOW[id];
+  if(T.sub==="nation")return "先発の11人をすべて "+(NAT_NAME[T.nat]||T.nat)+" の選手にして戦い続ける";
+  if(T.sub==="club")return "黄金期に、金色の3軸が "+id.slice(2).split("").map(a=>AXIS_ABBR[a]).join("・");
+  if(T.kind==="trait")return "選手からの提案で選ぶ / "+T.pos.join("・")+" で好採点(7.0 以上)が5試合続く";
+  if(T.card)return "このカードを手に入れる(初めから持っている)";
+  return "";
+}
+/** 手帳に載る全部の id(区分ごと) */
+function noteAll(){
+  const out={}; for(const [k] of NOTE_CAT)out[k]=[];
+  for(const id in TAGS){ const c=noteCat(id); if(c)out[c].push(id); }
+  for(const id in COMBOS)out.combo.push("cb:"+id);
+  return out;
+}
+/** 試合のあとに、見えているタグ(施設充実・オイルマネー・カードの固有)も手帳に書く */
+function noteSeen(S){
+  for(const t of teamTagsView(S))if(TAGS[t.id])noteTag(S,t.id);
+  for(const id of S.sq)if(TAGS["u_"+id])noteTag(S,"u_"+id);
 }

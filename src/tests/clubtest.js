@@ -885,5 +885,17 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   check("オイルマネーと契約中は、金パック(キラ・レジェンド)がおよそ2倍出る",b>a*1.6&&b<a*2.6,a+" → "+b);
   check("契約中はチームのタグ「オイルマネー」が見える",E.teamTagsView(S).some(t=>t.id==="oil"));
 }
+// COACHING NOTE(→docs/23 §23.10): 付いたタグを手帳に書き、任期をまたいで残す。全部に付き方の文がある
+{
+  console.log("\n■ COACHING NOTE");
+  const S=E.newCareer(4242), W=E.worldOf(S), o=[];
+  E.addTeamTag(S,"momentum",o); E.addPlayerTag(S,S.sq[9],"ace",o);
+  check("付いたタグは手帳に書かれる(チーム・選手)",!!(S.note&&S.note.momentum&&S.note.ace));
+  for(let n=0;n<120&&!S.termOver;n++){ const fx=E.nextFixture(S,W); if(!fx){ const r=E.skipSlot(S,W); if(!r)break; continue; } const on=S.sq.slice(0,11); E.applyResult(S,W,fx,{ hg:1, ag:0, played:on, onPitch:on, starters:on }); }
+  if(S.termOver){ E.endTerm(S); E.startNextTerm(S,W); }
+  check("任期をまたいでも手帳は残る(タグそのものはクリア)",!!(S.note.momentum&&S.note.ace)&&!(S.g.tags||[]).some(t=>t.id==="momentum"),"第"+S.term+"任期");
+  const A=E.noteAll(), miss=[]; for(const k in A)for(const id of A[k])if(!E.noteHow(id))miss.push(id);
+  check("手帳に載るタグ・コンビのすべてに付き方の文がある",!miss.length,miss.join(","));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

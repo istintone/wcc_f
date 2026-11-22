@@ -1172,6 +1172,25 @@ function offerHtml(){
     list.map(offerCardHtml).join("")+'</section>';
 }
 /** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+/**
+ * COACHING NOTE(→docs/23 §23.10): 見つけたタグの付き方と効き目。任期をまたいで残る。区分を押すと開く
+ */
+function noteHtml(){
+  const S=CL.S, N=S.note||{}, all=noteAll(), tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
+  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:TAGS[id].name;
+  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):TAGS[id].desc;
+  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].pol<0?'dn':'up';
+  let h='<section class="card note"><h3>COACHING NOTE <small>見つけたタグ '+got+' / '+tot+' ・ 任期をまたいで残る</small></h3>'+
+    '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
+      return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
+  if(CL.noteCat&&all[CL.noteCat]){
+    const L=all[CL.noteCat], got2=L.filter(id=>N[id]), un=L.length-got2.length;
+    h+='<ul class="nt-list">'+got2.map(id=>'<li><span class="tg '+cls(id)+'"><b>'+nameOfId(id)+'</b></span><small class="nt-at">第'+N[id].term+'任期で発見 ・ '+N[id].n+'回</small>'+
+        '<p><i>付き方</i>'+noteHow(id)+'</p><p><i>効き目</i>'+descOf(id)+'</p></li>').join("")+'</ul>'+
+      (un?'<div class="nt-un"><small>まだ見つけていない '+un+'</small>'+'<span class="tg"><b>???</b></span>'.repeat(un)+'</div>':'<p class="dim">この区分はすべて見つけた</p>');
+  }
+  return h+'</section>';
+}
 /** 黄金期の行(タグ「黄金期到来」の残り) */
 function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); return t?'<p class="gr-golden">👑 黄金期 ・ あと '+t.n+' 試合 全員が絶好調</p>':''; }
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
@@ -1455,7 +1474,7 @@ function managerTabHtml(){
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
       '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+S.salary+'</b><small>累計年俸(億)</small></div></div>'+
       (earned.length?'<p class="dim">取った称号: '+earned.map(id=>titleOf(id).name).join(" / ")+'</p>':'')+'</section>'+
-    trophyShelfHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
+    trophyShelfHtml()+noteHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
 }
 function tabbarHtml(){
   const S=CL.S;
@@ -1535,6 +1554,7 @@ function onClubClick(e){
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
+  if(act==="notecat"){ CL.noteCat=CL.noteCat===b.dataset.v?null:b.dataset.v; showClub(true); return; }
   if(act==="medit"){ CL.mEdit=!CL.mEdit; if(CL.draft)CL.draft.mname=null; showClub(true); return; }
   if(act==="mrename"){ const nm=CL.draft&&CL.draft.mname!=null?CL.draft.mname:S.mgr&&S.mgr.name; if(renameManager(S,nm)){ CL.mEdit=false; CL.draft.mname=null; save(); } else infoBar(["監督名を入れてください"]); showClub(true); return; }
   if(act==="licav"){ (CL.draft||(CL.draft={})).av=+b.dataset.v; showClub(true); return; }

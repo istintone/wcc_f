@@ -596,6 +596,7 @@ function loadCareer(store){
 function migrate(S){
   if(!S.sq)S.sq=startSquad();
   if(!S.coll)S.coll=newCollection();
+  if(!S.note)S.note={};                         // COACHING NOTE(→docs/23 §23.10)。任期をまたいで残る
   // カードの一覧が変わって存在しなくなったカードを外す(登録の空きは初めの16枚で埋める)
   for(const id of Object.keys(S.coll))if(!CARDS[id])delete S.coll[id];
   const spare=startSquad().filter(id=>!S.sq.includes(id));
