@@ -2436,3 +2436,31 @@ body[class] #pad .btn-keeper.on{color:#2a1d00!important}
 body[class] #pad .cross::before,body[class] #pad .act::before{top:3px!important;height:16px;padding-top:4px}
 body[class] #pad .cross::after,body[class] #pad .act::after{top:19px!important;height:3px!important}
 body[class] #pad .cross{padding-top:23px!important;grid-template-rows:24px 26px 24px!important}
+/* 帯は水平に(→docs/14 §14.100) */
+body[class] #pad .cross::before,body[class] #pad .act::before,body[class] #pad .cross::after,body[class] #pad .act::after{transform:none!important;left:0!important;right:0!important}
+body[class] #pad .cross::before,body[class] #pad .act::before{top:0!important;height:15px;padding-top:3px}
+body[class] #pad .cross::after,body[class] #pad .act::after{top:15px!important}
+body[class] #pad .cross::before{padding-left:12px} body[class] #pad .act::before{padding-right:12px}
+/* 十字: 字は出さない。筐体と同じ黄色の三角(外向き)と赤い □ */
+body[class] #pad .tac{font-size:0!important;color:transparent!important;padding:0!important;
+  background:linear-gradient(180deg,#fff27a,#ffd21e 55%,#e2a90a)!important;box-shadow:none!important}
+body[class] #pad .tac.up{clip-path:polygon(50% 8%,94% 92%,6% 92%)!important}
+body[class] #pad .tac.dn{clip-path:polygon(6% 8%,94% 8%,50% 92%)!important}
+body[class] #pad .tac.lf{clip-path:polygon(8% 50%,92% 8%,92% 92%)!important}
+body[class] #pad .tac.rt{clip-path:polygon(8% 8%,92% 50%,8% 92%)!important}
+body[class] #pad .tac.md{background:linear-gradient(180deg,#f02a48,#c8102e 55%,#8f0a1f)!important;box-shadow:0 0 0 2px #111!important;margin:3px!important;border-radius:2px!important}
+body[class] #pad .tac.on{background:linear-gradient(180deg,#ff6a7e,#e8202e 55%,#a50e25)!important;filter:drop-shadow(0 0 5px rgba(240,42,72,.95))}
+body[class] #pad .tac.md.on{background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c)!important;box-shadow:0 0 0 2px #111,0 0 12px rgba(233,199,107,.95)!important;filter:none}
+/* 発動中の指示の札(ピッチの左上)。操作パネルの帯と同じ意匠: 赤い帯に白い斜体 + 下に黒と金の細線。点くと左から滑り込む */
+#insTags{position:absolute;left:8px;top:8px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
+#insTags i{display:block;max-height:0;margin:0;overflow:hidden;opacity:0;transform:translateX(-120%);transition:transform .22s ease-out,opacity .22s,max-height .22s,margin .22s;
+  padding:0 10px 0 7px;font-style:italic;font-family:var(--f-num),sans-serif;font-size:10.5px;font-weight:900;line-height:18px;letter-spacing:.06em;color:#fff;white-space:nowrap;
+  background:linear-gradient(90deg,#a50e25,#f02a48);border-left:3px solid #fff;box-shadow:0 2px 0 #111,0 3.5px 0 #e9c76b,0 4px 8px rgba(0,0,0,.35);
+  clip-path:polygon(0 0,100% 0,calc(100% - 7px) 100%,0 100%)}
+#insTags i.on{max-height:22px;margin-bottom:6px;opacity:1;transform:none}
+body[class] #pad .tac.md{font-size:0!important;color:transparent!important}
+/* 発動中の札は、画面の左端から出す(筐体の演出。→docs/14 §14.100) */
+#insTags{left:0!important;top:10px!important;z-index:9!important}
+#insTags i{padding:0 14px 0 10px!important;border-left:0!important;font-size:11px!important;line-height:20px!important;transform:translateX(-105%);
+  clip-path:polygon(0 0,100% 0,calc(100% - 9px) 100%,0 100%)!important}
+#insTags i.on{max-height:24px!important;margin-bottom:7px!important;transform:none}

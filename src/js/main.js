@@ -88,6 +88,14 @@ function bossSay(key,name,extra){
   const line=a[Math.floor(Math.random()*a.length)].replace("%",name||"");   // 見た目だけの揺らぎ(試合の乱数は使わない)
   say("監督「"+line+"」"+(extra||""),false,"boss");
 }
+/** 発動中の指示を、ピッチの左上に札で出し入れする(十字のボタンは字を出さないので。→docs/14 §14.100) */
+function updateInsTags(){
+  const box=$("insTags"); if(!box)return;
+  const I=G.ins||{}, side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";
+  for(const el of box.children){ const k=el.dataset.k, on=k==="side"?!!side:!!I[k];
+    if(k==="side"&&side)el.textContent=side;
+    el.classList.toggle("on",on); }
+}
 function updateCtl(){
   if(G.M&&$("btnShoot"))$("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
   $("btnSpeed").textContent="×"+G.speed;
@@ -95,6 +103,7 @@ function updateCtl(){
   $("btnKp").classList.toggle("on",G.kpMode);
   $("board").classList.toggle("kpmode",G.kpMode);
   for(const [id,k] of INS_BTN)$(id).classList.toggle("on",!!G.ins[k]);
+  updateInsTags();
   updateStyleBar();
 }
 /** いま有効なスタイルを両チームぶん出す(映像の下の帯) */
