@@ -11942,11 +11942,21 @@ const BGM_TRACKS={
   //   root … 小節ごとのパワーコードの根音 / mute … ミュートで刻む8分の位置 / acc … 強く弾く位置 / lead … リードのリフ(根音からの半音)。null は休み
   //   bassPat … ベースの8分ごとの音(根音からの半音。オクターブで弾む)/ sub … 1オクターブ下のサイン波の重低音の強さ / clap … スネアに手拍子を重ねる
   // 2026-11-22: ベースを効かせたハイテンポでスポーティーに(→docs/14 §14.65)
-  club:{ bpm:140, vol:0.09, root:[40,36,38,35], mute:[1,2,3,5,6,7], acc:[0,3,6],
-    kick:[0,2,4,6], snare:[2,6], clap:true, sub:0.22, bassPat:[0,12,0,12,0,12,7,12], lead:[12,null,15,17,null,19,17,15] },
-  match:{ bpm:172, vol:0.075, root:[38,34,36,33], mute:[1,2,3,4,5,6,7], acc:[0,3,6],
-    kick:[0,2,3,4,6], snare:[2,6], clap:true, sub:0.24, bassPat:[0,0,12,0,0,12,7,10], lead:[12,15,17,null,19,null,17,19] }
+  // 2026-11-22: メロディを増やす(→docs/14 §14.66)。4小節ずつ バース(ギターのリフ + アルペジオ)と サビ(シンセのリードのメロディ)を交互に。8小節ごとにドラムのフィル
+  //   chord … 小節ごとの和音の種類(m 短 / M 長)/ mel … サビのメロディ [MIDI の音 | null, 8分の長さ] を4小節ぶん / arp … アルペジオの細かさ(8 = 8分、16 = 16分)
+  club:{ bpm:140, vol:0.09, root:[40,36,38,35], chord:["m","M","M","M"], mute:[1,2,3,5,6,7], acc:[0,3,6],
+    kick:[0,2,4,6], snare:[2,6], clap:true, sub:0.22, bassPat:[0,12,0,12,0,12,7,12], lead:[12,null,15,17,null,19,17,15], arp:8,
+    mel:[[71,2],[69,1],[67,1],[64,2],[67,2],   [72,3],[71,1],[67,2],[64,2],   [74,2],[72,1],[71,1],[69,2],[66,2],   [71,3],[75,1],[78,2],[75,1],[71,1]] },
+  match:{ bpm:172, vol:0.075, root:[38,34,36,33], chord:["m","M","M","M"], mute:[1,2,3,4,5,6,7], acc:[0,3,6],
+    kick:[0,2,3,4,6], snare:[2,6], clap:true, sub:0.24, bassPat:[0,0,12,0,0,12,7,10], lead:[12,15,17,null,19,null,17,19], arp:16,
+    mel:[[74,1],[74,1],[77,1],[74,1],[81,2],[79,2],   [77,2],[74,1],[70,1],[74,2],[77,2],   [79,1],[79,1],[76,1],[72,1],[76,2],[79,2],   [81,3],[73,1],[76,2],[81,2]] }
 };
+/** メロディの並び([音, 長さ])を、8分ごとの「その位置で始まる音」の表にする(曲ごとに1回) */
+function bgmMelMap(T){
+  if(T._mm)return T._mm;
+  const m={}; let at=0; for(const [n,l] of T.mel){ if(n!=null)m[at]=[n,l]; at+=l; }
+  return (T._mm=m);
+}
 function bgmVoice(type,freq,t,dur,peak,cut){
   const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
   o.type=type; o.frequency.setValueAtTime(freq,t);
@@ -11966,6 +11976,22 @@ function bgmKick(t,peak){
   o.type="sine"; o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(44,t+0.09); o.frequency.exponentialRampToValueAtTime(36,t+0.22);
   env(g,t,0.003,peak,0.05,0.2); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.32);
   bgmNoise(t,0.012,peak*0.12,"highpass",3000);
+}
+/** シンセのリード(のこぎり波と矩形波を少しずらして重ね、ビブラート。サビのメロディ) */
+function bgmLead(freq,t,dur,peak){
+  const g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter(), lfo=SND.ctx.createOscillator(), lg=SND.ctx.createGain();
+  f.type="lowpass"; f.frequency.setValueAtTime(5200,t); f.frequency.exponentialRampToValueAtTime(2600,t+dur);
+  lfo.frequency.value=5.5; lg.gain.value=freq*0.006; lfo.connect(lg);
+  [["sawtooth",1],["square",1.004]].forEach(([ty,dt])=>{ const o=SND.ctx.createOscillator(); o.type=ty; o.frequency.setValueAtTime(freq*dt,t);
+    lg.connect(o.frequency); o.connect(f); o.start(t); o.stop(t+dur+0.15); });
+  env(g,t,0.012,peak,dur*0.7,dur*0.35); f.connect(g); g.connect(BGM.gain);
+  lfo.start(t+Math.min(0.12,dur*0.4)); lfo.stop(t+dur+0.15);
+}
+/** アルペジオの粒(三角波の短い音) */
+function bgmPluck(freq,t,dur,peak){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
+  o.type="triangle"; o.frequency.setValueAtTime(freq,t); f.type="lowpass"; f.frequency.value=3800;
+  env(g,t,0.003,peak,0.02,dur); o.connect(f); f.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+dur+0.05);
 }
 /** 重低音(サイン波。ベースの1オクターブ下) */
 function bgmSub(freq,t,dur,peak){
@@ -11990,7 +12016,18 @@ function bgmStep(T,i,t){
   const bn=(T.bass?T.bass[bar]:T.root[bar])+(T.bassPat?T.bassPat[pos]:0);
   bgmVoice("sawtooth",mtof(bn),t,e*0.8,0.13,T.bassPat?750:500);                                    // ベース(オクターブで弾む)
   if(T.sub)bgmSub(mtof((T.bass?T.bass[bar]:T.root[bar])-12),t,e*0.9,T.sub);                         // 重低音(根音の1オクターブ下)
-  if(barN%2===1&&T.lead[pos]!=null)bgmGuitar(mtof(T.root[bar]+24+T.lead[pos]),t,e*0.9,0.03,4200);   // リードのリフ(2小節に1回)
+  const sec=Math.floor(barN/4)%2;                                                                 // 0 バース / 1 サビ(4小節ずつ)
+  if(sec===0){
+    if(barN%2===1&&T.lead[pos]!=null)bgmGuitar(mtof(T.root[bar]+24+T.lead[pos]),t,e*0.9,0.03,4200);   // リードのリフ(2小節に1回)
+    if(T.arp){ const tri=[0,T.chord&&T.chord[bar]==="M"?4:3,7,12], b0=T.root[bar]+36;              // アルペジオ(和音の音を上下に)
+      const seq=[0,1,2,3,2,1,2,1], k=T.arp===16?2:1;
+      for(let j=0;j<k;j++)bgmPluck(mtof(b0+tri[seq[(pos*k+j)%8]]),t+j*e/k,e/k*0.9,0.03); }
+  }else if(T.mel){
+    const mm=bgmMelMap(T)[(barN%4)*8+pos];                                                        // サビのメロディ(4小節)
+    if(mm)bgmLead(mtof(mm[0]),t,e*mm[1]*0.92,0.045);
+    if(pos===0||pos===4)[0,T.chord&&T.chord[bar]==="M"?4:3,7].forEach(n=>bgmVoice("sawtooth",mtof(T.root[bar]+24+n),t,e*1.6,0.018,1800));   // 和音の刻み(2拍ごと)
+  }
+  if(barN%8===7&&pos>=6){ bgmNoise(t+e/2,0.08,0.08,"bandpass",1800); bgmNoise(t+e/4,0.08,0.06,"bandpass",2100); }   // フィル(8小節の終わり)
   if(T.kick.includes(pos))bgmKick(t,0.42);
   if(T.snare.includes(pos)){ bgmNoise(t,0.16,0.11,"bandpass",1800); bgmNoise(t,0.09,0.05,"highpass",4500);
     if(T.clap)[0,0.011,0.022].forEach(d=>bgmNoise(t+d,0.05,0.05,"bandpass",1200)); }               // 手拍子(スタジアムのクラップ)
