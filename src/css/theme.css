@@ -2205,3 +2205,19 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 /* ラウンジの関係: 信頼は金の文字 */
 #club .sqc .if .rel-gd{color:#c99400;font-weight:900;text-shadow:0 0 4px rgba(242,193,78,.6)}
 #club .sqc .if .rel-sg{color:#b0861a;font-weight:800}
+/* SQUAD は2列(→docs/14 §14.89): ピッチ + 右の列(SUB の下に ORDER)。ピッチは個別指導・チーム練習の盤面と同じ大きさ */
+#club .sq-3col.sq-2col{display:flex;justify-content:center;align-items:flex-start;gap:4px}
+#club .sq-2col .sq-pitch{flex:0 0 auto;width:min(258px,calc(100% - 58px));aspect-ratio:100/150}
+#club .sq-2col .sq-side{flex:0 0 54px;display:flex;flex-direction:column;gap:6px}
+#club .sq-2col .sq-side .sq-bench{width:100%}
+#club .sq-2col .sq-side .sq-roles{width:100%;margin:0}
+/* SUB の下の ORDER は詰めて(右の列がピッチの高さに収まるように) */
+#club .sq-2col .sq-side .sq-roles{gap:3px;padding:4px 2px}
+#club .sq-2col .sq-side .sq-roles .rs{height:34px;grid-template-rows:12px 1fr;padding:0}
+#club .sq-2col .sq-side .sq-roles .rs b{font-size:9px;line-height:12px}
+#club .sq-2col .sq-side .sq-roles .rs .no{grid-row:2;font-size:11px}
+#club .sq-2col .sq-side .sq-roles .rs .nm{display:none}
+#club .sq-2col .sq-side .sq-roles .rs .nm.auto{display:block;grid-row:2;font-size:9px}
+#club .sq-2col .sq-side .sq-roles .rs small{display:none}
+#club .sq-2col .sq-side .sq-bench{gap:3px}
+#club .sq-2col .sq-side .sq-bench .sqc{margin:0 auto!important}

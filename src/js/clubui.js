@@ -457,8 +457,8 @@ function squadHtml(){
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
-  // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
-  h+='<div class="sq-3col">'+sqRolesHtml()+
+  // 2列: 左にピッチ、右に控え(SUB)とその下に任命(ORDER)。ピッチはチーム練習・個別指導の盤面と同じ大きさ(→docs/14 §14.89)
+  h+='<div class="sq-3col sq-2col">'+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+(CL.noLinks?'':sqLinksSvg())+
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+
@@ -466,7 +466,7 @@ function squadHtml(){
     '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
       '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
-    '<div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
+    '<div class="sq-side"><div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>'+sqRolesHtml()+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';

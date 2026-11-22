@@ -2804,6 +2804,22 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 /* ラウンジの関係: 信頼は金の文字 */
 #club .sqc .if .rel-gd{color:#c99400;font-weight:900;text-shadow:0 0 4px rgba(242,193,78,.6)}
 #club .sqc .if .rel-sg{color:#b0861a;font-weight:800}
+/* SQUAD は2列(→docs/14 §14.89): ピッチ + 右の列(SUB の下に ORDER)。ピッチは個別指導・チーム練習の盤面と同じ大きさ */
+#club .sq-3col.sq-2col{display:flex;justify-content:center;align-items:flex-start;gap:4px}
+#club .sq-2col .sq-pitch{flex:0 0 auto;width:min(258px,calc(100% - 58px));aspect-ratio:100/150}
+#club .sq-2col .sq-side{flex:0 0 54px;display:flex;flex-direction:column;gap:6px}
+#club .sq-2col .sq-side .sq-bench{width:100%}
+#club .sq-2col .sq-side .sq-roles{width:100%;margin:0}
+/* SUB の下の ORDER は詰めて(右の列がピッチの高さに収まるように) */
+#club .sq-2col .sq-side .sq-roles{gap:3px;padding:4px 2px}
+#club .sq-2col .sq-side .sq-roles .rs{height:34px;grid-template-rows:12px 1fr;padding:0}
+#club .sq-2col .sq-side .sq-roles .rs b{font-size:9px;line-height:12px}
+#club .sq-2col .sq-side .sq-roles .rs .no{grid-row:2;font-size:11px}
+#club .sq-2col .sq-side .sq-roles .rs .nm{display:none}
+#club .sq-2col .sq-side .sq-roles .rs .nm.auto{display:block;grid-row:2;font-size:9px}
+#club .sq-2col .sq-side .sq-roles .rs small{display:none}
+#club .sq-2col .sq-side .sq-bench{gap:3px}
+#club .sq-2col .sq-side .sq-bench .sqc{margin:0 auto!important}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10792,8 +10808,8 @@ function squadHtml(){
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
-  // 3列: 左に任命(CAP・PK・FK・CK)、中央にピッチ、右に控え(試合画面と同じ並び。→docs/12 §12.2)
-  h+='<div class="sq-3col">'+sqRolesHtml()+
+  // 2列: 左にピッチ、右に控え(SUB)とその下に任命(ORDER)。ピッチはチーム練習・個別指導の盤面と同じ大きさ(→docs/14 §14.89)
+  h+='<div class="sq-3col sq-2col">'+
     '<div class="sq-pitch" id="sqPitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     '<i class="pm ga top"></i><i class="pm ga bot"></i>'+(CL.noLinks?'':sqLinksSvg())+
     on.map((id,i)=>sqTokenHtml(id,i,true)).join("")+
@@ -10801,7 +10817,7 @@ function squadHtml(){
     '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
       '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
-    '<div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
+    '<div class="sq-side"><div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>'+sqRolesHtml()+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
