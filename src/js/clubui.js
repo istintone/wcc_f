@@ -485,7 +485,7 @@ function ggModalHtml(){
     '<td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
     '<header class="km-head"><span></span><b>成長グラフと戦力</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
-    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    goldenLineHtml(S)+
     '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#9aa1ad", fill:"#9aa1ad", op:0.2 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
       '<small class="gg-leg"><i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(練習で伸びる・KP のランクを決める) <i class="p"></i>戦力(選手の能力)</small></div>'+
     '<table class="gg-tbl"><tr><th></th><th>成長</th><th>戦力</th></tr>'+["O","D","S","P","R","C"].map(row).join("")+
@@ -502,7 +502,7 @@ function growGraphHtml(S){
     (gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
   const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
   return '<section class="card graph-r'+(all?' gold':'')+'"><h3>成長グラフ <small>'+(all?'黄金のチーム':'練習で伸び縮みする。KP のランクを決める')+'</small></h3>'+
-    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    goldenLineHtml(S)+
     '<div class="gr-wrap nor">'+   // レーダーは SQUAD の上部に出すので、ここは対ごとの値だけ(→docs/14 §14.42)
     '<ul class="gr-list">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+ax(p[0])+'<i class="pr">⇄</i>'+ax(p[1])+'</li>').join("")+'</ul></div>'+
     (false&&st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
@@ -1162,6 +1162,8 @@ function offerHtml(){
     list.map(offerCardHtml).join("")+'</section>';
 }
 /** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+/** 黄金期の行(タグ「黄金期到来」の残り) */
+function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); return t?'<p class="gr-golden">👑 黄金期 ・ あと '+t.n+' 試合 全員が絶好調</p>':''; }
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
 function teamTagsHtml(){
   const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";

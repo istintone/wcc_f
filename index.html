@@ -4044,7 +4044,9 @@ const teamNameOf=t=>(PACK.teams[t.id]&&PACK.teams[t.id].name)||t.name;
 /* ---------- タグ(チームと選手のバフ・デバフ。→docs/23) ----------
  * TAGS: id → { name, scope:"team"|"player", kind, pol:1 バフ / -1 デバフ, desc, dur:試合数 | null(条件が解けるまで), endOn:"win"|"lose", opp:打ち消すタグ, fx:{ 語彙:"+m" … } }
  *   fx の値は「向き + 強さ」: "+m" = ×(1 + 中)、"-m" = ×(1 − 中)。強さは TUNING.tag.str
- *   derived:true … 別の状態から読む(黄金期 = S.g.golden、施設充実 = スポンサーの報酬 S.biz.boost)。上限の数には入れない */
+ *   derived:true … 別の状態から読む(施設充実 = スポンサーの報酬 S.biz.boost)。上限の数には入れない
+ *   keep:true … 上限の数に入れず、押し出されない(黄金期)。dur:"graph.golden" のような文字は TUNING.grow から読む
+ *   fx の motLock:"on" … 全員(ケガ以外)を絶好調に固定する */
 TUNING.tag={
   str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
   teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
@@ -4052,7 +4054,7 @@ TUNING.tag={
   streak:3                        // 勢い・スランプが付く連勝・連敗の数
 };
 const TAGS={
-  golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  derived:true, desc:"選手全員が絶好調。調子が落ちない" },
+  golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  keep:true, dur:"graph.golden", fx:{ motLock:"on" }, endMsg:"黄金期がひと区切り(金色の成長グラフはそのまま)", desc:"選手全員が絶好調。調子が落ちない" },
   momentum: { name:"勢い",         scope:"team", kind:"gen", pol:1,  dur:10, endOn:"lose", opp:"slump", fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい。負けると消える" },
   slump:    { name:"スランプ",     scope:"team", kind:"gen", pol:-1, dur:null, endOn:"win", opp:"momentum", fx:{ motDown:"+m" }, desc:"負けたとき、調子が下がりやすい。勝つと消える" },
   promo:    { name:"昇格の勢い",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"releg", fx:{ motDown:"-m" }, desc:"チームの調子が落ちにくい" },
@@ -6892,7 +6894,7 @@ function newPlayerGrowth(){
 function newGrowth(ids){
   const pl={};
   (ids||TEAMS.azr.xi.concat(TEAMS.azr.bench)).forEach(id=>{ pl[id]=newPlayerGrowth(); });
-  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, gold:{}, golden:0, set:0,
+  return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, gold:{}, set:0,
     step:"train", cn:0, done:[], opts:null, tags:[], streak:0 };
 }
 /** 古いセーブの育成に、あとから増えた項目を補う */
@@ -6905,8 +6907,10 @@ function migrateGrowth(g,sq){
   if(!g.done)g.done=[];
   if(g.step==="ready")g.step="comm";
   // 成長グラフ(→docs/15)。前の戦力グラフ(−2〜+3 の上乗せ)とは目盛りが違うので 0 から
-  if(!g.gold){ g.gold={}; g.golden=0; for(const a in g.graph)g.graph[a]=0; }
+  if(!g.gold){ g.gold={}; for(const a in g.graph)g.graph[a]=0; }
   if(!g.tags){ g.tags=[]; g.streak=0; }        // タグ(→docs/23)
+  if(g.golden>0){ if(!g.tags.some(t=>t.id==="golden"))g.tags.push({ id:"golden", n:g.golden }); }
+  delete g.golden;                              // 黄金期はタグ「黄金期到来」に寄せた
   return g;
 }
 const linkOf=(S,a,b)=>S.g.links[lkey(a,b)]||{ lv:0, exp:0, gold:false };
@@ -6984,10 +6988,11 @@ function graphBreak(S,axes,out){
     if(S.g.gold[a]||S.g.gold[AXIS_PAIR[a]]||rng()>=R.breakP)continue;
     S.g.gold[a]=true; S.g.graph[a]=R.max;
     out.push("🌟 成長グラフの "+AXIS_ABBR[a]+" が限界突破！ 金色に輝いた(もう下がらない)");
-    if(graphGoldN(S)>=3&&!S.g.golden){
-      S.g.golden=R.golden; S.g.goldenAt=S.played;
-      for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4;
+    if(graphGoldN(S)>=3&&S.g.goldenAt==null){
+      // 黄金期はタグ「黄金期到来」(→docs/23)。付いた時点で全員が絶好調、期限はタグの仕組みで減る
+      S.g.goldenAt=S.played;
       out.push("👑 黄金期が到来！ 成長グラフが黄金に。"+R.golden+"試合のあいだ全員が絶好調");
+      addTeamTag(S,"golden",out,true);
     }
   }
 }
@@ -7416,13 +7421,10 @@ function afterMatchGrowth(S,fx,res){
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
   }
-  // 黄金期(→docs/15 §15.3): 残りの試合のあいだ、ケガ以外の全員が絶好調のまま。終わっても金色のグラフは残る
-  if(S.g.golden>0){
-    S.g.golden--;
-    if(S.g.golden>0){ for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4; }
-    else out.push("黄金期がひと区切り(金色の成長グラフはそのまま)");
-  }
-  tagsAfterMatch(S,fx,res,out);                 // タグ(→docs/23)。付いたタグは次の試合から効く
+  // タグ(→docs/23)。期限を減らし、付く・消えるを判定する。付いたタグは次の試合から効く。
+  // 黄金期(タグ「黄金期到来」。→docs/15 §15.3)の残りのあいだは、ケガ以外の全員が絶好調のまま
+  tagsAfterMatch(S,fx,res,out);
+  motLockApply(S);
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
   return out;
@@ -7693,27 +7695,36 @@ const secEvQ=(S,ev)=>{ const i=SEC_EVENTS.indexOf(ev), q=SEC_EV_Q[i]; return (q&
  * チームのタグは S.g.tags = [{ id, n:残りの試合 | null }]。育成と同じく任期ごと(newGrowth で空になる = 任期の終わりで全部クリア)
  * 選手のタグは S.g.pl[id].tags(第3段から付く)。効き目は tagK で1か所から読む */
 const tagFxK=v=>{ const sg=v[0]==="-"?-1:1, k=TUNING.tag.str[v.slice(1)]||0; return 1+sg*k; };
+/** タグの期限(数か、TUNING.grow の項目名 "graph.golden" など) */
+const tagDur=T=>typeof T.dur==="string"?T.dur.split(".").reduce((o,k)=>o&&o[k],TUNING.grow):T.dur;
+/** オンかオフの効き目(motLock など)を持つタグがあるか */
+const tagOn=(S,key)=>((S.g&&S.g.tags)||[]).some(t=>TAGS[t.id]&&TAGS[t.id].fx&&TAGS[t.id].fx[key]==="on");
+/** 全員を絶好調に固定するタグ(黄金期)があれば、ケガ以外の全員を絶好調に */
+function motLockApply(S){ if(tagOn(S,"motLock"))for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4; }
 /** チームのタグの効き目(掛け算)。無ければ 1 */
 function tagK(S,key){
-  let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key])k*=tagFxK(T.fx[key]); }
+  let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key]&&T.fx[key]!=="on")k*=tagFxK(T.fx[key]); }
   return k;
 }
 /** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
-function addTeamTag(S,id,out){
+function addTeamTag(S,id,out,quiet){
   const T=TAGS[id], L=S.g.tags||(S.g.tags=[]); if(!T)return;
   if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 「"+TAGS[T.opp].name+"」が消えた"); } }
   const cur=L.find(t=>t.id===id);
-  if(cur){ cur.n=T.dur; return; }
-  if(L.length>=TUNING.tag.teamMax){
-    const j=L.reduce((b,t,i)=>(t.n==null?1e9:t.n)<(L[b].n==null?1e9:L[b].n)?i:b,0);
-    out.push("🏷 「"+TAGS[L[j].id].name+"」が消えた"); L.splice(j,1);
+  if(cur){ cur.n=tagDur(T); return; }
+  // 上限は keep(黄金期)を除いて数える。押し出すのも keep 以外から
+  const cnt=L.filter(t=>!TAGS[t.id].keep);
+  if(!T.keep&&cnt.length>=TUNING.tag.teamMax){
+    const v=cnt.reduce((b,t)=>(t.n==null?1e9:t.n)<(b.n==null?1e9:b.n)?t:b,cnt[0]);
+    out.push("🏷 「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1);
   }
-  L.push({ id, n:T.dur });
-  out.push("🏷 チームに「"+T.name+"」 ― "+T.desc);
+  L.push({ id, n:tagDur(T) });
+  if(T.fx&&T.fx.motLock==="on")motLockApply(S);
+  if(!quiet)out.push("🏷 チームに「"+T.name+"」 ― "+T.desc);
 }
 function dropTeamTag(S,id,out){
   const L=S.g.tags||[], j=L.findIndex(t=>t.id===id); if(j<0)return;
-  L.splice(j,1); out.push("🏷 「"+TAGS[id].name+"」が消えた");
+  L.splice(j,1); out.push(TAGS[id].endMsg||"🏷 「"+TAGS[id].name+"」が消えた");
 }
 /**
  * 試合のあとのタグ(afterMatchGrowth の最後に呼ぶ。付いたタグは次の試合から効く)
@@ -7735,7 +7746,6 @@ function tagsAfterMatch(S,fx,res,out){
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
   const v=[], g=S.g||{};
-  if(g.golden>0)v.push({ id:"golden", left:g.golden+"試合" });
   for(const t of g.tags||[]){ const T=TAGS[t.id]; if(!T)continue;
     v.push({ id:t.id, left:t.n!=null?t.n+"試合":T.endOn==="win"?"勝つまで":T.endOn==="lose"?"負けるまで":"" }); }
   const B=S.biz&&S.biz.boost, fac={};
@@ -9867,7 +9877,7 @@ function ggModalHtml(){
     '<td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
     '<header class="km-head"><span></span><b>成長グラフと戦力</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
-    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    goldenLineHtml(S)+
     '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#9aa1ad", fill:"#9aa1ad", op:0.2 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
       '<small class="gg-leg"><i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(練習で伸びる・KP のランクを決める) <i class="p"></i>戦力(選手の能力)</small></div>'+
     '<table class="gg-tbl"><tr><th></th><th>成長</th><th>戦力</th></tr>'+["O","D","S","P","R","C"].map(row).join("")+
@@ -9884,7 +9894,7 @@ function growGraphHtml(S){
     (gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
   const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
   return '<section class="card graph-r'+(all?' gold':'')+'"><h3>成長グラフ <small>'+(all?'黄金のチーム':'練習で伸び縮みする。KP のランクを決める')+'</small></h3>'+
-    (S.g.golden>0?'<p class="gr-golden">👑 黄金期 ・ あと '+S.g.golden+' 試合 全員が絶好調</p>':'')+
+    goldenLineHtml(S)+
     '<div class="gr-wrap nor">'+   // レーダーは SQUAD の上部に出すので、ここは対ごとの値だけ(→docs/14 §14.42)
     '<ul class="gr-list">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+ax(p[0])+'<i class="pr">⇄</i>'+ax(p[1])+'</li>').join("")+'</ul></div>'+
     (false&&st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
@@ -10544,6 +10554,8 @@ function offerHtml(){
     list.map(offerCardHtml).join("")+'</section>';
 }
 /** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+/** 黄金期の行(タグ「黄金期到来」の残り) */
+function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); return t?'<p class="gr-golden">👑 黄金期 ・ あと '+t.n+' 試合 全員が絶好調</p>':''; }
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
 function teamTagsHtml(){
   const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";

@@ -743,7 +743,9 @@ const teamNameOf=t=>(PACK.teams[t.id]&&PACK.teams[t.id].name)||t.name;
 /* ---------- タグ(チームと選手のバフ・デバフ。→docs/23) ----------
  * TAGS: id → { name, scope:"team"|"player", kind, pol:1 バフ / -1 デバフ, desc, dur:試合数 | null(条件が解けるまで), endOn:"win"|"lose", opp:打ち消すタグ, fx:{ 語彙:"+m" … } }
  *   fx の値は「向き + 強さ」: "+m" = ×(1 + 中)、"-m" = ×(1 − 中)。強さは TUNING.tag.str
- *   derived:true … 別の状態から読む(黄金期 = S.g.golden、施設充実 = スポンサーの報酬 S.biz.boost)。上限の数には入れない */
+ *   derived:true … 別の状態から読む(施設充実 = スポンサーの報酬 S.biz.boost)。上限の数には入れない
+ *   keep:true … 上限の数に入れず、押し出されない(黄金期)。dur:"graph.golden" のような文字は TUNING.grow から読む
+ *   fx の motLock:"on" … 全員(ケガ以外)を絶好調に固定する */
 TUNING.tag={
   str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
   teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
@@ -751,7 +753,7 @@ TUNING.tag={
   streak:3                        // 勢い・スランプが付く連勝・連敗の数
 };
 const TAGS={
-  golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  derived:true, desc:"選手全員が絶好調。調子が落ちない" },
+  golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  keep:true, dur:"graph.golden", fx:{ motLock:"on" }, endMsg:"黄金期がひと区切り(金色の成長グラフはそのまま)", desc:"選手全員が絶好調。調子が落ちない" },
   momentum: { name:"勢い",         scope:"team", kind:"gen", pol:1,  dur:10, endOn:"lose", opp:"slump", fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい。負けると消える" },
   slump:    { name:"スランプ",     scope:"team", kind:"gen", pol:-1, dur:null, endOn:"win", opp:"momentum", fx:{ motDown:"+m" }, desc:"負けたとき、調子が下がりやすい。勝つと消える" },
   promo:    { name:"昇格の勢い",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"releg", fx:{ motDown:"-m" }, desc:"チームの調子が落ちにくい" },

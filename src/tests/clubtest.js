@@ -590,7 +590,7 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
           else{ const t=E.TRAIN_SP[o.sp], all=t.up.length===6; for(const a of t.up)if(want(a))sc+=(all?R.upAll:R.up)*(G[a]>=R.max?2:1); for(const a of t.down)if(want(a))sc-=R.down; }
           if(sc>bs){ bs=sc; bi=i; } });
         E.doTraining(V,bi,E.teamFatigue(V)>0.08?0:1); V.g.step="comm";
-        if(V.g.golden>0&&Object.values(V.g.pl).some(g=>g.mot>0&&g.mot<4))mot=false;
+        if(V.g.tags.some(t=>t.id==="golden")&&Object.values(V.g.pl).some(g=>g.mot>0&&g.mot<4))mot=false;
         const fx=E.nextFixture(V,VW), on=V.sq.slice(0,11);
         E.applyResult(V,VW,fx,{ hg:0, ag:2, played:on, onPitch:on, starters:on });
         n++; if(hit==null&&E.graphGoldN(V)>=3)hit=n;
@@ -754,6 +754,12 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   if(S.biz)S.biz.boost={ indExp:3 };
   check("スポンサーの報酬は「施設充実」のタグとして見える",!S.biz||E.teamTagsView(S).some(t=>t.id==="facTrain"));
   check("任期ごとの育成が新しくなると、タグは空(任期の終わりで全部クリア)",E.newGrowth(S.sq).tags.length===0);
+  // 黄金期もタグ(「黄金期到来」)。上限の数に入らず押し出されない。付いた時点で全員が絶好調、期限で消える
+  { const V=E.newCareer(77), o=[]; V.g.pl[V.sq[2]].mot=1;
+    E.addTeamTag(V,"slump",o); E.addTeamTag(V,"releg",o); E.addTeamTag(V,"golden",o,true); E.addTeamTag(V,"momentum",o);
+    const g0=V.g.tags.some(t=>t.id==="golden"), lock=V.g.pl[V.sq[2]].mot===4;
+    for(let k=0;k<E.TUNING.grow.graph.golden;k++)E.tagsAfterMatch(V,{ kind:"friendly" },{ win:false, lose:false },o);
+    check("黄金期もタグ: 押し出されず、付いた時点で全員が絶好調、"+E.TUNING.grow.graph.golden+"試合で消える",g0&&lock&&!V.g.tags.some(t=>t.id==="golden"),V.g.tags.map(t=>t.id).join(",")); }
 }
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);
