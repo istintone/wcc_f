@@ -2730,6 +2730,9 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 /* 準備の手順の札: 左の切り欠き(前の札の「>」の形)に番号が重ならないよう、文字を右へずらす。右の矢じりにもかからないように(→docs/14 §14.74) */
 #club .steps span,#club .steps.s4 span{padding-left:12px;padding-right:7px;white-space:nowrap}   /* % は列全体の幅に対してなので px で。切り欠きは札の幅の 8%(約 6px) */
 #club .steps span:first-child,#club .steps.s4 span:first-child{padding-left:7px}
+/* HOME などの見出しの数字の欄(→docs/14 §14.75): 名前(上の段)は左寄せ、名前と数字のあいだを詰める */
+#club .chd .num small{display:block;text-align:left;line-height:1;margin:0 0 1px}
+#club .chd .num b{display:block;line-height:1.05}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
