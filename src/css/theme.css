@@ -2224,3 +2224,52 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 /* 盤面の大きさを全画面でそろえる(→docs/14 §14.90): SQUAD・チーム練習・個別指導・休憩とも、ピッチは「全幅 − 右の列」いっぱい・縦横比 100:150。上限は外す */
 #club .sq-2col .sq-pitch,#club .cm-board .cm-pitch,#club .tr-fx .cm-board .cm-pitch{width:calc(100% - 58px)!important;max-width:none!important;flex:0 0 auto}
 #club .sq-3col.sq-2col,#club .cm-board{justify-content:space-between}
+/* チーム練習を1画面に(→docs/14 §14.91): 盤面の大きさはそのまま、上の部品を詰める */
+#club .prep .tr-top{grid-template-columns:104px minmax(0,1fr);gap:6px}
+#club .prep .tr-top .tf-radar{width:104px}
+#club .prep .trs.two .tr{min-height:0;padding:4px 6px}
+#club .prep .trs.two .tr b{font-size:12.5px}
+#club .prep .ints .tab{min-height:0;padding-top:3px;padding-bottom:3px}
+#club .prep .ints .tab small{font-size:9px}
+#club .prep .trs.two .tr{height:29px}
+#club .prep .tr-top{grid-template-columns:90px minmax(0,1fr)} #club .prep .tr-top .tf-radar{width:90px}
+#club .prep .ints .tab{height:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+#club .prep .step-h{margin-top:0;margin-bottom:3px}
+#club .prep .ints{margin:0 0 4px}
+#club .prep .trs.two{gap:3px}
+#club .prep .tr-top{margin:0}
+#club .prep .tr-fx,#club .prep .tr-fx .cm-board{margin-top:2px;margin-bottom:0}
+#club .prep .trs.two .tr{height:27px}
+#club .prep .ints .tab{height:32px}
+#club .prep .scout-top .tf-radar{width:92px}
+#club .prep .scout-top{margin-bottom:2px}
+#club .prep .step-h{margin-bottom:1px}
+#club .prep .scout-top .sq-ovr b{font-size:30px!important;line-height:1}
+#club .prep .scout-top .sc-rep{padding:3px 10px!important;min-height:0!important;font-size:12.5px}
+#club .prep .scout-top .sq-info{gap:2px}
+#club .prep .scout-top .sc-team b{font-size:14px}
+/* カードの大きさも個別指導にそろえる(→docs/14 §14.91): 盤面 56×67・SUB 44×53。SQUAD・チーム練習・休憩とも */
+#club .sq-3col .sq-pitch .sqc,#club .tr-fx .cm-board .cm-pitch .sqc.cmx{width:56px;height:67px}
+#club .sq-3col .sq-bench .sqc,#club .tr-fx .cm-board .sq-bench .sqc.cmx{width:44px;height:53px}
+#club .sq-3col .sq-pitch .sqc .nm{font-size:9px}
+/* SQUAD・準備の画面をスクロールなしに(→docs/14 §14.91) */
+#club .tab-squad .sq-top .tf-radar{width:112px}
+#club .tab-squad .sq-top{margin-bottom:4px}
+#club .prep-bot .btn-main{padding-top:9px;padding-bottom:9px}
+#club .prep .scout-top .sq-kp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+#club .prep .scout-top .sq-kp span{display:inline}
+#club .prep .scout-top .sq-kp{display:flex!important;align-items:center;gap:4px;flex-wrap:nowrap}
+#club .prep .scout-top .sq-kp b,#club .prep .scout-top .sq-kp span{display:inline-block!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#club .prep .scout-top .sc-ovr{height:32px;align-items:center}
+#club .prep-bot{padding-top:6px!important;padding-bottom:6px!important}
+#club .tab-squad .sq-top .tf-radar{width:106px}
+/* ORDER の札に選手名を戻す(→docs/14 §14.91): 役割の帯 / 背番号と印 / 名前 の3段 */
+#club .sq-2col .sq-side .sq-roles .rs{height:44px;grid-template-rows:12px 17px 13px}
+#club .sq-2col .sq-side .sq-roles .rs .nm{display:block;grid-row:3;font-size:8.5px;line-height:13px}
+#club .sq-2col .sq-side .sq-roles .rs .nm.auto{grid-row:2/4;font-size:9px}
+#club .sq-2col .sq-side .sq-roles .rs{height:41px;grid-template-rows:11px 16px 12px}
+#club .sq-2col .sq-side .sq-roles .rs b{line-height:11px}
+#club .sq-2col .sq-side .sq-roles .rs .nm{line-height:12px}
+#club .sq-2col .sq-side .sq-roles{gap:2px;padding:3px 2px}
+#club .tab-squad .sq-top .tf-radar{width:88px}
+#club .sq-2col .sq-side .sq-bench{gap:2px}
