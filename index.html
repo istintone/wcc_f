@@ -11940,10 +11940,12 @@ const mtof=n=>440*Math.pow(2,(n-69)/12);
 const BGM_TRACKS={
   // ロック(→docs/14 §14.15)。歪ませたエレキギターのパワーコード(頭は伸ばし、あとは8分のブリッジミュート)・リードのリフ・ベース・ロックのドラム
   //   root … 小節ごとのパワーコードの根音 / mute … ミュートで刻む8分の位置 / acc … 強く弾く位置 / lead … リードのリフ(根音からの半音)。null は休み
-  club:{ bpm:128, vol:0.09, root:[40,36,38,35], mute:[1,2,3,5,6,7], acc:[0,3,6],
-    kick:[0,3,4,6], snare:[2,6], lead:[12,null,15,17,null,19,17,15] },
-  match:{ bpm:150, vol:0.07, root:[38,34,36,33], mute:[1,2,3,4,5,6,7], acc:[0,3,6],
-    kick:[0,2,4,6], snare:[2,6], lead:[12,15,17,null,19,null,17,19] }
+  //   bassPat … ベースの8分ごとの音(根音からの半音。オクターブで弾む)/ sub … 1オクターブ下のサイン波の重低音の強さ / clap … スネアに手拍子を重ねる
+  // 2026-11-22: ベースを効かせたハイテンポでスポーティーに(→docs/14 §14.65)
+  club:{ bpm:140, vol:0.09, root:[40,36,38,35], mute:[1,2,3,5,6,7], acc:[0,3,6],
+    kick:[0,2,4,6], snare:[2,6], clap:true, sub:0.22, bassPat:[0,12,0,12,0,12,7,12], lead:[12,null,15,17,null,19,17,15] },
+  match:{ bpm:172, vol:0.075, root:[38,34,36,33], mute:[1,2,3,4,5,6,7], acc:[0,3,6],
+    kick:[0,2,3,4,6], snare:[2,6], clap:true, sub:0.24, bassPat:[0,0,12,0,0,12,7,10], lead:[12,15,17,null,19,null,17,19] }
 };
 function bgmVoice(type,freq,t,dur,peak,cut){
   const o=SND.ctx.createOscillator(), g=SND.ctx.createGain(), f=SND.ctx.createBiquadFilter();
@@ -11959,9 +11961,17 @@ function bgmNoise(t,dur,peak,filt,f0){
   s.connect(f); f.connect(g); g.connect(BGM.gain); s.start(t,Math.random()); s.stop(t+dur+0.05);
 }
 function bgmKick(t,peak){
+  // 太いキック: 高めから一気に低く落とし、長めに鳴らす。頭にクリックを少し
   const o=SND.ctx.createOscillator(), g=SND.ctx.createGain();
-  o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(42,t+0.12);
-  env(g,t,0.004,peak,0.02,0.14); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.25);
+  o.type="sine"; o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(44,t+0.09); o.frequency.exponentialRampToValueAtTime(36,t+0.22);
+  env(g,t,0.003,peak,0.05,0.2); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+0.32);
+  bgmNoise(t,0.012,peak*0.12,"highpass",3000);
+}
+/** 重低音(サイン波。ベースの1オクターブ下) */
+function bgmSub(freq,t,dur,peak){
+  const o=SND.ctx.createOscillator(), g=SND.ctx.createGain();
+  o.type="sine"; o.frequency.setValueAtTime(freq,t);
+  env(g,t,0.01,peak,dur*0.5,dur*0.45); o.connect(g); g.connect(BGM.gain); o.start(t); o.stop(t+dur+0.1);
 }
 /** 8分音符1つぶんを予約する */
 /** 歪ませたギター(のこぎり波2本を少しずらし、波形の歪み → ローパスの順。音の出口は BGM.gtr) */
@@ -11977,10 +11987,13 @@ function bgmStep(T,i,t){
   const e=60/T.bpm/2, pos=i%8, barN=Math.floor(i/8), bar=barN%T.root.length, r=T.root[bar]+12;
   if(pos===0)bgmPower(r,t,e*1.8,0.06,3400);                                                        // 頭は伸ばす
   else if(T.mute.includes(pos))bgmPower(r,t,e*0.45,T.acc.includes(pos)?0.05:0.032,1300);        // ブリッジミュートの刻み
-  bgmVoice("sawtooth",mtof(T.bass?T.bass[bar]:T.root[bar]),t,e*0.85,0.1,500);                     // ベース
+  const bn=(T.bass?T.bass[bar]:T.root[bar])+(T.bassPat?T.bassPat[pos]:0);
+  bgmVoice("sawtooth",mtof(bn),t,e*0.8,0.13,T.bassPat?750:500);                                    // ベース(オクターブで弾む)
+  if(T.sub)bgmSub(mtof((T.bass?T.bass[bar]:T.root[bar])-12),t,e*0.9,T.sub);                         // 重低音(根音の1オクターブ下)
   if(barN%2===1&&T.lead[pos]!=null)bgmGuitar(mtof(T.root[bar]+24+T.lead[pos]),t,e*0.9,0.03,4200);   // リードのリフ(2小節に1回)
-  if(T.kick.includes(pos))bgmKick(t,0.3);
-  if(T.snare.includes(pos)){ bgmNoise(t,0.16,0.1,"bandpass",1800); bgmNoise(t,0.09,0.05,"highpass",4500); }
+  if(T.kick.includes(pos))bgmKick(t,0.42);
+  if(T.snare.includes(pos)){ bgmNoise(t,0.16,0.11,"bandpass",1800); bgmNoise(t,0.09,0.05,"highpass",4500);
+    if(T.clap)[0,0.011,0.022].forEach(d=>bgmNoise(t+d,0.05,0.05,"bandpass",1200)); }               // 手拍子(スタジアムのクラップ)
   bgmNoise(t,0.03,pos%2?0.025:0.04,"highpass",8500); bgmNoise(t+e/2,0.025,0.018,"highpass",9500);   // ハイハット(16分)
   if(pos===0&&barN%4===0)bgmNoise(t,1.1,0.06,"highpass",5500);                                    // クラッシュ(4小節ごと)
 }
