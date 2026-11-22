@@ -69,7 +69,10 @@ function drawCard(S,salt){
   // salt … 同じ試合で何枚か引くとき(スポンサーの選手パック)に1枚ずつ変える
   const P=TUNING.pack, rng=mulberry32((S.seed^hashStr("pack:"+S.term+":"+S.played+(salt?":"+salt:"")))>>>0);
   let r=rng(), rar="W";
-  for(const k of RAR_ORDER){ if(r<P.rate[k]){ rar=k; break; } r-=P.rate[k]; }
+  // オイルマネー(レアスポンサーと契約中): 金パック(キラ・レジェンド)の率を oilK 倍に。ふえたぶんは白から引く(→docs/23)
+  const rate=Object.assign({},P.rate);
+  if(typeof oilMoney==="function"&&oilMoney(S)){ const add=(rate.K+rate.L)*(P.oilK-1); rate.K*=P.oilK; rate.L*=P.oilK; rate.W=Math.max(0,rate.W-add); }
+  for(const k of RAR_ORDER){ if(r<rate[k]){ rar=k; break; } r-=rate[k]; }
   const list=POOL.filter(id=>CARDS[id].rar===rar);
   return list[Math.floor(rng()*list.length)];
 }

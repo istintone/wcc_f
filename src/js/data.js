@@ -242,7 +242,8 @@ const TUNING={
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
-  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, oilK:2,   // oilK … オイルマネー(レアスポンサー)のときの金パック(K・L)の率の倍率(→docs/23)
+    trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
     // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
     promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
   // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
@@ -268,7 +269,8 @@ const TUNING={
         //   rankFans … ☆2〜5 が届くファン数(その7割でも、リーグの格 rankGrade か今の任期の優勝 rankTitles があれば届く)/ pay … ☆ごとの1試合の収入
         //   eff … 報酬の効果の大きさ(☆1〜5)。care・careSec・indSec・loungeSec は率、loungeOk は大成功に足す率、indExp・loungeExp は経験の倍率、
         //         noFat は試合の疲労の倍率、injury はケガの起きやすさの倍率、bench・keepForm はやる気が下がる率の倍率
-        sp:{ rankFans:[12000,25000,45000,70000], rankGrade:[2,2,3,3], rankTitles:[1,1,2,3], pay:[0.2,0.4,0.7,1.1,1.6],
+        sp:{ rareP:0.08, rarePay:1.6,   // レアスポンサー: 候補を出すたびに出る率・☆5 の収入の倍率(→docs/05 §5.14)
+             rankFans:[12000,25000,45000,70000], rankGrade:[2,2,3,3], rankTitles:[1,1,2,3], pay:[0.2,0.4,0.7,1.1,1.6],
              eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
                    loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
                    noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
@@ -761,7 +763,8 @@ const TAGS={
   facTrain: { name:"練習場施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
   facTact:  { name:"戦術室施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
   facLounge:{ name:"ラウンジ施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
-  facMed:   { name:"メディカル施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" }
+  facMed:   { name:"メディカル施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
+  oil:      { name:"オイルマネー",     scope:"team", kind:"gen", pol:1, derived:true, desc:"王族の投資ファンドと契約中。カードの金パック(キラ・レジェンド)が出る率 ×2" }
 };
 /** スポンサーの報酬の効果 → 施設充実のタグ(オーナーの案: 報酬は施設の名前に寄せる。中身は今の報酬のまま) */
 const SP_FAC_TAG={ indExp:"facTrain", indSec:"facTrain", loungeOk:"facLounge", loungeExp:"facLounge", loungeSec:"facLounge",

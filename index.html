@@ -2734,6 +2734,10 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .chd .num small{display:block;text-align:left;line-height:1;margin:0 0 1px}
 #club .chd .num b{display:block;line-height:1.05}
 #club .ch-acts:has(.prop) .cr:not(.prop){display:flex;align-items:center;justify-content:flex-start;text-align:left}   /* 「今は見送る」も選択肢と同じく左寄せ */
+/* レアスポンサー(→docs/05 §5.14) */
+#club .spo.rare{background:linear-gradient(120deg,#fff8e1,#fbe7a6 45%,#fff3cf 70%,#f3d27a);box-shadow:0 0 0 2px #d9a520,0 0 18px rgba(217,165,32,.45)}
+#club .sp-rare{display:inline-block;margin-right:6px;padding:1px 7px;font-style:normal;font-family:var(--f-num);font-size:10px;font-weight:800;letter-spacing:.12em;color:#2a1a00;background:linear-gradient(100deg,#b8860b,#f6d36b,#d9a520)}
+#club .rw.oil b{color:#8a5d00}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -3656,7 +3660,8 @@ const TUNING={
   //   rate  … 払い出しのレアリティの率(白 / 黒 / キラ / レジェンド)
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
-  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+  pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, oilK:2,   // oilK … オイルマネー(レアスポンサー)のときの金パック(K・L)の率の倍率(→docs/23)
+    trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
     // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
     promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
   // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
@@ -3682,7 +3687,8 @@ const TUNING={
         //   rankFans … ☆2〜5 が届くファン数(その7割でも、リーグの格 rankGrade か今の任期の優勝 rankTitles があれば届く)/ pay … ☆ごとの1試合の収入
         //   eff … 報酬の効果の大きさ(☆1〜5)。care・careSec・indSec・loungeSec は率、loungeOk は大成功に足す率、indExp・loungeExp は経験の倍率、
         //         noFat は試合の疲労の倍率、injury はケガの起きやすさの倍率、bench・keepForm はやる気が下がる率の倍率
-        sp:{ rankFans:[12000,25000,45000,70000], rankGrade:[2,2,3,3], rankTitles:[1,1,2,3], pay:[0.2,0.4,0.7,1.1,1.6],
+        sp:{ rareP:0.08, rarePay:1.6,   // レアスポンサー: 候補を出すたびに出る率・☆5 の収入の倍率(→docs/05 §5.14)
+             rankFans:[12000,25000,45000,70000], rankGrade:[2,2,3,3], rankTitles:[1,1,2,3], pay:[0.2,0.4,0.7,1.1,1.6],
              eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
                    loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
                    noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
@@ -4175,7 +4181,8 @@ const TAGS={
   facTrain: { name:"練習場施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
   facTact:  { name:"戦術室施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
   facLounge:{ name:"ラウンジ施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
-  facMed:   { name:"メディカル施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" }
+  facMed:   { name:"メディカル施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
+  oil:      { name:"オイルマネー",     scope:"team", kind:"gen", pol:1, derived:true, desc:"王族の投資ファンドと契約中。カードの金パック(キラ・レジェンド)が出る率 ×2" }
 };
 /** スポンサーの報酬の効果 → 施設充実のタグ(オーナーの案: 報酬は施設の名前に寄せる。中身は今の報酬のまま) */
 const SP_FAC_TAG={ indExp:"facTrain", indSec:"facTrain", loungeOk:"facLounge", loungeExp:"facLounge", loungeSec:"facLounge",
@@ -6671,7 +6678,15 @@ const SP_IND=[
   { id:"media",  name:"放送・芸能", eff:"keepForm", effName:"好調を維持しやすい",             dur:[2,5], items:["ラジオ番組出演オファー","テレビ番組出演オファー","CM出演オファー","ドラマ出演オファー","映画出演オファー"],
     pre:["ステラ","ヒノデ","アカツキ","ミライ","ルクス"], suf:["放送","エンタープライズ","プロダクション"] }
 ];
-const spIndOf=id=>SP_IND.find(x=>x.id===id)||SP_IND[0];
+/**
+ * レアスポンサー(→docs/05 §5.14)。候補を出すたびに TUNING.biz.sp.rareP の率で、3社目と入れ替わって完全にランダムに出る。
+ * オイルマネーの王子が投資したメガクラブを模す。契約しているあいだチームに「オイルマネー」のタグ(カードの金パックが出やすい)
+ */
+const SP_RARE=[
+  { id:"oil", name:"王族の投資ファンド", eff:"keepForm", effName:"好調を維持しやすい", dur:[3,6], rare:true,
+    items:["王子の差し入れ","王子の専用ジェット","砂漠の宮殿への招待","王子の私設トレーナー","王子の金のトロフィー"],
+    pre:["ロイヤル・","サルタン・","オアシス・","デザートローズ・","ゴールデンファルコン・"], suf:["インベストメント","キャピタル","ホールディングス"] } ];
+const spIndOf=id=>SP_IND.find(x=>x.id===id)||SP_RARE.find(x=>x.id===id)||SP_IND[0];
 const spDur=(ind,rank)=>Math.round(ind.dur[0]+(ind.dur[1]-ind.dur[0])*(rank-1)/4);
 const spItem=(ind,rank)=>ind.items[rank-1];
 /** 効果の大きさ(☆1〜5)。effTxt は画面の説明 */
@@ -6721,8 +6736,16 @@ function spOffers(S){
     const n=rank>=4?3:2, ms=[]; for(let j=0;j<n;j++)ms.push(mkMission(rng,rank));
     out.push({ ind:ind.id, rank, name, pay, ms });
   }
+  // レアスポンサー: 完全にランダム(3社目と入れ替わる)。☆5・収入が多い
+  if(rng()<TUNING.biz.sp.rareP){
+    const R=SP_RARE[Math.floor(rng()*SP_RARE.length)], ms=[]; for(let j=0;j<3;j++)ms.push(mkMission(rng,5));
+    out[2]={ ind:R.id, rank:5, rare:true, name:R.pre[Math.floor(rng()*R.pre.length)]+R.suf[Math.floor(rng()*R.suf.length)],
+      pay:Math.round(TUNING.biz.sp.pay[4]*TUNING.biz.sp.rarePay*100)/100, ms };
+  }
   return out;
 }
+/** オイルマネー(レアスポンサーと契約中)か */
+const oilMoney=S=>!!(S&&S.biz&&S.biz.sp&&S.biz.sp.ind==="oil");
 /** 契約する(i = 候補の番号)。keep なら今の社と、ミッションを新しくして続ける */
 function signSponsor(S,i,keep){
   const Z=S.biz;
@@ -7049,7 +7072,10 @@ function drawCard(S,salt){
   // salt … 同じ試合で何枚か引くとき(スポンサーの選手パック)に1枚ずつ変える
   const P=TUNING.pack, rng=mulberry32((S.seed^hashStr("pack:"+S.term+":"+S.played+(salt?":"+salt:"")))>>>0);
   let r=rng(), rar="W";
-  for(const k of RAR_ORDER){ if(r<P.rate[k]){ rar=k; break; } r-=P.rate[k]; }
+  // オイルマネー(レアスポンサーと契約中): 金パック(キラ・レジェンド)の率を oilK 倍に。ふえたぶんは白から引く(→docs/23)
+  const rate=Object.assign({},P.rate);
+  if(typeof oilMoney==="function"&&oilMoney(S)){ const add=(rate.K+rate.L)*(P.oilK-1); rate.K*=P.oilK; rate.L*=P.oilK; rate.W=Math.max(0,rate.W-add); }
+  for(const k of RAR_ORDER){ if(r<rate[k]){ rar=k; break; } r-=rate[k]; }
   const list=POOL.filter(id=>CARDS[id].rar===rar);
   return list[Math.floor(rng()*list.length)];
 }
@@ -8123,6 +8149,7 @@ function teamTagsView(S){
   if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
     f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
   for(const id in fac)v.push({ id, left:fac[id].n+"試合", desc:"スポンサーの報酬: "+fac[id].eff.join("・") });
+  if(typeof oilMoney==="function"&&oilMoney(S))v.unshift({ id:"oil", left:"契約中" });   // レアスポンサー(→docs/23)
   const out=v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
   for(const c of g.combos||[]){ const C=COMBOS[c.id]; if(C)out.splice(out.filter(x=>x.title).length,0,{ id:"cb:"+c.id, name:C.name, pol:1, combo:true, left:"任期中",
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(C) }); }
@@ -11079,15 +11106,16 @@ function missionsHtml(ms){
 /** 1社ぶん(業種・☆・収入・報酬・ミッション) */
 function spCardHtml(o){
   const ind=spIndOf(o.ind);
-  return '<div class="spo-h"><b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
+  return '<div class="spo-h">'+(o.rare?'<em class="sp-rare">RARE</em>':'')+'<b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
     '<small>1試合 '+o.pay.toFixed(2)+'億 ・ ミッションを達成するたびに報酬</small></div>'+
-    '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+missionsHtml(o.ms);
+    '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+
+    (o.rare?'<p class="rw oil"><b>オイルマネー</b> 契約しているあいだ、カードの金パック(キラ・レジェンド)が出る率 ×'+TUNING.pack.oilK+'</p>':'')+missionsHtml(o.ms);
 }
 /** 候補から選ぶ。first なら選ばないと始められない(任期の始め)、そうでなければ今の契約を続けられる */
 function spPickHtml(first){
   const S=CL.S, Z=S.biz;
   return '<section class="card sppick"><h3>スポンサーを選ぶ <small>'+(first?'任期の始め':'リーグの1周が終わった')+' ・ 契約は次の区切りまで</small></h3>'+
-    Z.offers.map((o,i)=>'<div class="spo r'+o.rank+'">'+spCardHtml(o)+
+    Z.offers.map((o,i)=>'<div class="spo r'+o.rank+(o.rare?' rare':'')+'">'+spCardHtml(o)+
       '<button class="btn" data-act="spsign" data-i="'+i+'">この社と契約する</button></div>').join("")+
     (!first&&Z.sp?'<button class="btn btn-sub" data-act="spkeep">'+Z.sp.name+' との契約を続ける(ミッションは新しくなる)</button>':'')+'</section>';
 }

@@ -957,6 +957,7 @@ function teamTagsView(S){
   if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
     f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
   for(const id in fac)v.push({ id, left:fac[id].n+"試合", desc:"スポンサーの報酬: "+fac[id].eff.join("・") });
+  if(typeof oilMoney==="function"&&oilMoney(S))v.unshift({ id:"oil", left:"契約中" });   // レアスポンサー(→docs/23)
   const out=v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
   for(const c of g.combos||[]){ const C=COMBOS[c.id]; if(C)out.splice(out.filter(x=>x.title).length,0,{ id:"cb:"+c.id, name:C.name, pol:1, combo:true, left:"任期中",
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(C) }); }

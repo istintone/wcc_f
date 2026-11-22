@@ -968,15 +968,16 @@ function missionsHtml(ms){
 /** 1社ぶん(業種・☆・収入・報酬・ミッション) */
 function spCardHtml(o){
   const ind=spIndOf(o.ind);
-  return '<div class="spo-h"><b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
+  return '<div class="spo-h">'+(o.rare?'<em class="sp-rare">RARE</em>':'')+'<b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
     '<small>1試合 '+o.pay.toFixed(2)+'億 ・ ミッションを達成するたびに報酬</small></div>'+
-    '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+missionsHtml(o.ms);
+    '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+
+    (o.rare?'<p class="rw oil"><b>オイルマネー</b> 契約しているあいだ、カードの金パック(キラ・レジェンド)が出る率 ×'+TUNING.pack.oilK+'</p>':'')+missionsHtml(o.ms);
 }
 /** 候補から選ぶ。first なら選ばないと始められない(任期の始め)、そうでなければ今の契約を続けられる */
 function spPickHtml(first){
   const S=CL.S, Z=S.biz;
   return '<section class="card sppick"><h3>スポンサーを選ぶ <small>'+(first?'任期の始め':'リーグの1周が終わった')+' ・ 契約は次の区切りまで</small></h3>'+
-    Z.offers.map((o,i)=>'<div class="spo r'+o.rank+'">'+spCardHtml(o)+
+    Z.offers.map((o,i)=>'<div class="spo r'+o.rank+(o.rare?' rare':'')+'">'+spCardHtml(o)+
       '<button class="btn" data-act="spsign" data-i="'+i+'">この社と契約する</button></div>').join("")+
     (!first&&Z.sp?'<button class="btn btn-sub" data-act="spkeep">'+Z.sp.name+' との契約を続ける(ミッションは新しくなる)</button>':'')+'</section>';
 }

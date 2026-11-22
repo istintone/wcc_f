@@ -875,5 +875,15 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     const crowd=S.g.tags.some(t=>t.id==="crowded"); E.autoTeamTags(S,{ kind:"league" },{},o);
     check("優勝で「優勝の余韻」、カップが続くと「過密日程」(カップ以外の試合で消える)",S.g.tags.some(t=>t.id==="afterglow")&&crowd&&!S.g.tags.some(t=>t.id==="crowded")); }
 }
+// レアスポンサー(→docs/05 §5.14・docs/23): ランダムに出て、契約中はオイルマネー(金パックの率 ×2)
+{
+  console.log("\n■ レアスポンサー");
+  let n=0; for(let s=1;s<=400;s++){ const S=E.newCareer(s); S.biz.fans=200000; if(E.spOffers(S).some(o=>o.rare))n++; }
+  check("レアスポンサーは候補にときどき出る(400回で 8〜60回)",n>=8&&n<=60,n+"回");
+  const S=E.newCareer(9), cnt=sp=>{ S.biz.sp=sp; const c={ K:0, L:0 }; for(let k=0;k<4000;k++){ S.played=k; const r=E.CARDS[E.drawCard(S)].rar; if(c[r]!=null)c[r]++; } return c.K+c.L; };
+  const a=cnt(null), b=cnt({ ind:"oil", rank:5, name:"x", pay:1, ms:[] });
+  check("オイルマネーと契約中は、金パック(キラ・レジェンド)がおよそ2倍出る",b>a*1.6&&b<a*2.6,a+" → "+b);
+  check("契約中はチームのタグ「オイルマネー」が見える",E.teamTagsView(S).some(t=>t.id==="oil"));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

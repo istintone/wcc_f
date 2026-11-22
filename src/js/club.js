@@ -736,7 +736,15 @@ const SP_IND=[
   { id:"media",  name:"放送・芸能", eff:"keepForm", effName:"好調を維持しやすい",             dur:[2,5], items:["ラジオ番組出演オファー","テレビ番組出演オファー","CM出演オファー","ドラマ出演オファー","映画出演オファー"],
     pre:["ステラ","ヒノデ","アカツキ","ミライ","ルクス"], suf:["放送","エンタープライズ","プロダクション"] }
 ];
-const spIndOf=id=>SP_IND.find(x=>x.id===id)||SP_IND[0];
+/**
+ * レアスポンサー(→docs/05 §5.14)。候補を出すたびに TUNING.biz.sp.rareP の率で、3社目と入れ替わって完全にランダムに出る。
+ * オイルマネーの王子が投資したメガクラブを模す。契約しているあいだチームに「オイルマネー」のタグ(カードの金パックが出やすい)
+ */
+const SP_RARE=[
+  { id:"oil", name:"王族の投資ファンド", eff:"keepForm", effName:"好調を維持しやすい", dur:[3,6], rare:true,
+    items:["王子の差し入れ","王子の専用ジェット","砂漠の宮殿への招待","王子の私設トレーナー","王子の金のトロフィー"],
+    pre:["ロイヤル・","サルタン・","オアシス・","デザートローズ・","ゴールデンファルコン・"], suf:["インベストメント","キャピタル","ホールディングス"] } ];
+const spIndOf=id=>SP_IND.find(x=>x.id===id)||SP_RARE.find(x=>x.id===id)||SP_IND[0];
 const spDur=(ind,rank)=>Math.round(ind.dur[0]+(ind.dur[1]-ind.dur[0])*(rank-1)/4);
 const spItem=(ind,rank)=>ind.items[rank-1];
 /** 効果の大きさ(☆1〜5)。effTxt は画面の説明 */
@@ -786,8 +794,16 @@ function spOffers(S){
     const n=rank>=4?3:2, ms=[]; for(let j=0;j<n;j++)ms.push(mkMission(rng,rank));
     out.push({ ind:ind.id, rank, name, pay, ms });
   }
+  // レアスポンサー: 完全にランダム(3社目と入れ替わる)。☆5・収入が多い
+  if(rng()<TUNING.biz.sp.rareP){
+    const R=SP_RARE[Math.floor(rng()*SP_RARE.length)], ms=[]; for(let j=0;j<3;j++)ms.push(mkMission(rng,5));
+    out[2]={ ind:R.id, rank:5, rare:true, name:R.pre[Math.floor(rng()*R.pre.length)]+R.suf[Math.floor(rng()*R.suf.length)],
+      pay:Math.round(TUNING.biz.sp.pay[4]*TUNING.biz.sp.rarePay*100)/100, ms };
+  }
   return out;
 }
+/** オイルマネー(レアスポンサーと契約中)か */
+const oilMoney=S=>!!(S&&S.biz&&S.biz.sp&&S.biz.sp.ind==="oil");
 /** 契約する(i = 候補の番号)。keep なら今の社と、ミッションを新しくして続ける */
 function signSponsor(S,i,keep){
   const Z=S.biz;
