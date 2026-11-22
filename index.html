@@ -2775,6 +2775,11 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .sqc .nm{align-self:start;padding-bottom:7px}   /* 名前は背番号のすぐ下へ詰め、いちばん下の段を電池に空ける */
 #club .sq-det .fat .bat{width:26px;height:11px}
 #club .sqc .if:not(:empty){margin-bottom:8px}   /* 札の下の小さな情報(覚醒の兆しなど)は電池の上に */
+/* SQUAD の札の星(→docs/14 §14.82): 右下に「★1 ★4」(個人 = 黄・特殊 = 青・★5 はピンクの光) */
+#club .sqc .stc{position:absolute;right:3px;bottom:1px;display:flex;gap:2px;font-family:var(--f-num);font-size:8.5px;font-weight:800;line-height:9px;letter-spacing:-.02em;z-index:3}
+#club .sqc .stc .i{color:#d99a00}
+#club .sqc .stc .s{color:#1d72d8}
+#club .sqc .stc .x{color:#ff2e8a;text-shadow:0 0 4px rgba(255,46,138,.6)}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10658,7 +10663,10 @@ function sqTokenHtml(id,i,on,o){
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
-    (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
+    // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
+    (()=>{ if(!g)return '';
+      if(!o)return CL.noStars?'':'<span class="stc"><b class="i'+(g.is>=5?' x':'')+'">★'+g.is+'</b><b class="s'+(g.ss>=5?' x':'')+'">★'+g.ss+'</b></span>';
+      const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
