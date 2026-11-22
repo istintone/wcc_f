@@ -38,7 +38,7 @@ function emblemSvg(team,size){
   // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
   const c=own?CL.S.club:null;
-  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null });
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null, text:c?c.short:null });
 }
 
 /* ---- タイトル ---- */

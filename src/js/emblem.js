@@ -22,7 +22,9 @@ const EMB_FIELDS=["solid","stripe","half","quarter","sash","hoop","chevron","cro
 const EMB_CRESTS=["none","star","crown","eagle","lion","horse","helm",
                   "dragon","fleur","cannon","griffin","wyvern","athena"];
 // 文字の並べ方(→§3.54c)。**2文字をどう置くか**で、紋章を持たないクラブにも個性が出る
-const EMB_LAYS=["row","col","diag"];
+const EMB_LAYS=["row","col","diag","none"];   // none … 文字なし(無地)
+// 紋章・文字の色(auto = 地の明るさで白か黒。→docs/14 §14.77)
+const EMB_INKS=["auto","white","black","gold","away"];
 
 /**
  * 選べる色(→docs/10 §3.54)。**色相だけ持つ**ので、明るさと彩度は
@@ -295,8 +297,9 @@ function embMonogram(name){
     if(out.length>=2)break;
   }
   if(out.length<2&&parts.length){
-    // 語が1つしかない。頭の2音から取る(「ロドリ」→ RD)
-    for(const ch of parts[0]){ const c=embLetter(ch); if(c&&out.length<2)out.push(c); }
+    // 語が1つしかない。頭の2音から取る(「ロドリ」→ RD)。**1文字目は取り済みなので2文字目から**(前は AA のように重なっていた →docs/14 §14.77)
+    let first=true;
+    for(const ch of parts[0]){ const c=embLetter(ch); if(!c)continue; if(first&&out.length){ first=false; continue; } if(out.length<2)out.push(c); }
   }
   if(!out.length){                                   // ラテン名がそのまま来た場合
     const s=String(name||"").replace(/[^A-Za-z]/g,"");
@@ -321,6 +324,7 @@ function embMonogram(name){
  * 縦と斜めは**1文字ずつ置く**。`<text>` に改行は無く、`textLength` で潰すと字が歪む。
  */
 function embTextPath(lay,text,ink,edge){
+  if(lay==="none")return "";                         // 無地(文字なし)
   const t=String(text||"");
   const font=' font-family="Georgia,&apos;Times New Roman&apos;,serif" font-weight="700"'
     +' text-anchor="middle" fill="'+ink+'" stroke="'+edge+'"'
@@ -512,6 +516,7 @@ let EMB_UID=0;
 function embSvg(clubId,name,size,opts){
   const o=opts||{};
   const d=embDesign(clubId,name,o.design||null,o.color||null);
+  if(o.text)d.text=String(o.text).replace(/[^A-Za-z]/g,"").slice(0,2).toUpperCase()||d.text;   // 自分のクラブは略称の頭2文字(→docs/14 §14.77)
   const i=-1;
   const h2=hashStr("emb2:"+clubId);
   // **選んだ色があればそれを使う**(ホーム=地 / アウェイ=柄 →docs/10 §3.54)
@@ -523,7 +528,8 @@ function embSvg(clubId,name,size,opts){
   const b=pa?pa.hex:"oklch(0.38 0.14 "+hue2.toFixed(1)+")";
   // **地が明るいときは字を暗く**。レモンや白の上に白字を置くと消える
   const la=ph?embLum(ph.hex):0.62;
-  const ink=la>=0.62?"#1A1A1E":"#FFFFFF";
+  // 紋章・文字の色: 選んでいればその色、おまかせなら地の明るさで白か黒
+  const ink=d.ink==="white"?"#FFFFFF":d.ink==="black"?"#1A1A1E":d.ink==="gold"?"oklch(0.84 0.15 88)":d.ink==="away"?b:(la>=0.62?"#1A1A1E":"#FFFFFF");
   const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
   // **idはクラブごとに変える**。同じ画面に2つ出したとき clipPath がぶつかる

@@ -1229,7 +1229,7 @@ function contractHtml(edit){
   const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
   const hues=EMB_CLASSIC.map(id=>embHueById(id));
   return '<section class="card contract">'+(edit?'<h3>クラブの設定 <small>名前・エンブレムなどを変える</small></h3>':'<h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>')+
-    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
+    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb, text:c.short||clubAbbr(name) })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
       (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
     '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
     '<label>略称(英字3字・スコアに出る)<input data-f="cshort" maxlength="3" value="'+embEsc(c.short)+'" placeholder="'+clubAbbr(name)+'"></label>'+
@@ -1237,15 +1237,18 @@ function contractHtml(edit){
     '<div class="ce-row"><i>クラブの色</i>'+hues.map(h=>'<button class="ce sw'+(c.color===h.hex?' on':'')+'" data-act="ccolor" data-v="'+h.hex+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
     '<h4>エンブレム</h4>'+
     row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
+    '<div class="ce-row"><i>紋章・文字の色</i>'+EMB_INKS.map(v=>'<button class="ce'+((e.ink||"auto")===v?' on':'')+'" data-act="emb" data-k="ink" data-v="'+v+'">'+EMB_INK_LABEL[v]+'</button>').join("")+'</div>'+
     '<div class="ce-row"><i>柄の色</i>'+hues.map(h=>'<button class="ce sw'+(e.away===h.id?' on':'')+'" data-act="emb" data-k="away" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
     '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button>'+
       (edit?'<button class="btn btn-main" data-act="csave">この内容で保存する</button></div><button class="lnk" data-act="cedit">やめる</button>'
         :'<button class="btn btn-main" data-act="contract">この内容で契約する</button></div>')+'</section>';
 }
+const EMB_INK_LABEL={ auto:"おまかせ", white:"白", black:"黒", gold:"金", away:"柄の色" };
 const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾", banner:"旗",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
   none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
   laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
+EMB_LABEL.none="なし";   // 紋章・外装・文字の「なし」(文字なし = 無地)
 /** 監督の絵(→docs/14 §14.69)。k: full 立ち絵 / bust バストアップ / face 顔 */
 const mgrArt=(av,k)=>typeof MGR_ART!=="undefined"&&MGR_ART.length?MGR_ART[Math.min(MGR_ART.length-1,Math.max(0,av|0))][k||"face"]:null;
 /** アバターを選ぶ列(顔を並べる) */

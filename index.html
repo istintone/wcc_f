@@ -8653,7 +8653,9 @@ const EMB_FIELDS=["solid","stripe","half","quarter","sash","hoop","chevron","cro
 const EMB_CRESTS=["none","star","crown","eagle","lion","horse","helm",
                   "dragon","fleur","cannon","griffin","wyvern","athena"];
 // 文字の並べ方(→§3.54c)。**2文字をどう置くか**で、紋章を持たないクラブにも個性が出る
-const EMB_LAYS=["row","col","diag"];
+const EMB_LAYS=["row","col","diag","none"];   // none … 文字なし(無地)
+// 紋章・文字の色(auto = 地の明るさで白か黒。→docs/14 §14.77)
+const EMB_INKS=["auto","white","black","gold","away"];
 
 /**
  * 選べる色(→docs/10 §3.54)。**色相だけ持つ**ので、明るさと彩度は
@@ -8926,8 +8928,9 @@ function embMonogram(name){
     if(out.length>=2)break;
   }
   if(out.length<2&&parts.length){
-    // 語が1つしかない。頭の2音から取る(「ロドリ」→ RD)
-    for(const ch of parts[0]){ const c=embLetter(ch); if(c&&out.length<2)out.push(c); }
+    // 語が1つしかない。頭の2音から取る(「ロドリ」→ RD)。**1文字目は取り済みなので2文字目から**(前は AA のように重なっていた →docs/14 §14.77)
+    let first=true;
+    for(const ch of parts[0]){ const c=embLetter(ch); if(!c)continue; if(first&&out.length){ first=false; continue; } if(out.length<2)out.push(c); }
   }
   if(!out.length){                                   // ラテン名がそのまま来た場合
     const s=String(name||"").replace(/[^A-Za-z]/g,"");
@@ -8952,6 +8955,7 @@ function embMonogram(name){
  * 縦と斜めは**1文字ずつ置く**。`<text>` に改行は無く、`textLength` で潰すと字が歪む。
  */
 function embTextPath(lay,text,ink,edge){
+  if(lay==="none")return "";                         // 無地(文字なし)
   const t=String(text||"");
   const font=' font-family="Georgia,&apos;Times New Roman&apos;,serif" font-weight="700"'
     +' text-anchor="middle" fill="'+ink+'" stroke="'+edge+'"'
@@ -9143,6 +9147,7 @@ let EMB_UID=0;
 function embSvg(clubId,name,size,opts){
   const o=opts||{};
   const d=embDesign(clubId,name,o.design||null,o.color||null);
+  if(o.text)d.text=String(o.text).replace(/[^A-Za-z]/g,"").slice(0,2).toUpperCase()||d.text;   // 自分のクラブは略称の頭2文字(→docs/14 §14.77)
   const i=-1;
   const h2=hashStr("emb2:"+clubId);
   // **選んだ色があればそれを使う**(ホーム=地 / アウェイ=柄 →docs/10 §3.54)
@@ -9154,7 +9159,8 @@ function embSvg(clubId,name,size,opts){
   const b=pa?pa.hex:"oklch(0.38 0.14 "+hue2.toFixed(1)+")";
   // **地が明るいときは字を暗く**。レモンや白の上に白字を置くと消える
   const la=ph?embLum(ph.hex):0.62;
-  const ink=la>=0.62?"#1A1A1E":"#FFFFFF";
+  // 紋章・文字の色: 選んでいればその色、おまかせなら地の明るさで白か黒
+  const ink=d.ink==="white"?"#FFFFFF":d.ink==="black"?"#1A1A1E":d.ink==="gold"?"oklch(0.84 0.15 88)":d.ink==="away"?b:(la>=0.62?"#1A1A1E":"#FFFFFF");
   const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
   // **idはクラブごとに変える**。同じ画面に2つ出したとき clipPath がぶつかる
@@ -11367,7 +11373,7 @@ function contractHtml(edit){
   const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
   const hues=EMB_CLASSIC.map(id=>embHueById(id));
   return '<section class="card contract">'+(edit?'<h3>クラブの設定 <small>名前・エンブレムなどを変える</small></h3>':'<h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>')+
-    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
+    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb, text:c.short||clubAbbr(name) })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
       (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
     '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
     '<label>略称(英字3字・スコアに出る)<input data-f="cshort" maxlength="3" value="'+embEsc(c.short)+'" placeholder="'+clubAbbr(name)+'"></label>'+
@@ -11375,15 +11381,18 @@ function contractHtml(edit){
     '<div class="ce-row"><i>クラブの色</i>'+hues.map(h=>'<button class="ce sw'+(c.color===h.hex?' on':'')+'" data-act="ccolor" data-v="'+h.hex+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
     '<h4>エンブレム</h4>'+
     row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
+    '<div class="ce-row"><i>紋章・文字の色</i>'+EMB_INKS.map(v=>'<button class="ce'+((e.ink||"auto")===v?' on':'')+'" data-act="emb" data-k="ink" data-v="'+v+'">'+EMB_INK_LABEL[v]+'</button>').join("")+'</div>'+
     '<div class="ce-row"><i>柄の色</i>'+hues.map(h=>'<button class="ce sw'+(e.away===h.id?' on':'')+'" data-act="emb" data-k="away" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
     '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button>'+
       (edit?'<button class="btn btn-main" data-act="csave">この内容で保存する</button></div><button class="lnk" data-act="cedit">やめる</button>'
         :'<button class="btn btn-main" data-act="contract">この内容で契約する</button></div>')+'</section>';
 }
+const EMB_INK_LABEL={ auto:"おまかせ", white:"白", black:"黒", gold:"金", away:"柄の色" };
 const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾", banner:"旗",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
   none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
   laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
+EMB_LABEL.none="なし";   // 紋章・外装・文字の「なし」(文字なし = 無地)
 /** 監督の絵(→docs/14 §14.69)。k: full 立ち絵 / bust バストアップ / face 顔 */
 const mgrArt=(av,k)=>typeof MGR_ART!=="undefined"&&MGR_ART.length?MGR_ART[Math.min(MGR_ART.length-1,Math.max(0,av|0))][k||"face"]:null;
 /** アバターを選ぶ列(顔を並べる) */
@@ -12295,7 +12304,7 @@ function emblemSvg(team,size){
   // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
   const c=own?CL.S.club:null;
-  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null });
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null, text:c?c.short:null });
 }
 
 /* ---- タイトル ---- */
