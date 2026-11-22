@@ -2780,6 +2780,16 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .sqc .stc .i{color:#d99a00}
 #club .sqc .stc .s{color:#1d72d8}
 #club .sqc .stc .x{color:#ff2e8a;text-shadow:0 0 4px rgba(255,46,138,.6)}
+/* 調子の丸は、役割の帯(ヘッダ)ではなく名前のある白い面の右上に(盤面すべて・試合も。→docs/14 §14.83) */
+#club .sqc .mt,#club .sqc.cmx .mt,#club .cm-board .sq-bench .sqc.cmx .mt{left:auto;right:3px;top:18px;bottom:auto}
+.cd .mtm{right:3px;top:17px;left:auto;bottom:auto}
+/* 選手のタグの印: CAP・KP の札(左上)と同じ形で、右上に */
+.ptags{position:absolute;right:-8px;top:-8px;z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:1px;pointer-events:none}
+.ptags .t{display:block;font-style:normal;font-family:var(--f-num);font-size:9.5px;font-weight:800;letter-spacing:.04em;line-height:13px;padding:0 4px;color:#2a1a00;border-radius:2px;
+  background:linear-gradient(100deg,#e0a92a,#f6d36b);box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.ptags .t.dn{color:#fff;background:linear-gradient(100deg,#4a3c8a,#6b55b8)}
+#club .sqc:has(.ptags){z-index:3}
+#club .sqc .ptg{display:none}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10669,7 +10679,8 @@ function sqTokenHtml(id,i,on,o){
       const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
-    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
+    // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
+    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<span class="ptags"><i class="t'+(v.some(t=>t.pol>0)?'':' dn')+'">TAG'+(v.length>1?'×'+v.length:'')+'</i></span>':''; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */

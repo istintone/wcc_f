@@ -360,7 +360,8 @@ function sqTokenHtml(id,i,on,o){
       const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
-    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
+    // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
+    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<span class="ptags"><i class="t'+(v.some(t=>t.pol>0)?'':' dn')+'">TAG'+(v.length>1?'×'+v.length:'')+'</i></span>':''; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
