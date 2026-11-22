@@ -75,6 +75,11 @@ function buildBoard(M){
     bindBenchDrag(el,card.id);
     BD.bench.appendChild(el);
   }
+  // 交代でピッチを出た選手は、SUB の列にグレーで残す(もう出られない。→docs/14 §14.95)。試合の記録の交代から読む
+  for(const ev of M.events)if(ev.type==="sub"&&ev.side==="H"&&CARDS[ev.out]){
+    const el=mkCard(CARDS[ev.out]); const s=el.querySelector(".stm"); if(s)s.remove();
+    el.classList.add("off"); el.title="交代で退いた"; BD.bench.appendChild(el);
+  }
   syncBoard(M);
   fitBoard();
 }
