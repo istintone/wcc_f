@@ -761,5 +761,32 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     for(let k=0;k<E.TUNING.grow.graph.golden;k++)E.tagsAfterMatch(V,{ kind:"friendly" },{ win:false, lose:false },o);
     check("黄金期もタグ: 押し出されず、付いた時点で全員が絶好調、"+E.TUNING.grow.graph.golden+"試合で消える",g0&&lock&&!V.g.tags.some(t=>t.id==="golden"),V.g.tags.map(t=>t.id).join(",")); }
 }
+// チームの称号(→docs/23 §23.3): 国の称号は同じ国籍の11人で戦って確率で、クラブの称号は金色の3軸で。相手も称号を持つ
+{
+  console.log("\n■ チームの称号");
+  const ita=Object.values(E.CARDS).filter(c=>c.nat==="ITA").map(c=>c.id), N=E.TUNING.tag.nation;
+  const at=[];
+  for(let seed=1;seed<=20;seed++){ const S=E.newCareer(seed), o=[]; let got=null;
+    for(let n=1;n<=60&&!got;n++){ S.played=n; E.tagsAfterMatch(S,{ kind:"friendly" },{ win:n%2===0, lose:false, starters:ita.slice(0,11) },o);
+      if(S.g.tags.some(t=>t.id==="n_ITA"))got=n; }
+    at.push(got||99); }
+  at.sort((a,b)=>a-b);
+  check("国の称号: 同じ国籍の11人で "+N.from+" 試合目より前には付かない(急造では取れない)",at[0]>=N.from,"最短 "+at[0]);
+  check("国の称号: 重ねれば付く(20通りすべて 40試合以内。中央 8〜20試合)",at[at.length-1]<=40&&at[10]>=8&&at[10]<=20,"中央 "+at[10]+" / 最長 "+at[at.length-1]);
+  { const S=E.newCareer(5), o=[]; const mix=ita.slice(0,10).concat(Object.values(E.CARDS).find(c=>c.nat==="ESP").id);
+    for(let n=1;n<=40;n++){ S.played=n; E.tagsAfterMatch(S,{ kind:"friendly" },{ win:true, lose:false, starters:mix },o); }
+    check("国の称号: 1人でも別の国籍なら付かない",!S.g.tags.some(t=>/^n_/.test(t.id))); }
+  { const S=E.newCareer(6); S.sq=ita.slice(0,16); S.layout={}; E.fillLayout(S); S.g=E.newGrowth(S.sq);
+    const d0=E.playerDef(S).xi.map(x=>x.card.def); S.g.tags=[{ id:"n_ITA", n:null }];
+    const d1=E.playerDef(S).xi.map(x=>x.card.def);
+    S.sq=[S.sq[0]].concat(S.sq.slice(1).reverse()); const sw=S.sq.slice(); sw[5]=Object.values(E.CARDS).find(c=>c.nat==="ESP").id; S.sq=sw; S.g=E.newGrowth(S.sq); S.g.tags=[{ id:"n_ITA", n:null }];
+    const d2=E.playerDef(S);
+    check("国の称号の効き目: 先発がその国の11人なら全員の DEF +2、そろっていなければ効かない",d1.every((v,k)=>Math.abs(v-d0[k]-2)<1e-9||v===E.STAT_MAX)&&E.nationOf(d2.xi.map(x=>x.card.id))===null,d0[3]+" → "+d1[3]); }
+  check("クラブの称号: 金色の3軸の組み合わせで決まる(8通り)",E.clubTitleOf({ D:true, P:true, C:true })==="c_DPC"&&E.clubTitleOf({ O:true, S:true, R:true })==="c_OSR"&&
+    Object.keys(E.TAGS).filter(k=>/^c_/.test(k)).length===8);
+  { const S=E.newCareer(9), W=E.worldOf(S); const hi=Object.keys(E.TEAMS).find(k=>E.tierOf(k)>=4), lo=Object.keys(E.TEAMS).find(k=>E.tierOf(k)<=2&&k!=="azr");
+    const dh=E.oppDefOf(S,{ opp:hi, kind:"cup" }), dl=E.oppDefOf(S,{ opp:lo, kind:"cup" });
+    check("相手の称号: 段4以上のクラブはクラブの称号を持ち、段の低いクラブは持たない",dh.titles.some(t=>/^c_/.test(t))&&!dl.titles.some(t=>/^c_/.test(t)),dh.titles.join(",")+" / "+dl.titles.join(",")); }
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

@@ -169,6 +169,9 @@ function graphBreak(S,axes,out){
       S.g.goldenAt=S.played;
       out.push("👑 黄金期が到来！ 成長グラフが黄金に。"+R.golden+"試合のあいだ全員が絶好調");
       addTeamTag(S,"golden",out,true);
+      // クラブの称号(→docs/23 §23.3): 金色の3軸の組み合わせで1つ。任期の終わりまで
+      const ct=clubTitleOf(S.g.gold); addTeamTag(S,ct,out,true);
+      out.push("🏷 クラブの称号「"+TAGS[ct].name+"」 ― "+tagStatTxt(TAGS[ct].stat));
     }
   }
 }
@@ -918,12 +921,14 @@ function tagsAfterMatch(S,fx,res,out){
   if(S.g.streak===TUNING.tag.streak)addTeamTag(S,"momentum",out);
   if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
+  nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
   const v=[], g=S.g||{};
   for(const t of g.tags||[]){ const T=TAGS[t.id]; if(!T)continue;
-    v.push({ id:t.id, left:t.n!=null?t.n+"試合":T.endOn==="win"?"勝つまで":T.endOn==="lose"?"負けるまで":"" }); }
+    v.push({ id:t.id, title:T.kind==="title", left:t.n!=null?t.n+"試合":T.endOn==="win"?"勝つまで":T.endOn==="lose"?"負けるまで":T.kind==="title"?"任期中":"" }); }
+  v.sort((a,b)=>(b.title?1:0)-(a.title?1:0));   // 称号を先に
   const B=S.biz&&S.biz.boost, fac={};
   if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
     f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
@@ -934,4 +939,55 @@ function teamTagsView(S){
 function playerTagsView(S,id){
   const g=S.g&&S.g.pl[id]; if(!g||!g.tags)return [];
   return g.tags.filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" }));
+}
+
+/* ---- チームの称号(→docs/23 §23.3) ---- */
+/** 金色の3軸(または軸の強さ)から、クラブの称号の id */
+function clubTitleOf(gold){ return "c_"+(gold.O?"O":"D")+(gold.S?"S":"P")+(gold.R?"R":"C"); }
+/** 先発11人が同じ国籍なら、その国(称号のある国だけ)。ids … カードの id */
+function nationOf(ids){
+  if(!ids||ids.length<11)return null;
+  const n=CARDS[ids[0]]&&CARDS[ids[0]].nat;
+  return n&&TAGS["n_"+n]&&ids.slice(0,11).every(id=>CARDS[id]&&CARDS[id].nat===n)?n:null;
+}
+/** 国の称号の判定(試合のあと)。その国の11人で戦った試合を数え、from 試合目から確率で付く */
+function nationTitleCheck(S,res,out){
+  const nat=nationOf(res.starters); if(!nat)return;
+  const N=TUNING.tag.nation, cnt=S.g.natN||(S.g.natN={}); cnt[nat]=(cnt[nat]||0)+1;
+  const id="n_"+nat; if((S.g.tags||[]).some(t=>t.id===id)||cnt[nat]<N.from)return;
+  const p=Math.min(N.max,N.step*(cnt[nat]-N.from+1))*(res.win?N.winK:1);
+  if(mulberry32((S.seed^hashStr("nt:"+S.term+":"+S.played))>>>0)()>=p)return;
+  addTeamTag(S,id,out,true);
+  const me=typeof myTeam==="function"?myTeam(S).name:"わがクラブ";
+  out.push("🏷 "+me+" は代表選手をそろえて起用することで、「"+TAGS[id].name+"」の再現といわれています(国の称号。先発がこの国の11人のとき: "+tagStatTxt(TAGS[id].stat)+")");
+}
+/**
+ * 称号の能力の上乗せを、試合に渡すカードに足す(カードは写しを作る)。tagIds … 称号の id。
+ * 国の称号は先発11人がその国のときだけ。1つの能力の合計は statCap まで
+ */
+function applyTitleStats(def,tagIds){
+  const T=TUNING.tag, xiIds=def.xi.map(s=>s.card.id), nat=nationOf(xiIds);
+  const on=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
+  if(!on.length)return def;
+  const hit=(who,pos)=>who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
+  const boost=c=>{ const add={}, o=Object.assign({},c);
+    for(const t of on)for(const x of t.stat)if(hit(x.who,c.pos))for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k];
+    for(const k in add)o[k]=clamp(o[k]+Math.min(T.statCap,add[k]),1,STAT_MAX);
+    return o; };
+  def.xi.forEach(s=>{ s.card=boost(s.card); });
+  def.bench=def.bench.map(boost);
+  return def;
+}
+/** 自チームの称号の id(いま付いているもの) */
+const myTitleIds=S=>((S.g&&S.g.tags)||[]).filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="title").map(t=>t.id);
+/**
+ * 相手の称号(→docs/23 §23.7 の 4): 段4・5のクラブと Premier Div の相手は、クラブの称号を1つ持つ(先発の能力の強い側を対ごとに選ぶ)。
+ * 先発11人が同じ国籍なら国の称号も
+ */
+function oppTitleIds(def,strong){
+  const ids=[], xi=def.xi.map(s=>s.card);
+  if(strong){ const av=k=>xi.reduce((a,c)=>a+c[k],0);
+    ids.push(clubTitleOf({ O:av("off")>=av("def"), S:av("spd")>=av("pow"), R:av("tec")>=av("sta") })); }
+  const nat=nationOf(xi.map(c=>c.id)); if(nat)ids.push("n_"+nat);
+  return ids;
 }

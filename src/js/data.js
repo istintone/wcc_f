@@ -766,3 +766,49 @@ const TAGS={
 /** スポンサーの報酬の効果 → 施設充実のタグ(オーナーの案: 報酬は施設の名前に寄せる。中身は今の報酬のまま) */
 const SP_FAC_TAG={ indExp:"facTrain", indSec:"facTrain", loungeOk:"facLounge", loungeExp:"facLounge", loungeSec:"facLounge",
   care:"facMed", careSec:"facMed", noFat:"facMed", injury:"facMed", bench:"facTact", keepForm:"facTact" };
+
+/* ---- チームの称号(→docs/23 §23.3)----
+ * 国の称号: 先発11人が同じ国籍で実際に戦い、試合のあとに確率で付く(重ねるほど上がる。急造では取りにくい)。効くのは先発がその国の11人のときだけ
+ * クラブの称号: 黄金期(金色が3つ)に届いたとき、金色の3軸の組み合わせで付く。いつでも効く
+ * 能力の上乗せ: stat:[{ who:"all"|"DF"|"MF"|"FW"|"FM"(FW と MF)|"DM"(DF と MF), st:[能力], k:"s"|"m"|"l" }]。量は TUNING.tag.stat、1つの能力の合計は statCap まで */
+Object.assign(TUNING.tag,{
+  stat:{ s:1, m:2, l:3 },
+  statCap:3,
+  nation:{ from:5, step:0.03, max:0.30, winK:1.5 }   // その国の11人で戦った試合が from 試合目から判定。率 = step ×(試合数 − from + 1)、上限 max、勝てば ×winK
+});
+const TITLE_NATION={
+  ITA:["カテナチオ",            [{ who:"all", st:["def"], k:"m" }]],
+  ENG:["キックアンドラッシュ",  [{ who:"all", st:["spd"], k:"m" }]],
+  NED:["トータルフットボール",  [{ who:"all", st:["sta"], k:"m" }]],
+  CRO:["バトレニ",              [{ who:"all", st:["tec"], k:"m" }]],
+  SWE:["ブローギューラ",        [{ who:"all", st:["spd","tec"], k:"s" }]],
+  ESP:["無敵艦隊",              [{ who:"all", st:["tec"], k:"m" }]],
+  DEN:["ダニッシュダイナマイト",[{ who:"all", st:["tec"], k:"m" }]],
+  GER:["ゲルマン魂",            [{ who:"all", st:["pow"], k:"m" }]],
+  FRA:["シャンパンサッカー",    [{ who:"all", st:["tec"], k:"m" },{ who:"MF", st:["off"], k:"s" }]],
+  BEL:["ロードダウフェルス",    [{ who:"all", st:["tec"], k:"m" }]],
+  POR:["セレソンダスキナス",    [{ who:"all", st:["tec"], k:"m" },{ who:"FW", st:["spd"], k:"s" }]],
+  ARG:["セレスティブランコ",    [{ who:"all", st:["off"], k:"m" }]],
+  URU:["セレステ",              [{ who:"all", st:["spd"], k:"m" },{ who:"DF", st:["pow"], k:"s" }]],
+  BRA:["カナリア軍団",          [{ who:"all", st:["off"], k:"m" },{ who:"all", st:["tec"], k:"s" }]],
+  JPN:["大和魂",                [{ who:"all", st:["tec"], k:"m" },{ who:"all", st:["sta"], k:"s" }]]
+};
+// 金色の3軸(OFE/DEF・SPE/POW・TEC/STA の順に1文字ずつ)→ クラブの称号
+const TITLE_CLUB={
+  OSR:["銀河系軍団",       [{ who:"all", st:["off","tec"], k:"s" },{ who:"FW", st:["off"], k:"m" }]],
+  OSC:["疾風軍団",         [{ who:"all", st:["spd","sta"], k:"s" }]],
+  OPR:["王朝",             [{ who:"FM", st:["off","pow"], k:"s" }], { motDown:"-s" }],
+  OPC:["鉄血軍団",         [{ who:"FM", st:["pow","sta"], k:"s" }]],
+  DSR:["堅守速攻",         [{ who:"DM", st:["spd"], k:"s" },{ who:"FW", st:["off"], k:"s" }]],
+  DSC:["鉄壁のハイライン", [{ who:"DF", st:["spd","sta"], k:"m" }]],
+  DPR:["王者の風格",       [{ who:"DF", st:["def","tec"], k:"s" }], { motDown:"-m" }],
+  DPC:["不沈艦",           [{ who:"DF", st:["def","pow"], k:"m" }]]
+};
+const TAG_WHO={ all:"全員", DF:"DF", MF:"MF", FW:"FW", FM:"FW・MF", DM:"DF・MF" };
+const tagStatTxt=L=>L.map(x=>TAG_WHO[x.who]+"の "+x.st.map(k=>STAT_LABEL[k]).join("・")+" +"+TUNING.tag.stat[x.k]).join("、");
+for(const nat in TITLE_NATION){ const [name,stat]=TITLE_NATION[nat];
+  TAGS["n_"+nat]={ name, scope:"team", kind:"title", sub:"nation", nat, pol:1, keep:true, dur:null, stat,
+    desc:"国の称号。先発がこの国の11人のとき: "+tagStatTxt(stat) }; }
+for(const k in TITLE_CLUB){ const [name,stat,fx]=TITLE_CLUB[k];
+  TAGS["c_"+k]={ name, scope:"team", kind:"title", sub:"club", pol:1, keep:true, dur:null, stat, fx,
+    desc:"クラブの称号(黄金期の形): "+tagStatTxt(stat)+(fx&&fx.motDown?"、調子が落ちにくい":"") }; }

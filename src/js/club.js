@@ -144,7 +144,9 @@ function oppDefOf(S,fx){
     if(st)for(const a of styleAxes(st)){ d.graph[a]=TUNING.grow.graph.max; d.graph.gold[a]=true; }
     d.rareOpp=true;                                   // 育成レベル最大 = KP の特殊能力も ★5 相当(→docs/21 §21.5)
   }
-  return d;
+  // 相手の称号(→docs/23 §23.7 の 4): 段4・5のクラブと Premier Div の相手はクラブの称号、先発が同じ国籍なら国の称号も
+  d.titles=oppTitleIds(d,tierOf(fx.opp)>=4||d.rareOpp);
+  return applyTitleStats(d,d.titles);
 }
 function newLeague(S,W){
   setLeagueName(S);
@@ -364,7 +366,8 @@ function playerDef(S){
   def.injK=spBoost(S,"injury")??1;           // スポンサーの効果(医療): ケガの起きやすさ
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
-  return def;
+  def.titles=myTitleIds(S);                      // チームの称号(→docs/23 §23.3)。能力の上乗せは試合のカードに
+  return applyTitleStats(def,def.titles);
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
 function fixtureMatch(S,fx){
@@ -456,7 +459,7 @@ function applyResult(S,W,fx,res){
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
   misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
-  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[] };
+  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[] };
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
   // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ

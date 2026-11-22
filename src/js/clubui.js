@@ -1083,7 +1083,8 @@ function oppSquadHtml(S,oppId,def,rep){
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
       '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
-      (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+'</div></section>'+
+      (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
+      ((def.titles||[]).length?'<p class="opp-ttl">'+def.titles.map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
@@ -1167,7 +1168,7 @@ function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); ret
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
 function teamTagsHtml(){
   const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";
-  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+'" data-act="taginfo" data-v="'+t.id+'">'+
+  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
 /** 選手のタグの札(選手の窓)。第3段から付く */
