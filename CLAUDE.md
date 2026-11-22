@@ -81,7 +81,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | ロゴ(スラッシュ・ボール)を変える | `src/js/logo.js` の `ballMarkSvg` / `logoSvg` / `logoMarkSvg`(タイトル・看板・結果の透かし)、アイコンは `build.py` の `_png`。正本は docs/14 §14.8 |
 | レーダー・適性の色・カードの裏を変える | `src/js/cardback.js`(`radarSvg` / `teamAxes` / `aptZones` / `aptOverlaySvg` / `aptMapSvg` / `cardBackHtml`)と theme.css の「適性の色・レーダー・カードの裏」。正本は docs/14 §14.14 |
 | 既定の陣形(SQUAD)を変える | `clubui.js` の `squadHtml` / `sqBind`(描画・引っ張って入れ替え)/ `sqSwap`、`pool.js` の `fillLayout` / `setForm` / `moveSquad` / `autoSquad`(最適配置)。正本は docs/07 §7.10・docs/14 §14.12 |
-| 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。構成の正本は docs/07 §7.9 |
+| 監督室の画面を足す・変える | `clubui.js` の `clubHtml`(HOME / 準備の手順 / タブの振り分け)と `TABS`。CLUB は `clubTabHtml`(クラブの記録と持ち物)、MANAGER は `managerTabHtml`(監督・生涯成績・歴代・秘書・設定)。構成の正本は docs/07 §7.9・docs/14 §14.63 |
 | 見た目の決まり(ネオンのデザインシステム: 地・パネル・ボタン・タブ・アイコン・書体)を変える | `src/css/neon.css`(既定の th-bk にだけ掛かる。トークンは先頭の `--n-*` と `--fs-*`)、アイコンは `clubui.js` の `TAB_ICON`、書体は build.py の `FONTS`(英字と数字は `--f-num` に通す。カードだけは Oswald のまま)。地の透かしは `LOGO_IMG.wm`(`tools/gen_logo.py`)。正本は docs/14 §14.18・§14.19。**既定のホワイト × レッドは `src/css/white.css`**(`body.th-wl` にだけ掛かる。部品の名前は同じ。正本は §14.21) |
 | テーマ(色)を足す・変える | `src/css/theme.css` の先頭のトークン(`--t-*`)の組。名前は `settings.js` の `THEMES`。**既定は暗い地の `th-bk`**(th-wr の形 + 暗い色の組。白を直に書いた部品は theme.css の末尾で直す)。設計の正本は docs/07 §7.8 |
 | カードの見た目を変える | `clubui.js` の `cardHtml`(構成)と `theme.css` の「カード」(意匠) |

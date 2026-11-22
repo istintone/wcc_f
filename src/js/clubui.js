@@ -785,9 +785,10 @@ const TAB_ICON={
   squad:'<rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.6"/><circle cx="8" cy="7.5" r="1"/><circle cx="16" cy="7.5" r="1"/><circle cx="12" cy="17" r="1"/>',
   cards:'<rect x="7" y="3.5" width="12" height="16" rx="1.5" transform="rotate(8 13 11.5)"/><rect x="4.5" y="5" width="12" height="16" rx="1.5"/><path d="M8 9h5M8 12h3"/>',
   season:'<path d="M7 4h10v4a5 5 0 01-10 0z"/><path d="M7 6H4a3 3 0 003 4M17 6h3a3 3 0 01-3 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/>',
-  club:'<path d="M12 3l7 3v6c0 4.2-3 7.5-7 9-4-1.5-7-4.8-7-9V6z"/><path d="M9.5 12.5l1.8 1.8 3.5-4"/>'
+  club:'<path d="M12 3l7 3v6c0 4.2-3 7.5-7 9-4-1.5-7-4.8-7-9V6z"/><path d="M9.5 12.5l1.8 1.8 3.5-4"/>',
+  mgr:'<circle cx="12" cy="7.5" r="3.5"/><path d="M5 20.5c.8-4.2 3.6-6.5 7-6.5s6.2 2.3 7 6.5"/><path d="M12 14l-1.3 2.2L12 20l1.3-3.8z"/>'
 };
-const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"],["season","SEASON","☰"],["club","CLUB","◎"]];
+const TABS=[["home","HOME","⌂"],["squad","SQUAD","◫"],["cards","CARDS","▤"],["season","SEASON","☰"],["club","CLUB","◎"],["mgr","MANAGER","👤"]];
 
 /** 秘書の一言。次に何をするとよいかを、状況から1つ選ぶ。言葉はいまの秘書の口調(→grow.js の secSay) */
 function secLine(S){
@@ -1210,7 +1211,7 @@ function termExpHtml(e){
 function licenseHtml(){
   const d=CL.draft||(CL.draft={});
   const ani=(()=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.birth||""); return m?aniOfDate(+m[1],+m[2],+m[3]):null; })();
-  return '<section class="card lic"><h3>監督ライセンス <small>初回だけ。あとから変えられない</small></h3>'+
+  return '<section class="card lic"><h3>監督ライセンス <small>初回だけ。名前はあとで MANAGER から変えられる</small></h3>'+
     '<label>監督名<input data-f="mname" maxlength="12" value="'+embEsc(d.mname||"")+'" placeholder="例: 山田 太郎"></label>'+
     '<label>生年月日(任意)<input type="date" data-f="birth" value="'+embEsc(d.birth||"")+'"></label>'+
     (ani!=null?'<p class="dim">監督の動物: '+ANI_ICON[ani]+ANIMALS[ani].name+'('+ANI_GROUP[ANIMALS[ani].g]+')。同じ群れの選手と相性が良い</p>':'<p class="dim">生年月日を入れると、監督の動物(動物占い)が分かる</p>')+
@@ -1404,8 +1405,30 @@ function clubTabHtml(){
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p>'+
-    '<p class="dim">'+divName(S.grade)+' ・ 監督ランク '+S.fac+(S.tset?' ・ セットした称号「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
-    trophyShelfHtml()+spTileHtml()+bizClubHtml()+secClubHtml()+careerHtml()+settingsHtml();
+    '<p class="dim">'+divName(S.grade)+(S.cprof&&S.cprof.name?' ・ '+S.cprof.name:'')+'</p></section>'+
+    trophyShelfHtml()+spTileHtml()+bizClubHtml();
+}
+/**
+ * MANAGER(→docs/07 §7.9): 監督の情報(名前は変えられる)・生涯成績・称号・歴代・秘書・設定。
+ * クラブ(任期ごとに替わるもの)の記録と持ち物は CLUB に残す
+ */
+function managerTabHtml(){
+  const S=CL.S, m=S.mgr||{ name:"—" }, all=S.career.reduce((a,c)=>({ w:a.w+c.w, d:a.d+c.d, l:a.l+c.l }),{ w:0, d:0, l:0 });
+  if(!S.termOver){ all.w+=S.rec.w; all.d+=S.rec.d; all.l+=S.rec.l; }
+  const n=all.w+all.d+all.l, wr=n?Math.round(all.w/n*100):0, earned=earnedTitles(S);
+  const last=S.career.length?titleOf(S.career[S.career.length-1].title).name:"—";
+  const d=CL.draft||(CL.draft={});
+  const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
+    :'<b>'+embEsc(m.name)+'</b><button class="lnk" data-act="medit">名前を変える</button>';
+  return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督の格 '+mgrLv(S)+'</small></h3>'+
+      '<div class="mg-name">'+name+'</div>'+
+      '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
+        '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
+    '<section class="card"><h3>生涯成績 <small>'+(S.career.length+(S.termOver?0:1))+'任期 ・ 勝率 '+wr+'%</small></h3>'+
+      '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
+      '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+S.salary+'</b><small>累計年俸(億)</small></div></div>'+
+      (earned.length?'<p class="dim">取った称号: '+earned.map(id=>titleOf(id).name).join(" / ")+'</p>':'')+'</section>'+
+    careerHtml()+secClubHtml()+settingsHtml();
 }
 function tabbarHtml(){
   const S=CL.S;
@@ -1416,7 +1439,7 @@ function clubHtml(){
   if(CL.paperI!=null)return paperHtml(CL.paperI);
   if(CL.flow==="prep"&&!CL.S.termOver)return prepHtml();
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
-    :CL.tab==="club"?clubTabHtml():homeHtml();
+    :CL.tab==="club"?clubTabHtml():CL.tab==="mgr"?managerTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
     (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
@@ -1485,6 +1508,8 @@ function onClubClick(e){
   if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
+  if(act==="medit"){ CL.mEdit=!CL.mEdit; if(CL.draft)CL.draft.mname=null; showClub(true); return; }
+  if(act==="mrename"){ const nm=CL.draft&&CL.draft.mname!=null?CL.draft.mname:S.mgr&&S.mgr.name; if(renameManager(S,nm)){ CL.mEdit=false; CL.draft.mname=null; save(); } else infoBar(["監督名を入れてください"]); showClub(true); return; }
   if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
   if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)
   if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }

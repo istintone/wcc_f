@@ -838,6 +838,12 @@ const TOWNS=["ミナト市","ホクト市","アオバ市","カザミ市","セト
 /** 監督契約の前の、今までのクラブ(古いセーブ・途中の任期) */
 function defaultClub(){ return { name:"アズーロFC", short:"AZR", town:TOWNS[0], color:TEAMS.azr.color, emblem:null }; }
 /** 監督ライセンスを登録する。名前は必須、生年月日は任意。登録したら変えられない */
+/** 監督名を変える(MANAGER から。→docs/07 §7.9) */
+function renameManager(S,name){
+  const nm=String(name||"").trim().slice(0,12);
+  if(!nm||!S.mgr)return false;
+  S.mgr.name=nm; return true;
+}
 function registerManager(S,name,birth){
   const nm=String(name||"").trim().slice(0,12);
   if(!nm||S.mgr)return false;

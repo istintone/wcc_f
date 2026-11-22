@@ -2070,3 +2070,12 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 /* レジェンドは金がさらに強くきらめく */
 .om-L .pk-body i{background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.7) 45%,transparent 65%);animation:sheen 1.2s infinite}
 .om-L .pk-wrap{filter:drop-shadow(0 0 14px rgba(255,210,90,.75)) drop-shadow(0 14px 18px rgba(0,0,0,.5))}
+/* MANAGER(→docs/07 §7.9) */
+#club .mgr-card .mg-name{display:flex;align-items:center;gap:10px;margin:2px 0 4px}
+#club .mgr-card .mg-name>b{font-size:20px;font-weight:900}
+#club .mgr-card .mg-edit{display:flex;align-items:center;gap:6px;width:100%}
+#club .mgr-card .mg-edit input{flex:1;min-width:0;padding:6px 8px;font:inherit;font-size:15px}
+#club .mgr-card .mg-edit .btn{width:auto;min-height:0;padding:6px 12px;margin:0}
+#club .tabbar button span{font-size:9.5px;letter-spacing:.04em}
+#club .tabbar{grid-template-columns:repeat(6,1fr)}
+#club .mgr-card .mg-edit .btn.btn-main{flex:0 0 auto!important;width:auto!important;min-width:0;height:auto;padding:7px 14px;font-size:13px;clip-path:none;border-radius:3px}
