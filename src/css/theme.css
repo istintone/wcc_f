@@ -2221,3 +2221,6 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .sq-2col .sq-side .sq-roles .rs small{display:none}
 #club .sq-2col .sq-side .sq-bench{gap:3px}
 #club .sq-2col .sq-side .sq-bench .sqc{margin:0 auto!important}
+/* 盤面の大きさを全画面でそろえる(→docs/14 §14.90): SQUAD・チーム練習・個別指導・休憩とも、ピッチは「全幅 − 右の列」いっぱい・縦横比 100:150。上限は外す */
+#club .sq-2col .sq-pitch,#club .cm-board .cm-pitch,#club .tr-fx .cm-board .cm-pitch{width:calc(100% - 58px)!important;max-width:none!important;flex:0 0 auto}
+#club .sq-3col.sq-2col,#club .cm-board{justify-content:space-between}
