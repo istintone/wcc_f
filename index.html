@@ -2632,6 +2632,16 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 #club .tg.ttl b{font-size:12.5px}
 #club .opp-ttl{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 0}
 #club .opp-ttl .tg{cursor:default}
+/* 選手からの提案の3択(→docs/23 §23.2 の 5) */
+#club .ch-acts .cr.prop{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;background:linear-gradient(100deg,#b8860b,#f2c14e 60%,#e0a92a);color:#2a1a00}
+#club .ch-acts .cr.prop small{font-size:10px;font-weight:600;opacity:.85}
+#club .ch-acts:has(.prop){display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:5px}
+#club .ch-acts .cr.prop{width:100%;min-height:0;padding:6px 10px;clip-path:none;border-radius:3px}
+#club .ch-acts .cr.prop b{font-size:13px}
+#club .ch-acts:has(.prop) .cr:not(.prop){width:100%;min-height:0;padding:6px 10px;clip-path:none;border-radius:3px}
+#club .pt-row{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#club .pt-row .tg{padding:4px 8px}
+#club .ch-acts:has(.prop) .cr:not(.prop){background:rgba(127,127,127,.2);color:inherit;box-shadow:none;font-weight:700}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4055,7 +4065,7 @@ const teamNameOf=t=>(PACK.teams[t.id]&&PACK.teams[t.id].name)||t.name;
 TUNING.tag={
   str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
   teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
-  playerMax:2,                    // 選手の汎用の上限
+  playerMax:2,                    // 選手の汎用の上限(任期まで続くもの・一過性のもの、それぞれ)
   streak:3                        // 勢い・スランプが付く連勝・連敗の数
 };
 const TAGS={
@@ -4118,6 +4128,66 @@ for(const nat in TITLE_NATION){ const [name,stat]=TITLE_NATION[nat];
 for(const k in TITLE_CLUB){ const [name,stat,fx]=TITLE_CLUB[k];
   TAGS["c_"+k]={ name, scope:"team", kind:"title", sub:"club", pol:1, keep:true, dur:null, stat, fx,
     desc:"クラブの称号(黄金期の形): "+tagStatTxt(stat)+(fx&&fx.motDown?"、調子が落ちにくい":"") }; }
+
+/* ---- 選手のタグ(→docs/23 §23.4)----
+ * 汎用: 調子・話題・出場の記録から付く。1人2つまで(残りの短いものから押し出す)。特性: ポジションの色。1人1つ(付け替え)
+ * 選手の fx の語彙: inj(ケガの起きやすさ)/ comm(コミュニケーションの成功しやすさ)/ exp(経験の入り)/ motUp・motDown / motLock:"on" /
+ *   fat(試合の疲労)/ kp(KP の効き目)/ noInj:"on"(ケガをしない)。teamFx … SQUAD にいるとチームに効く
+ * stat の when: 省略 = いつでも / "start" 先発のとき / "sub" 途中出場のとき / "final" 決勝のとき */
+TUNING.tag.str.x=1;                       // 「たまらない」など、まるごと消す強さ
+TUNING.tag.stat.x=5;                      // MVP の「超」
+Object.assign(TUNING.tag,{
+  statCapX:5,                             // MVP がいるときの1つの能力の上限
+  player:{ propP:0.10, propTrust:2,       // 選手からの提案: 信頼度の段 propTrust 以上の個人練習で propP。1人につき任期に1回
+    rookieAge:23, vetAge:31,              // 加入で ROOKIE・ベテラン
+    wait:10, rebel:15,                    // 出場なしが続いた試合数で 出番待ち・反抗期
+    bandiera:70,                          // バンディエラ: この任期の出場が bandiera に最初に届いた1人だけ(チームに1人)
+    superSub:2, ace:10, pillar:30, kpWin:10, iron:20,
+    injN:2, careN:5,                      // ケガの回数でケガがち、ケアの回数でケガに強い
+    rateMin:7.0, rateN:5 }                // そのポジションで採点 rateMin 以上が rateN 試合続くと特性
+});
+const ALL6=["off","def","tec","pow","spd","sta"];
+Object.assign(TAGS,{
+  injRes:  { name:"ケガに強い",   scope:"player", kind:"gen", pol:1,  dur:null, opp:"injProne", fx:{ inj:"-m" }, desc:"ケガをしにくい" },
+  injProne:{ name:"ケガがち",     scope:"player", kind:"gen", pol:-1, dur:null, opp:"injRes",   fx:{ inj:"+m" }, desc:"ケガをしやすい" },
+  rebel:   { name:"反抗期",       scope:"player", kind:"gen", pol:-1, dur:5, opp:"growth", fx:{ comm:"-m" }, desc:"コミュニケーションが失敗しやすい" },
+  growth:  { name:"成長期",       scope:"player", kind:"gen", pol:1,  dur:5, opp:"rebel",  fx:{ comm:"+m", exp:"+s" }, desc:"コミュニケーションが成功しやすく、経験が入りやすい" },
+  rookie:  { name:"ROOKIE",       scope:"player", kind:"gen", pol:1,  dur:5, onAdd:"mot4", fx:{ motDown:"-l" }, desc:"加入したての若手。絶好調で始まり、調子が落ちにくい" },
+  veteran: { name:"ベテラン",     scope:"player", kind:"gen", pol:1,  dur:5, fx:{ fat:"-x" }, desc:"加入したての熟練。試合の疲労がたまらない" },
+  bandiera:{ name:"バンディエラ", scope:"player", kind:"gen", pol:1,  dur:null, fx:{ inj:"-s" }, stat:[{ st:["sta"], k:"s" }], desc:"クラブの顔(チームに1人)。STA +1、ケガをしにくい" },
+  supersub:{ name:"スーパーサブ", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"sub", st:["off","spd","tec","pow"], k:"m" }], desc:"途中出場すると OFE・SPE・TEC・POW +2" },
+  ace:     { name:"エース",       scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"start", st:["off","tec","spd"], k:"m" }], desc:"先発すると OFE・TEC・SPE +2" },
+  pillar:  { name:"精神的支柱",   scope:"player", kind:"gen", pol:1,  dur:null, teamFx:{ motDown:"-s" }, desc:"SQUAD にいるとチームの調子が落ちにくい" },
+  mvp:     { name:"MVP",          scope:"player", kind:"gen", pol:1,  dur:5, capX:true, fx:{ noInj:"on" }, stat:[{ st:ALL6, k:"x" }], desc:"大舞台の主役。能力すべて +5、ケガをしない" },
+  strat:   { name:"戦略家",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ kp:"+s" }, desc:"KP の効き目が上がる" },
+  iron:    { name:"鉄人",         scope:"player", kind:"gen", pol:1,  dur:10, fx:{ fat:"-m" }, desc:"試合の疲労がたまりにくい" },
+  waiting: { name:"出番待ち",     scope:"player", kind:"gen", pol:-1, dur:null, endOn:"played", fx:{ motDown:"+m" }, desc:"調子が落ちやすい。出場すると「やる気爆発」に変わる" },
+  burst:   { name:"やる気爆発",   scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"待ちに待った出番。次の試合は絶好調" },
+  scorer:  { name:"得点感覚",     scope:"player", kind:"gen", pol:1,  dur:3, stat:[{ st:["off"], k:"s" }], desc:"ゴールの匂いがわかる。OFE +1" },
+  bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
+});
+// 特性(ポジション)。pos のポジションで出たときだけ効く。grp … 選手からの提案で、そのグループ(GK・DF・MF・FW)の選手にも候補に出す
+const TRAITS={
+  gkGuard:  ["守護神",                ["GK"],                  ["GK"], [{ st:ALL6, k:"s" }]],
+  gkSweep:  ["スイーパーキーパー",    ["GK"],                  ["GK"], [{ st:["spd","tec"], k:"m" }]],
+  gkWall:   ["壁",                    ["GK"],                  ["GK"], [{ st:["def","pow"], k:"m" }]],
+  libero:   ["リベロ",                ["CB"],                  ["DF"], [{ st:["sta","spd"], k:"s" }]],
+  sweeper:  ["スイーパー",            ["CB"],                  ["DF"], [{ st:["def","pow"], k:"s" }]],
+  stopper:  ["ストッパー",            ["CB"],                  ["DF"], [{ st:["def"], k:"m" }]],
+  wingback: ["ウイングバック",        ["LSB","RSB"],           ["DF"], [{ st:["spd","off"], k:"s" }]],
+  crosser:  ["クロッサー",            ["LWG","RWG","LSB","RSB","LMF","RMF"], ["DF","MF","FW"], [{ st:["tec","spd"], k:"s" }]],
+  watchdog: ["番犬",                  ["DMF"],                 ["MF"], [{ st:["sta","def"], k:"s" }]],
+  anchor:   ["アンカー",              ["DMF"],                 ["MF"], [{ st:["tec","off"], k:"s" }]],
+  b2b:      ["ボックス・トゥ・ボックス",["CMF"],               ["MF"], [{ st:["sta","off"], k:"s" }]],
+  fanta:    ["ファンタジスタ",        ["OMF"],                 ["MF"], [{ st:["tec"], k:"m" }]],
+  no10:     ["No.10",                 ["ST","OMF"],            ["MF","FW"], [{ st:["off"], k:"m" }]],
+  no95:     ["No.9.5",                ["ST","CF"],             ["FW"], [{ st:["def","sta"], k:"s" }]],
+  target:   ["ターゲットマン",        ["CF"],                  ["FW"], [{ st:["pow"], k:"m" }]],
+  dribbler: ["ドリブラー",            ["LWG","RWG"],           ["FW"], [{ st:["spd","tec"], k:"s" }]]
+};
+for(const k in TRAITS){ const [name,pos,grp,stat]=TRAITS[k];
+  TAGS["t_"+k]={ name, scope:"player", kind:"trait", pol:1, dur:null, pos, grp, stat,
+    desc:"特性("+pos.join("・")+" で出たとき): "+stat.map(x=>x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・")).join("、")+" +"+TUNING.tag.stat[stat[0].k] }; }
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -5391,7 +5461,8 @@ function setPiece(M,T,kind,h,x){
 function injCheck(M,push,T,p,base){
   const J=TUNING.inj;
   if(!p||p.inj||!M.irng)return;
-  if(M.irng()<base*T.injK*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
+  // p.c.injK … 選手のタグ(ケガに強い・ケガがち・MVP。→docs/23)
+  if(M.irng()<base*T.injK*(p.c.injK??1)*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
 }
 function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   const O=TUNING.rule, pk=forcePk||inBox(h,x), k=pk?O.pkCardK:1, r=rng();
@@ -6026,7 +6097,7 @@ function declineCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].st="qu
 function enterCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].ent=true; }
 
 /** 自分のクラブの定義。前の試合の最後の配置と KP を引き継ぐ(カードは盤面に置いたまま) */
-function playerDef(S){
+function playerDef(S,fx){
   // 登録選手(S.sq)から作る。先頭11枚が先発で、並びは陣形の枠の順(→pool.js)
   const def=makeTeamDef("azr",false), f=FORMS[S.form]||FORMS[TEAMS.azr.form], sq=S.sq||startSquad();
   def.xi=sq.slice(0,11).map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] }));
@@ -6042,11 +6113,11 @@ function playerDef(S){
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
   def.titles=myTitleIds(S);                      // チームの称号(→docs/23 §23.3)。能力の上乗せは試合のカードに
-  return applyTitleStats(def,def.titles);
+  return applyTagStats(def,def.titles,S,fx);      // 称号と選手のタグ・特性の能力の上乗せ(→docs/23)
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
 function fixtureMatch(S,fx){
-  return { home:playerDef(S), away:oppDefOf(S,fx),
+  return { home:playerDef(S,fx), away:oppDefOf(S,fx),
     seed:(S.seed^hashStr("m:"+S.term+":"+S.played))>>>0,
     opts:{ ko:fx.ko, agg:fx.agg } };
 }
@@ -6134,7 +6205,8 @@ function applyResult(S,W,fx,res){
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
   misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
-  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[] };
+  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[],
+    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd };   // 選手のタグの判定に(→docs/23)
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
   // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ
@@ -6788,6 +6860,7 @@ function swapSquad(S,outId,inId){
   delete S.g.pl[outId];
   for(const k of Object.keys(S.g.links))if(k.split("|").includes(outId))delete S.g.links[k];
   S.g.pl[inId]=newPlayerGrowth();
+  S.joinLines=[]; if(typeof joinTags==="function")joinTags(S,inId,S.joinLines);   // 加入: 若手は ROOKIE、熟練はベテラン(→docs/23)
   return true;
 }
 /** 登録選手の中で、先発と控えを入れ替える(育成は消えない) */
@@ -6980,7 +7053,8 @@ function growCard(S,card){
   }
   c.cond=G0.mot.mul[g.mot];
   c.gs=g.is; c.gm=g.mot;                     // 盤面に出す★とやる気(見た目だけ)
-  c.buffK=1+G0.sp.buff*g.ss;
+  c.buffK=(1+G0.sp.buff*g.ss)*playerTagK(S,card.id,"kp");   // 戦略家(→docs/23)
+  c.injK=pTagOn(S,card.id,"noInj")?0:playerTagK(S,card.id,"inj");   // ケガに強い・ケガがち・MVP
   c.ss=g.ss; c.is=g.is;
   c.fat0=g.fat;                              // 練習の疲れを残したまま試合を始める
   return c;
@@ -7241,9 +7315,15 @@ function doIndTrain(S,id){
   const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
   // 重なったカード1枚ごとに +10%(→docs/08 §8.12)
-  g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1);
+  g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1)*playerTagK(S,id,"exp");
   g.bond++;
   out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
+  // 選手からの提案(→docs/23 §23.2 の 5): 信頼の深い選手が、まれに育成の方針を3択で出す。1人につき任期に1回
+  const TP=TUNING.tag.player;
+  if(trustLv(g)>=TP.propTrust&&!g.propDone&&mulberry32((S.seed^hashStr("pp:"+S.term+":"+S.played+":"+S.g.cn+":"+id))>>>0)()<TP.propP){
+    const opts=traitOptions(S,id);
+    if(opts.length){ g.propDone=true; S.g.prop={ id, opts }; out.push("💡 "+nameOf(CARDS[id])+" から、育成の方針の提案があった"); }
+  }
   // スポンサーの効果: 秘書がもう1人の先発にも経験の半分を入れる
   const si=spBoost(S,"indSec");
   if(si&&mulberry32((S.seed^hashStr("isec:"+S.term+":"+S.played+":"+S.g.cn))>>>0)()<si){
@@ -7270,6 +7350,7 @@ function doTalk(S,id){
   }
   if(was===0)g.injN=0;
   out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
+  if(++pCnt(g).care>=TUNING.tag.player.careN&&!pHas(S,id,"injRes"))addPlayerTag(S,id,"injRes",out);   // ケアを重ねた選手はケガに強い(→docs/23)
   useComm(S,"talk");
   return { res:1, lines:out };
 }
@@ -7294,7 +7375,8 @@ function doLounge(S,a,b,choice){
   if(!canComm(S)||a===b||!S.g.pl[a]||!S.g.pl[b])return { res:-1, lines:out };
   const c=compatOf(a,b), best=LOUNGE_BEST[c];
   const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=(spBoost(S,"loungeOk")||0)+(tsetOf(S,"loungeOk")||0);
-  const p=[p0[0]+ok,p0[1],Math.max(0,p0[2]-ok)];   // スポンサーの効果: 失敗のぶんが大成功に回る
+  const ck=playerTagK(S,a,"comm")*playerTagK(S,b,"comm"), f=Math.min(1,Math.max(0,p0[2]-ok)*(ck>0?1/ck:1));   // 反抗期は失敗しやすく、成長期は失敗しにくい
+  const p=[Math.max(0,p0[0]+ok-(f-Math.max(0,p0[2]-ok))),p0[1],f];   // スポンサーの効果: 失敗のぶんが大成功に回る
   const r=mulberry32((S.seed^hashStr("lg:"+S.term+":"+S.played+":"+S.g.cn+":"+lkey(a,b)+":"+choice))>>>0)();
   const res=r<p[0]?0:r<p[0]+p[1]?1:2, l=linkSet(S,a,b);
   out.push(["大成功！","成功","失敗…"][res]);
@@ -7336,7 +7418,7 @@ function doMeeting(S,id,choice){
   const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
-    const p=(choice===persOf(id)?P.qOk:P.qNg)+(tsetOf(S,"qOk")||0);   // 名将: ★突破が成功しやすい
+    const p=Math.min(0.95,((choice===persOf(id)?P.qOk:P.qNg)+(tsetOf(S,"qOk")||0))*playerTagK(S,id,"comm"));   // 名将: ★突破が成功しやすい / 反抗期・成長期
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
@@ -7347,7 +7429,7 @@ function doMeeting(S,id,choice){
       out.push(nameOf(CARDS[id])+" の心に響かなかった…(やる気が下がった)");
     }
   }else{
-    g.se+=P.meet*facK(S,"tact")*(tsetOf(S,"meetK")||1);
+    g.se+=P.meet*facK(S,"tact")*(tsetOf(S,"meetK")||1)*playerTagK(S,id,"exp");
     out.push(nameOf(CARDS[id])+" と戦術の話をした(特殊能力の経験 +"+P.meet+")");
   }
   g.bond+=2;
@@ -7420,7 +7502,8 @@ function afterMatchGrowth(S,fx,res){
   GROW_NEWS=res.news=[];
   const rng=mulberry32((S.seed^hashStr("gr:"+S.term+":"+S.played))>>>0);
   const played=res.played.filter(id=>S.g.pl[id]), on=res.onPitch.filter(id=>S.g.pl[id]);
-  for(const id of played)S.g.pl[id].ie+=I.match*growK(id,S)*facK(S,"train");
+  const st0={}; for(const id in S.g.pl)st0[id]=S.g.pl[id].is+S.g.pl[id].ss;   // 成長期の判定(試合の前の★)
+  for(const id of played)S.g.pl[id].ie+=I.match*growK(id,S)*facK(S,"train")*playerTagK(S,id,"exp");
   for(let a=0;a<on.length;a++)for(let b=a+1;b<on.length;b++)
     linkExp(S,on[a],on[b],L.match*linkBonusK(on[a],on[b]),linkCap(on[a],on[b]));
   for(const id in S.g.pl)checkInd(S,id,out);
@@ -7446,7 +7529,7 @@ function afterMatchGrowth(S,fx,res){
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
   for(const id in S.g.pl){
     const g=S.g.pl[id];
-    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1):0))*N.recover*medFat(S));
+    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1)*playerTagK(S,id,"fat"):0))*N.recover*medFat(S));
   }
   // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
   const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
@@ -7467,13 +7550,13 @@ function afterMatchGrowth(S,fx,res){
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
-      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1)*tagK(S,"motUp"))g.mot=Math.min(4,g.mot+1);
+      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1)*tagK(S,"motUp")*playerTagK(S,id,"motUp"))g.mot=Math.min(4,g.mot+1);
       else if(res.win&&giant&&rng()<giant)g.mot=Math.min(4,g.mot+1);   // 刺客: 格上に勝つと上がりやすい
-      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1)*tagK(S,"motDown"))g.mot=Math.max(1,g.mot-1);
+      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1)*tagK(S,"motDown")*playerTagK(S,id,"motDown"))g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
     }else{
       g.bench=(g.bench||0)+1;
-      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1)*tagK(S,"motDown"))g.mot=Math.max(1,g.mot-1);
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1)*tagK(S,"motDown")*playerTagK(S,id,"motDown"))g.mot=Math.max(1,g.mot-1);
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
@@ -7481,6 +7564,7 @@ function afterMatchGrowth(S,fx,res){
   // タグ(→docs/23)。期限を減らし、付く・消えるを判定する。付いたタグは次の試合から効く。
   // 黄金期(タグ「黄金期到来」。→docs/15 §15.3)の残りのあいだは、ケガ以外の全員が絶好調のまま
   tagsAfterMatch(S,fx,res,out);
+  playerTagsAfterMatch(S,fx,res,out,st0);      // 選手のタグ(→docs/23 §23.4)
   motLockApply(S);
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
@@ -7667,6 +7751,7 @@ function linkSign(S,a,b){
  *   {g} KP のやること / {n} 選手 / {x} 柱の選手 / {c} まとめ役 / {k} キッカー
  */
 Object.assign(SEC_LINES.s0,{
+  chProp:"{n} が自分の育て方を相談してきました。選んだ道が、その選手の特性になります。",
   chLink:"{a} と {b}、いまは「{l}」です。", chNear:"周りで {n} も聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」です。", chMot:"いま {m} ・ 疲労 {f}%です。",
   scStyle:"{s}が得意なチームです。",
@@ -7685,6 +7770,7 @@ Object.assign(SEC_LINES.s0,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修しませんか。費用は {c}億です{d}。",
   reply:["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"] });
 Object.assign(SEC_LINES.s1,{
+  chProp:"{n} が育て方の相談に来ましたよ！ 選んだ道が特性になります！",
   chLink:"{a} と {b}、いまは「{l}」ですよ！", chNear:"周りで {n} も聞き耳たててます！",
   chReady:"★突破の話、切り出してきましたよ！ 性格は「{p}」です！", chMot:"いま {m} ・ 疲労 {f}% です！",
   scStyle:"{s}が得意なチームみたいです！",
@@ -7703,6 +7789,7 @@ Object.assign(SEC_LINES.s1,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)にしちゃいませんか！ 費用は {c}億です{d}！",
   reply:["そっかぁ……。","はい！","えへへ、ありがとうございます！","監督……すっごくうれしいです！"] });
 Object.assign(SEC_LINES.s2,{
+  chProp:"{n} から育成方針の相談です。選択がそのまま特性になります。",
   chLink:"{a} と {b}、現在「{l}」。", chNear:"{n} も周りで聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」。", chMot:"状態は {m}、疲労 {f}%。",
   scStyle:"{s}を得意とするチームです。",
@@ -7721,6 +7808,7 @@ Object.assign(SEC_LINES.s2,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修する提案です。費用は {c}億{d}。",
   reply:["……了解です。","はい。","……ありがとうございます。","……監督。うれしい、です。"] });
 Object.assign(SEC_LINES.s3,{
+  chProp:"{n} が育て方の相談に来たわ。選んだ道が、あの子の特性になるのよ。",
   chLink:"{a} と {b}、いまは「{l}」ね。", chNear:"周りで {n} も聞いているわ。",
   chReady:"★突破の話を切り出してきたわ。性格は「{p}」よ。", chMot:"いま {m} ・ 疲労 {f}% ね。",
   scStyle:"{s}が得意なチームみたいね。",
@@ -7761,6 +7849,7 @@ function motLockApply(S){ if(tagOn(S,"motLock"))for(const id in S.g.pl)if(S.g.pl
 /** チームのタグの効き目(掛け算)。無ければ 1 */
 function tagK(S,key){
   let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key]&&T.fx[key]!=="on")k*=tagFxK(T.fx[key]); }
+  for(const id of S.sq||[])for(const t of (S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[]){ const T=TAGS[t.id]; if(T&&T.teamFx&&T.teamFx[key])k*=tagFxK(T.teamFx[key]); }
   return k;
 }
 /** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
@@ -7839,23 +7928,8 @@ function nationTitleCheck(S,res,out){
   const me=typeof myTeam==="function"?myTeam(S).name:"わがクラブ";
   out.push("🏷 "+me+" は代表選手をそろえて起用することで、「"+TAGS[id].name+"」の再現といわれています(国の称号。先発がこの国の11人のとき: "+tagStatTxt(TAGS[id].stat)+")");
 }
-/**
- * 称号の能力の上乗せを、試合に渡すカードに足す(カードは写しを作る)。tagIds … 称号の id。
- * 国の称号は先発11人がその国のときだけ。1つの能力の合計は statCap まで
- */
-function applyTitleStats(def,tagIds){
-  const T=TUNING.tag, xiIds=def.xi.map(s=>s.card.id), nat=nationOf(xiIds);
-  const on=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
-  if(!on.length)return def;
-  const hit=(who,pos)=>who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
-  const boost=c=>{ const add={}, o=Object.assign({},c);
-    for(const t of on)for(const x of t.stat)if(hit(x.who,c.pos))for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k];
-    for(const k in add)o[k]=clamp(o[k]+Math.min(T.statCap,add[k]),1,STAT_MAX);
-    return o; };
-  def.xi.forEach(s=>{ s.card=boost(s.card); });
-  def.bench=def.bench.map(boost);
-  return def;
-}
+/** 称号だけの能力の上乗せ(相手のクラブ。中身は applyTagStats) */
+function applyTitleStats(def,tagIds){ return applyTagStats(def,tagIds,null,null); }
 /** 自チームの称号の id(いま付いているもの) */
 const myTitleIds=S=>((S.g&&S.g.tags)||[]).filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="title").map(t=>t.id);
 /**
@@ -7868,6 +7942,135 @@ function oppTitleIds(def,strong){
     ids.push(clubTitleOf({ O:av("off")>=av("def"), S:av("spd")>=av("pow"), R:av("tec")>=av("sta") })); }
   const nat=nationOf(xi.map(c=>c.id)); if(nat)ids.push("n_"+nat);
   return ids;
+}
+
+/* ---- 選手のタグ(→docs/23 §23.4) ---- */
+const pTags=(S,id)=>(S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[];
+/** 選手のタグの効き目(掛け算) */
+function playerTagK(S,id,key){
+  let k=1; for(const t of pTags(S,id)){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key]&&T.fx[key]!=="on")k*=tagFxK(T.fx[key]); }
+  return k;
+}
+const pTagOn=(S,id,key)=>pTags(S,id).some(t=>TAGS[t.id]&&TAGS[t.id].fx&&TAGS[t.id].fx[key]==="on");
+const pHas=(S,id,tid)=>pTags(S,id).some(t=>t.id===tid);
+/** 選手のタグを付ける。反対のタグは消す・同じは期限を延ばす。汎用は playerMax まで、特性は1つ(付け替え) */
+function addPlayerTag(S,id,tid,out){
+  const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
+  const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
+  if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 "+nm+" の「"+TAGS[T.opp].name+"」が消えた"); } }
+  const cur=L.find(t=>t.id===tid);
+  if(cur){ cur.n=tagDur(T); return; }
+  if(T.kind==="trait"){ const j=L.findIndex(t=>TAGS[t.id]&&TAGS[t.id].kind==="trait"); if(j>=0){ out.push("🏷 "+nm+" の特性「"+TAGS[L[j].id].name+"」を付け替えた"); L.splice(j,1); } }
+  else{
+    // 汎用は「任期まで続くもの」と「一過性(期限・条件で消える)」で別の枠。続くものは一過性に押し出されない(→docs/23 §23.1)
+    const last=x=>x.dur==null&&!x.endOn, mine=L.filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="gen"&&last(TAGS[t.id])===last(T));
+    if(mine.length>=TUNING.tag.playerMax){
+      if(last(T))return;                        // 続くものが埋まっていれば、新しい続くものは付かない(先に取ったものを残す)
+      const v=mine.reduce((b,t)=>(t.n==null?1e9:t.n)<(b.n==null?1e9:b.n)?t:b,mine[0]);
+      out.push("🏷 "+nm+" の「"+TAGS[v.id].name+"」が消えた"); L.splice(L.indexOf(v),1); }
+  }
+  L.push({ id:tid, n:tagDur(T) });
+  if(T.onAdd==="mot4"&&g.mot>0)g.mot=4;
+  out.push("🏷 "+nm+" に「"+T.name+"」 ― "+T.desc);
+}
+function dropPlayerTag(S,id,tid,out){
+  const L=pTags(S,id), j=L.findIndex(t=>t.id===tid); if(j<0)return;
+  L.splice(j,1); out.push("🏷 "+nameOf(CARDS[id])+" の「"+TAGS[tid].name+"」が消えた");
+}
+/** 選手の数え(この任期): 出場・先発の連続・得点・キャプテン・KP の勝ち・ケガ・ケア・好採点の連続 */
+const pCnt=g=>g.c||(g.c={ app:0, startRun:0, startGoals:0, subGoals:0, cap:0, kpW:0, inj:0, care:0, rateRun:0, scored:false });
+/** 決勝か(大会の最後の段) */
+const isFinal=fx=>!!(fx&&fx.kind==="cup"&&/決勝/.test(fx.label||"")&&!/準決勝/.test(fx.label||""));
+/**
+ * 試合のあとの選手のタグ(afterMatchGrowth の最後)。res に goals:{id:点}・rate:{id:採点}・mvp・kpEnd があれば使う。st0 … 試合の前の★の合計
+ */
+function playerTagsAfterMatch(S,fx,res,out,st0){
+  const P=TUNING.tag.player, played=res.played||[], starters=res.starters||[], goals=res.goals||{}, fin=isFinal(fx);
+  for(const id of S.sq){
+    const g=S.g.pl[id]; if(!g)continue;
+    const c=pCnt(g), was=pTags(S,id).slice(), on=played.includes(id), st=starters.includes(id), gl=goals[id]||0;
+    // ① 期限を減らす・出場で消える
+    for(const t of was){ const T=TAGS[t.id]; if(!T)continue;
+      if(T.endOn==="played"&&on){ dropPlayerTag(S,id,t.id,out); if(t.id==="waiting")addPlayerTag(S,id,"burst",out); continue; }
+      if(t.n!=null&&--t.n<=0)dropPlayerTag(S,id,t.id,out); }
+    // ② 数える
+    if(on)c.app++;
+    c.startRun=st?c.startRun+1:0;
+    if(st)c.startGoals+=gl; else if(on)c.subGoals+=gl;
+    if(st&&S.roles&&S.roles.cap===id)c.cap++;
+    if(res.kpEnd===id&&res.win)c.kpW++;
+    if((res.inj||[]).includes(id))c.inj++;
+    // ③ 付く
+    // 任期まで続くタグは、任期に1回だけ(消えたり付かなかったりしても、同じ条件でくり返し付けない)
+    const got=c.got||(c.got={}), add=tid=>{ if(!got[tid]&&!pHas(S,id,tid)){ got[tid]=true; addPlayerTag(S,id,tid,out); } };
+    if(c.inj>=P.injN)add("injProne");
+    if((g.bench||0)===P.rebel)addPlayerTag(S,id,"rebel",out); else if((g.bench||0)===P.wait)addPlayerTag(S,id,"waiting",out);   // 出場なしがちょうどその数になった試合で
+    if(st0&&CARDS[id].age<=P.rookieAge&&g.is+g.ss>st0[id])addPlayerTag(S,id,"growth",out);
+    if(c.app>=P.bandiera&&!S.g.bandiera){ S.g.bandiera=id; add("bandiera"); }   // チームに1人
+    if(c.subGoals>=P.superSub)add("supersub");
+    if(c.startGoals>=P.ace)add("ace");
+    if(c.cap>=P.pillar)add("pillar");
+    if(c.kpW>=P.kpWin)add("strat");
+    if(c.startRun===P.iron)addPlayerTag(S,id,"iron",out);
+    if(gl>0&&c.scored)addPlayerTag(S,id,"scorer",out);
+    c.scored=gl>0;
+    if(fin&&gl>0)add("bigstage");
+    if(fin&&res.mvp===id&&fx&&COMPS[fx.comp]&&/^[SA]$/.test(COMPS[fx.comp].grade))addPlayerTag(S,id,"mvp",out);
+    // ④ 特性: そのポジションで好採点が続く
+    const r=res.rate&&res.rate[id];
+    c.rateRun=st&&r!=null&&r>=P.rateMin?c.rateRun+1:st?0:c.rateRun;
+    if(c.rateRun>=P.rateN&&!pTags(S,id).some(t=>TAGS[t.id].kind==="trait")){
+      const i=S.sq.indexOf(id), f=(FORMS[S.form]||[])[i], l=(S.layout&&S.layout[id])||f, role=i===0?"GK":l?posAt(l[0],l[1]):null;   // 盤面の位置(無ければ陣形の枠)
+      const cand=Object.keys(TAGS).filter(k=>TAGS[k].kind==="trait"&&role&&TAGS[k].pos.includes(role));
+      if(cand.length){ const k=cand[hashStr("tr:"+S.term+":"+S.played+":"+id)%cand.length];
+        out.push("🏷 "+nameOf(CARDS[id])+" の "+role+" での動きが評判に"); addPlayerTag(S,id,k,out); c.rateRun=0; }
+    }
+    if(pTagOn(S,id,"motLock")&&g.mot>0)g.mot=4;
+  }
+}
+/** 加入(SQUAD と交代で入った選手): 若手は ROOKIE、熟練はベテラン */
+function joinTags(S,id,out){
+  const P=TUNING.tag.player, c=CARDS[id]; if(!c||!S.g||!S.g.pl[id])return;
+  if(c.age<=P.rookieAge)addPlayerTag(S,id,"rookie",out);
+  else if(c.age>=P.vetAge)addPlayerTag(S,id,"veteran",out);
+}
+/** 選手からの提案の候補(特性を3つ): その選手のポジション → 同じグループの順 */
+function traitOptions(S,id){
+  const c=CARDS[id], roles=c.roles||[c.pos], have=pTags(S,id).map(t=>t.id);
+  const ks=Object.keys(TAGS).filter(k=>TAGS[k].kind==="trait"&&!have.includes(k));
+  const own=ks.filter(k=>TAGS[k].pos.some(p=>roles.includes(p))), grp=ks.filter(k=>!own.includes(k)&&TAGS[k].grp.includes(c.pos));
+  const rng=mulberry32((S.seed^hashStr("prop:"+S.term+":"+id))>>>0), sh=a=>a.map(x=>[rng(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+  return sh(own).concat(sh(grp)).slice(0,3);
+}
+/** 選手からの提案に答える(i … 候補の番号。null なら見送る) */
+function answerProposal(S,i){
+  const P=S.g.prop; if(!P)return [];
+  const out=[]; S.g.prop=null;
+  if(i!=null&&P.opts[i])addPlayerTag(S,P.id,P.opts[i],out);
+  else out.push(nameOf(CARDS[P.id])+" の提案は見送った");
+  return out;
+}
+/**
+ * 称号と選手のタグの能力の上乗せを、試合に渡すカードに足す(写しを作る。1つの能力は statCap、MVP がいれば statCapX まで)。
+ * S … 自チームのとき(選手のタグ・特性も足す)。fx … 決勝の判定
+ */
+function applyTagStats(def,tagIds,S,fx){
+  const T=TUNING.tag, xiIds=def.xi.map(s=>s.card.id), nat=nationOf(xiIds), fin=isFinal(fx);
+  const team=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
+  const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
+  const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
+    const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k]; };
+    for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
+    if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
+      if(P.kind==="trait"&&!(start&&role&&P.pos.includes(role)))continue;
+      if(P.capX)cap=T.statCapX;
+      for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue; put(x); } }
+    if(!Object.keys(add).length)return c;
+    const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.min(cap,add[k]),1,STAT_MAX);
+    return o; };
+  def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
+  def.bench=def.bench.map(c=>boost(c,false,null));
+  return def;
 }
 
 /* =========================================================================
@@ -9733,10 +9936,15 @@ function commChatHtml(){
   const S=CL.S, U=COMM_UI[CL.comm];
   if(CL.chat){
     const K=CL.chat;
+    const PR=S.g.prop&&S.g.prop.id===K.who[0]?S.g.prop:null;   // 選手からの提案(→docs/23 §23.2 の 5)
     return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b></div><div class="ch-log">'+
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
-      '</div><div class="ch-acts">'+(commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
+      (PR?chatPl(PR.id,"「監督、自分はこんな選手になりたいんです。どの道がいいと思いますか？」",true)+
+        chatSec(secSay(S,"chProp",{ n:cname(PR.id) }),true):'')+
+      '</div><div class="ch-acts">'+(PR?PR.opts.map((k,i)=>'<button class="cr prop" data-act="propick" data-i="'+i+'"><b>'+TAGS[k].name+'</b><small>'+TAGS[k].desc.replace(/^特性/,"")+'</small></button>').join("")+
+          '<button class="cr" data-act="propick" data-i="-1">今は見送る</button>'
+      :commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
         :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">視察へ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
@@ -10929,8 +11137,12 @@ function finishFixture(M){
   // この任期の選手ごとの得点(→docs/14 第4弾)
   if(!CL.S.tgoals)CL.S.tgoals={};
   for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")CL.S.tgoals[e.by]=(CL.S.tgoals[e.by]||0)+1;
+  // 選手のタグの判定に: 得点・採点・MVP・試合の最後の KP(→docs/23 §23.4)
+  const RT0=matchRatings(M), goals={}, rate={};
+  for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")goals[e.by]=(goals[e.by]||0)+1;
+  for(const x of RT0.list)if(x.side==="H")rate[x.id]=x.r;
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
-    starters:G.meta.starters||[], subs:M.home.subs,
+    starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   const L=CL.S.last;
   if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
@@ -10955,6 +11167,7 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
+  if(act==="propick"){ const i=+b.dataset.i, ln=answerProposal(S,i<0?null:i); if(CL.chat)CL.chat.lines=CL.chat.lines.concat(ln); save(); showClub(true); setTimeout(()=>infoBar(ln.filter(x=>/^🏷/.test(x))),0); return; }
   if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
@@ -11032,7 +11245,8 @@ function onClubClick(e){
   else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
-    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"]; CL.sel=null; CL.kSwap=false; CL.kOut=null; save(); }
+    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
+      if(S.joinLines&&S.joinLines.length){ const jl=S.joinLines; setTimeout(()=>infoBar(jl),0); } S.joinLines=null; }
     showClub(true);
   }
   else if(act==="sqpick")sqPick(b.dataset.id);

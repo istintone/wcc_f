@@ -863,7 +863,8 @@ function setPiece(M,T,kind,h,x){
 function injCheck(M,push,T,p,base){
   const J=TUNING.inj;
   if(!p||p.inj||!M.irng)return;
-  if(M.irng()<base*T.injK*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
+  // p.c.injK … 選手のタグ(ケガに強い・ケガがち・MVP。→docs/23)
+  if(M.irng()<base*T.injK*(p.c.injK??1)*(1+J.fatK*(1-p.stam))){ p.inj=true; push({ side:T.side, type:"injury", by:p.id }); }
 }
 function giveFoul(M,rng,push,T,D,fouler,victim,h,x,forcePk){
   const O=TUNING.rule, pk=forcePk||inBox(h,x), k=pk?O.pkCardK:1, r=rng();

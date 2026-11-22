@@ -2033,3 +2033,13 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 #club .tg.ttl b{font-size:12.5px}
 #club .opp-ttl{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 0}
 #club .opp-ttl .tg{cursor:default}
+/* 選手からの提案の3択(→docs/23 §23.2 の 5) */
+#club .ch-acts .cr.prop{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:1px;background:linear-gradient(100deg,#b8860b,#f2c14e 60%,#e0a92a);color:#2a1a00}
+#club .ch-acts .cr.prop small{font-size:10px;font-weight:600;opacity:.85}
+#club .ch-acts:has(.prop){display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:5px}
+#club .ch-acts .cr.prop{width:100%;min-height:0;padding:6px 10px;clip-path:none;border-radius:3px}
+#club .ch-acts .cr.prop b{font-size:13px}
+#club .ch-acts:has(.prop) .cr:not(.prop){width:100%;min-height:0;padding:6px 10px;clip-path:none;border-radius:3px}
+#club .pt-row{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+#club .pt-row .tg{padding:4px 8px}
+#club .ch-acts:has(.prop) .cr:not(.prop){background:rgba(127,127,127,.2);color:inherit;box-shadow:none;font-weight:700}

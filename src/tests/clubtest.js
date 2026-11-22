@@ -788,5 +788,42 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     const dh=E.oppDefOf(S,{ opp:hi, kind:"cup" }), dl=E.oppDefOf(S,{ opp:lo, kind:"cup" });
     check("相手の称号: 段4以上のクラブはクラブの称号を持ち、段の低いクラブは持たない",dh.titles.some(t=>/^c_/.test(t))&&!dl.titles.some(t=>/^c_/.test(t)),dh.titles.join(",")+" / "+dl.titles.join(",")); }
 }
+// 選手のタグ(→docs/23 §23.4): 汎用・特性・選手からの提案
+{
+  console.log("\n■ 選手のタグ");
+  const P=E.TUNING.tag.player, S=E.newCareer(4242), out=[], id=S.sq[9], xi=S.sq.slice(0,11);
+  const has=(x,t)=>(S.g.pl[x].tags||[]).some(q=>q.id===t);
+  const after=(o)=>{ S.played++; E.playerTagsAfterMatch(S,{ kind:"friendly" },Object.assign({ played:xi, starters:xi, goals:{}, rate:{}, win:false, lose:false, inj:[] },o),out,null); };
+  for(let n=0;n<P.ace;n++)after({ goals:{ [id]:1 } });
+  const d=E.playerDef(S,{ kind:"friendly" }), c=d.xi.find(s=>s.card.id===id).card, base=E.growCard(S,E.CARDS[id]);
+  check("先発で "+P.ace+" 点で「エース」、続けて得点で「得点感覚」。先発すると能力が上がる",has(id,"ace")&&has(id,"scorer")&&c.off>base.off,base.off+" → "+c.off);
+  const bc=d.bench.length?d.bench[0]:null;
+  check("エースの上乗せは先発のときだけ(控えのカードには乗らない)",!bc||!has(bc.id,"ace")||bc.off===E.growCard(S,E.CARDS[bc.id]).off);
+  const S2=E.newCareer(77), o2=[], g=S2.sq[4];
+  for(let n=0;n<P.rateN;n++){ S2.played++; E.playerTagsAfterMatch(S2,{ kind:"friendly" },{ played:S2.sq.slice(0,11), starters:S2.sq.slice(0,11), goals:{}, rate:{ [g]:7.5 }, win:true, inj:[] },o2,null); }
+  const tr=(S2.g.pl[g].tags||[]).find(t=>E.TAGS[t.id].kind==="trait");
+  check("そのポジションで採点 "+P.rateMin+" 以上が "+P.rateN+" 試合続くと、ポジションに合う特性",!!tr&&E.TAGS[tr.id].pos.length>0,tr&&E.TAGS[tr.id].name);
+  const b=S.sq[14]; S.g.pl[b].bench=P.wait; after({});
+  const w=has(b,"waiting"); S.g.pl[b].bench=0; after({ played:xi.concat([b]) });
+  check("出場なしが "+P.wait+" 試合で「出番待ち」、出ると「やる気爆発」(絶好調)",w&&!has(b,"waiting")&&has(b,"burst")&&S.g.pl[b].mot===4);
+  const k=S.sq[2]; for(let n=0;n<P.injN;n++)after({ inj:[k] });
+  const injK=E.growCard(S,E.CARDS[k]).injK;
+  for(let n=0;n<P.careN;n++){ S.g.step="comm"; S.g.cn=0; S.g.done=[]; E.doTalk(S,k); }
+  check("ケガ "+P.injN+" 回で「ケガがち」(ケガが起きやすい)、ケア "+P.careN+" 回で「ケガに強い」に変わる",injK>1&&has(k,"injRes")&&!has(k,"injProne"),injK);
+  const pt=S.sq[5]; S.g.pl[pt].tags=[]; ["bandiera","strat","ace","iron","scorer","growth"].forEach(t=>E.addPlayerTag(S,pt,t,out));
+  const ids=S.g.pl[pt].tags.map(t=>t.id);
+  check("選手の汎用は、任期まで続くもの "+E.TUNING.tag.playerMax+" つ + 一過性 "+E.TUNING.tag.playerMax+" つ(続くものは先に取ったものが残り、一過性は押し出される)",
+    ids.includes("bandiera")&&ids.includes("strat")&&!ids.includes("ace")&&ids.filter(t=>["iron","scorer","growth"].includes(t)).length===2&&ids.includes("growth"),ids.join(","));
+  // 選手からの提案
+  const S3=E.newCareer(9), q=S3.sq[9], gq=S3.g.pl[q]; gq.bond=99; let got=null;
+  for(let n=0;n<80&&!got;n++){ S3.g.step="comm"; S3.g.cn=0; S3.g.done=[]; S3.played++; E.doIndTrain(S3,q); if(S3.g.prop)got=n+1; }
+  const opts=S3.g.prop?S3.g.prop.opts.slice():[]; E.answerProposal(S3,0);
+  check("信頼の深い選手の個人練習で、まれに育成の方針の3択(選んだ特性が付く)",got!=null&&opts.length===3&&(gq.tags||[]).some(t=>t.id===opts[0]),got+" 回目");
+  let again=false; for(let n=0;n<80;n++){ S3.g.step="comm"; S3.g.cn=0; S3.g.done=[]; S3.played++; E.doIndTrain(S3,q); if(S3.g.prop)again=true; }
+  check("提案は1人につき任期に1回",!again);
+  { const S4=E.newCareer(5), out4=[], y=Object.values(E.CARDS).find(c=>c.age<=P.rookieAge&&!S4.sq.includes(c.id));
+    S4.coll[y.id]=1; E.swapSquad(S4,S4.sq[15],y.id);
+    check("若手が加わると「ROOKIE」(絶好調で始まる)",(S4.g.pl[y.id].tags||[]).some(t=>t.id==="rookie")&&S4.g.pl[y.id].mot===4); }
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

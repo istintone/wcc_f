@@ -749,7 +749,7 @@ const teamNameOf=t=>(PACK.teams[t.id]&&PACK.teams[t.id].name)||t.name;
 TUNING.tag={
   str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
   teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
-  playerMax:2,                    // 選手の汎用の上限
+  playerMax:2,                    // 選手の汎用の上限(任期まで続くもの・一過性のもの、それぞれ)
   streak:3                        // 勢い・スランプが付く連勝・連敗の数
 };
 const TAGS={
@@ -812,3 +812,63 @@ for(const nat in TITLE_NATION){ const [name,stat]=TITLE_NATION[nat];
 for(const k in TITLE_CLUB){ const [name,stat,fx]=TITLE_CLUB[k];
   TAGS["c_"+k]={ name, scope:"team", kind:"title", sub:"club", pol:1, keep:true, dur:null, stat, fx,
     desc:"クラブの称号(黄金期の形): "+tagStatTxt(stat)+(fx&&fx.motDown?"、調子が落ちにくい":"") }; }
+
+/* ---- 選手のタグ(→docs/23 §23.4)----
+ * 汎用: 調子・話題・出場の記録から付く。1人2つまで(残りの短いものから押し出す)。特性: ポジションの色。1人1つ(付け替え)
+ * 選手の fx の語彙: inj(ケガの起きやすさ)/ comm(コミュニケーションの成功しやすさ)/ exp(経験の入り)/ motUp・motDown / motLock:"on" /
+ *   fat(試合の疲労)/ kp(KP の効き目)/ noInj:"on"(ケガをしない)。teamFx … SQUAD にいるとチームに効く
+ * stat の when: 省略 = いつでも / "start" 先発のとき / "sub" 途中出場のとき / "final" 決勝のとき */
+TUNING.tag.str.x=1;                       // 「たまらない」など、まるごと消す強さ
+TUNING.tag.stat.x=5;                      // MVP の「超」
+Object.assign(TUNING.tag,{
+  statCapX:5,                             // MVP がいるときの1つの能力の上限
+  player:{ propP:0.10, propTrust:2,       // 選手からの提案: 信頼度の段 propTrust 以上の個人練習で propP。1人につき任期に1回
+    rookieAge:23, vetAge:31,              // 加入で ROOKIE・ベテラン
+    wait:10, rebel:15,                    // 出場なしが続いた試合数で 出番待ち・反抗期
+    bandiera:70,                          // バンディエラ: この任期の出場が bandiera に最初に届いた1人だけ(チームに1人)
+    superSub:2, ace:10, pillar:30, kpWin:10, iron:20,
+    injN:2, careN:5,                      // ケガの回数でケガがち、ケアの回数でケガに強い
+    rateMin:7.0, rateN:5 }                // そのポジションで採点 rateMin 以上が rateN 試合続くと特性
+});
+const ALL6=["off","def","tec","pow","spd","sta"];
+Object.assign(TAGS,{
+  injRes:  { name:"ケガに強い",   scope:"player", kind:"gen", pol:1,  dur:null, opp:"injProne", fx:{ inj:"-m" }, desc:"ケガをしにくい" },
+  injProne:{ name:"ケガがち",     scope:"player", kind:"gen", pol:-1, dur:null, opp:"injRes",   fx:{ inj:"+m" }, desc:"ケガをしやすい" },
+  rebel:   { name:"反抗期",       scope:"player", kind:"gen", pol:-1, dur:5, opp:"growth", fx:{ comm:"-m" }, desc:"コミュニケーションが失敗しやすい" },
+  growth:  { name:"成長期",       scope:"player", kind:"gen", pol:1,  dur:5, opp:"rebel",  fx:{ comm:"+m", exp:"+s" }, desc:"コミュニケーションが成功しやすく、経験が入りやすい" },
+  rookie:  { name:"ROOKIE",       scope:"player", kind:"gen", pol:1,  dur:5, onAdd:"mot4", fx:{ motDown:"-l" }, desc:"加入したての若手。絶好調で始まり、調子が落ちにくい" },
+  veteran: { name:"ベテラン",     scope:"player", kind:"gen", pol:1,  dur:5, fx:{ fat:"-x" }, desc:"加入したての熟練。試合の疲労がたまらない" },
+  bandiera:{ name:"バンディエラ", scope:"player", kind:"gen", pol:1,  dur:null, fx:{ inj:"-s" }, stat:[{ st:["sta"], k:"s" }], desc:"クラブの顔(チームに1人)。STA +1、ケガをしにくい" },
+  supersub:{ name:"スーパーサブ", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"sub", st:["off","spd","tec","pow"], k:"m" }], desc:"途中出場すると OFE・SPE・TEC・POW +2" },
+  ace:     { name:"エース",       scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"start", st:["off","tec","spd"], k:"m" }], desc:"先発すると OFE・TEC・SPE +2" },
+  pillar:  { name:"精神的支柱",   scope:"player", kind:"gen", pol:1,  dur:null, teamFx:{ motDown:"-s" }, desc:"SQUAD にいるとチームの調子が落ちにくい" },
+  mvp:     { name:"MVP",          scope:"player", kind:"gen", pol:1,  dur:5, capX:true, fx:{ noInj:"on" }, stat:[{ st:ALL6, k:"x" }], desc:"大舞台の主役。能力すべて +5、ケガをしない" },
+  strat:   { name:"戦略家",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ kp:"+s" }, desc:"KP の効き目が上がる" },
+  iron:    { name:"鉄人",         scope:"player", kind:"gen", pol:1,  dur:10, fx:{ fat:"-m" }, desc:"試合の疲労がたまりにくい" },
+  waiting: { name:"出番待ち",     scope:"player", kind:"gen", pol:-1, dur:null, endOn:"played", fx:{ motDown:"+m" }, desc:"調子が落ちやすい。出場すると「やる気爆発」に変わる" },
+  burst:   { name:"やる気爆発",   scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"待ちに待った出番。次の試合は絶好調" },
+  scorer:  { name:"得点感覚",     scope:"player", kind:"gen", pol:1,  dur:3, stat:[{ st:["off"], k:"s" }], desc:"ゴールの匂いがわかる。OFE +1" },
+  bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
+});
+// 特性(ポジション)。pos のポジションで出たときだけ効く。grp … 選手からの提案で、そのグループ(GK・DF・MF・FW)の選手にも候補に出す
+const TRAITS={
+  gkGuard:  ["守護神",                ["GK"],                  ["GK"], [{ st:ALL6, k:"s" }]],
+  gkSweep:  ["スイーパーキーパー",    ["GK"],                  ["GK"], [{ st:["spd","tec"], k:"m" }]],
+  gkWall:   ["壁",                    ["GK"],                  ["GK"], [{ st:["def","pow"], k:"m" }]],
+  libero:   ["リベロ",                ["CB"],                  ["DF"], [{ st:["sta","spd"], k:"s" }]],
+  sweeper:  ["スイーパー",            ["CB"],                  ["DF"], [{ st:["def","pow"], k:"s" }]],
+  stopper:  ["ストッパー",            ["CB"],                  ["DF"], [{ st:["def"], k:"m" }]],
+  wingback: ["ウイングバック",        ["LSB","RSB"],           ["DF"], [{ st:["spd","off"], k:"s" }]],
+  crosser:  ["クロッサー",            ["LWG","RWG","LSB","RSB","LMF","RMF"], ["DF","MF","FW"], [{ st:["tec","spd"], k:"s" }]],
+  watchdog: ["番犬",                  ["DMF"],                 ["MF"], [{ st:["sta","def"], k:"s" }]],
+  anchor:   ["アンカー",              ["DMF"],                 ["MF"], [{ st:["tec","off"], k:"s" }]],
+  b2b:      ["ボックス・トゥ・ボックス",["CMF"],               ["MF"], [{ st:["sta","off"], k:"s" }]],
+  fanta:    ["ファンタジスタ",        ["OMF"],                 ["MF"], [{ st:["tec"], k:"m" }]],
+  no10:     ["No.10",                 ["ST","OMF"],            ["MF","FW"], [{ st:["off"], k:"m" }]],
+  no95:     ["No.9.5",                ["ST","CF"],             ["FW"], [{ st:["def","sta"], k:"s" }]],
+  target:   ["ターゲットマン",        ["CF"],                  ["FW"], [{ st:["pow"], k:"m" }]],
+  dribbler: ["ドリブラー",            ["LWG","RWG"],           ["FW"], [{ st:["spd","tec"], k:"s" }]]
+};
+for(const k in TRAITS){ const [name,pos,grp,stat]=TRAITS[k];
+  TAGS["t_"+k]={ name, scope:"player", kind:"trait", pol:1, dur:null, pos, grp, stat,
+    desc:"特性("+pos.join("・")+" で出たとき): "+stat.map(x=>x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・")).join("、")+" +"+TUNING.tag.stat[stat[0].k] }; }

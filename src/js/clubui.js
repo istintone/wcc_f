@@ -231,10 +231,15 @@ function commChatHtml(){
   const S=CL.S, U=COMM_UI[CL.comm];
   if(CL.chat){
     const K=CL.chat;
+    const PR=S.g.prop&&S.g.prop.id===K.who[0]?S.g.prop:null;   // 選手からの提案(→docs/23 §23.2 の 5)
     return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b></div><div class="ch-log">'+
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
-      '</div><div class="ch-acts">'+(commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
+      (PR?chatPl(PR.id,"「監督、自分はこんな選手になりたいんです。どの道がいいと思いますか？」",true)+
+        chatSec(secSay(S,"chProp",{ n:cname(PR.id) }),true):'')+
+      '</div><div class="ch-acts">'+(PR?PR.opts.map((k,i)=>'<button class="cr prop" data-act="propick" data-i="'+i+'"><b>'+TAGS[k].name+'</b><small>'+TAGS[k].desc.replace(/^特性/,"")+'</small></button>').join("")+
+          '<button class="cr" data-act="propick" data-i="-1">今は見送る</button>'
+      :commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
         :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">視察へ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
@@ -1427,8 +1432,12 @@ function finishFixture(M){
   // この任期の選手ごとの得点(→docs/14 第4弾)
   if(!CL.S.tgoals)CL.S.tgoals={};
   for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")CL.S.tgoals[e.by]=(CL.S.tgoals[e.by]||0)+1;
+  // 選手のタグの判定に: 得点・採点・MVP・試合の最後の KP(→docs/23 §23.4)
+  const RT0=matchRatings(M), goals={}, rate={};
+  for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")goals[e.by]=(goals[e.by]||0)+1;
+  for(const x of RT0.list)if(x.side==="H")rate[x.id]=x.r;
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
-    starters:G.meta.starters||[], subs:M.home.subs,
+    starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   const L=CL.S.last;
   if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
@@ -1453,6 +1462,7 @@ function onClubClick(e){
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
+  if(act==="propick"){ const i=+b.dataset.i, ln=answerProposal(S,i<0?null:i); if(CL.chat)CL.chat.lines=CL.chat.lines.concat(ln); save(); showClub(true); setTimeout(()=>infoBar(ln.filter(x=>/^🏷/.test(x))),0); return; }
   if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
   if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
@@ -1530,7 +1540,8 @@ function onClubClick(e){
   else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
-    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"]; CL.sel=null; CL.kSwap=false; CL.kOut=null; save(); }
+    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
+      if(S.joinLines&&S.joinLines.length){ const jl=S.joinLines; setTimeout(()=>infoBar(jl),0); } S.joinLines=null; }
     showClub(true);
   }
   else if(act==="sqpick")sqPick(b.dataset.id);

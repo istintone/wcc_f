@@ -95,6 +95,7 @@ function swapSquad(S,outId,inId){
   delete S.g.pl[outId];
   for(const k of Object.keys(S.g.links))if(k.split("|").includes(outId))delete S.g.links[k];
   S.g.pl[inId]=newPlayerGrowth();
+  S.joinLines=[]; if(typeof joinTags==="function")joinTags(S,inId,S.joinLines);   // 加入: 若手は ROOKIE、熟練はベテラン(→docs/23)
   return true;
 }
 /** 登録選手の中で、先発と控えを入れ替える(育成は消えない) */

@@ -351,7 +351,7 @@ function declineCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].st="qu
 function enterCup(S,id){ if(S.cups[id]&&S.cups[id].st==="in")S.cups[id].ent=true; }
 
 /** 自分のクラブの定義。前の試合の最後の配置と KP を引き継ぐ(カードは盤面に置いたまま) */
-function playerDef(S){
+function playerDef(S,fx){
   // 登録選手(S.sq)から作る。先頭11枚が先発で、並びは陣形の枠の順(→pool.js)
   const def=makeTeamDef("azr",false), f=FORMS[S.form]||FORMS[TEAMS.azr.form], sq=S.sq||startSquad();
   def.xi=sq.slice(0,11).map((id,i)=>({ card:CARDS[id], h:f[i][0], x:f[i][1] }));
@@ -367,11 +367,11 @@ function playerDef(S){
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
   def.titles=myTitleIds(S);                      // チームの称号(→docs/23 §23.3)。能力の上乗せは試合のカードに
-  return applyTitleStats(def,def.titles);
+  return applyTagStats(def,def.titles,S,fx);      // 称号と選手のタグ・特性の能力の上乗せ(→docs/23)
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
 function fixtureMatch(S,fx){
-  return { home:playerDef(S), away:oppDefOf(S,fx),
+  return { home:playerDef(S,fx), away:oppDefOf(S,fx),
     seed:(S.seed^hashStr("m:"+S.term+":"+S.played))>>>0,
     opts:{ ko:fx.ko, agg:fx.agg } };
 }
@@ -459,7 +459,8 @@ function applyResult(S,W,fx,res){
   if(got)out.push("賞金 +"+got.toFixed(1)+"億");
   misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
-  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[] };
+  const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[],
+    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd };   // 選手のタグの判定に(→docs/23)
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
   // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ
