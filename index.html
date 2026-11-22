@@ -6814,7 +6814,7 @@ const OF_REGIONS=[
   { id:"eu", name:"欧州",   fac:"stad",   ax:"O" }, { id:"sa", name:"南米",   fac:"train",  ax:"R" },
   { id:"na", name:"北中米", fac:"med",    ax:"P" }, { id:"as", name:"アジア", fac:"lounge", ax:"S" },
   { id:"af", name:"アフリカ", fac:"tact", ax:"C" } ];
-// 地域ごとの国(所属するリーグ。→docs/16 §16.8)。リーグの名前は国名で(実在のリーグ名は使わない)
+// 地域ごとの国(所属するリーグ。→docs/16 §16.5)。リーグの名前は国名で(実在のリーグ名は使わない)
 const OF_COUNTRIES={ eu:["イングランド","スペイン","イタリア","ドイツ","フランス","オランダ","ポルトガル"],
   sa:["ブラジル","アルゼンチン","ウルグアイ","コロンビア"], na:["アメリカ","メキシコ","カナダ"],
   as:["日本","韓国","サウジアラビア","オーストラリア"], af:["エジプト","モロッコ","ナイジェリア","南アフリカ"] };
@@ -6874,7 +6874,7 @@ function mkOffer(S,rng,lv,reg,rare){
   o.expLv=clamp(o.lv+(rare==="rising"?-2:rare==="trad"?2:0),1,7);
   o.target=O.target[o.expLv-1];
   o.misP=O.misP[o.expLv-1];
-  // 所属するリーグ(国)。乱数の並びを変えないよう、たねと地域と格から決める(→docs/16 §16.8)
+  // 所属するリーグ(国)。乱数の並びを変えないよう、たねと地域と格から決める(→docs/16 §16.5)
   const CL0=OF_COUNTRIES[reg]; o.country=CL0[hashStr((S?S.seed:0)+":"+(S?S.term:0)+":"+reg+":"+lv+":"+(rare||""))%CL0.length];
   o.name=o.country+"の"+(rare?OF_RARES.find(x=>x.id===rare).name:divName(4-div)+" の"+OF_SIZES.find(z=>z.id===size.id).name+"クラブ");
   return o;
