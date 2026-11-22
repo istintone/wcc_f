@@ -2052,3 +2052,21 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 #club .tag-ev .pl-av img{object-fit:cover;object-position:50% 8%;transform:scale(1.5);transform-origin:50% 15%}
 /* 対戦カードの TOUCH: 白い地でも見えるようにタイトルと同じ赤 */
 body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
+/* パックを引く: PULL と下向きの矢印(→docs/14 §14.62) */
+.pk-pull{display:inline-flex;flex-direction:column;align-items:center;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:24px;letter-spacing:.3em;margin-left:.3em;color:#fff;text-shadow:0 0 12px rgba(255,42,80,.8)}
+.pk-pull i{font-style:normal;font-size:26px;line-height:1;margin-right:.3em;animation:pullDown 1s ease-in-out infinite}
+@keyframes pullDown{0%,100%{transform:translateY(0);opacity:1}60%{transform:translateY(8px);opacity:.55}}
+/* キラ・レジェンドの予兆: パックそのものが金色に(引き出したとき。昇格のときはそこで金色に変わる) */
+.om-K .pk-top,.om-L .pk-top{background:linear-gradient(180deg,rgba(255,255,255,.35),transparent 40%,rgba(0,0,0,.15)),
+    repeating-linear-gradient(90deg,rgba(90,60,0,.25) 0 1px,rgba(255,255,255,.15) 1px 2px,transparent 2px 4px),
+    repeating-linear-gradient(135deg,#c9961e 0 9px,#e6b93a 9px 11px)}
+.om-K .pk-body,.om-L .pk-body{background:linear-gradient(90deg,rgba(80,50,0,.45),rgba(0,0,0,0) 13%,rgba(0,0,0,0) 85%,rgba(80,50,0,.5)),
+    linear-gradient(180deg,rgba(80,50,0,.3),rgba(0,0,0,0) 10%,rgba(0,0,0,0) 84%,rgba(80,50,0,.3)),
+    linear-gradient(100deg,transparent 14%,rgba(255,255,255,.5) 21%,rgba(255,255,255,.12) 27%,transparent 33%),
+    radial-gradient(ellipse 70% 55% at 50% 46%,rgba(255,250,220,.35),transparent 70%),
+    repeating-linear-gradient(135deg,#c9961e 0 9px,#e6b93a 9px 11px)}
+.om-K .pk-body::before,.om-L .pk-body::before{border-color:rgba(120,70,0,.55)}
+.om-K .pk-logo,.om-L .pk-logo{filter:drop-shadow(2px 3px 0 rgba(90,50,0,.6))}
+/* レジェンドは金がさらに強くきらめく */
+.om-L .pk-body i{background:linear-gradient(115deg,transparent 25%,rgba(255,255,255,.7) 45%,transparent 65%);animation:sheen 1.2s infinite}
+.om-L .pk-wrap{filter:drop-shadow(0 0 14px rgba(255,210,90,.75)) drop-shadow(0 14px 18px rgba(0,0,0,.5))}

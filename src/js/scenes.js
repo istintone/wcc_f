@@ -285,7 +285,7 @@ function sceneCard(id,isNew,go){
         '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"><span>ここから破る ✂</span></div>'+
           '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
       '</div></div>'+
-    '<div class="pk-msg">パックを下へ引き出す</div>',
+    '<div class="pk-msg"><b class="pk-pull">PULL<i>↓</i></b></div>',   // パックを下へ引き出す(→docs/14 §14.62)
     { lock:500 });
   SC.card={ r, shown, promo, isNew, c, go, stage:0 };
   SC.promote=()=>{
