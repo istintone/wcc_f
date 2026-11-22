@@ -2576,6 +2576,25 @@ body[class] #club .sc-rbox .scout-sec ul,body[class] #club .sc-rbox .scout-sec l
 body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 /* 結果の画面の Div の帯: 残留(🛡・➡)は控えめに。昇格・降格だけを大きく(→docs/19) */
 #scene .res-div.stay{padding:2px 12px;font-size:11.5px;font-weight:700;letter-spacing:.04em;background:rgba(0,0,0,.45);color:#e8e2cf;box-shadow:none}
+/* パックの包み(→docs/14 §14.60): 切り口も本体と同じ赤のストライプ。上下は圧着(縦の筋とギザギザ)、本体は中身でふくらんだ陰影、真ん中にロゴ */
+.pk-wrap{filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))}
+.pk-top{border-radius:0;height:15%;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 40%,rgba(0,0,0,.18)),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px),
+    repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px)}
+.pk-top::after{left:5%;right:5%;bottom:2px;border-bottom:2px dashed rgba(255,255,255,.75)}
+.pk-top span{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);top:46%}
+.pk-body{top:15%;border-radius:0;box-shadow:none;gap:0;
+  background:linear-gradient(90deg,rgba(0,0,0,.42),rgba(0,0,0,0) 13%,rgba(0,0,0,0) 85%,rgba(0,0,0,.45)),
+    linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0) 10%,rgba(0,0,0,0) 84%,rgba(0,0,0,.3)),
+    linear-gradient(100deg,transparent 14%,rgba(255,255,255,.26) 21%,rgba(255,255,255,.06) 27%,transparent 33%),
+    radial-gradient(ellipse 70% 55% at 50% 46%,rgba(255,255,255,.14),transparent 70%),
+    repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px)}
+.pk-body::before{content:"";position:absolute;left:9%;right:9%;top:6%;bottom:15%;border:1px solid rgba(255,226,138,.55);box-shadow:inset 0 0 0 3px rgba(0,0,0,.08)}
+.pk-logo{position:relative;width:74%;margin-top:-8%;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55))}
+.pk-crimp{position:absolute;left:0;right:0;bottom:0;height:8%;
+  background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(255,255,255,.1) 30%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px)}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11479,8 +11498,8 @@ function sceneCard(id,isNew,go){
     '<div class="pk-slot st0">'+(r==="L"?'<div class="rays"></div>':'')+'<i class="pk-aura"></i>'+
       '<div class="pk-pack" data-sc="flip">'+
         '<div class="pk-cardin r-'+r+'">'+cardHtml(id,"m")+'</div>'+
-        '<div class="pk-wrap"><div class="pk-top"><span>ここから破る ✂</span></div>'+
-          '<div class="pk-body"><b>wcc<span>_</span>f</b><small>PLAYER CARD ・ 1枚入り</small><i></i></div></div>'+
+        '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"><span>ここから破る ✂</span></div>'+
+          '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
       '</div></div>'+
     '<div class="pk-msg">パックを下へ引き出す</div>',
     { lock:500 });
@@ -11501,6 +11520,16 @@ function sceneCard(id,isNew,go){
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
   sndUi("tap");
+}
+/**
+ * パックの包みの形(→docs/14 §14.60): 上下の端は圧着のギザギザ、破り口の左右に V の切り込み。
+ * top … 上の圧着(切り口)/ body … 本体(下の端もギザギザ)
+ */
+function packClip(part){
+  const n=26, d=5, zig=(y0,dir)=>{ const p=[]; for(let i=0;i<=n;i++)p.push((i/n*100).toFixed(2)+"% "+(i%2?(dir>0?"calc("+y0+" + "+d+"px)":"calc("+y0+" - "+d+"px)"):y0)); return p; };
+  const v=7;
+  if(part==="top")return "polygon("+zig("0px",1).join(",")+",100% calc(100% - "+v+"px),calc(100% - "+v+"px) 100%,"+v+"px 100%,0 calc(100% - "+v+"px))";
+  return "polygon("+v+"px 0,calc(100% - "+v+"px) 0,100% "+v+"px,"+zig("100%",-1).reverse().join(",")+",0 "+v+"px)";
 }
 /** パックを1段進める: 0 口から少し出ている → 1 引き出した → 2 破って中身が見えた → 監督室へ */
 function packStep(){

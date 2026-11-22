@@ -267,8 +267,8 @@ function sceneCard(id,isNew,go){
     '<div class="pk-slot st0">'+(r==="L"?'<div class="rays"></div>':'')+'<i class="pk-aura"></i>'+
       '<div class="pk-pack" data-sc="flip">'+
         '<div class="pk-cardin r-'+r+'">'+cardHtml(id,"m")+'</div>'+
-        '<div class="pk-wrap"><div class="pk-top"><span>ここから破る ✂</span></div>'+
-          '<div class="pk-body"><b>wcc<span>_</span>f</b><small>PLAYER CARD ・ 1枚入り</small><i></i></div></div>'+
+        '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"><span>ここから破る ✂</span></div>'+
+          '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
       '</div></div>'+
     '<div class="pk-msg">パックを下へ引き出す</div>',
     { lock:500 });
@@ -289,6 +289,16 @@ function sceneCard(id,isNew,go){
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
   sndUi("tap");
+}
+/**
+ * パックの包みの形(→docs/14 §14.60): 上下の端は圧着のギザギザ、破り口の左右に V の切り込み。
+ * top … 上の圧着(切り口)/ body … 本体(下の端もギザギザ)
+ */
+function packClip(part){
+  const n=26, d=5, zig=(y0,dir)=>{ const p=[]; for(let i=0;i<=n;i++)p.push((i/n*100).toFixed(2)+"% "+(i%2?(dir>0?"calc("+y0+" + "+d+"px)":"calc("+y0+" - "+d+"px)"):y0)); return p; };
+  const v=7;
+  if(part==="top")return "polygon("+zig("0px",1).join(",")+",100% calc(100% - "+v+"px),calc(100% - "+v+"px) 100%,"+v+"px 100%,0 calc(100% - "+v+"px))";
+  return "polygon("+v+"px 0,calc(100% - "+v+"px) 0,100% "+v+"px,"+zig("100%",-1).reverse().join(",")+",0 "+v+"px)";
 }
 /** パックを1段進める: 0 口から少し出ている → 1 引き出した → 2 破って中身が見えた → 監督室へ */
 function packStep(){

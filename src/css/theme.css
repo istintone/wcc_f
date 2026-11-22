@@ -1994,3 +1994,22 @@ body[class] #club .sc-rbox .scout-sec ul,body[class] #club .sc-rbox .scout-sec l
 body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 /* 結果の画面の Div の帯: 残留(🛡・➡)は控えめに。昇格・降格だけを大きく(→docs/19) */
 #scene .res-div.stay{padding:2px 12px;font-size:11.5px;font-weight:700;letter-spacing:.04em;background:rgba(0,0,0,.45);color:#e8e2cf;box-shadow:none}
+/* パックの包み(→docs/14 §14.60): 切り口も本体と同じ赤のストライプ。上下は圧着(縦の筋とギザギザ)、本体は中身でふくらんだ陰影、真ん中にロゴ */
+.pk-wrap{filter:drop-shadow(0 14px 18px rgba(0,0,0,.55))}
+.pk-top{border-radius:0;height:15%;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 40%,rgba(0,0,0,.18)),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px),
+    repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px)}
+.pk-top::after{left:5%;right:5%;bottom:2px;border-bottom:2px dashed rgba(255,255,255,.75)}
+.pk-top span{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);top:46%}
+.pk-body{top:15%;border-radius:0;box-shadow:none;gap:0;
+  background:linear-gradient(90deg,rgba(0,0,0,.42),rgba(0,0,0,0) 13%,rgba(0,0,0,0) 85%,rgba(0,0,0,.45)),
+    linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0) 10%,rgba(0,0,0,0) 84%,rgba(0,0,0,.3)),
+    linear-gradient(100deg,transparent 14%,rgba(255,255,255,.26) 21%,rgba(255,255,255,.06) 27%,transparent 33%),
+    radial-gradient(ellipse 70% 55% at 50% 46%,rgba(255,255,255,.14),transparent 70%),
+    repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px)}
+.pk-body::before{content:"";position:absolute;left:9%;right:9%;top:6%;bottom:15%;border:1px solid rgba(255,226,138,.55);box-shadow:inset 0 0 0 3px rgba(0,0,0,.08)}
+.pk-logo{position:relative;width:74%;margin-top:-8%;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.55))}
+.pk-crimp{position:absolute;left:0;right:0;bottom:0;height:8%;
+  background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(255,255,255,.1) 30%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px)}
