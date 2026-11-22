@@ -83,6 +83,8 @@ const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動�
 
 /* ---- 育成の札 ---- */
 
+/** 疲労の電池(3目盛り・横向き)。満タン緑 → 1つ減って黄 → 2つ減って赤 → 空で灰(→docs/14 §14.81) */
+const batteryHtml=g=>{ const n=batteryOf(g); return '<i class="bat b'+n+'" title="疲労">'+[0,1,2].map(k=>'<u'+(k<n?' class="on"':'')+'></u>').join("")+'</i>'; };
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
 /** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
@@ -347,13 +349,14 @@ function sqTokenHtml(id,i,on,o){
   else pos=' style="--cc:'+col+'"';
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     // 疲れているほど暗く(3段。→docs/14 §14.57)
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(3-batteryOf(g)):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
+    (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
@@ -403,12 +406,12 @@ function sqDetailHtml(){
       '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
       (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
-      '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
+      '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat">'+batteryHtml(g)+'</span></div>'+
     playerTagsHtml(id)+
     cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
     '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '</div>'+
-    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p></div>';
+    '</div>';   // 選手のコメントは HOME の選手の声へ(→docs/14 §14.81)
 }
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
@@ -800,6 +803,7 @@ function secLine(S){
   if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
   if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
   if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
+  if(tiredStarters(S)>=TUNING.voice.manyTired)return secSay(S,"tiredMany");   // 多くの選手が疲れを訴えている(→docs/14 §14.81)
   if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return secSay(S,"tired");
   if(sign)return secSay(S,"sign",{ n:sign });
   if(fx.ko&&/決勝/.test(fx.label))return secSay(S,"final",{ c:COMPS[fx.comp].name });

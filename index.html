@@ -109,7 +109,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 #bench .lbl{font-size:10px;color:var(--dim);letter-spacing:.2em}
 
 /* ---- 盤面のカードの印 ---- */
-.cd.tired{filter:saturate(.45) brightness(.82)}
+.cd.tired{filter:none}   /* 試合中の疲れは下の体力のバーで(色だけに頼らない。→docs/14 §14.81) */
 .cd.tired .stm{outline:1px solid var(--bad)}
 .cd .kpm{display:none;position:absolute;right:-1px;top:13px;font-size:7.5px;line-height:10px;padding:0 2px;
   background:var(--accent);color:#201400;border-radius:2px 0 0 2px}
@@ -2764,6 +2764,15 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .pvoice .sec-nm{color:#2a5fa8}
 #club .pvoice .pl-av{background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)}
 body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoice .sec-nm{color:#2a5fa8!important}body[class] #club .pvoice .sec-av{box-shadow:0 0 0 2px #3b7dd8}
+/* 疲労の電池(→docs/14 §14.81): カードを暗くするのはやめる(色覚に頼らない)。目盛りの数で分かる */
+#club .sqc.tired,#club .sqc.tired.t1,#club .sqc.tired.t2,#club .sqc.tired.t3,#club .cmt.tired{filter:none}
+.bat{position:relative;display:inline-flex;gap:1px;align-items:center;padding:1px;width:19px;height:8px;border:1px solid #555;border-radius:2px;background:#fff;box-sizing:border-box;vertical-align:middle}
+.bat::after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:3px;background:#555;border-radius:0 1px 1px 0}
+.bat u{flex:1;height:100%;background:transparent}
+.bat.b3 u.on{background:#1fa35a} .bat.b2 u.on{background:#e0b000} .bat.b1 u.on{background:#d42a2a}
+.bat.b0{border-color:#999;background:#e6e6e6} .bat.b0::after{background:#999}
+#club .sqc .bat{position:absolute;right:3px;top:20px;left:auto;bottom:auto;z-index:2;width:15px;height:7px}   /* 背番号の段の右(番号は真ん中。役割の名前・名前に重ならない) */
+#club .sq-det .fat .bat{width:26px;height:11px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4439,7 +4448,7 @@ const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], 
 /* ---- 選手の声(→docs/14 §14.79)----
  * 育成度・動物・相性は裏の数字にした。その代わり、選手がたまに HOME で自分のことを伝えてくる。ちゃんと選手を見ていると得をする
  *   p … 試合のあとに誰かが話しかけてくる率 / near … 「もう少し」と言い出す進み / ani・comp … 動物・気の合う仲間を話す率(成長の話が無いとき) */
-TUNING.voice={ p:0.4, near:0.7, ani:0.35, comp:0.35 };
+TUNING.voice={ p:0.4, pState:0.6, near:0.7, ani:0.35, comp:0.35, manyTired:4 };   // pState … 調子・疲労・出番の話がある選手がいるときの率 / manyTired … これ以上の先発が疲れていたら秘書がまとめて知らせる
 const PV_LINES={
   ind:["最近、自分の成長を感じています。","練習の手応えが変わってきました。もう少しで何かがつかめそうです。","体が軽いんです。もうひと伸びできそうな気がします。"],
   sp:["練習を積めば何かが見えそうです。","戦術の話をもっと聞かせてください。何かがつながりそうなんです。","自分の型が見えてきた気がします。"],
@@ -8058,6 +8067,7 @@ function linkSign(S,a,b){
  *   {g} KP のやること / {n} 選手 / {x} 柱の選手 / {c} まとめ役 / {k} キッカー
  */
 Object.assign(SEC_LINES.s0,{
+  tiredMany:"選手の多くが疲れを訴えています。今日は休憩か、軽めの練習がよさそうです。",
   chProp:"{n} が自分の育て方を相談してきました。選んだ道が、その選手の特性になります。",
   chLink:"{a} と {b}、いまは「{l}」です。", chNear:"周りで {n} も聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」です。", chMot:"いま {m} ・ 疲労 {f}%です。",
@@ -8077,6 +8087,7 @@ Object.assign(SEC_LINES.s0,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修しませんか。費用は {c}億です{d}。",
   reply:["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"] });
 Object.assign(SEC_LINES.s1,{
+  tiredMany:"みんなヘトヘトだって言ってます！ 今日は休ませてあげませんか？",
   chProp:"{n} が育て方の相談に来ましたよ！ 選んだ道が特性になります！",
   chLink:"{a} と {b}、いまは「{l}」ですよ！", chNear:"周りで {n} も聞き耳たててます！",
   chReady:"★突破の話、切り出してきましたよ！ 性格は「{p}」です！", chMot:"いま {m} ・ 疲労 {f}% です！",
@@ -8096,6 +8107,7 @@ Object.assign(SEC_LINES.s1,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)にしちゃいませんか！ 費用は {c}億です{d}！",
   reply:["そっかぁ……。","はい！","えへへ、ありがとうございます！","監督……すっごくうれしいです！"] });
 Object.assign(SEC_LINES.s2,{
+  tiredMany:"疲労を訴える選手が多数。休憩か軽めの練習を推奨します。",
   chProp:"{n} から育成方針の相談です。選択がそのまま特性になります。",
   chLink:"{a} と {b}、現在「{l}」。", chNear:"{n} も周りで聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」。", chMot:"状態は {m}、疲労 {f}%。",
@@ -8115,6 +8127,7 @@ Object.assign(SEC_LINES.s2,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修する提案です。費用は {c}億{d}。",
   reply:["……了解です。","はい。","……ありがとうございます。","……監督。うれしい、です。"] });
 Object.assign(SEC_LINES.s3,{
+  tiredMany:"みんな疲れたって言ってるわ。今日はゆっくりさせてあげて。",
   chProp:"{n} が育て方の相談に来たわ。選んだ道が、あの子の特性になるのよ。",
   chLink:"{a} と {b}、いまは「{l}」ね。", chNear:"周りで {n} も聞いているわ。",
   chReady:"★突破の話を切り出してきたわ。性格は「{p}」よ。", chMot:"いま {m} ・ 疲労 {f}% ね。",
@@ -8557,12 +8570,21 @@ function noteSeen(S){
 }
 
 /* ---- 選手の声(→docs/14 §14.79) ---- */
+/** 疲れている先発の数(電池が1つ以上減っている) */
+const tiredStarters=S=>S.sq.slice(0,11).filter(id=>S.g.pl[id]&&S.g.pl[id].fat>=TUNING.grow.int.tiredSign).length;
+/** 電池の残り(3 = 満タン 〜 0 = 空)。疲れが深いほど減る(→docs/14 §14.81) */
+const batteryOf=g=>!g?3:g.fat>=0.14?0:g.fat>=0.08?1:g.fat>=TUNING.grow.int.tiredSign?2:3;
 /** 試合のあとに、誰かが話しかけてくるか決める。S.g.pvoice = { id, text }(次の試合まで HOME に出る) */
 function playerVoiceRoll(S){
   const V=TUNING.voice, r=mulberry32((S.seed^hashStr("pv:"+S.term+":"+S.played))>>>0);
   S.g.pvoice=null;
-  if(r()>=V.p)return;
   const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0), pick=a=>a[Math.floor(r()*a.length)];
+  // 調子・疲労・出番・★突破の話(前は SQUAD の選手の窓に出ていた)。疲れた先発が多いときは、秘書がまとめて知らせるので個別には言わない
+  const G0=TUNING.grow, many=tiredStarters(S)>=V.manyTired;
+  const stateK=id=>{ const g=S.g.pl[id]; return spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":(!many&&g.fat>=G0.int.tiredSign*1.5)?"tired":(g.bench||0)>=G0.mot.benchGrace?"bench":null; };
+  const st=sq.map(id=>[id,stateK(id)]).filter(x=>x[1]);
+  if(st.length&&r()<V.pState){ const [id,k]=pick(st); S.g.pvoice={ id, text:pick(VOICE[k]), kind:k }; return; }
+  if(r()>=V.p)return;
   const near=[];
   for(const id of sq){ const g=S.g.pl[id];
     if(g.is<5&&!g.q&&indProgress(g)>=V.near)near.push([id,"ind"]);
@@ -10363,6 +10385,8 @@ const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動�
 
 /* ---- 育成の札 ---- */
 
+/** 疲労の電池(3目盛り・横向き)。満タン緑 → 1つ減って黄 → 2つ減って赤 → 空で灰(→docs/14 §14.81) */
+const batteryHtml=g=>{ const n=batteryOf(g); return '<i class="bat b'+n+'" title="疲労">'+[0,1,2].map(k=>'<u'+(k<n?' class="on"':'')+'></u>').join("")+'</i>'; };
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
 /** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
@@ -10627,13 +10651,14 @@ function sqTokenHtml(id,i,on,o){
   else pos=' style="--cc:'+col+'"';
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     // 疲れているほど暗く(3段。→docs/14 §14.57)
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(3-batteryOf(g)):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
+    (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
@@ -10683,12 +10708,12 @@ function sqDetailHtml(){
       '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
       (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
-      '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
+      '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat">'+batteryHtml(g)+'</span></div>'+
     playerTagsHtml(id)+
     cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
     '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '</div>'+
-    '<p class="voice"><b>'+nameOf(c)+'</b>「'+voiceOf(S,id)+'」</p></div>';
+    '</div>';   // 選手のコメントは HOME の選手の声へ(→docs/14 §14.81)
 }
 /** ハーフタイムの指示の登録(→docs/10 §10.8)。使える指示から3つまで。同じ特殊練習を2回すると覚える */
 function htSetHtml(){
@@ -11080,6 +11105,7 @@ function secLine(S){
   if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
   if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
   if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
+  if(tiredStarters(S)>=TUNING.voice.manyTired)return secSay(S,"tiredMany");   // 多くの選手が疲れを訴えている(→docs/14 §14.81)
   if(teamFatigue(S)>=TUNING.grow.int.tiredSign)return secSay(S,"tired");
   if(sign)return secSay(S,"sign",{ n:sign });
   if(fx.ko&&/決勝/.test(fx.label))return secSay(S,"final",{ c:COMPS[fx.comp].name });

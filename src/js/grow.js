@@ -802,6 +802,7 @@ function linkSign(S,a,b){
  *   {g} KP のやること / {n} 選手 / {x} 柱の選手 / {c} まとめ役 / {k} キッカー
  */
 Object.assign(SEC_LINES.s0,{
+  tiredMany:"選手の多くが疲れを訴えています。今日は休憩か、軽めの練習がよさそうです。",
   chProp:"{n} が自分の育て方を相談してきました。選んだ道が、その選手の特性になります。",
   chLink:"{a} と {b}、いまは「{l}」です。", chNear:"周りで {n} も聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」です。", chMot:"いま {m} ・ 疲労 {f}%です。",
@@ -821,6 +822,7 @@ Object.assign(SEC_LINES.s0,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修しませんか。費用は {c}億です{d}。",
   reply:["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"] });
 Object.assign(SEC_LINES.s1,{
+  tiredMany:"みんなヘトヘトだって言ってます！ 今日は休ませてあげませんか？",
   chProp:"{n} が育て方の相談に来ましたよ！ 選んだ道が特性になります！",
   chLink:"{a} と {b}、いまは「{l}」ですよ！", chNear:"周りで {n} も聞き耳たててます！",
   chReady:"★突破の話、切り出してきましたよ！ 性格は「{p}」です！", chMot:"いま {m} ・ 疲労 {f}% です！",
@@ -840,6 +842,7 @@ Object.assign(SEC_LINES.s1,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)にしちゃいませんか！ 費用は {c}億です{d}！",
   reply:["そっかぁ……。","はい！","えへへ、ありがとうございます！","監督……すっごくうれしいです！"] });
 Object.assign(SEC_LINES.s2,{
+  tiredMany:"疲労を訴える選手が多数。休憩か軽めの練習を推奨します。",
   chProp:"{n} から育成方針の相談です。選択がそのまま特性になります。",
   chLink:"{a} と {b}、現在「{l}」。", chNear:"{n} も周りで聞いています。",
   chReady:"★突破の話を切り出してきました。性格は「{p}」。", chMot:"状態は {m}、疲労 {f}%。",
@@ -859,6 +862,7 @@ Object.assign(SEC_LINES.s2,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修する提案です。費用は {c}億{d}。",
   reply:["……了解です。","はい。","……ありがとうございます。","……監督。うれしい、です。"] });
 Object.assign(SEC_LINES.s3,{
+  tiredMany:"みんな疲れたって言ってるわ。今日はゆっくりさせてあげて。",
   chProp:"{n} が育て方の相談に来たわ。選んだ道が、あの子の特性になるのよ。",
   chLink:"{a} と {b}、いまは「{l}」ね。", chNear:"周りで {n} も聞いているわ。",
   chReady:"★突破の話を切り出してきたわ。性格は「{p}」よ。", chMot:"いま {m} ・ 疲労 {f}% ね。",
@@ -1301,12 +1305,21 @@ function noteSeen(S){
 }
 
 /* ---- 選手の声(→docs/14 §14.79) ---- */
+/** 疲れている先発の数(電池が1つ以上減っている) */
+const tiredStarters=S=>S.sq.slice(0,11).filter(id=>S.g.pl[id]&&S.g.pl[id].fat>=TUNING.grow.int.tiredSign).length;
+/** 電池の残り(3 = 満タン 〜 0 = 空)。疲れが深いほど減る(→docs/14 §14.81) */
+const batteryOf=g=>!g?3:g.fat>=0.14?0:g.fat>=0.08?1:g.fat>=TUNING.grow.int.tiredSign?2:3;
 /** 試合のあとに、誰かが話しかけてくるか決める。S.g.pvoice = { id, text }(次の試合まで HOME に出る) */
 function playerVoiceRoll(S){
   const V=TUNING.voice, r=mulberry32((S.seed^hashStr("pv:"+S.term+":"+S.played))>>>0);
   S.g.pvoice=null;
-  if(r()>=V.p)return;
   const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0), pick=a=>a[Math.floor(r()*a.length)];
+  // 調子・疲労・出番・★突破の話(前は SQUAD の選手の窓に出ていた)。疲れた先発が多いときは、秘書がまとめて知らせるので個別には言わない
+  const G0=TUNING.grow, many=tiredStarters(S)>=V.manyTired;
+  const stateK=id=>{ const g=S.g.pl[id]; return spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":(!many&&g.fat>=G0.int.tiredSign*1.5)?"tired":(g.bench||0)>=G0.mot.benchGrace?"bench":null; };
+  const st=sq.map(id=>[id,stateK(id)]).filter(x=>x[1]);
+  if(st.length&&r()<V.pState){ const [id,k]=pick(st); S.g.pvoice={ id, text:pick(VOICE[k]), kind:k }; return; }
+  if(r()>=V.p)return;
   const near=[];
   for(const id of sq){ const g=S.g.pl[id];
     if(g.is<5&&!g.q&&indProgress(g)>=V.near)near.push([id,"ind"]);
