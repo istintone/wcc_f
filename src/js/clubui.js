@@ -1428,7 +1428,7 @@ function managerTabHtml(){
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
       '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+S.salary+'</b><small>累計年俸(億)</small></div></div>'+
       (earned.length?'<p class="dim">取った称号: '+earned.map(id=>titleOf(id).name).join(" / ")+'</p>':'')+'</section>'+
-    careerHtml()+secClubHtml()+settingsHtml();
+    trophyShelfHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
 }
 function tabbarHtml(){
   const S=CL.S;
