@@ -37,11 +37,16 @@ function aptOverlaySvg(card,map){
 function aptMapSvg(card){
   const W=60, H=84, X=x=>x/100*W, Y=h=>H-h*H;
   let g='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="#1d6a33"/>';
+  // 名前はポジションごとに1回だけ(サイドの MF・WG は縦に何段かあるので、まとめた範囲の真ん中に。→docs/14 §14.80)
+  const box={};
   for(const z of aptZones(card)){
     const F=z.lv?APT_FILL[z.lv]:null, x=X(z.x0), y=Y(z.h1), w=X(z.x1)-X(z.x0), h=Y(z.h0)-Y(z.h1);
     if(F)g+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+F[0]+'" fill-opacity="'+Math.min(1,F[1]*1.8)+'"/>';
-    if(z.lv==="own")g+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y+h/2+2).toFixed(1)+'" text-anchor="middle" font-size="5.5" font-weight="700" fill="#fff">'+z.role+'</text>';
+    if(z.lv==="own"){ const B=box[z.role]||(box[z.role]={ x0:x, x1:x+w, y0:y, y1:y+h });
+      B.x0=Math.min(B.x0,x); B.x1=Math.max(B.x1,x+w); B.y0=Math.min(B.y0,y); B.y1=Math.max(B.y1,y+h); }
   }
+  for(const role in box){ const B=box[role];
+    g+='<text x="'+((B.x0+B.x1)/2).toFixed(1)+'" y="'+((B.y0+B.y1)/2+2).toFixed(1)+'" text-anchor="middle" font-size="5.5" font-weight="700" fill="#fff">'+role+'</text>'; }
   g+='<g fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".6"><rect x="1" y="1" width="'+(W-2)+'" height="'+(H-2)+'"/><line x1="1" y1="'+H/2+'" x2="'+(W-1)+'" y2="'+H/2+'"/>'+
     '<circle cx="'+W/2+'" cy="'+H/2+'" r="6"/><rect x="'+(W*0.25)+'" y="'+(H-12)+'" width="'+(W*0.5)+'" height="11"/><rect x="'+(W*0.25)+'" y="1" width="'+(W*0.5)+'" height="11"/></g>';
   return '<svg class="apt-map" viewBox="0 0 '+W+' '+H+'">'+g+'</svg>';
