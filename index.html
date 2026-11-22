@@ -2771,8 +2771,10 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 .bat u{flex:1;height:100%;background:transparent}
 .bat.b3 u.on{background:#1fa35a} .bat.b2 u.on{background:#e0b000} .bat.b1 u.on{background:#d42a2a}
 .bat.b0{border-color:#999;background:#e6e6e6} .bat.b0::after{background:#999}
-#club .sqc .bat{position:absolute;left:-3px;bottom:-4px;right:auto;top:auto;z-index:3;width:16px;height:8px;box-shadow:0 0 0 1.5px rgba(0,0,0,.35)}   /* 左下の角(右下はタグの印。名前にかからないよう角から少しはみ出す) */
+#club .sqc .bat{position:absolute;left:3px;bottom:2px;right:auto;top:auto;z-index:3;width:15px;height:7px}   /* 札の内側の左下(右下の外はタグの印) */
+#club .sqc .nm{align-self:start;padding-bottom:7px}   /* 名前は背番号のすぐ下へ詰め、いちばん下の段を電池に空ける */
 #club .sq-det .fat .bat{width:26px;height:11px}
+#club .sqc .if:not(:empty){margin-bottom:8px}   /* 札の下の小さな情報(覚醒の兆しなど)は電池の上に */
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
