@@ -2191,3 +2191,6 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 .ptags .t.dn{color:#fff;background:linear-gradient(100deg,#4a3c8a,#6b55b8)}
 #club .sqc:has(.ptags){z-index:3}
 #club .sqc .ptg{display:none}
+/* 休憩の見通し: 回復する目盛りが点滅(→docs/14 §14.84) */
+.bat u.up{animation:batUp 1s ease-in-out infinite}
+@keyframes batUp{0%,100%{opacity:1}50%{opacity:.15}}

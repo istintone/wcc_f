@@ -2790,6 +2790,9 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 .ptags .t.dn{color:#fff;background:linear-gradient(100deg,#4a3c8a,#6b55b8)}
 #club .sqc:has(.ptags){z-index:3}
 #club .sqc .ptg{display:none}
+/* 休憩の見通し: 回復する目盛りが点滅(→docs/14 §14.84) */
+.bat u.up{animation:batUp 1s ease-in-out infinite}
+@keyframes batUp{0%,100%{opacity:1}50%{opacity:.15}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10403,7 +10406,10 @@ const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動�
 /* ---- 育成の札 ---- */
 
 /** 疲労の電池(3目盛り・横向き)。満タン緑 → 1つ減って黄 → 2つ減って赤 → 空で灰(→docs/14 §14.81) */
-const batteryHtml=g=>{ const n=batteryOf(g); return '<i class="bat b'+n+'" title="疲労">'+[0,1,2].map(k=>'<u'+(k<n?' class="on"':'')+'></u>').join("")+'</i>'; };
+const batteryHtml=(g,to)=>{
+  // to … 休憩のあとの残り(休憩の見通し)。ふえる目盛りは点滅し、色はあとの段で(→docs/14 §14.84)
+  const n=batteryOf(g), m=to!=null?Math.max(n,to):n;
+  return '<i class="bat b'+m+(m>n?' brec':'')+'" title="疲労">'+[0,1,2].map(k=>'<u class="'+(k<n?'on':k<m?'on up':'')+'"></u>').join("")+'</i>'; };
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
 /** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
@@ -10522,10 +10528,12 @@ function trainEffectHtml(part){
 /** 休憩の見通し(→docs/14 §14.37): 盤面に選手ごとの疲労(今 → 休憩のあと)。疲れている選手は暗く(試合中と同じ) */
 function restEffectHtml(){
   const S=CL.S, T=JSON.parse(JSON.stringify(S)); doRest(T);
-  const info=(g,id)=>{ const b=T.g.pl[id]||g, f0=Math.round(g.fat*100), f1=Math.round(b.fat*100);
-    return '<b class="'+(g.fat>=TUNING.grow.int.tiredSign?'fw':'')+'">疲'+f0+'%</b>'+(f1<f0?'→'+f1:'')+(b.mot>g.mot?' <i class="mu">調子↑</i>':''); };
-  return '<section class="tr-fx rest-fx">'+
-    commBoardHtml(Object.keys(S.g.pl),[],info,null)+'</section>';
+  // 疲労の数字はやめ、札の電池を休憩のあとの状態で描く(回復するぶんが点滅。→docs/14 §14.84)
+  const info=(g,id)=>{ const b=T.g.pl[id]||g; return b.mot>g.mot?'<i class="mu">調子↑</i>':''; };
+  CL.batTo={}; for(const id in S.g.pl)CL.batTo[id]=batteryOf(T.g.pl[id]||S.g.pl[id]);
+  const h='<section class="tr-fx rest-fx">'+commBoardHtml(Object.keys(S.g.pl),[],info,null)+'</section>';
+  CL.batTo=null;
+  return h;
 }
 /** ① チーム練習 */
 function trainStepHtml(){
@@ -10678,7 +10686,7 @@ function sqTokenHtml(id,i,on,o){
       if(!o)return CL.noStars?'':'<span class="stc"><b class="i'+(g.is>=5?' x':'')+'">★'+g.is+'</b><b class="s'+(g.ss>=5?' x':'')+'">★'+g.ss+'</b></span>';
       const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
-    (g?batteryHtml(g):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)
+    (g?batteryHtml(g,CL.batTo&&CL.batTo[id]):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)。休憩の見通しでは、回復するぶんが点滅
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; if(!v.length)return '';
