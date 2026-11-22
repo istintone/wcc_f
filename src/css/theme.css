@@ -2118,3 +2118,8 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .cf.sp{visibility:hidden;box-shadow:none!important}
 #club .cf.pl img,#club .cf.pl.se img,#club .cf.pl.mg img{flex:0 0 auto;width:190%!important;height:auto!important;margin-top:-2%}
 #club .cf.pl.se,#club .cf.pl.mg,#club .cf.pl.se:has(img){background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)!important}
+/* CLUB の上段: クラブの欄(→docs/14 §14.71) */
+#club .club-card .cc-top{display:flex;align-items:center;gap:12px}
+#club .club-card .cc-top>svg{flex:0 0 auto}
+#club .club-card .cc-top b{display:block;font-size:19px;font-weight:900}
+#club .club-card .cc-top small{display:block;font-size:11.5px;opacity:.75;margin:2px 0 4px}

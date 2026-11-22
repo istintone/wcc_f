@@ -2717,6 +2717,11 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .cf.sp{visibility:hidden;box-shadow:none!important}
 #club .cf.pl img,#club .cf.pl.se img,#club .cf.pl.mg img{flex:0 0 auto;width:190%!important;height:auto!important;margin-top:-2%}
 #club .cf.pl.se,#club .cf.pl.mg,#club .cf.pl.se:has(img){background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)!important}
+/* CLUB の上段: クラブの欄(→docs/14 §14.71) */
+#club .club-card .cc-top{display:flex;align-items:center;gap:12px}
+#club .club-card .cc-top>svg{flex:0 0 auto}
+#club .club-card .cc-top b{display:block;font-size:19px;font-weight:900}
+#club .club-card .cc-top small{display:block;font-size:11.5px;opacity:.75;margin:2px 0 4px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11272,14 +11277,15 @@ function licenseHtml(){
     '<button class="btn btn-main" data-act="license">登録する</button></section>';
 }
 /** 監督契約(初回と新しい任期の始め): クラブ名・略称・ホームタウン・色・エンブレム */
-function contractHtml(){
+function contractHtml(edit){
+  // edit … CLUB からクラブの設定を変える(→docs/14 §14.71)。中身は監督契約と同じで、いまのクラブを読み込んで始める
   const S=CL.S, d=CL.draft||(CL.draft={});
   if(!d.c){ const nm=S.term>1?"":"アズーロFC";
     d.c={ name:nm, short:"", town:TOWNS[(S.term-1)%TOWNS.length], color:"#1B4FD8", emb:{} }; }
   const c=d.c, name=c.name||"(クラブ名)", e=embDesign("azr",name,c.emb,c.color);
   const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
   const hues=EMB_CLASSIC.map(id=>embHueById(id));
-  return '<section class="card contract"><h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>'+
+  return '<section class="card contract">'+(edit?'<h3>クラブの設定 <small>名前・エンブレムなどを変える</small></h3>':'<h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>')+
     '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb })+'<div><b>'+embEsc(name)+'</b><small>'+embEsc(c.town)+' ・ '+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
       (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
     '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
@@ -11289,7 +11295,9 @@ function contractHtml(){
     '<h4>エンブレム</h4>'+
     row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
     '<div class="ce-row"><i>柄の色</i>'+hues.map(h=>'<button class="ce sw'+(e.away===h.id?' on':'')+'" data-act="emb" data-k="away" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
-    '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button><button class="btn btn-main" data-act="contract">この内容で契約する</button></div></section>';
+    '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button>'+
+      (edit?'<button class="btn btn-main" data-act="csave">この内容で保存する</button></div><button class="lnk" data-act="cedit">やめる</button>'
+        :'<button class="btn btn-main" data-act="contract">この内容で契約する</button></div>')+'</section>';
 }
 const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾", banner:"旗",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
@@ -11459,9 +11467,18 @@ function trophyShelfHtml(){
       '<small>'+TROPHY_SHORT[id]+'</small>'+(n[id]?'<b>×'+n[id]+'</b>':'')+(now[id]?'<i>今期</i>':'')+'</div>').join("")+'</div></section>';
 }
 /** CLUB: この任期の記録・歴代・設定 */
+/** CLUB の上段: クラブの情報(エンブレム・名前・略称・ホームタウン)。「クラブを編集する」で設定を変える(→docs/14 §14.71) */
+function clubInfoHtml(){
+  const S=CL.S, c=S.club;
+  if(CL.clubEdit)return contractHtml(true);
+  const T=myTeam(S);
+  return '<section class="card club-card"><h3>クラブ <small>'+(S.cprof&&S.cprof.name?S.cprof.name:'第'+S.term+'任期')+'</small></h3>'+
+    '<div class="cc-top">'+emblemSvg(T,72)+'<div><b>'+embEsc(T.name)+'</b><small>'+embEsc(T.short)+(c&&c.town?' ・ '+embEsc(c.town):'')+'</small>'+
+      '<button class="lnk" data-act="cedit">クラブを編集する</button></div></div></section>';
+}
 function clubTabHtml(){
   const S=CL.S, r=S.rec, names=S.titles.filter(t=>t.term===S.term).map(t=>trophyName(trophyKey(t)));
-  return '<section class="card"><h3>この任期 <small>第'+S.term+'任期</small></h3>'+
+  return clubInfoHtml()+'<section class="card"><h3>この任期 <small>第'+S.term+'任期</small></h3>'+
     '<div class="rec"><div><b>'+r.w+'</b><small>勝</small></div><div><b>'+r.d+'</b><small>分</small></div><div><b>'+r.l+'</b><small>敗</small></div>'+
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p>'+
@@ -11582,6 +11599,14 @@ function onClubClick(e){
   if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }
   if(act==="embauto"){ const c=CL.draft.c; c.emb={}; showClub(true); return; }
   if(act==="offer"){ if(pickOffer(S,CL.W,+b.dataset.i)){ CL.msg=[S.cprof.name+" の監督に就任した。次はクラブ名とエンブレムを決める"]; save(); } showClub(true); return; }
+  if(act==="cedit"){ CL.clubEdit=!CL.clubEdit; if(CL.clubEdit){ const c=S.club||{};
+      (CL.draft||(CL.draft={})).c={ name:c.name||myTeam(S).name, short:c.short||"", town:c.town||TOWNS[0], color:c.color||myTeam(S).color, emb:Object.assign({},c.emblem||{}) }; }
+    else if(CL.draft)CL.draft.c=null;
+    showClub(true); return; }
+  if(act==="csave"){ const c=CL.draft&&CL.draft.c;
+    if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
+      emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft.c=null; CL.clubEdit=false; save(); infoBar(["クラブの設定を保存した"]); }
+    else infoBar(["クラブ名を入れてください"]); showClub(true); return; }
   if(act==="contract"){ const c=CL.draft&&CL.draft.c;
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
