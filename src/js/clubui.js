@@ -83,13 +83,17 @@ const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動�
 
 /* ---- 育成の札 ---- */
 
+/** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
+const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
+/** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
+const sgnOf=g=>g&&(g.q||g.sq)?'<b class="sgn2">覚醒の兆し</b>':'';
 /** 選手を指名するための札の並び。on = 選択中。info = 札の下段に出す情報。act = 押したときの動き */
 function chipsHtml(ids,on,info,act){
   const S=CL.S;
   return '<div class="chips">'+ids.map(id=>{
     const c=CARDS[id];
     return '<button class="chipb '+c.pos.toLowerCase()+(on.includes(id)?' on':'')+'" data-act="'+(act||"pick")+'" data-id="'+id+'">'+
-      '<i>'+c.no+'</i>'+nameOf(c)+(hasSign(S,id)?'<b class="sign">！</b>':'')+
+      '<i>'+c.no+'</i>'+nameOf(c)+(hasSign(S,id)?'<b class="sign">'+BUB+'</b>':'')+
       '<small>'+info(S.g.pl[id],id)+'</small></button>'; }).join("")+'</div>';
 }
 /**
@@ -125,16 +129,14 @@ function loungeLinksSvg(a,ids,L){
 }
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
-  // 札には次の★までの進み(%)と兆しを出す(→docs/05 §5.3 見える化)
-  ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(個人能力の経験 +"+TUNING.grow.comm.ind+" × 伸びやすさ。★は試合のあとに上がる)",
-           info:(g,id)=>g.is>=5?"個★5 覚醒":g.q?"個★4 覚醒の兆し":"個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%" },
-  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(！ = ★突破の話がある)",
-           info:g=>g.ss>=5?"特★5":g.sq?"特★4 極みの兆し":"特★"+g.ss+" "+Math.floor(spProgress(g)*100)+"%" },
+  // 育成度(次の★までの %)は裏の数字なので出さない。フィーリングで感じる程度に(→docs/14 §14.78)。覚醒の兆しだけは見せる
+  ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(★は試合のあとに上がる)", info:g=>sgnOf(g) },
+  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(吹き出し = ★突破の話がある)", info:g=>sgnOf(g) },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
-  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(動物・国籍・クラブが手がかり)", info:(g,id)=>{ const a=CL.pick[0], ic=ANI_ICON[CARDS[id].ani]||"";
-    if(!a||a===id)return ic; const l=linkOf(CL.S,a,id);
-    // 札の幅に収まるよう短く(線なし→なし・黄金線→黄金。太線の黄金線の兆しは「兆し」)
-    return ic+(l.lv===2&&l.gold?"兆し":["なし","薄線","太線","黄金"][l.lv])+(l.lv>=2?"":Math.floor(linkProgress(CL.S,a,id)*100)+"%"); } },
+  lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(気の合う2人ほど連携が深まる)", info:(g,id)=>{ const a=CL.pick[0];
+    if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
+    // 動物の印と連携の進み(%)は出さない(→docs/14 §14.78)。いまの線の段だけ
+    return l.lv===2&&l.gold?"兆し":["なし","薄線","太線","黄金"][l.lv]; } },
   talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
@@ -187,9 +189,7 @@ function trainEffectHtml(part){
   // 盤面: 選んだ練習でよく伸びる選手(個人の進みが平均より大きい)を光らせ、札に伸びを出す
   const vals=pv?Object.values(pv.pl).map(x=>x.ind):[], avg=vals.length?vals.reduce((s,x)=>s+x,0)/vals.length:0;
   const fit=pv?Object.keys(pv.pl).filter(id=>pv.pl[id].ind>avg*1.15):[];
-  const info=(g,id)=>{ if(!pv)return "個★"+g.is+" "+Math.floor(indProgress(g)*100)+"%";
-    const x=pv.pl[id]||{ ind:0, sp:0 };
-    return '<b class="tg">個 +'+Math.round(x.ind*100)+'%</b>'+(x.sp>0.005?' 特 +'+Math.round(x.sp*100)+'%':''); };
+  const info=g=>sgnOf(g);   // 育成度・伸びの % は出さない(よく伸びる選手が光るだけ。→docs/14 §14.78)
   // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
   const hl={}, delta={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; delta[x.a]=x.d; });
   // part="graph" … 候補の左のグラフ / "chips" … 候補の下の変わる軸と凡例 / それ以外 … 盤面(→docs/14 §14.35)
@@ -248,19 +248,17 @@ function commChatHtml(){
   if(CL.comm==="lounge"){
     const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
     log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:LINK_LABEL[f.lv]+(f.gold?"(黄金線の兆し)":"") }),true)+
-      chatSec(f.hint+"。<br><span class=\"dim\">"+who.map(x=>cname(x)+" "+aniTxt(CARDS[x])+" ・ "+natTxt(CARDS[x])).join("<br>")+"</span>"+
-        (bo.length?"<br><span class=\"bonus\">"+bo.map(t=>BONUS_LABEL[t]).join("・")+" ― 連携が付きやすい</span>":""),false);
+      chatSec(f.hint+"。",false);   // 動物・国籍・相性の手がかりは出さない(→docs/14 §14.78)
     acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
   }else if(CL.comm==="meet"){
     const f=meetInfo(S,id);
-    log+=chatSec("特殊能力 "+stars(f.ss)+" ・ 経験 "+Math.min(Math.floor(f.se),f.need)+"/"+f.need+"。"+
-      (f.near.length?secSay(S,"chNear",{ n:f.near.map(cname).join("・") }):""),true);
+    log+=chatSec("特殊能力 "+stars(f.ss)+(f.ss<5&&S.g.pl[id].sq?"(覚醒の兆し)":"")+"。",true);   // 経験の数字・周りで聞いている選手は出さない(→docs/14 §14.78)
     if(f.ready){ log+=chatSec(secSay(S,"chReady",{ p:f.pers }),false);
       acts=f.choices.map((t,i)=>'<button class="cr" data-act="meet" data-i="'+i+'">'+t+'</button>').join(""); }
     else acts='<button class="cr" data-act="meet" data-i="0">戦術の話をする</button>';
   }else if(CL.comm==="ind"){
     const p=S.g.pl[id];
-    log+=chatSec("個人能力 "+stars(p.is)+(p.q?"(覚醒の兆し)":"")+" ・ 次の★まで "+Math.floor(indProgress(p)*100)+"%"+(dupOf(S,id)?" ・ 重なり ×"+dupOf(S,id):"")+"。",true);
+    log+=chatSec("個人能力 "+stars(p.is)+(p.q?"(覚醒の兆し)":"")+(dupOf(S,id)?" ・ 重なり ×"+dupOf(S,id):"")+"。",true);   // 次の★までの % は出さない(→docs/14 §14.78)
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
@@ -279,7 +277,7 @@ function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">！</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
@@ -349,7 +347,7 @@ function sqTokenHtml(id,i,on,o){
   else pos=' style="--cc:'+col+'"';
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     // 疲れているほど暗く(3段。→docs/14 §14.57)
-    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
+    (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(g.fat>=0.14?3:g.fat>=0.08?2:1):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
@@ -357,7 +355,7 @@ function sqTokenHtml(id,i,on,o){
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
-    (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
+    (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
 function sqLinksSvg(){
@@ -403,7 +401,7 @@ function sqDetailHtml(){
       (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">SUB</span>')+'</div>'+
     '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
       '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
-      (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
+      (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
     playerTagsHtml(id)+

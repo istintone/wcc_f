@@ -2154,3 +2154,8 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .note .nt-un .tg{background:#d7d7d7;color:#777}
 #club .note .nt-un small{margin-left:6px;font-size:10px;opacity:.6}
 #club .note div.nt-un{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px}#club .note div.nt-un small{width:100%;font-size:10.5px;opacity:.65}#club .note div.nt-un .tg{padding:2px 7px;cursor:default}#club .note div.nt-un .tg b{font-size:10px}
+/* 話がある印(吹き出し)と覚醒の兆し(→docs/14 §14.78) */
+.bub{display:inline-block;width:1.05em;height:1.05em;vertical-align:-.15em;fill:currentColor}
+#club .sqc .sg .bub{width:12px;height:12px}
+#club .sgn2{display:inline-block;padding:0 4px;font-size:9px;font-weight:900;color:#2a1a00;background:linear-gradient(100deg,#f6d36b,#e0a92a);border-radius:2px;white-space:nowrap}
+#club .sqc.hsg{z-index:6}   /* 話がある選手(吹き出しの印)は手前に。隣の札に印が隠れないように */
