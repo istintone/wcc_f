@@ -2123,8 +2123,3 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .club-card .cc-top>svg{flex:0 0 auto}
 #club .club-card .cc-top b{display:block;font-size:19px;font-weight:900}
 #club .club-card .cc-top small{display:block;font-size:11.5px;opacity:.75;margin:2px 0 4px}
-/* 監督・秘書のバストアップ(→docs/14 §14.73): MANAGER の監督の欄・秘書の欄・秘書を選ぶ画面で同じ大きさ */
-#club .mgr-card .mg-full,#club .sec-card .sp-full,#club .secpick .sp .sp-full{width:84px!important;height:auto;margin-bottom:0!important;border-radius:6px;background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890);image-rendering:pixelated}
-#club .secpick .sp{align-items:center;padding:6px 12px 6px 6px}
-#club .secpick .sp .sp-tx{padding-bottom:0}
-#club .mgr-card .mg-top,#club .sec-card .sc-row{align-items:center}
