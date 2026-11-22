@@ -7195,7 +7195,9 @@ function trainOptions(S){
   });
   return S.g.opts;
 }
-function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:STAT_LABEL[o.param]+"の練習"; }
+/** 基本の練習の名前(能力ごと) */
+const TRAIN_NAME={ off:"攻撃練習", def:"守備練習", spd:"速攻練習", tec:"パス練習", pow:"奪取練習", sta:"走行練習" };
+function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:TRAIN_NAME[o.param]||STAT_LABEL[o.param]+"の練習"; }
 /** 練習の中身を、選ぶ前に見せる文にする */
 function trainDesc(o){
   const ax=s=>s.split("").map(a=>AXIS_ABBR[a]).join("・");
@@ -10224,10 +10226,10 @@ function chatResult(kind,who,said,r,react){
 }
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
-  let h='<div class="step-h"><b>コミュニケーション</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
+  let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
       (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">！</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
-  if(!left)return h+'<p class="dim">今回のコミュニケーションは使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
+  if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
   h+=commChatHtml();
@@ -10242,7 +10244,7 @@ function prepHtml(){
   // 準備は4段: チーム練習 → コミュニケーション → 視察(相手の SQUAD。→docs/18)→ 戦略方針 → キックオフ(→docs/14)
   const no=st==="train"?1:CL.strat?4:CL.scout?3:2;
   let h='<header class="prep-top"><button class="x" data-act="home">×</button>'+
-    '<div class="steps s4">'+["チーム練習","コミュニケーション","視察","戦略方針"].map((t,i)=>
+    '<div class="steps s4">'+["チーム練習","個別指導","視察","戦略方針"].map((t,i)=>
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
@@ -10252,9 +10254,9 @@ function prepHtml(){
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<span class="dim">練習と強さを選んで決定する</span>')
         :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+'<button class="lnk" data-act="stratback">‹ 視察に戻る</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="scoutback">‹ コミュニケーションに戻る</button>':'')
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="scoutback">‹ 個別指導に戻る</button>':'')
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(コミュニケーションはあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
+            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(個別指導はあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
@@ -10708,7 +10710,7 @@ function termEndHtml(){
   h+='<h4>次の任期についてくる選手</h4>'+(e.follow.length?'<ul class="fol">'+e.follow.map(id=>{
       const g=S.g.pl[id], c=CARDS[id];
       return '<li><b>'+c.no+' '+nameOf(c)+'</b> 個人'+stars(g.is)+' 特殊'+stars(g.ss)+' <small>絆 '+g.bond+'</small></li>'; }).join("")+'</ul>'
-    :'<p class="dim">絆を深めた選手がいない(コミュニケーションで呼ぶと絆が深まる)</p>')+
+    :'<p class="dim">絆を深めた選手がいない(個別指導で呼ぶと絆が深まる)</p>')+
     '<p class="dim">ついてくる選手は★と能力を保ったまま、互いの連携も残る。ほかの選手は初めから。'+
     '次の任期は、届いたオファー(称号と年俸で決まる)からクラブを選ぶ。途中のリーグとカップは任期の終わりで打ち切り</p>'+
     '<button class="btn btn-main" data-act="term">次の任期へ</button></section>';
@@ -10772,10 +10774,10 @@ function homeHeadHtml(){
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
   return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
-    '<div class="num pw"><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b><small>OVR</small></div>'+
-    '<div class="num"><b>'+S.played+'<i>/'+C.termLen+'</i></b><small>試合</small></div>'+
-    '<div class="num"><b>'+S.money.toFixed(0)+'<i>億</i></b><small>資金</small></div>'+
-    (S.biz?'<div class="num"><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b><small>ファン</small></div>':'')+'</header>';
+    '<div class="num pw"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b></div>'+
+    '<div class="num"><small>任期</small><b>'+S.played+'<i>/'+C.termLen+'</i></b></div>'+
+    '<div class="num"><small>資金</small><b>'+S.money.toFixed(0)+'<i>億</i></b></div>'+
+    (S.biz?'<div class="num"><small>サポーター</small><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b></div>':'')+'</header>';
 }
 /** 次の試合のタイル。**タイル全体が押す面**で、中にボタンを置かない(pftb の決まり) */
 function nextTileHtml(){

@@ -135,7 +135,9 @@ function trainOptions(S){
   });
   return S.g.opts;
 }
-function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:STAT_LABEL[o.param]+"の練習"; }
+/** 基本の練習の名前(能力ごと) */
+const TRAIN_NAME={ off:"攻撃練習", def:"守備練習", spd:"速攻練習", tec:"パス練習", pow:"奪取練習", sta:"走行練習" };
+function trainLabel(o){ return o.sp>=0?TRAIN_SP[o.sp].name:TRAIN_NAME[o.param]||STAT_LABEL[o.param]+"の練習"; }
 /** 練習の中身を、選ぶ前に見せる文にする */
 function trainDesc(o){
   const ax=s=>s.split("").map(a=>AXIS_ABBR[a]).join("・");
