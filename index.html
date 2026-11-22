@@ -3077,6 +3077,34 @@ body[class] #hudComp{display:block;max-width:100%;white-space:normal;line-height
 body[class] #hud .sb{justify-self:center}
 body[class] #hud .clk{justify-self:end;display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px}
 body[class] #hudClock{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;color:#c8102e}
+/* 十字の三角にも白い縁取り・点いたら金に光る(右の丸と共通。→docs/14 §14.102)
+   ボタン自体は切り抜かず、白い三角(::before)と黄色い三角(::after)を重ねる。影と光は filter で形に沿わせる */
+body[class] #pad .tac:not(.md){clip-path:none!important;background:transparent!important;box-shadow:none!important;position:relative;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+body[class] #pad .tac:not(.md)::before,body[class] #pad .tac:not(.md)::after{content:""!important;position:absolute!important;display:block!important;
+  width:auto!important;height:auto!important;border-radius:0!important;box-shadow:none!important}
+body[class] #pad .tac:not(.md)::before{inset:0!important;background:#fff!important}
+body[class] #pad .tac:not(.md)::after{inset:4px!important;background:linear-gradient(180deg,#fff27a,#ffd21e 55%,#e2a90a)!important}
+body[class] #pad .tac.up::before,body[class] #pad .tac.up::after{clip-path:polygon(50% 0,100% 100%,0 100%)}
+body[class] #pad .tac.dn::before,body[class] #pad .tac.dn::after{clip-path:polygon(0 0,100% 0,50% 100%)}
+body[class] #pad .tac.lf::before,body[class] #pad .tac.lf::after{clip-path:polygon(0 50%,100% 0,100% 100%)}
+body[class] #pad .tac.rt::before,body[class] #pad .tac.rt::after{clip-path:polygon(0 0,100% 50%,0 100%)}
+body[class] #pad .tac.up::after{inset:7px 5px 3px 5px!important} body[class] #pad .tac.dn::after{inset:3px 5px 7px 5px!important}
+body[class] #pad .tac.lf::after{inset:5px 3px 5px 7px!important} body[class] #pad .tac.rt::after{inset:5px 7px 5px 3px!important}
+/* 中央の □: 白い縁取り */
+body[class] #pad .tac.md{box-shadow:0 0 0 2.5px #fff,0 2px 5px 2px rgba(0,0,0,.3)!important}
+body[class] #pad .tac.md::after,body[class] #pad .tac.on::after{content:none}
+/* 点いたら金(右の丸と同じ)。白い丸の印は出さない(発動中の札で分かる) */
+body[class] #pad .tac:not(.md).on{filter:drop-shadow(0 0 5px rgba(255,214,110,.95)) drop-shadow(0 0 2px rgba(255,214,110,.9))}
+body[class] #pad .tac:not(.md).on::after{content:""!important;background:linear-gradient(180deg,#fffbe8,#ffe08a 50%,#e9b10a)!important}
+body[class] #pad .tac.md.on{background:radial-gradient(circle at 50% 30%,#fffbe8,#ffe08a 55%,#e9b10a)!important;box-shadow:0 0 0 2.5px #fff,0 0 14px 4px rgba(255,214,110,.95)!important}
+body[class] #pad .btn-keeper.on::after{content:none}
+/* 点いたときの金をそろえる(白い光の点は入れない): 濃い金 + 強めの光 */
+body[class] #pad .tac:not(.md).on{filter:drop-shadow(0 0 4px rgba(255,190,40,1)) drop-shadow(0 0 8px rgba(255,190,40,.85))!important}
+body[class] #pad .tac:not(.md).on::after{background:linear-gradient(180deg,#ffc93a,#f29a00 60%,#d97f00)!important}
+body[class] #pad .tac.md.on,body[class] #pad .btn-shoot.armed,body[class] #pad .btn-keeper.on,body[class] #pad .mid .btn-kp.on{color:#2a1400!important;
+  background:linear-gradient(180deg,#ffc93a,#f29a00 60%,#d97f00)!important;box-shadow:0 0 0 2.5px #fff,0 0 10px 3px rgba(255,190,40,1),0 0 18px 6px rgba(255,190,40,.6)!important}
+body[class] #pad .tac.md.on::before,body[class] #pad .btn-keeper.on::before{content:none!important}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
