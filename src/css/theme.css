@@ -2123,3 +2123,8 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .club-card .cc-top>svg{flex:0 0 auto}
 #club .club-card .cc-top b{display:block;font-size:19px;font-weight:900}
 #club .club-card .cc-top small{display:block;font-size:11.5px;opacity:.75;margin:2px 0 4px}
+/* 秘書の立ち絵も監督の欄と同じ出し方(→docs/14 §14.73): 幅 96px・背景は透過・下は欄の端で切る */
+#club .sec-card .sp-full,#club .secpick .sp .sp-full{width:96px;margin-bottom:-46px}
+#club .sec-card .sc-row{align-items:flex-end}
+#club .secpick .sp{align-items:flex-end}
+#club .secpick .sp .sp-tx{padding-bottom:10px}
