@@ -399,8 +399,8 @@ function sqDetailHtml(){
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
       (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">SUB</span>')+'</div>'+
-    '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
-      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
+    '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b></span>'+   // ★の進み(バー)は裏の数字にした(→docs/14 §14.79)
+      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
       (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
@@ -699,7 +699,7 @@ function rareRowHtml(S,id){
 function cardBackOf(id){
   const S=CL.S, c=CARDS[id], g=S.g.pl[id], cc=g?growCard(S,c):c;
   return '<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
-    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
+    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+   // 動物は出さない(選手の声で伝わる。→docs/14 §14.79)
       (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
 }
 /**
@@ -1197,6 +1197,13 @@ function teamTagsHtml(){
   return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
+/** 選手の声(→docs/14 §14.79)。試合のあとに、ときどき選手が自分のことを伝えてくる(次の試合まで) */
+function playerVoiceHtml(){
+  const S=CL.S, v=S.g&&S.g.pvoice; if(!v||S.termOver||!CARDS[v.id]||!S.sq.includes(v.id))return "";
+  const c=CARDS[v.id], a=artSrc(c,"stand");
+  return '<section class="sec pvoice"><i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'+
+    '<div><b class="sec-nm">'+c.no+' '+nameOf(c)+'<em class="sec-tag">VOICE</em></b><p>「'+v.text+'」</p></div></section>';
+}
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
   const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
@@ -1313,7 +1320,7 @@ function homeHtml(){
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+tagEventHtml()+expTileHtml()+newsLineHtml()+
-    (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
+    (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
 /** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */

@@ -2759,6 +2759,12 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .sgn2{display:inline-block;padding:0 4px;font-size:9px;font-weight:900;color:#2a1a00;background:linear-gradient(100deg,#f6d36b,#e0a92a);border-radius:2px;white-space:nowrap}
 #club .sqc.hsg{z-index:6}   /* 話がある選手(吹き出しの印)は手前に。隣の札に印が隠れないように */
 
+/* 選手の声(→docs/14 §14.79) */
+#club .pvoice{border-left-color:#3b7dd8}
+#club .pvoice .sec-nm{color:#2a5fa8}
+#club .pvoice .pl-av{background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)}
+body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoice .sec-nm{color:#2a5fa8!important}body[class] #club .pvoice .sec-av{box-shadow:0 0 0 2px #3b7dd8}
+
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
    参考にしたのは雰囲気だけ(暗い地にネオンの光・斜めの線・太い斜体の英字)。意匠は独自。
@@ -4429,6 +4435,18 @@ const NOTE_HOW={
   crybaby:"高いレアリティの選手に、反抗期・ゴシップ・出番待ちが2回付く", academy:"21歳以下の選手が覚醒する"
 };
 const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"] ];
+
+/* ---- 選手の声(→docs/14 §14.79)----
+ * 育成度・動物・相性は裏の数字にした。その代わり、選手がたまに HOME で自分のことを伝えてくる。ちゃんと選手を見ていると得をする
+ *   p … 試合のあとに誰かが話しかけてくる率 / near … 「もう少し」と言い出す進み / ani・comp … 動物・気の合う仲間を話す率(成長の話が無いとき) */
+TUNING.voice={ p:0.4, near:0.7, ani:0.35, comp:0.35 };
+const PV_LINES={
+  ind:["最近、自分の成長を感じています。","練習の手応えが変わってきました。もう少しで何かがつかめそうです。","体が軽いんです。もうひと伸びできそうな気がします。"],
+  sp:["練習を積めば何かが見えそうです。","戦術の話をもっと聞かせてください。何かがつながりそうなんです。","自分の型が見えてきた気がします。"],
+  ani:["{me}が好きな動物は{a}です。","{a}をイメージした動きを取り込んでみます。","{me}、{a}みたいなプレーが目標なんです。"],
+  comp:["{n}とは、なんだか気が合う気がします。","{n}とは、もっと一緒にプレーしてみたいです。"]
+};
+const PV_ME=["俺","僕","私","自分"];
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -8186,6 +8204,7 @@ function tagsAfterMatch(S,fx,res,out){
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
   noteSeen(S);                                  // 見えているタグも手帳に
+  playerVoiceRoll(S);                           // 選手の声(→docs/14 §14.79)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -8535,6 +8554,28 @@ function noteAll(){
 function noteSeen(S){
   for(const t of teamTagsView(S))if(TAGS[t.id])noteTag(S,t.id);
   for(const id of S.sq)if(TAGS["u_"+id])noteTag(S,"u_"+id);
+}
+
+/* ---- 選手の声(→docs/14 §14.79) ---- */
+/** 試合のあとに、誰かが話しかけてくるか決める。S.g.pvoice = { id, text }(次の試合まで HOME に出る) */
+function playerVoiceRoll(S){
+  const V=TUNING.voice, r=mulberry32((S.seed^hashStr("pv:"+S.term+":"+S.played))>>>0);
+  S.g.pvoice=null;
+  if(r()>=V.p)return;
+  const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0), pick=a=>a[Math.floor(r()*a.length)];
+  const near=[];
+  for(const id of sq){ const g=S.g.pl[id];
+    if(g.is<5&&!g.q&&indProgress(g)>=V.near)near.push([id,"ind"]);
+    if(g.ss<5&&!g.sq&&spProgress(g)>=V.near)near.push([id,"sp"]); }
+  let id, kind, vars={};
+  if(near.length&&r()>=V.ani*0.5){ [id,kind]=pick(near); }
+  else if(r()<V.ani/(V.ani+V.comp)){ id=pick(sq); kind="ani"; const A=ANIMALS[CARDS[id].ani]; if(!A)return; vars.a=A.name; }
+  else{ id=pick(sq); kind="comp";
+    const mates=sq.filter(x=>x!==id&&compatOf(id,x)===2&&linkOf(S,id,x).lv<2); if(!mates.length)return;
+    vars.n=nameOf(CARDS[pick(mates)]); }
+  vars.me=PV_ME[hashStr("me:"+id)%PV_ME.length];
+  let t=pick(PV_LINES[kind]); for(const k in vars)t=t.split("{"+k+"}").join(vars[k]);
+  S.g.pvoice={ id, text:t, kind };
 }
 
 /* =========================================================================
@@ -10633,8 +10674,8 @@ function sqDetailHtml(){
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
       (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">SUB</span>')+'</div>'+
-    '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
-      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
+    '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b></span>'+   // ★の進み(バー)は裏の数字にした(→docs/14 §14.79)
+      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
       (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
@@ -10933,7 +10974,7 @@ function rareRowHtml(S,id){
 function cardBackOf(id){
   const S=CL.S, c=CARDS[id], g=S.g.pl[id], cc=g?growCard(S,c):c;
   return '<div class="kdet back">'+cardBackHtml(cc,{ stars:g?[g.is,g.ss]:null, ss:g?g.ss:0, front:cardHtml(id,"s"),
-    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+' ・ 動物: '+aniTxt(c)+'</p>'+
+    extra:'<p class="dim">'+RAR_TAG[c.rar||"B"]+' ・ 持っている枚数 '+(S.coll[id]||0)+'</p>'+   // 動物は出さない(選手の声で伝わる。→docs/14 §14.79)
       (dupOf(S,id)?'<p class="dup">重なり ×'+dupOf(S,id)+': 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'% ・ 覚醒の上がり幅が大きくなりやすい</p>':'') })+'</div>';
 }
 /**
@@ -11431,6 +11472,13 @@ function teamTagsHtml(){
   return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
+/** 選手の声(→docs/14 §14.79)。試合のあとに、ときどき選手が自分のことを伝えてくる(次の試合まで) */
+function playerVoiceHtml(){
+  const S=CL.S, v=S.g&&S.g.pvoice; if(!v||S.termOver||!CARDS[v.id]||!S.sq.includes(v.id))return "";
+  const c=CARDS[v.id], a=artSrc(c,"stand");
+  return '<section class="sec pvoice"><i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'+
+    '<div><b class="sec-nm">'+c.no+' '+nameOf(c)+'<em class="sec-tag">VOICE</em></b><p>「'+v.text+'」</p></div></section>';
+}
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
   const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
@@ -11547,7 +11595,7 @@ function homeHtml(){
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+tagEventHtml()+expTileHtml()+newsLineHtml()+
-    (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
+    (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
 /** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */

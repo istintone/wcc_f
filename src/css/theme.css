@@ -2159,3 +2159,9 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .sqc .sg .bub{width:12px;height:12px}
 #club .sgn2{display:inline-block;padding:0 4px;font-size:9px;font-weight:900;color:#2a1a00;background:linear-gradient(100deg,#f6d36b,#e0a92a);border-radius:2px;white-space:nowrap}
 #club .sqc.hsg{z-index:6}   /* 話がある選手(吹き出しの印)は手前に。隣の札に印が隠れないように */
+
+/* 選手の声(→docs/14 §14.79) */
+#club .pvoice{border-left-color:#3b7dd8}
+#club .pvoice .sec-nm{color:#2a5fa8}
+#club .pvoice .pl-av{background:radial-gradient(circle at 50% 35%,#b7c0d2,#6f7890)}
+body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoice .sec-nm{color:#2a5fa8!important}body[class] #club .pvoice .sec-av{box-shadow:0 0 0 2px #3b7dd8}

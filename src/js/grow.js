@@ -948,6 +948,7 @@ function tagsAfterMatch(S,fx,res,out){
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
   noteSeen(S);                                  // 見えているタグも手帳に
+  playerVoiceRoll(S);                           // 選手の声(→docs/14 §14.79)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -1297,4 +1298,26 @@ function noteAll(){
 function noteSeen(S){
   for(const t of teamTagsView(S))if(TAGS[t.id])noteTag(S,t.id);
   for(const id of S.sq)if(TAGS["u_"+id])noteTag(S,"u_"+id);
+}
+
+/* ---- 選手の声(→docs/14 §14.79) ---- */
+/** 試合のあとに、誰かが話しかけてくるか決める。S.g.pvoice = { id, text }(次の試合まで HOME に出る) */
+function playerVoiceRoll(S){
+  const V=TUNING.voice, r=mulberry32((S.seed^hashStr("pv:"+S.term+":"+S.played))>>>0);
+  S.g.pvoice=null;
+  if(r()>=V.p)return;
+  const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0), pick=a=>a[Math.floor(r()*a.length)];
+  const near=[];
+  for(const id of sq){ const g=S.g.pl[id];
+    if(g.is<5&&!g.q&&indProgress(g)>=V.near)near.push([id,"ind"]);
+    if(g.ss<5&&!g.sq&&spProgress(g)>=V.near)near.push([id,"sp"]); }
+  let id, kind, vars={};
+  if(near.length&&r()>=V.ani*0.5){ [id,kind]=pick(near); }
+  else if(r()<V.ani/(V.ani+V.comp)){ id=pick(sq); kind="ani"; const A=ANIMALS[CARDS[id].ani]; if(!A)return; vars.a=A.name; }
+  else{ id=pick(sq); kind="comp";
+    const mates=sq.filter(x=>x!==id&&compatOf(id,x)===2&&linkOf(S,id,x).lv<2); if(!mates.length)return;
+    vars.n=nameOf(CARDS[pick(mates)]); }
+  vars.me=PV_ME[hashStr("me:"+id)%PV_ME.length];
+  let t=pick(PV_LINES[kind]); for(const k in vars)t=t.split("{"+k+"}").join(vars[k]);
+  S.g.pvoice={ id, text:t, kind };
 }
