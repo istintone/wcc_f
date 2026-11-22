@@ -15,6 +15,8 @@ const PARAM_AXIS={ off:"O", def:"D", tec:"R", pow:"P", spd:"S", sta:"C" };
 const AXIS_PARAM={ O:"off", D:"def", R:"tec", P:"pow", S:"spd", C:"sta" };
 const MOT_LABEL=["ケガ","絶不調","不調","好調","絶好調"];
 const LINK_LABEL=["線なし","薄線","太線","黄金線"];
+// ラウンジで見せる2人の関係(線の段の物語の言い方。→docs/14 §14.88)。信頼 = 黄金線
+const REL_LABEL=["無関心","関心","理解","信頼"];
 const INT_LABEL=["軽め","普通","ハード"];
 const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"ケア" };
 /** ラウンジの3択。相性(2=良い / 1=ふつう / 0=悪い)ごとに、いちばん合う手が違う */

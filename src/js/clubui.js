@@ -142,7 +142,8 @@ const COMM_UI={
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(気の合う2人ほど連携が深まる)", info:(g,id)=>{ const a=CL.pick[0];
     if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
     // 動物の印と連携の進み(%)は出さない(→docs/14 §14.78)。いまの線の段だけ
-    return l.lv===2&&l.gold?"兆し":["なし","薄線","太線","黄金"][l.lv]; } },
+    // 線の名前ではなく、2人の関係の言い方で(→docs/14 §14.88)。信頼(黄金線)は金の文字、黄金線の兆しは「信頼の兆し」
+    return l.lv>=3?'<b class="rel-gd">信頼</b>':l.lv===2&&l.gold?'<b class="rel-sg">信頼の兆し</b>':REL_LABEL[l.lv]; } },
   talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
 };
 /** 育成で起きたことの帯(手順の上に出す) */
@@ -258,7 +259,7 @@ function commChatHtml(){
   let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+"」",true)+chatNote("信頼度: "+TRUST_LABEL[trustLv(S.g.pl[x])])).join(""), acts="";
   if(CL.comm==="lounge"){
     const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
-    log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:LINK_LABEL[f.lv]+(f.gold?"(黄金線の兆し)":"") }),true)+
+    log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:REL_LABEL[f.lv]+(f.gold?"(信頼の兆し)":"") }),true)+
       chatSec(f.hint+"。",false);   // 動物・国籍・相性の手がかりは出さない(→docs/14 §14.78)
     acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
   }else if(CL.comm==="meet"){
