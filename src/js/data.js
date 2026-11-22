@@ -739,3 +739,28 @@ for(const c of Object.values(CARDS))if(c.roles.some(r=>LR_ROLE[r]))c.roles=sided
 const PACK={ names:{}, teams:{}, images:{} };
 const nameOf=card=>PACK.names[card.id]||card.name;
 const teamNameOf=t=>(PACK.teams[t.id]&&PACK.teams[t.id].name)||t.name;
+
+/* ---------- タグ(チームと選手のバフ・デバフ。→docs/23) ----------
+ * TAGS: id → { name, scope:"team"|"player", kind, pol:1 バフ / -1 デバフ, desc, dur:試合数 | null(条件が解けるまで), endOn:"win"|"lose", opp:打ち消すタグ, fx:{ 語彙:"+m" … } }
+ *   fx の値は「向き + 強さ」: "+m" = ×(1 + 中)、"-m" = ×(1 − 中)。強さは TUNING.tag.str
+ *   derived:true … 別の状態から読む(黄金期 = S.g.golden、施設充実 = スポンサーの報酬 S.biz.boost)。上限の数には入れない */
+TUNING.tag={
+  str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
+  teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
+  playerMax:2,                    // 選手の汎用の上限
+  streak:3                        // 勢い・スランプが付く連勝・連敗の数
+};
+const TAGS={
+  golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  derived:true, desc:"選手全員が絶好調。調子が落ちない" },
+  momentum: { name:"勢い",         scope:"team", kind:"gen", pol:1,  dur:10, endOn:"lose", opp:"slump", fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい。負けると消える" },
+  slump:    { name:"スランプ",     scope:"team", kind:"gen", pol:-1, dur:null, endOn:"win", opp:"momentum", fx:{ motDown:"+m" }, desc:"負けたとき、調子が下がりやすい。勝つと消える" },
+  promo:    { name:"昇格の勢い",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"releg", fx:{ motDown:"-m" }, desc:"チームの調子が落ちにくい" },
+  releg:    { name:"降格の重圧",   scope:"team", kind:"gen", pol:-1, dur:10, opp:"promo", fx:{ motDown:"+m" }, desc:"チームの調子が落ちやすい" },
+  facTrain: { name:"練習場施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
+  facTact:  { name:"戦術室施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
+  facLounge:{ name:"ラウンジ施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
+  facMed:   { name:"メディカル施設充実", scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" }
+};
+/** スポンサーの報酬の効果 → 施設充実のタグ(オーナーの案: 報酬は施設の名前に寄せる。中身は今の報酬のまま) */
+const SP_FAC_TAG={ indExp:"facTrain", indSec:"facTrain", loungeOk:"facLounge", loungeExp:"facLounge", loungeSec:"facLounge",
+  care:"facMed", careSec:"facMed", noFat:"facMed", injury:"facMed", bench:"facTact", keepForm:"facTact" };

@@ -732,5 +732,28 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   check("最適配置: 崩した並びから強さ(適性込み)が戻り、GK が枠の先頭、16人が重ならない",fit(S)>=base-1e-9&&fit(S)>bad&&E.CARDS[S.sq[0]].pos==="GK"&&new Set(S.sq).size===16,
     f2(bad)+" → "+f2(fit(S)));
 }
+// タグ(→docs/23): 連勝で勢い・連敗でスランプ・打ち消し・上限・効き目・任期でクリア
+{
+  console.log("\n■ タグ");
+  const S=E.newCareer(4242), out=[], run=r=>E.tagsAfterMatch(S,{ kind:"friendly" },{ win:r==="w", lose:r==="l" },out);
+  const has=id=>S.g.tags.some(t=>t.id===id);
+  "ww".split("").forEach(run); const before=has("momentum"); run("w");
+  check("3連勝で「勢い」が付き、調子の上がりやすさが上がる",!before&&has("momentum")&&E.tagK(S,"motUp")>1,E.tagK(S,"motUp"));
+  run("l"); check("負けると「勢い」は消える",!has("momentum"));
+  "ll".split("").forEach(run);
+  check("3連敗で「スランプ」(勝つまで続く)",has("slump")&&E.tagK(S,"motDown")>1&&S.g.tags.find(t=>t.id==="slump").n==null);
+  run("w"); check("勝つと「スランプ」は消える",!has("slump"));
+  E.addTeamTag(S,"promo",out); E.addTeamTag(S,"releg",out);
+  check("反対のタグは打ち消す(昇格の勢い → 降格の重圧)",has("releg")&&!has("promo"));
+  E.addTeamTag(S,"momentum",out); E.addTeamTag(S,"releg",out);
+  check("同じタグは重ねず、期限を延ばす",S.g.tags.filter(t=>t.id==="releg").length===1&&S.g.tags.find(t=>t.id==="releg").n===E.TAGS.releg.dur);
+  E.addTeamTag(S,"slump",out); E.addTeamTag(S,"promo",out);
+  check("チームの汎用は "+E.TUNING.tag.teamMax+" つまで",S.g.tags.length<=E.TUNING.tag.teamMax,S.g.tags.map(t=>t.id).join(","));
+  for(let i=0;i<12;i++)run("d");
+  check("期限が来たタグは消える(10試合)",!has("promo"),S.g.tags.map(t=>t.id+":"+t.n).join(","));
+  if(S.biz)S.biz.boost={ indExp:3 };
+  check("スポンサーの報酬は「施設充実」のタグとして見える",!S.biz||E.teamTagsView(S).some(t=>t.id==="facTrain"));
+  check("任期ごとの育成が新しくなると、タグは空(任期の終わりで全部クリア)",E.newGrowth(S.sq).tags.length===0);
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

@@ -142,7 +142,7 @@ const COMM_UI={
  * インフォバー(→docs/14 §14.41)。画面の右から滑り込み、少し置いて消える。めったに出ない大事な知らせ用
  * (成長グラフの限界突破・黄金期の到来・ハーフタイムの指示を覚えた)。複数あれば少しずつずらして重ねる
  */
-const INFO_BAR_RE=/^(🌟|👑|📋)/;
+const INFO_BAR_RE=/^(🌟|👑|📋|🏷)/;
 function infoBar(lines){
   if(!lines||!lines.length)return;
   let box=document.getElementById("infoBars");
@@ -351,6 +351,7 @@ function sqTokenHtml(id,i,on,o){
     (g?'<em class="mt m'+g.mot+'"></em>':'')+
     (()=>{ const m=o?o.stars:(CL.noStars?null:"both"); return g&&m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
+    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; return v.length?'<i class="ptg'+(v.some(t=>t.pol>0)?'':' dn')+'">'+v.length+'</i>':''; })()+   // 選手のタグの印(→docs/23 §23.6)
     (o?(o.sign?'<em class="sg">！</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -400,6 +401,7 @@ function sqDetailHtml(){
       (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat'+(g.fat>=G0.int.tiredSign?' warn':'')+'">疲労 '+Math.round(g.fat*100)+'%</span></div>'+
+    playerTagsHtml(id)+
     cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
     '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '</div>'+
@@ -1160,6 +1162,17 @@ function offerHtml(){
     list.map(offerCardHtml).join("")+'</section>';
 }
 /** HOME: クラブの期待(獲得賞金の進み)と、進んでいるオーナーの指令 */
+/** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
+function teamTagsHtml(){
+  const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";
+  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+'" data-act="taginfo" data-v="'+t.id+'">'+
+    '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
+}
+/** 選手のタグの札(選手の窓)。第3段から付く */
+function playerTagsHtml(id){
+  const v=playerTagsView(CL.S,id); if(!v.length)return "";
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+}
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
   const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100);
@@ -1249,7 +1262,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -1465,6 +1478,7 @@ function onClubClick(e){
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
+  if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }
   if(act==="skipslot"){ const r=skipSlot(S,CL.W); if(r){ save(); showClub(true); infoBar(r); } return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
   if(act==="home"){ CL.flow=null; CL.tab="home"; CL.strat=false; CL.scout=false; CL.oppSel=null; showClub(); return; }

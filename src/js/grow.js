@@ -71,7 +71,7 @@ function newGrowth(ids){
   const pl={};
   (ids||TEAMS.azr.xi.concat(TEAMS.azr.bench)).forEach(id=>{ pl[id]=newPlayerGrowth(); });
   return { pl, links:{}, graph:{ O:0, D:0, R:0, C:0, S:0, P:0 }, gold:{}, golden:0, set:0,
-    step:"train", cn:0, done:[], opts:null };
+    step:"train", cn:0, done:[], opts:null, tags:[], streak:0 };
 }
 /** 古いセーブの育成に、あとから増えた項目を補う */
 function migrateGrowth(g,sq){
@@ -84,6 +84,7 @@ function migrateGrowth(g,sq){
   if(g.step==="ready")g.step="comm";
   // 成長グラフ(→docs/15)。前の戦力グラフ(−2〜+3 の上乗せ)とは目盛りが違うので 0 から
   if(!g.gold){ g.gold={}; g.golden=0; for(const a in g.graph)g.graph[a]=0; }
+  if(!g.tags){ g.tags=[]; g.streak=0; }        // タグ(→docs/23)
   return g;
 }
 const linkOf=(S,a,b)=>S.g.links[lkey(a,b)]||{ lv:0, exp:0, gold:false };
@@ -582,13 +583,13 @@ function afterMatchGrowth(S,fx,res){
     const sw=motSwing(id);                    // 若いほどむらがある
     if(played.includes(id)){
       g.bench=0;
-      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1))g.mot=Math.min(4,g.mot+1);
+      if(res.win&&rng()<Mo.winUp*sw*(tsetOf(S,"winUpK")||1)*tagK(S,"motUp"))g.mot=Math.min(4,g.mot+1);
       else if(res.win&&giant&&rng()<giant)g.mot=Math.min(4,g.mot+1);   // 刺客: 格上に勝つと上がりやすい
-      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1))g.mot=Math.max(1,g.mot-1);
+      else if(res.lose&&rng()<Mo.loseDown*sw*(spBoost(S,"keepForm")??1)*(fx.kind==="cup"?(tsetOf(S,"cupKeep")||1):1)*tagK(S,"motDown"))g.mot=Math.max(1,g.mot-1);
       else if(!res.win&&!res.lose&&rng()<Mo.drawSwing*sw)g.mot=clamp(g.mot+(rng()<0.5?1:-1),1,4);
     }else{
       g.bench=(g.bench||0)+1;
-      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1))g.mot=Math.max(1,g.mot-1);
+      if(g.bench>=Mo.benchGrace&&rng()<Mo.benchDown*sw*(spBoost(S,"bench")??1)*(tsetOf(S,"benchK")||1)*tagK(S,"motDown"))g.mot=Math.max(1,g.mot-1);
       else if(res.win&&rng()<Mo.teamWinUp)g.mot=Math.min(4,g.mot+1);
     }
     if(g.mot===was&&g.mot!==Mo.start&&rng()<Mo.revert)g.mot+=g.mot<Mo.start?1:-1;
@@ -599,6 +600,7 @@ function afterMatchGrowth(S,fx,res){
     if(S.g.golden>0){ for(const id in S.g.pl)if(S.g.pl[id].mot>0)S.g.pl[id].mot=4; }
     else out.push("黄金期がひと区切り(金色の成長グラフはそのまま)");
   }
+  tagsAfterMatch(S,fx,res,out);                 // タグ(→docs/23)。付いたタグは次の試合から効く
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
   return out;
@@ -864,3 +866,64 @@ const SEC_EV_Q=[
   { s1:"選手たちの写真、広報に使っていいですか？ いいのが撮れたんです！", s2:"選手の写真を広報に使う許可をください。", s3:"選手たちの写真、クラブの広報に使ってもいいかしら？" }
 ];
 const secEvQ=(S,ev)=>{ const i=SEC_EVENTS.indexOf(ev), q=SEC_EV_Q[i]; return (q&&q[secOf(S).id])||ev.q; };
+
+/* ---------- タグ(→docs/23) ----------
+ * チームのタグは S.g.tags = [{ id, n:残りの試合 | null }]。育成と同じく任期ごと(newGrowth で空になる = 任期の終わりで全部クリア)
+ * 選手のタグは S.g.pl[id].tags(第3段から付く)。効き目は tagK で1か所から読む */
+const tagFxK=v=>{ const sg=v[0]==="-"?-1:1, k=TUNING.tag.str[v.slice(1)]||0; return 1+sg*k; };
+/** チームのタグの効き目(掛け算)。無ければ 1 */
+function tagK(S,key){
+  let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key])k*=tagFxK(T.fx[key]); }
+  return k;
+}
+/** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
+function addTeamTag(S,id,out){
+  const T=TAGS[id], L=S.g.tags||(S.g.tags=[]); if(!T)return;
+  if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 「"+TAGS[T.opp].name+"」が消えた"); } }
+  const cur=L.find(t=>t.id===id);
+  if(cur){ cur.n=T.dur; return; }
+  if(L.length>=TUNING.tag.teamMax){
+    const j=L.reduce((b,t,i)=>(t.n==null?1e9:t.n)<(L[b].n==null?1e9:L[b].n)?i:b,0);
+    out.push("🏷 「"+TAGS[L[j].id].name+"」が消えた"); L.splice(j,1);
+  }
+  L.push({ id, n:T.dur });
+  out.push("🏷 チームに「"+T.name+"」 ― "+T.desc);
+}
+function dropTeamTag(S,id,out){
+  const L=S.g.tags||[], j=L.findIndex(t=>t.id===id); if(j<0)return;
+  L.splice(j,1); out.push("🏷 「"+TAGS[id].name+"」が消えた");
+}
+/**
+ * 試合のあとのタグ(afterMatchGrowth の最後に呼ぶ。付いたタグは次の試合から効く)
+ *   ① 期限を1つ減らす ② 勝ち負けで消えるもの ③ 連勝・連敗で付くもの ④ 昇格・降格(リーグの最終節)
+ */
+function tagsAfterMatch(S,fx,res,out){
+  const L=S.g.tags||(S.g.tags=[]);
+  for(const t of L.slice()){
+    const T=TAGS[t.id];
+    if((T.endOn==="win"&&res.win)||(T.endOn==="lose"&&res.lose)){ dropTeamTag(S,t.id,out); continue; }
+    if(t.n!=null&&--t.n<=0)dropTeamTag(S,t.id,out);
+  }
+  const st=S.g.streak||0;
+  S.g.streak=res.win?Math.max(0,st)+1:res.lose?Math.min(0,st)-1:0;
+  if(S.g.streak===TUNING.tag.streak)addTeamTag(S,"momentum",out);
+  if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
+  if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
+}
+/** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
+function teamTagsView(S){
+  const v=[], g=S.g||{};
+  if(g.golden>0)v.push({ id:"golden", left:g.golden+"試合" });
+  for(const t of g.tags||[]){ const T=TAGS[t.id]; if(!T)continue;
+    v.push({ id:t.id, left:t.n!=null?t.n+"試合":T.endOn==="win"?"勝つまで":T.endOn==="lose"?"負けるまで":"" }); }
+  const B=S.biz&&S.biz.boost, fac={};
+  if(B)for(const e in B)if(B[e]>0&&SP_FAC_TAG[e]){ const id=SP_FAC_TAG[e], f=fac[id]||(fac[id]={ n:0, eff:[] });
+    f.n=Math.max(f.n,B[e]); const ind=(typeof SP_IND!=="undefined"?SP_IND:[]).find(x=>x.eff===e); if(ind)f.eff.push(ind.effName); }
+  for(const id in fac)v.push({ id, left:fac[id].n+"試合", desc:"スポンサーの報酬: "+fac[id].eff.join("・") });
+  return v.map(x=>Object.assign({ name:TAGS[x.id].name, pol:TAGS[x.id].pol, desc:TAGS[x.id].desc },x));
+}
+/** 選手のタグ(見せる用)。第3段から付く */
+function playerTagsView(S,id){
+  const g=S.g&&S.g.pl[id]; if(!g||!g.tags)return [];
+  return g.tags.filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" }));
+}

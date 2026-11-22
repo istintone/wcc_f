@@ -2013,3 +2013,18 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 .pk-crimp{position:absolute;left:0;right:0;bottom:0;height:8%;
   background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(255,255,255,.1) 30%,rgba(0,0,0,.12)),
     repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px)}
+/* タグ(→docs/23 §23.6): バフは金、デバフは青紫 */
+#club .tt-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:8px 0 0}
+#club .tt-row>small{font-family:var(--f-num);font-size:10px;letter-spacing:.16em;opacity:.65;margin-right:2px}
+#club .tg{display:inline-flex;align-items:baseline;gap:5px;padding:3px 9px 3px 8px;border:0;border-radius:2px;font:inherit;cursor:pointer;
+  clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+#club .tg b{font-size:11.5px;font-weight:900;letter-spacing:.02em}
+#club .tg i{font-style:normal;font-size:9.5px;opacity:.8}
+#club .tg.up{background:linear-gradient(100deg,#b8860b,#f2c14e 55%,#e0a92a);color:#2a1a00}
+#club .tg.dn{background:linear-gradient(100deg,#3b2f6b,#6b55b8 55%,#4a3c8a);color:#efeaff}
+#club .pt-row{display:flex;flex-direction:column;gap:4px;margin:6px 8px}
+#club .pt-row .tg{cursor:default;flex-wrap:wrap;clip-path:none;border-radius:3px}
+#club .pt-row .tg small{width:100%;font-size:10px;opacity:.85}
+#club .sqc .ptg{position:absolute;right:-4px;bottom:-4px;z-index:3;min-width:14px;height:14px;padding:0 3px;border-radius:7px;font-style:normal;font-size:9px;font-weight:900;line-height:14px;text-align:center;
+  background:#f2c14e;color:#2a1a00;box-shadow:0 0 0 1.5px rgba(0,0,0,.4)}
+#club .sqc .ptg.dn{background:#6b55b8;color:#fff}
