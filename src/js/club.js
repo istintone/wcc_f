@@ -714,9 +714,9 @@ function answerStadium(S,yes){
  * 報酬は持ち物にしない。ミッションを達成すると、その業種・ランクの報酬の名前で効果が始まり、決まった試合数だけ続く(重なると長い方)。
  * S.biz.sp = { ind:業種, rank:1〜5, name, pay, ms:[ミッション], at } | null、S.biz.offers = [候補] | null、S.biz.boost = { 効果: 残り試合 } */
 const SP_IND=[
-  { id:"kaden",  name:"家電",       eff:"care",     effName:"ケアの効果アップ",               dur:[3,7], items:["家電製品","最新家電","高級家電","全自動掃除機","IoT家電"],
+  { id:"kaden",  name:"家電",       eff:"care",     effName:"メディカルの効果アップ",               dur:[3,7], items:["家電製品","最新家電","高級家電","全自動掃除機","IoT家電"],
     pre:["ミナト","ヒカリ","アオバ","シンセイ","ユメノ"], suf:["電機","家電","エレクトリック"] },
-  { id:"car",    name:"自動車",     eff:"careSec",  effName:"ケアで秘書が手伝う",             dur:[3,7], items:["軽自動車","自動車","高級車","EV車","AI搭載車"],
+  { id:"car",    name:"自動車",     eff:"careSec",  effName:"メディカルで秘書が手伝う",             dur:[3,7], items:["軽自動車","自動車","高級車","EV車","AI搭載車"],
     pre:["カゼミチ","ハヤブサ","ミライ","アークス","ソウマ"], suf:["自動車","モーターズ","オート"] },
   { id:"food",   name:"食品",       eff:"indExp",   effName:"個人練習の経験アップ",           dur:[3,7], items:["健康食品","サプリメント","プロテイン","最新アスリートフード","専属カリスマ栄養士"],
     pre:["ミノリ","アサヒノ","ユタカ","ハルカ","ミドリ"], suf:["食品","フーズ","ニュートリション"] },
@@ -752,7 +752,7 @@ const spItem=(ind,rank)=>ind.items[rank-1];
 const spEffK=(eff,rank)=>TUNING.biz.sp.eff[eff][rank-1];
 function spEffTxt(eff,rank){
   const v=spEffK(eff,rank), pc=x=>Math.round(x*100)+"%";
-  return eff==="care"?"ケアで やる気がもう1段上がる率 "+pc(v):eff==="careSec"?"ケアのあと秘書がもう1人ケアする率 "+pc(v)
+  return eff==="care"?"メディカルで やる気がもう1段上がる率 "+pc(v):eff==="careSec"?"メディカルのあと秘書がもう1人ケアする率 "+pc(v)
     :eff==="indExp"?"個人練習の経験 ×"+v:eff==="indSec"?"個人練習のあと秘書がもう1人に経験の半分を入れる率 "+pc(v)
     :eff==="loungeOk"?"ラウンジの大成功 +"+pc(v):eff==="loungeExp"?"ラウンジの連携の経験 ×"+v:eff==="loungeSec"?"ラウンジの失敗に秘書のフォロー +"+pc(v)
     :eff==="noFat"?"試合の疲労 ×"+v:eff==="injury"?"ケガの起きやすさ ×"+v:eff==="bench"?"控えのやる気が下がる率 ×"+v:"負けてやる気が下がる率 ×"+v;

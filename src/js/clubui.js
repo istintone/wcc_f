@@ -293,7 +293,7 @@ function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+'</small></button>').join("")+'</div>';   // 2段目は施設のレベルだけ(→docs/14 §14.93)
   if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);

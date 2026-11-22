@@ -4537,7 +4537,7 @@ const NOTE_HOW={
   oil:"まれに現れるレアスポンサー(王族の投資ファンド)と契約する",
   camp:"出来事「合宿の申し出」を受ける", boom:"出来事「協賛の増額」を受ける", broke:"スタジアムの改修で資金が費用の半分を切る",
   fever:"ファンが 1万・3万・6万・10万人を越える", crowded:"カップの試合が3つ続く", afterglow:"大会で優勝する",
-  injRes:"同じ選手を任期の中で5回ケアする", injProne:"同じ選手が任期の中で2回ケガをする",
+  injRes:"同じ選手を任期の中で5回メディカルでケアする", injProne:"同じ選手が任期の中で2回ケガをする",
   rebel:"出場なしが15試合続く / 出来事「移籍の噂」を放っておく", growth:"23歳以下の選手の★が上がる / 出来事で話を聞く・自主練に付き合う",
   rookie:"23歳以下の選手を SQUAD に加える", veteran:"31歳以上の選手を SQUAD に加える",
   bandiera:"任期の中でチームでいちばん早く70試合に出場する", supersub:"途中出場で2得点する", ace:"先発で10得点する",
@@ -6833,9 +6833,9 @@ function answerStadium(S,yes){
  * 報酬は持ち物にしない。ミッションを達成すると、その業種・ランクの報酬の名前で効果が始まり、決まった試合数だけ続く(重なると長い方)。
  * S.biz.sp = { ind:業種, rank:1〜5, name, pay, ms:[ミッション], at } | null、S.biz.offers = [候補] | null、S.biz.boost = { 効果: 残り試合 } */
 const SP_IND=[
-  { id:"kaden",  name:"家電",       eff:"care",     effName:"ケアの効果アップ",               dur:[3,7], items:["家電製品","最新家電","高級家電","全自動掃除機","IoT家電"],
+  { id:"kaden",  name:"家電",       eff:"care",     effName:"メディカルの効果アップ",               dur:[3,7], items:["家電製品","最新家電","高級家電","全自動掃除機","IoT家電"],
     pre:["ミナト","ヒカリ","アオバ","シンセイ","ユメノ"], suf:["電機","家電","エレクトリック"] },
-  { id:"car",    name:"自動車",     eff:"careSec",  effName:"ケアで秘書が手伝う",             dur:[3,7], items:["軽自動車","自動車","高級車","EV車","AI搭載車"],
+  { id:"car",    name:"自動車",     eff:"careSec",  effName:"メディカルで秘書が手伝う",             dur:[3,7], items:["軽自動車","自動車","高級車","EV車","AI搭載車"],
     pre:["カゼミチ","ハヤブサ","ミライ","アークス","ソウマ"], suf:["自動車","モーターズ","オート"] },
   { id:"food",   name:"食品",       eff:"indExp",   effName:"個人練習の経験アップ",           dur:[3,7], items:["健康食品","サプリメント","プロテイン","最新アスリートフード","専属カリスマ栄養士"],
     pre:["ミノリ","アサヒノ","ユタカ","ハルカ","ミドリ"], suf:["食品","フーズ","ニュートリション"] },
@@ -6871,7 +6871,7 @@ const spItem=(ind,rank)=>ind.items[rank-1];
 const spEffK=(eff,rank)=>TUNING.biz.sp.eff[eff][rank-1];
 function spEffTxt(eff,rank){
   const v=spEffK(eff,rank), pc=x=>Math.round(x*100)+"%";
-  return eff==="care"?"ケアで やる気がもう1段上がる率 "+pc(v):eff==="careSec"?"ケアのあと秘書がもう1人ケアする率 "+pc(v)
+  return eff==="care"?"メディカルで やる気がもう1段上がる率 "+pc(v):eff==="careSec"?"メディカルのあと秘書がもう1人ケアする率 "+pc(v)
     :eff==="indExp"?"個人練習の経験 ×"+v:eff==="indSec"?"個人練習のあと秘書がもう1人に経験の半分を入れる率 "+pc(v)
     :eff==="loungeOk"?"ラウンジの大成功 +"+pc(v):eff==="loungeExp"?"ラウンジの連携の経験 ×"+v:eff==="loungeSec"?"ラウンジの失敗に秘書のフォロー +"+pc(v)
     :eff==="noFat"?"試合の疲労 ×"+v:eff==="injury"?"ケガの起きやすさ ×"+v:eff==="bench"?"控えのやる気が下がる率 ×"+v:"負けてやる気が下がる率 ×"+v;
@@ -7388,7 +7388,7 @@ const LINK_LABEL=["線なし","薄線","太線","黄金線"];
 // ラウンジで見せる2人の関係(線の段の物語の言い方。→docs/14 §14.88)。信頼 = 黄金線
 const REL_LABEL=["無関心","関心","理解","信頼"];
 const INT_LABEL=["軽め","普通","ハード"];
-const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"ケア" };
+const COMM_LABEL={ ind:"個人練習", meet:"ミーティング", lounge:"ラウンジ", talk:"メディカル" };   // 施設の名前にそろえる(→docs/14 §14.93)
 /** ラウンジの3択。相性(2=良い / 1=ふつう / 0=悪い)ごとに、いちばん合う手が違う */
 const LOUNGE_CHOICE=["連携の練習をさせる","食事に行かせる","競わせる"];
 const LOUNGE_HINT=["ふたりは張り合っているようだ","ふたりはまだよそよそしい","ふたりは気が合うようだ"];
@@ -7958,7 +7958,7 @@ function afterMatchGrowth(S,fx,res){
   const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
   for(const id in S.g.pl){
     const g=S.g.pl[id];
-    if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。ケアで手当てできる)"); newsOf("inj",[id],out); }
+    if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。メディカルで手当てできる)"); newsOf("inj",[id],out); }
     else if(g.mot===0){
       if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
@@ -8016,7 +8016,7 @@ const SEC_LINES={
     sign:"「！」の付いた選手が {n} 人います。話を聞いてあげてください。",
     omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花します。",
     final:"{c}の決勝です。ここで勝てばタイトルです。",
-    hurt:"{n} がケガをしています。SQUAD で控えと入れ替えるか、ケアで手当てしましょう。",
+    hurt:"{n} がケガをしています。SQUAD で控えと入れ替えるか、メディカルで手当てしましょう。",
     termOver:"任期が終わりました。お疲れさまでした。",
     win:["お疲れさまでした。見事な勝利です。","お疲れさまでした。監督の采配、見事でした。"],
     lose:["お疲れさまでした。切り替えて次へ行きましょう。","悔しいですね……。でも監督なら大丈夫です。次へ行きましょう。"],
@@ -8031,7 +8031,7 @@ const SEC_LINES={
     sign:"「！」の付いた選手が {n} 人いますよ！ 話を聞いてあげてください！",
     omen:"フレンドリーマッチです！ 兆しのある選手を出して勝てば、きっと開花します！",
     final:"{c}の決勝ですよ！ 勝てばタイトルです、ドキドキしますね！",
-    hurt:"{n} がケガしちゃってます！ 控えと入れ替えるか、ケアしてあげてください！",
+    hurt:"{n} がケガしちゃってます！ 控えと入れ替えるか、メディカルで手当てしてあげてください！",
     termOver:"任期おわりましたー！ 監督、おつかれさまでした！",
     win:["やりましたね監督！ 勝ちましたー！","さっすがボス！ 最高の試合でした！"],
     lose:["うう、くやしい……。でも次こそ勝ちましょう！","ボス、落ち込まないで！ 次はぜったい勝てます！"],
@@ -8046,7 +8046,7 @@ const SEC_LINES={
     sign:"「！」の付いた選手が {n} 人。対応を推奨します。",
     omen:"フレンドリーマッチです。兆しのある選手を出して勝てば、開花の確率があります。",
     final:"{c}の決勝です。勝てばタイトル。",
-    hurt:"{n} が負傷中。控えとの入れ替えか、ケアでの処置を推奨します。",
+    hurt:"{n} が負傷中。控えとの入れ替えか、メディカルでの処置を推奨します。",
     termOver:"任期終了です。お疲れさまでした。",
     win:["勝利です。内容も悪くありません。","勝利です。……監督の判断は、正しかったと思います。"],
     lose:["敗戦です。原因は分析しておきます。","敗戦です。でも、修正点は見えています。監督なら立て直せます。"],
@@ -8061,7 +8061,7 @@ const SEC_LINES={
     sign:"「！」の付いた子が {n} 人いるわ。お話、聞いてあげて。",
     omen:"フレンドリーマッチね。兆しのある子を出して勝てば、花が開くかも。",
     final:"{c}の決勝ね。勝てばタイトルよ。",
-    hurt:"{n} がケガをしてるの。控えと替えるか、ケアしてあげてね。",
+    hurt:"{n} がケガをしてるの。控えと替えるか、メディカルで手当てしてあげてね。",
     termOver:"任期はおしまい。本当にお疲れさま。",
     win:["お疲れさま。いい試合だったわね。","ふふ、さすが監督。みんな誇らしそうよ。"],
     lose:["お疲れさま。負けた日は、ゆっくり休むのも大事よ。","大丈夫。監督が下を向かなければ、みんなついてくるわ。"],
@@ -10702,7 +10702,7 @@ function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+'</small></button>').join("")+'</div>';   // 2段目は施設のレベルだけ(→docs/14 §14.93)
   if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
