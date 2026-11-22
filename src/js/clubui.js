@@ -207,10 +207,10 @@ function trainEffectHtml(part){
 function restEffectHtml(){
   const S=CL.S, T=JSON.parse(JSON.stringify(S)); doRest(T);
   // 疲労の数字はやめ、札の電池を休憩のあとの状態で描く(回復するぶんが点滅。→docs/14 §14.84)
-  const info=(g,id)=>{ const b=T.g.pl[id]||g; return b.mot>g.mot?'<i class="mu">調子↑</i>':''; };
-  CL.batTo={}; for(const id in S.g.pl)CL.batTo[id]=batteryOf(T.g.pl[id]||S.g.pl[id]);
+  const info=()=>'';   // 調子が上がる選手は、調子の丸が光る(文字は出さない)
+  CL.batTo={}; CL.motTo={}; for(const id in S.g.pl){ const b=T.g.pl[id]||S.g.pl[id]; CL.batTo[id]=batteryOf(b); CL.motTo[id]=b.mot; }
   const h='<section class="tr-fx rest-fx">'+commBoardHtml(Object.keys(S.g.pl),[],info,null)+'</section>';
-  CL.batTo=null;
+  CL.batTo=null; CL.motTo=null;
   return h;
 }
 /** ① チーム練習 */
@@ -358,7 +358,8 @@ function sqTokenHtml(id,i,on,o){
     '<i class="no">'+c.no+'</i>'+
     (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
     '<span class="nm">'+nameOf(c)+'</span>'+
-    (g?'<em class="mt m'+g.mot+'"></em>':'')+
+    // 調子の丸。休憩の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
+    (g?(()=>{ const to=CL.motTo&&CL.motTo[id]; return to!=null&&to>g.mot?'<em class="mt m'+g.mot+' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')"></em>':'<em class="mt m'+g.mot+'"></em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
       if(!o)return CL.noStars?'':'<span class="stc"><b class="i'+(g.is>=5?' x':'')+'">★'+g.is+'</b><b class="s'+(g.ss>=5?' x':'')+'">★'+g.ss+'</b></span>';
