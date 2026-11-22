@@ -11774,9 +11774,9 @@ async function onSettingsFile(input){
    (単一ファイル・オフラインのまま)。スマホは最初のタップまで鳴らせないので、タイトルで unlock する。
    ========================================================================= */
 
-const SND={ ctx:null, master:null, crowd:null, crowdGain:null, on:true, crowdLv:0, noise:null };
+const SND={ ctx:null, master:null, crowd:null, crowdGain:null, on:false, crowdLv:0, noise:null };
 const SND_KEY="wcc_f.sound";
-try{ SND.on=localStorage.getItem(SND_KEY)!=="off"; }catch(e){}
+try{ SND.on=localStorage.getItem(SND_KEY)==="on"; }catch(e){}   // 既定はオフ(外で遊ぶため。設定で「あり」にすると残る)
 
 /** 最初のタップで呼ぶ。以降、音が鳴らせるようになる */
 function sndUnlock(){
@@ -11932,9 +11932,9 @@ function sndLose(){
      match … 試合中。軽快な8分のベースと四つ打ち。歓声の下で小さく鳴らす
    先読みで 8分音符ずつ予約する(setInterval で 120ms 先まで)。効果音とは別に、設定で切れる
    ========================================================================= */
-const BGM={ on:true, cur:null, gain:null, timer:null, step:0, next:0 };
+const BGM={ on:false, cur:null, gain:null, timer:null, step:0, next:0 };
 const BGM_KEY="wcc_f.bgm";
-try{ BGM.on=localStorage.getItem(BGM_KEY)!=="off"; }catch(e){}
+try{ BGM.on=localStorage.getItem(BGM_KEY)==="on"; }catch(e){}   // 既定はオフ
 const mtof=n=>440*Math.pow(2,(n-69)/12);
 /** 曲。prog は小節ごとの和音(MIDI の音の高さ)、bass は小節ごとの根音 */
 const BGM_TRACKS={
