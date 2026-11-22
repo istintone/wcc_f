@@ -2088,3 +2088,5 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #scene .res-div.up small,#scene .res-div.down small{font-size:10px;font-weight:700;opacity:.75;letter-spacing:.06em}
 #scene .res-div.down{background:linear-gradient(180deg,rgba(14,14,18,.85),rgba(28,28,32,.9));box-shadow:0 0 0 1.5px #9aa0aa,0 0 0 4px rgba(0,0,0,.35);color:#b9bec7}
 #scene .res-div.down b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:20px;letter-spacing:.06em;color:#c8ccd4}
+/* 監督室の中身は縮めない(スポンサーの候補など長い中身が来ても、次の試合の札などが潰れないように。→docs/14 §14.68) */
+#club .cl-main>*{flex-shrink:0}
