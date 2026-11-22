@@ -85,8 +85,9 @@ const BONUS_LABEL={ nat:"同じ国籍", club:"同じクラブ", ani:"同じ動�
 
 /** 疲労の電池(3目盛り・横向き)。満タン緑 → 1つ減って黄 → 2つ減って赤 → 空で灰(→docs/14 §14.81) */
 const batteryHtml=(g,to)=>{
-  // to … 休憩のあとの残り(休憩の見通し)。ふえる目盛りは点滅し、色はあとの段で(→docs/14 §14.84)
-  const n=batteryOf(g), m=to!=null?Math.max(n,to):n;
+  // to … 見通しのあとの残り。休憩でふえる目盛りは点滅(色はあとの段)、練習で減る目盛りは赤く点滅(→docs/14 §14.84・§14.87)
+  const n=batteryOf(g), m=to!=null?to:n;
+  if(m<n)return '<i class="bat b'+m+' bdrop" title="疲労">'+[0,1,2].map(k=>'<u class="'+(k<m?'on':k<n?'dn':'')+'"></u>').join("")+'</i>';
   return '<i class="bat b'+m+(m>n?' brec':'')+'" title="疲労">'+[0,1,2].map(k=>'<u class="'+(k<n?'on':k<m?'on up':'')+'"></u>').join("")+'</i>'; };
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
@@ -201,7 +202,10 @@ function trainEffectHtml(part){
   if(part==="graph")return '<div class="tf-g">'+radarSvg(sets,{ gold:S.g.gold, hl, delta, cls:"tf-radar" })+'</div>';
   if(part==="chips")return '<div class="tf-chips">'+chips+(pv?'<span class="tf-leg"><i class="tf-fit"></i>よく伸びる選手</span>':'')+'</div>';
   return '<section class="tr-fx">'+
-    commBoardHtml(Object.keys(S.g.pl),fit,info,"is")+'</section>';
+    (()=>{ // 練習の強さを選んでいれば、練習のあとの疲労で電池を描く(減る目盛りが赤く点滅。→docs/14 §14.87)
+      const N=TUNING.grow.int, add=CL.int!=null&&CL.int>=0?N.fat[CL.int]||0:0;
+      if(add>0){ CL.batTo={}; for(const id in S.g.pl){ const g=S.g.pl[id]; CL.batTo[id]=batteryOf({ fat:Math.min(N.fatMax,g.fat+add) }); } }
+      const h=commBoardHtml(Object.keys(S.g.pl),fit,info,"is"); CL.batTo=null; return h; })()+'</section>';
 }
 /** 休憩の見通し(→docs/14 §14.37): 盤面に選手ごとの疲労(今 → 休憩のあと)。疲れている選手は暗く(試合中と同じ) */
 function restEffectHtml(){
