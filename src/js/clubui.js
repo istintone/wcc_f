@@ -285,11 +285,15 @@ function chatResult(kind,who,said,r,react){
   CL.chat={ title:COMM_LABEL[kind], who, said, lines:r.lines||[], react:react?react.replace(/^[^「]*/,""):"" };
   CL.pick=[];
 }
+/** 個別指導の種類ごとの施設(→docs/14 §14.92)。見出しに施設のレベルを出す */
+const COMM_FAC={ ind:"train", meet:"tact", lounge:"lounge", talk:"med" };
+const commFacHtml=(S,k)=>{ const f=COMM_FAC[k], lv=S.biz&&f?S.biz.fac[f]||0:null;
+  return lv==null?'':'<i class="flv'+(lv>0?' up':'')+'" title="'+FAC_INFO[f].name+'">Lv'+lv+'</i>'; };
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);

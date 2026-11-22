@@ -2273,3 +2273,9 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .sq-2col .sq-side .sq-roles{gap:2px;padding:3px 2px}
 #club .tab-squad .sq-top .tf-radar{width:88px}
 #club .sq-2col .sq-side .sq-bench{gap:2px}
+/* 個別指導の見出しに施設のレベル(→docs/14 §14.92) */
+#club .tabs.t4 .tab .flv{position:absolute;left:3px;top:2px;padding:0 3px;font-style:normal;font-family:var(--f-num);font-size:8.5px;font-weight:700;line-height:11px;letter-spacing:.02em;color:var(--t-mute);border:1px solid currentColor;border-radius:2px}
+#club .tabs.t4 .tab .flv.up{color:#2a1a00;background:linear-gradient(100deg,#f6d36b,#e0a92a);border-color:#c99a2a}
+#club .tabs.t4 .tab.on .flv:not(.up){color:#fff}
+#club .tabs.t4 .tab .flv{position:static;display:inline-block;margin-right:3px;vertical-align:1px}
+#club .tabs.t4 .tab small{white-space:nowrap;letter-spacing:-.03em}

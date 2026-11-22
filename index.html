@@ -2872,6 +2872,12 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .sq-2col .sq-side .sq-roles{gap:2px;padding:3px 2px}
 #club .tab-squad .sq-top .tf-radar{width:88px}
 #club .sq-2col .sq-side .sq-bench{gap:2px}
+/* 個別指導の見出しに施設のレベル(→docs/14 §14.92) */
+#club .tabs.t4 .tab .flv{position:absolute;left:3px;top:2px;padding:0 3px;font-style:normal;font-family:var(--f-num);font-size:8.5px;font-weight:700;line-height:11px;letter-spacing:.02em;color:var(--t-mute);border:1px solid currentColor;border-radius:2px}
+#club .tabs.t4 .tab .flv.up{color:#2a1a00;background:linear-gradient(100deg,#f6d36b,#e0a92a);border-color:#c99a2a}
+#club .tabs.t4 .tab.on .flv:not(.up){color:#fff}
+#club .tabs.t4 .tab .flv{position:static;display:inline-block;margin-right:3px;vertical-align:1px}
+#club .tabs.t4 .tab small{white-space:nowrap;letter-spacing:-.03em}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10688,11 +10694,15 @@ function chatResult(kind,who,said,r,react){
   CL.chat={ title:COMM_LABEL[kind], who, said, lines:r.lines||[], react:react?react.replace(/^[^「]*/,""):"" };
   CL.pick=[];
 }
+/** 個別指導の種類ごとの施設(→docs/14 §14.92)。見出しに施設のレベルを出す */
+const COMM_FAC={ ind:"train", meet:"tact", lounge:"lounge", talk:"med" };
+const commFacHtml=(S,k)=>{ const f=COMM_FAC[k], lv=S.biz&&f?S.biz.fac[f]||0:null;
+  return lv==null?'':'<i class="flv'+(lv>0?' up':'')+'" title="'+FAC_INFO[f].name+'">Lv'+lv+'</i>'; };
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
   let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
-      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
+      (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+COMM_UI[k].sub+'</small></button>').join("")+'</div>';
   if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
   if(!U)return h+'<p class="dim">場所を選ぶ</p>';
   h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
