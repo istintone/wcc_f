@@ -32,7 +32,7 @@ const TITLES=[
     ok:x=>x.kpCh>=30&&x.wr>=0.55 },
   { id:"heir",    name:"伝承者",       grade:2, bonus:40,  need:"黄金線を10本以上つないだ",
     ok:x=>x.gold>=10 },
-  { id:"assassin",name:"刺客",         grade:2, bonus:40,  need:"格上(★5)のクラブに8勝以上",
+  { id:"assassin",name:"刺客",         grade:2, bonus:40,  need:"強豪(★5)のクラブに8勝以上",
     ok:x=>x.topW>=8 },
   // 覚醒工場: 個人・特殊ともに ★5 の選手を5人以上(この任期に育てた分。→docs/21 §21.5)
   { id:"factory", name:"覚醒工場",     grade:2, bonus:50,  need:"個人・特殊ともに ★5 の選手を5人以上育てた",
@@ -139,7 +139,7 @@ const TITLE_FX={
   factory:  { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 個人練習の経験 +10%" },
   magic:    { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの経験 +10%" },
   heir:     { favor:{ eff:"link" },    desc:"連携の特殊練習 ・ ラウンジが大成功しやすい" },
-  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 格上に勝つとやる気が上がりやすい" },
+  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 強豪に勝つとやる気が上がりやすい" },
   tactician:{ favor:{ eff:"set" },     desc:"セットプレイの特殊練習 ・ セットプレイの伸び +20%" },
   native:   { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 21歳以下の伸びやすさ +10%" },
   fickle:   { favor:{ axis:"S" },      desc:"スピードの特殊練習 ・ 控えのやる気が下がりにくい" },

@@ -815,7 +815,7 @@ function hypeOf(S,fx){
   if(fx.agg)return "第1試合の結果を背負って、勝負の第2戦。";
   if(/決勝/.test(fx.label))return "頂点まで、あと一つ。";
   if(fx.kind==="league"&&S.league.done===13)return "リーグ最終節。";
-  if(t>=me+2)return "格上への挑戦。番狂わせを起こせ。";
+  if(t>=me+2)return "強豪への挑戦。番狂わせを起こせ。";
   if(t<=me-1)return "取りこぼしは許されない。";
   return fx.kind==="cup"?"負ければ終わりの一戦。":"勝ち点3を積み上げる。";
 }
@@ -1153,7 +1153,7 @@ function offerCardHtml(o,i){
   return '<article class="ofc'+(rare?' rare':'')+'">'+
     '<header><small>'+R.name+(rare?' ・ RARE':' ・ '+OF_DIV_LABEL[o.div-1])+'</small><b>'+o.name+'</b>'+
       (rare?'<i>'+rare.desc+'</i>':'<i>'+R.name+'のクラブは'+OF_FAC_NAME[R.fac]+'が育っている</i>')+
-      '<span class="lv">格 '+o.lv+'</span></header>'+
+      '<span class="lv">GRADE '+o.lv+'</span></header>'+
     '<div class="of-body">'+radarSvg([{ v, color:"#d0102f" }],{ cls:"of-radar" })+
       '<dl><div><dt>リーグ</dt><dd>'+OF_DIV_LABEL[o.div-1]+'</dd></div>'+
         '<div><dt>ファン</dt><dd>'+(o.fans/10000).toFixed(1)+'万人</dd></div>'+
@@ -1165,7 +1165,7 @@ function offerCardHtml(o,i){
 }
 function offerHtml(){
   const S=CL.S, list=offersOf(S);
-  return '<section class="card offers"><h3>クラブオファー <small>第'+S.term+'任期 ・ 監督の格 '+mgrLv(S)+'</small></h3>'+
+  return '<section class="card offers"><h3>クラブオファー <small>第'+S.term+'任期 ・ 監督 GRADE '+mgrLv(S)+'</small></h3>'+
     '<p class="dim">3つのクラブから監督のオファーが届いた。クラブを選んだあと、監督契約でクラブ名とエンブレムを決める。'+
     '大きいクラブほど設備は整っているが、期待される獲得賞金が高く、オーナーの指令も多い</p>'+
     list.map(offerCardHtml).join("")+'</section>';
@@ -1420,7 +1420,7 @@ function managerTabHtml(){
   const d=CL.draft||(CL.draft={});
   const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
     :'<b>'+embEsc(m.name)+'</b><button class="lnk" data-act="medit">名前を変える</button>';
-  return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督の格 '+mgrLv(S)+'</small></h3>'+
+  return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督 GRADE '+mgrLv(S)+'</small></h3>'+
       '<div class="mg-name">'+name+'</div>'+
       '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
         '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
