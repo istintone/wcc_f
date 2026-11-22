@@ -289,14 +289,26 @@ function chatResult(kind,who,said,r,react){
 const COMM_FAC={ ind:"train", meet:"tact", lounge:"lounge", talk:"med" };
 const commFacHtml=(S,k)=>{ const f=COMM_FAC[k], lv=S.biz&&f?S.biz.fac[f]||0:null;
   return lv==null?'':'<i class="flv'+(lv>0?' up':'')+'" title="'+FAC_INFO[f].name+'">Lv'+lv+'</i>'; };
+/** 秘書の呼びかけ(顔の丸 + 吹き出し)。個別指導の案内(→docs/14 §14.94) */
+const cmSayHtml=t=>'<div class="cm-say">'+secAv(CL.S)+'<p>'+t+'</p></div>';
+/** いまの個別指導の種類と、選んだ途中の状態に合わせた呼びかけ */
+function cmLine(S){
+  const k=CL.comm, ids=Object.keys(S.g.pl);
+  if(k==="lounge")return CL.pick[0]?secSay(S,"cmLounge2",{ n:nameOf(CARDS[CL.pick[0]]) }):secSay(S,"cmLounge");
+  if(k==="meet")return secSay(S,ids.some(id=>commSign(S,id,k))?"cmMeetSign":"cmMeet");
+  if(k==="talk"){ const h=ids.find(id=>S.g.pl[id].mot===0&&S.sq.includes(id)); return h?secSay(S,"cmTalkHurt",{ n:nameOf(CARDS[h]) }):secSay(S,"cmTalk"); }
+  return secSay(S,"cmInd");
+}
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
-  let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
+  // 残りは右端に「残り n/最大」。案内は秘書の呼びかけで(説明文にしない。→docs/14 §14.94)
+  const max=TUNING.grow.comm.max;
+  let h='<div class="step-h one cm-h"><b>個別指導</b><span class="cm-left'+(left?'':' out')+'">残り <em>'+left+'</em>/'+max+'</span></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
       (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+'</small></button>').join("")+'</div>';   // 2段目は施設のレベルだけ(→docs/14 §14.93)
-  if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
-  if(!U)return h+'<p class="dim">場所を選ぶ</p>';
-  h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
+  if(!left)return h+cmSayHtml(secSay(S,"cmDone"))+commChatHtml();   // 最後の1回の結果はここで見せる
+  if(!U)return h;
+  h+=cmSayHtml(cmLine(S))+commBoardHtml(all,CL.pick,U.info);
   h+=commChatHtml();
   return h;
 }

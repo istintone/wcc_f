@@ -2878,6 +2878,16 @@ body[class] #club .sec.pvoice{border-left-color:#3b7dd8}body[class] #club .pvoic
 #club .tabs.t4 .tab.on .flv:not(.up){color:#fff}
 #club .tabs.t4 .tab .flv{position:static;display:inline-block;margin-right:3px;vertical-align:1px}
 #club .tabs.t4 .tab small{white-space:nowrap;letter-spacing:-.03em}
+/* 個別指導: 残りは右端に・案内は秘書の吹き出し(→docs/14 §14.94) */
+#club .step-h.cm-h{justify-content:space-between;align-items:center;flex-wrap:nowrap}
+#club .cm-left{font-family:var(--f-num);font-size:12px;font-weight:700;color:var(--t-mute);letter-spacing:.04em;white-space:nowrap}
+#club .cm-left em{font-size:20px;margin-left:2px}
+#club .cm-left.out em{color:var(--t-mute)}
+#club .cm-say{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
+#club .cm-say .sec-av{width:30px;height:30px;box-shadow:0 0 0 1.5px var(--t-gold,#e9c76b)}
+#club .cm-say p{position:relative;flex:1;margin:0;padding:5px 10px;font-size:12px;font-weight:700;line-height:1.35;color:var(--t-ink);background:var(--t-card,#fff);border:1px solid var(--t-rule);border-radius:10px}
+#club .cm-say p::before{content:"";position:absolute;left:-6px;top:50%;margin-top:-5px;border:5px solid transparent;border-right-color:var(--t-rule);border-left:0}
+#club .cm-say p::after{content:"";position:absolute;left:-4.5px;top:50%;margin-top:-4px;border:4px solid transparent;border-right-color:var(--t-card,#fff);border-left:0}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8174,6 +8184,14 @@ function linkSign(S,a,b){
  *   {g} KP のやること / {n} 選手 / {x} 柱の選手 / {c} まとめ役 / {k} キッカー
  */
 Object.assign(SEC_LINES.s0,{
+  cmInd:"今日は誰の練習を見ましょうか？",
+  cmMeet:"誰とミーティングしましょうか？",
+  cmMeetSign:"誰とミーティングしましょうか？ 話をしたそうな選手がいます。",
+  cmLounge:"選手同士で話をさせてみましょう。誰と誰にしますか？",
+  cmLounge2:"{n} と、もう1人は誰にしますか？",
+  cmTalk:"誰の様子を見ましょうか？ 調子を落としている選手ほど効きます。",
+  cmTalkHurt:"{n} がケガをしています。手当てしてあげてください。",
+  cmDone:"今回の個別指導はここまでです。視察に進みましょう。",
   tiredMany:"選手の多くが疲れを訴えています。今日は休憩か、軽めの練習がよさそうです。",
   chProp:"{n} が自分の育て方を相談してきました。選んだ道が、その選手の特性になります。",
   chLink:"{a} と {b}、いまは「{l}」です。", chNear:"周りで {n} も聞いています。",
@@ -8194,6 +8212,14 @@ Object.assign(SEC_LINES.s0,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修しませんか。費用は {c}億です{d}。",
   reply:["……そうですか。","はい！","ふふ、ありがとうございます。","監督……うれしいです。"] });
 Object.assign(SEC_LINES.s1,{
+  cmInd:"今日は誰の練習を見てあげます？",
+  cmMeet:"誰を呼び出しますか？",
+  cmMeetSign:"誰を呼び出しますか？ 話したそうにしてる子がいますよ！",
+  cmLounge:"選手同士でおしゃべりさせちゃいましょう！ 誰と誰にします？",
+  cmLounge2:"{n} と、もう1人は誰にします？",
+  cmTalk:"誰の様子を見に行きます？ 元気がない子ほど効きますよ！",
+  cmTalkHurt:"{n} がケガしてます！ 手当てしてあげてください！",
+  cmDone:"今回の個別指導はおしまいです！ 視察に行きましょう！",
   tiredMany:"みんなヘトヘトだって言ってます！ 今日は休ませてあげませんか？",
   chProp:"{n} が育て方の相談に来ましたよ！ 選んだ道が特性になります！",
   chLink:"{a} と {b}、いまは「{l}」ですよ！", chNear:"周りで {n} も聞き耳たててます！",
@@ -8214,6 +8240,14 @@ Object.assign(SEC_LINES.s1,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)にしちゃいませんか！ 費用は {c}億です{d}！",
   reply:["そっかぁ……。","はい！","えへへ、ありがとうございます！","監督……すっごくうれしいです！"] });
 Object.assign(SEC_LINES.s2,{
+  cmInd:"個人練習の対象を指名してください。",
+  cmMeet:"面談の対象を指名してください。",
+  cmMeetSign:"面談の対象を指名してください。相談を希望する選手がいます。",
+  cmLounge:"選手間の交流を設定します。2名を指名してください。",
+  cmLounge2:"{n} と組ませる、もう1名を指名してください。",
+  cmTalk:"ケアの対象を指名してください。不調の選手ほど効果が高いです。",
+  cmTalkHurt:"{n} が負傷中。処置を推奨します。",
+  cmDone:"個別指導は終了です。視察へ進んでください。",
   tiredMany:"疲労を訴える選手が多数。休憩か軽めの練習を推奨します。",
   chProp:"{n} から育成方針の相談です。選択がそのまま特性になります。",
   chLink:"{a} と {b}、現在「{l}」。", chNear:"{n} も周りで聞いています。",
@@ -8234,6 +8268,14 @@ Object.assign(SEC_LINES.s2,{
   stad:"スタジアムを「{nm}」(収容 {cap}万人)に改修する提案です。費用は {c}億{d}。",
   reply:["……了解です。","はい。","……ありがとうございます。","……監督。うれしい、です。"] });
 Object.assign(SEC_LINES.s3,{
+  cmInd:"今日は誰の練習を見てあげる？",
+  cmMeet:"誰を呼んで話をする？",
+  cmMeetSign:"誰を呼んで話をする？ 話したそうな子がいるわよ。",
+  cmLounge:"選手同士で話をさせてみましょ。誰と誰にする？",
+  cmLounge2:"{n} と、もう1人は誰にする？",
+  cmTalk:"誰の様子を見てあげる？ 元気のない子ほど効くわ。",
+  cmTalkHurt:"{n} がケガをしてるの。手当てしてあげて。",
+  cmDone:"今回の個別指導はここまでね。視察に行きましょ。",
   tiredMany:"みんな疲れたって言ってるわ。今日はゆっくりさせてあげて。",
   chProp:"{n} が育て方の相談に来たわ。選んだ道が、あの子の特性になるのよ。",
   chLink:"{a} と {b}、いまは「{l}」ね。", chNear:"周りで {n} も聞いているわ。",
@@ -10698,14 +10740,26 @@ function chatResult(kind,who,said,r,react){
 const COMM_FAC={ ind:"train", meet:"tact", lounge:"lounge", talk:"med" };
 const commFacHtml=(S,k)=>{ const f=COMM_FAC[k], lv=S.biz&&f?S.biz.fac[f]||0:null;
   return lv==null?'':'<i class="flv'+(lv>0?' up':'')+'" title="'+FAC_INFO[f].name+'">Lv'+lv+'</i>'; };
+/** 秘書の呼びかけ(顔の丸 + 吹き出し)。個別指導の案内(→docs/14 §14.94) */
+const cmSayHtml=t=>'<div class="cm-say">'+secAv(CL.S)+'<p>'+t+'</p></div>';
+/** いまの個別指導の種類と、選んだ途中の状態に合わせた呼びかけ */
+function cmLine(S){
+  const k=CL.comm, ids=Object.keys(S.g.pl);
+  if(k==="lounge")return CL.pick[0]?secSay(S,"cmLounge2",{ n:nameOf(CARDS[CL.pick[0]]) }):secSay(S,"cmLounge");
+  if(k==="meet")return secSay(S,ids.some(id=>commSign(S,id,k))?"cmMeetSign":"cmMeet");
+  if(k==="talk"){ const h=ids.find(id=>S.g.pl[id].mot===0&&S.sq.includes(id)); return h?secSay(S,"cmTalkHurt",{ n:nameOf(CARDS[h]) }):secSay(S,"cmTalk"); }
+  return secSay(S,"cmInd");
+}
 function commStepHtml(){
   const S=CL.S, g=S.g, all=Object.keys(g.pl), left=commLeft(S), U=COMM_UI[CL.comm];
-  let h='<div class="step-h"><b>個別指導</b><small>あと <em>'+left+'</em> 回。使わずに試合へ進んでもよい</small></div>'+
+  // 残りは右端に「残り n/最大」。案内は秘書の呼びかけで(説明文にしない。→docs/14 §14.94)
+  const max=TUNING.grow.comm.max;
+  let h='<div class="step-h one cm-h"><b>個別指導</b><span class="cm-left'+(left?'':' out')+'">残り <em>'+left+'</em>/'+max+'</span></div>'+
     '<div class="tabs t4">'+Object.keys(COMM_UI).map(k=>'<button class="tab'+(CL.comm===k?' on':'')+'" data-act="comm" data-v="'+k+'"'+
       (left?'':' disabled')+'>'+COMM_LABEL[k]+(Object.keys(S.g.pl).some(id=>commSign(S,id,k))?'<b class="tsg">'+BUB+'</b>':'')+'<small>'+commFacHtml(S,k)+'</small></button>').join("")+'</div>';   // 2段目は施設のレベルだけ(→docs/14 §14.93)
-  if(!left)return h+'<p class="dim">今回の個別指導は使い切った</p>'+commChatHtml();   // 最後の1回の結果はここで見せる
-  if(!U)return h+'<p class="dim">場所を選ぶ</p>';
-  h+='<p class="dim">'+U.hint+'</p>'+commBoardHtml(all,CL.pick,U.info);
+  if(!left)return h+cmSayHtml(secSay(S,"cmDone"))+commChatHtml();   // 最後の1回の結果はここで見せる
+  if(!U)return h;
+  h+=cmSayHtml(cmLine(S))+commBoardHtml(all,CL.pick,U.info);
   h+=commChatHtml();
   return h;
 }
