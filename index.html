@@ -579,6 +579,23 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 /* 字幕の残り時間(→docs/14) */
 #cap .cap-bar{display:block;width:70%;height:3px;margin-top:6px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
 #cap .cap-bar u{display:block;height:100%;width:100%;background:#f0cf75}
+/* 結果の画面: カードと交代の記録(→docs/07 §7.12) */
+#scene .res-log{width:100%;max-width:360px;margin:10px auto 0;animation:fadeIn .4s 1.2s both}
+#scene .res-log h4{margin:0 0 4px;text-align:center;font-size:10.5px;font-weight:900;letter-spacing:.14em;opacity:.7}
+#scene .res-log .rl-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#scene .res-log ul{list-style:none;margin:0;padding:0;font-size:11px;line-height:1.35}
+#scene .res-log li{display:flex;gap:5px;align-items:flex-start;margin:0 0 4px}
+#scene .res-log ul.a li{flex-direction:row-reverse;text-align:right}
+#scene .res-log li>i{flex:0 0 auto;min-width:26px;font-style:normal;font-family:var(--f-num,inherit);color:#ffe28a}
+#scene .res-log li>span{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;min-width:0}
+#scene .res-log ul.a li>span{justify-content:flex-end}
+#scene .res-log .rl-sub span{flex-direction:column;align-items:flex-start;gap:0} #scene .res-log ul.a .rl-sub span{align-items:flex-end}
+#scene .res-log .in{color:#5fe39a;font-weight:700} #scene .res-log .out{color:#ff8a8a;text-decoration:none;opacity:.85}
+#scene .res-log small{font-size:9.5px;opacity:.75;width:100%}
+#scene .res-log .ck{display:inline-block;width:8px;height:11px;border-radius:1.5px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#scene .res-log .ck.y{background:#ffd400} #scene .res-log .ck.r{background:#e0102e}
+#scene .res-log .ck.yr{background:linear-gradient(135deg,#ffd400 0 50%,#e0102e 50%)}
+#scene .res-log .rl-cd.r b,#scene .res-log .rl-cd.yr b{text-decoration:line-through;text-decoration-thickness:1.5px}
 
 /* =========================================================================
    wcc_f — テーマ(→docs/07 §7.8)
@@ -4889,7 +4906,7 @@ function doSub(M,T,outId,inId,t){
   if(out.kp)T.kp=null;                       // KP を下げると KP は居なくなる
   if(M.ball&&M.ball.holder===out)M.ball.holder=np;
   if(M.ball&&M.ball.assist===out)M.ball.assist=null;
-  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"sub", out:outId, in:inId });
+  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"sub", out:outId, in:inId, at:!!(t&&t.at) });
   return true;
 }
 function changeKp(M,T,id,t){
@@ -11341,6 +11358,19 @@ function goalsOf(M,side){
   return M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side===side)
     .map(e=>'<li><i>'+(e.at?e.min+"+":e.min+"'")+'</i>'+nm(e.by)+(e.sp==="pk"?" (PK)":e.sp==="fk"?" (FK)":"")+'</li>').join("");
 }
+/**
+ * 試合の記録(→docs/07 §7.12): カード(警告・2枚目の警告で退場・一発退場)と交代を、チームごとに時間の順に。
+ * 交代は ▲ 入った選手 / ▼ 出た選手。退場した選手の名前には線を引く
+ */
+const evMin=e=>e.at?(e.half===1?"45+":"90+"):e.min+"'";
+function matchLogOf(M,side){
+  const L=M.events.filter(e=>e.side===side&&((e.type==="foul"&&e.card)||e.type==="sub"));
+  return L.map(e=>{
+    if(e.type==="sub")return '<li class="rl-sub"><i>'+evMin(e)+'</i><span><b class="in">▲ '+nm(e.in)+'</b><s class="out">▼ '+nm(e.out)+'</s></span></li>';
+    const k=e.card==="y"?["y",""]:e.card==="yr"?["yr","退場(警告2枚)"]:["r","一発退場"];
+    return '<li class="rl-cd '+k[0]+'"><i>'+evMin(e)+'</i><span><em class="ck '+k[0]+'"></em><b>'+nm(e.by)+'</b>'+(k[1]?'<small>'+k[1]+'</small>':'')+'</span></li>';
+  }).join("");
+}
 const POS_ORD={ GK:0, DF:1, MF:2, FW:3 };
 /** 採点の色: 7.5 以上は金、5.5 以下は青 */
 const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
@@ -11360,6 +11390,8 @@ function sceneResult(M,last,go){
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   const rtHtml='<div class="res-rt two">'+rtCol("H",H)+rtCol("A",A)+'</div>';
+  const lgH=matchLogOf(M,"H"), lgA=matchLogOf(M,"A");
+  const logHtml=lgH||lgA?'<div class="res-log"><h4>カード ・ 交代</h4><div class="rl-cols"><ul>'+lgH+'</ul><ul class="a">'+lgA+'</ul></div></div>':'';
   const mv=mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
       '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'';
   sceneShow("sc-res r-"+res.toLowerCase(),
@@ -11374,7 +11406,7 @@ function sceneResult(M,last,go){
     ((last&&last.lines||[]).filter(x=>/^(⬆|⬇|🛡|➡) /.test(x)).map(x=>'<div class="res-div '+(/^⬆/.test(x)?'up':/^⬇/.test(x)?'down':'stay')+'"><b>'+x.slice(2)+'</b></div>').join(""))+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     mv+                                            // MVP は上の段(得点者の下。→docs/14)
-    stHtml+rtHtml+
+    stHtml+logHtml+rtHtml+
     '<div class="touch sm">TOUCH</div>',
     { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ

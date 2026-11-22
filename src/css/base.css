@@ -559,3 +559,20 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);overflow:h
 /* 字幕の残り時間(→docs/14) */
 #cap .cap-bar{display:block;width:70%;height:3px;margin-top:6px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden}
 #cap .cap-bar u{display:block;height:100%;width:100%;background:#f0cf75}
+/* 結果の画面: カードと交代の記録(→docs/07 §7.12) */
+#scene .res-log{width:100%;max-width:360px;margin:10px auto 0;animation:fadeIn .4s 1.2s both}
+#scene .res-log h4{margin:0 0 4px;text-align:center;font-size:10.5px;font-weight:900;letter-spacing:.14em;opacity:.7}
+#scene .res-log .rl-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#scene .res-log ul{list-style:none;margin:0;padding:0;font-size:11px;line-height:1.35}
+#scene .res-log li{display:flex;gap:5px;align-items:flex-start;margin:0 0 4px}
+#scene .res-log ul.a li{flex-direction:row-reverse;text-align:right}
+#scene .res-log li>i{flex:0 0 auto;min-width:26px;font-style:normal;font-family:var(--f-num,inherit);color:#ffe28a}
+#scene .res-log li>span{display:flex;flex-wrap:wrap;align-items:center;gap:0 4px;min-width:0}
+#scene .res-log ul.a li>span{justify-content:flex-end}
+#scene .res-log .rl-sub span{flex-direction:column;align-items:flex-start;gap:0} #scene .res-log ul.a .rl-sub span{align-items:flex-end}
+#scene .res-log .in{color:#5fe39a;font-weight:700} #scene .res-log .out{color:#ff8a8a;text-decoration:none;opacity:.85}
+#scene .res-log small{font-size:9.5px;opacity:.75;width:100%}
+#scene .res-log .ck{display:inline-block;width:8px;height:11px;border-radius:1.5px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#scene .res-log .ck.y{background:#ffd400} #scene .res-log .ck.r{background:#e0102e}
+#scene .res-log .ck.yr{background:linear-gradient(135deg,#ffd400 0 50%,#e0102e 50%)}
+#scene .res-log .rl-cd.r b,#scene .res-log .rl-cd.yr b{text-decoration:line-through;text-decoration-thickness:1.5px}

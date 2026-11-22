@@ -110,6 +110,19 @@ function goalsOf(M,side){
   return M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side===side)
     .map(e=>'<li><i>'+(e.at?e.min+"+":e.min+"'")+'</i>'+nm(e.by)+(e.sp==="pk"?" (PK)":e.sp==="fk"?" (FK)":"")+'</li>').join("");
 }
+/**
+ * 試合の記録(→docs/07 §7.12): カード(警告・2枚目の警告で退場・一発退場)と交代を、チームごとに時間の順に。
+ * 交代は ▲ 入った選手 / ▼ 出た選手。退場した選手の名前には線を引く
+ */
+const evMin=e=>e.at?(e.half===1?"45+":"90+"):e.min+"'";
+function matchLogOf(M,side){
+  const L=M.events.filter(e=>e.side===side&&((e.type==="foul"&&e.card)||e.type==="sub"));
+  return L.map(e=>{
+    if(e.type==="sub")return '<li class="rl-sub"><i>'+evMin(e)+'</i><span><b class="in">▲ '+nm(e.in)+'</b><s class="out">▼ '+nm(e.out)+'</s></span></li>';
+    const k=e.card==="y"?["y",""]:e.card==="yr"?["yr","退場(警告2枚)"]:["r","一発退場"];
+    return '<li class="rl-cd '+k[0]+'"><i>'+evMin(e)+'</i><span><em class="ck '+k[0]+'"></em><b>'+nm(e.by)+'</b>'+(k[1]?'<small>'+k[1]+'</small>':'')+'</span></li>';
+  }).join("");
+}
 const POS_ORD={ GK:0, DF:1, MF:2, FW:3 };
 /** 採点の色: 7.5 以上は金、5.5 以下は青 */
 const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
@@ -129,6 +142,8 @@ function sceneResult(M,last,go){
     return '<span class="'+(x.id===RT.mvp?'mvp':'')+'"><i class="pos '+c.pos.toLowerCase()+'">'+c.pos+'</i><b>'+nameOf(c)+
       (x.g?'<u>'+"⚽".repeat(Math.min(3,x.g))+'</u>':'')+'</b><em class="'+rateCls(x.r)+'">'+rateTxt(x.r)+'</em></span>'; }).join("")+'</div>';
   const rtHtml='<div class="res-rt two">'+rtCol("H",H)+rtCol("A",A)+'</div>';
+  const lgH=matchLogOf(M,"H"), lgA=matchLogOf(M,"A");
+  const logHtml=lgH||lgA?'<div class="res-log"><h4>カード ・ 交代</h4><div class="rl-cols"><ul>'+lgH+'</ul><ul class="a">'+lgA+'</ul></div></div>':'';
   const mv=mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
       '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'';
   sceneShow("sc-res r-"+res.toLowerCase(),
@@ -143,7 +158,7 @@ function sceneResult(M,last,go){
     ((last&&last.lines||[]).filter(x=>/^(⬆|⬇|🛡|➡) /.test(x)).map(x=>'<div class="res-div '+(/^⬆/.test(x)?'up':/^⬇/.test(x)?'down':'stay')+'"><b>'+x.slice(2)+'</b></div>').join(""))+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     mv+                                            // MVP は上の段(得点者の下。→docs/14)
-    stHtml+rtHtml+
+    stHtml+logHtml+rtHtml+
     '<div class="touch sm">TOUCH</div>',
     { next:()=>go(RT), lock:1400 });
   // スコアのカウントアップ

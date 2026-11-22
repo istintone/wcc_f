@@ -471,7 +471,7 @@ function doSub(M,T,outId,inId,t){
   if(out.kp)T.kp=null;                       // KP を下げると KP は居なくなる
   if(M.ball&&M.ball.holder===out)M.ball.holder=np;
   if(M.ball&&M.ball.assist===out)M.ball.assist=null;
-  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"sub", out:outId, in:inId });
+  M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"sub", out:outId, in:inId, at:!!(t&&t.at) });
   return true;
 }
 function changeKp(M,T,id,t){
