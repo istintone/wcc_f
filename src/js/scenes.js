@@ -106,6 +106,16 @@ function sceneMatchup(fx,go){
 function sndCrowdBurst(){ if(sndOk())noiseBurst(now(),1.6,0.22,"bandpass",600,900,0.6); }
 
 /* ---- 結果(→docs/07 §7.12): スコア・得点者・チームの数字・採点・MVP ---- */
+/**
+ * リーグの最終節の昇格・降格・残留の帯(→docs/19・docs/14 §14.67)。
+ * 昇格 = 金の文字と金の縁の「Congratulations! Go to Next Division!」、降格 = 同じ形でグレー、残留 = 小さく控えめ
+ */
+function divBannerHtml(x){
+  const rest=x.slice(2), div=(rest.match(/(Premier|1st|2nd) Div/)||[""])[0];
+  if(/^⬆/.test(x))return '<div class="res-div up"><b>Congratulations!</b><span>Go to Next Division!</span><small>次の周から '+div+'</small></div>';
+  if(/^⬇/.test(x))return '<div class="res-div down"><b>Relegated…</b><span>Back to '+div+'</span><small>次の周は '+div+'</small></div>';
+  return '<div class="res-div stay"><b>'+rest+'</b></div>';
+}
 function goalsOf(M,side){
   return M.events.filter(e=>e.type==="shot"&&e.res==="goal"&&e.side===side)
     .map(e=>'<li><i>'+(e.at?e.min+"+":e.min+"'")+'</i>'+nm(e.by)+(e.sp==="pk"?" (PK)":e.sp==="fk"?" (FK)":"")+'</li>').join("");
@@ -155,7 +165,7 @@ function sceneResult(M,last,go){
       '<div class="rs">'+emblemSvg(A,40)+'<b>'+A.short+'</b></div></div>'+
     (pso?'<div class="res-pso">PK '+pso[0]+' - '+pso[1]+'</div>':'')+
     // リーグの最終節: 昇格・降格・残留の知らせ(→docs/19)
-    ((last&&last.lines||[]).filter(x=>/^(⬆|⬇|🛡|➡) /.test(x)).map(x=>'<div class="res-div '+(/^⬆/.test(x)?'up':/^⬇/.test(x)?'down':'stay')+'"><b>'+x.slice(2)+'</b></div>').join(""))+
+    ((last&&last.lines||[]).filter(x=>/^(⬆|⬇|🛡|➡) /.test(x)).map(divBannerHtml).join(""))+
     '<div class="res-goals"><ul>'+goalsOf(M,"H")+'</ul><ul class="a">'+goalsOf(M,"A")+'</ul></div>'+
     mv+                                            // MVP は上の段(得点者の下。→docs/14)
     stHtml+logHtml+rtHtml+

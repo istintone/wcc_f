@@ -2079,3 +2079,12 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #club .tabbar button span{font-size:9.5px;letter-spacing:.04em}
 #club .tabbar{grid-template-columns:repeat(6,1fr)}
 #club .mgr-card .mg-edit .btn.btn-main{flex:0 0 auto!important;width:auto!important;min-width:0;height:auto;padding:7px 14px;font-size:13px;clip-path:none;border-radius:3px}
+/* 昇格・降格の帯(→docs/14 §14.67): 昇格は金の文字と金の縁、降格は同じ形でグレー */
+#scene .res-div.up,#scene .res-div.down{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 22px 7px;letter-spacing:.04em;
+  background:linear-gradient(180deg,rgba(10,10,14,.82),rgba(26,22,10,.9));box-shadow:0 0 0 1.5px #e9c76b,0 0 0 4px rgba(0,0,0,.35),0 0 22px rgba(233,199,107,.45);color:#f6d36b}
+#scene .res-div.up b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;letter-spacing:.06em;
+  background:linear-gradient(180deg,#fff6cf,#f6d36b 45%,#c9962a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
+#scene .res-div.up span,#scene .res-div.down span{font-family:var(--f-num);font-style:italic;font-weight:700;font-size:13px;letter-spacing:.12em}
+#scene .res-div.up small,#scene .res-div.down small{font-size:10px;font-weight:700;opacity:.75;letter-spacing:.06em}
+#scene .res-div.down{background:linear-gradient(180deg,rgba(14,14,18,.85),rgba(28,28,32,.9));box-shadow:0 0 0 1.5px #9aa0aa,0 0 0 4px rgba(0,0,0,.35);color:#b9bec7}
+#scene .res-div.down b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:20px;letter-spacing:.06em;color:#c8ccd4}
