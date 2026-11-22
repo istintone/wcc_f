@@ -3063,6 +3063,20 @@ body[class] #pad .tac.md{font-size:0!important;color:transparent!important}
 #insTags i{padding:0 14px 0 10px!important;border-left:0!important;font-size:11px!important;line-height:20px!important;transform:translateX(-105%);
   clip-path:polygon(0 0,100% 0,calc(100% - 9px) 100%,0 100%)!important}
 #insTags i.on{max-height:24px!important;margin-bottom:7px!important;transform:none}
+/* 発動中の KP の札(最上段。→docs/14 §14.101): 黒い帯に金の KP */
+#insTags i[data-k="kp"]{background:linear-gradient(90deg,#0b0b0d,#2a2b31)!important}
+#insTags i[data-k="kp"] b{margin-right:6px;padding:0 4px;font-style:italic;color:#2a1d00;background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c);border-radius:2px}
+#insTags i[data-k="kp"] small{margin-left:6px;font-size:9.5px;color:#e9c76b;letter-spacing:.04em}
+/* ヘッダ(→docs/14 §14.101): 左にマッチアップ・中央にエンブレムと得点・右にタイムと倍速。操作パネルと同じ白い紙にドット */
+body[class] #hud{display:grid!important;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:0 8px!important;
+  background:radial-gradient(rgba(0,0,0,.09) 1px,transparent 1.3px) 0 0/6px 6px,linear-gradient(180deg,#faf8f4,#ece7df)!important;
+  border-bottom:3px solid #c8102e!important;box-shadow:0 2px 0 #111,0 3.5px 0 #e9c76b,0 6px 12px rgba(0,0,0,.25)!important}
+body[class] #hud .mu{min-width:0;justify-self:start}
+body[class] #hudComp{display:block;max-width:100%;white-space:normal;line-height:1.15;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;font-size:10px;letter-spacing:.06em;color:#c8102e;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+body[class] #hud .sb{justify-self:center}
+body[class] #hud .clk{justify-self:end;display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px}
+body[class] #hudClock{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;color:#c8102e}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -3692,16 +3706,16 @@ body.th-wl #ovTitle{font-size:32px;letter-spacing:.1em}
 <body>
 <div id="app">
   <header id="hud">
+    <div class="mu"><small id="hudComp"></small></div>
     <div class="sb"><i id="hudHc" class="em"></i><b id="hudH" class="tn">HOME</b><span id="hudScore">0 - 0</span><b id="hudA" class="tn">AWAY</b><i id="hudAc" class="em"></i></div>
-    <div class="clk"><small id="hudComp"></small><span id="hudClock">0'</span></div>
-    <button id="btnSpeed" class="btn spd">×1</button>
+    <div class="clk"><span id="hudClock">0'</span><button id="btnSpeed" class="btn spd">×1</button></div>
   </header>
   <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div><div id="cap"></div><button id="replay" class="replay"><b>REPLAY</b><small>タッチでスキップ ▶▶</small></button>
   </div>
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
   <div id="deck">
-    <div id="insTags"><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i><i data-k="shoot">シュートを狙え！</i></div>
+    <div id="insTags"><i data-k="kp"></i><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i><i data-k="shoot">シュートを狙え！</i></div>
     <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
     <div id="bench"></div>
     <div id="info"><div id="infoBody"></div>
@@ -13296,6 +13310,10 @@ function bossSay(key,name,extra){
 function updateInsTags(){
   const box=$("insTags"); if(!box)return;
   const I=Object.assign({},G.ins||{},{ shoot:$("btnShoot").classList.contains("armed") }), side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";   // SHOOT はボタンの光り方に合わせる
+  // KP(最上段): 発動中の KP の選手とスタイル(→docs/14 §14.101)
+  const kc=G.M&&G.M.home.kp?CARDS[G.M.home.kp]:null, kst=kc?styleOfCard(kc):null;
+  I.kp=!!kc;
+  const kel=box.querySelector('[data-k="kp"]'); if(kel&&kc)kel.innerHTML='<b>KP</b>'+nameOf(kc)+(kst?'<small>'+kst.name+'</small>':'');
   for(const el of box.children){ const k=el.dataset.k, on=k==="side"?!!side:!!I[k];
     if(k==="side"&&side)el.textContent=side;
     el.classList.toggle("on",on); }
@@ -13320,6 +13338,7 @@ function styleText(T,pendingKp){
 function updateStyleBar(){
   $("styH").innerHTML=styleText(G.M.home,BD.kp);
   $("styA").innerHTML=styleText(G.M.away,null);
+  updateInsTags();   // 発動中の KP の札(→docs/14 §14.101)
 }
 function setPlaying(v){ G.playing=v; updateCtl(); if(v){ sndCrowd(true); wakeLock(true); } }
 /** 試合が始まってから終わるまで画面を消さない(止めて考えている間も)。対応していない端末では何もしない */

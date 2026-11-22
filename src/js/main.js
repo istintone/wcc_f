@@ -92,6 +92,10 @@ function bossSay(key,name,extra){
 function updateInsTags(){
   const box=$("insTags"); if(!box)return;
   const I=Object.assign({},G.ins||{},{ shoot:$("btnShoot").classList.contains("armed") }), side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";   // SHOOT はボタンの光り方に合わせる
+  // KP(最上段): 発動中の KP の選手とスタイル(→docs/14 §14.101)
+  const kc=G.M&&G.M.home.kp?CARDS[G.M.home.kp]:null, kst=kc?styleOfCard(kc):null;
+  I.kp=!!kc;
+  const kel=box.querySelector('[data-k="kp"]'); if(kel&&kc)kel.innerHTML='<b>KP</b>'+nameOf(kc)+(kst?'<small>'+kst.name+'</small>':'');
   for(const el of box.children){ const k=el.dataset.k, on=k==="side"?!!side:!!I[k];
     if(k==="side"&&side)el.textContent=side;
     el.classList.toggle("on",on); }
@@ -116,6 +120,7 @@ function styleText(T,pendingKp){
 function updateStyleBar(){
   $("styH").innerHTML=styleText(G.M.home,BD.kp);
   $("styA").innerHTML=styleText(G.M.away,null);
+  updateInsTags();   // 発動中の KP の札(→docs/14 §14.101)
 }
 function setPlaying(v){ G.playing=v; updateCtl(); if(v){ sndCrowd(true); wakeLock(true); } }
 /** 試合が始まってから終わるまで画面を消さない(止めて考えている間も)。対応していない端末では何もしない */
