@@ -2134,4 +2134,4 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 /* HOME などの見出しの数字の欄(→docs/14 §14.75): 名前(上の段)は左寄せ、名前と数字のあいだを詰める */
 #club .chd .num small{display:block;text-align:left;line-height:1;margin:0 0 1px}
 #club .chd .num b{display:block;line-height:1.05}
-#club .ch-acts:has(.prop) .cr:not(.prop){display:flex;align-items:flex-start;justify-content:flex-start;text-align:left}   /* 「今は見送る」も選択肢と同じく左寄せ */
+#club .ch-acts:has(.prop) .cr:not(.prop){display:flex;align-items:center;justify-content:flex-start;text-align:left}   /* 「今は見送る」も選択肢と同じく左寄せ */
