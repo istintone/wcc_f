@@ -106,7 +106,7 @@ function commBoardHtml(ids,on,info,stars){
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
     (first&&L[first]&&xi.includes(first)?loungeLinksSvg(first,xi.filter(id=>ids.includes(id)),L):'')+
     xi.filter(id=>ids.includes(id)).map(id=>sqTokenHtml(id,xi.indexOf(id),true,o(id))).join("")+'</div>'+
-    '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+bench.map(id=>sqTokenHtml(id,S.sq.indexOf(id),false,o(id))).join("")+'</div></div>';
+    '<div class="sq-bench cm-bench"><span class="lbl">SUB</span>'+bench.map(id=>sqTokenHtml(id,S.sq.indexOf(id),false,o(id))).join("")+'</div></div>';
 }
 /**
  * ラウンジの1人目と、盤面のほかの選手との連携の線。線なしは淡い点線、薄線・太線・黄金線は SQUAD と同じ線、
@@ -400,7 +400,7 @@ function sqDetailHtml(){
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
-      (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">控え</span>')+'</div>'+
+      (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">SUB</span>')+'</div>'+
     '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b><em><u style="width:'+(g.is>=5?100:Math.min(100,g.ie/need*100))+'%"></u></em></span>'+
       '<span>特殊 <b class="st5">'+stars(g.ss)+'</b><em><u style="width:'+Math.floor(spProgress(g)*100)+'%"></u></em></span>'+
       (g.q?'<span class="sgn">覚醒の兆し</span>':'')+(g.sq?'<span class="sgn">極みの兆し</span>':'')+
@@ -447,7 +447,7 @@ function squadHtml(){
     '<div class="sq-lkrow"><span class="lklg"><span><i class="l1"></i>薄</span><span><i class="l2"></i>太</span><span><i class="l3"></i>黄金</span><span><i class="omen"></i>兆し</span></span>'+
       '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
-    '<div class="sq-bench"><span class="lbl">控え</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
+    '<div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div></div>'+
     // フォーメーションと最適配置は盤面の下(→docs/14 §14.43)
     '<div class="sq-ctl sq-ctl-b"><button class="btn btn-sub sq-kpb" data-act="kpopen">KP設定</button><select class="sq-formsel" data-chg="sqform" aria-label="フォーメーション">'+SQ_FORMS.map(f=>'<option value="'+f+'"'+(S.form===f?' selected':'')+'>'+f+'</option>').join("")+'</select>'+
       '<button class="btn btn-sub sq-auto" data-act="sqauto">最適配置</button></div>';
@@ -528,13 +528,13 @@ function kickMark(S,id,kind){
 }
 function sqRolesHtml(){
   const S=CL.S, R=S.roles||{};
-  return '<div class="sq-roles"><span class="lbl">任命</span>'+ROLE_KINDS.map(k=>{
+  return '<div class="sq-roles"><span class="lbl">ORDER</span>'+ROLE_KINDS.map(k=>{
     const id=R[k], c=id&&CARDS[id], on=id&&S.sq.slice(0,11).includes(id);
     const mk=!c?"":k==="cap"?CAP_MARK[capApt(c)]:kickMark(S,id,k);
     return '<button class="rs'+(CL.roleSel===k?' sel':'')+(c?' set':'')+(c&&!on?' off':'')+'" data-act="sqrole" data-v="'+k+'">'+
       '<b>'+ROLE_LABEL[k]+'</b>'+(c?'<i class="no">'+c.no+'</i><span class="nm">'+nameOf(c)+'</span><em class="mk m'+mk+'">'+mk+'</em>'
         :'<span class="nm auto">'+(k==="cap"?'未任命':'自動')+'</span>')+
-      (c&&!on?'<small>控え</small>':'')+'</button>'; }).join("")+'</div>';
+      (c&&!on?'<small>SUB</small>':'')+'</button>'; }).join("")+'</div>';
 }
 /** 選手を選ぶ。2人目で入れ替え(→pool.js moveSquad)。任命の枠を選んでいるときは、その役に任命する */
 function sqPick(id){
@@ -714,12 +714,12 @@ function cardModalHtml(id,list){
   let h='<div class="kmodal" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+cardBackOf(id);
-  if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"控え")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
+  if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"SUB")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
   else{
     h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
     if(CL.kSwap){
       h+='<p class="hint">交代させる選手を選ぶ(その選手の育成は消える)</p>'+
-        chipsHtml(S.sq,CL.kOut?[CL.kOut]:[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"控え ")+(g?"個★"+g.is:""),"kout");
+        chipsHtml(S.sq,CL.kOut?[CL.kOut]:[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"SUB ")+(g?"個★"+g.is:""),"kout");
       if(CL.kOut&&S.sq.includes(CL.kOut))h+='<div class="km-cmp"><p class="km-vs"><b>'+nameOf(c)+'</b> ⇄ <b>'+cname(CL.kOut)+'</b> <small>いまの登録</small></p>'+
         cardBackOf(CL.kOut)+'<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
     }
@@ -1094,7 +1094,7 @@ function oppSquadHtml(S,oppId,def,rep){
         def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>'<span class="tg up unq" title="'+nameOf(CARDS[x])+'"><b>'+TAGS["u_"+x].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
-      '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
+      '<div class="sq-bench cm-bench"><span class="lbl">SUB</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
 }
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;

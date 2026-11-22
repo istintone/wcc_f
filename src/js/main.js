@@ -186,7 +186,7 @@ function showInfo(id){
   // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に
   $("infoBody").innerHTML=cardBackHtml(c,{ stars:c.is!=null?[c.is,c.ss]:null, ss:c.ss||0,
     extra:'<p class="cb-now">'+(kp?'<b class="kpt">KP</b> ':'')+(p&&p.yc?'<b class="yct">警告</b> ':'')+
-      (p?'いま '+p.role+'(適性 '+Math.round(p.apt*100)+'%)・ 体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'控え')+
+      (p?'いま '+p.role+'(適性 '+Math.round(p.apt*100)+'%)・ 体力 <b class="'+(p.stam<0.4?"lo":p.stam<0.6?"md":"hi")+'">'+Math.round(p.stam*100)+'%</b>':'SUB')+
       (st?' ・ KP スタイルのランク <b class="rk rk'+rank+'">'+rank+'</b>':'')+'</p>' });
   const b=$("infoKp");
   b.style.display=p?"":"none";

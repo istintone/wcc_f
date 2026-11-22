@@ -66,7 +66,7 @@ function buildBoard(M){
     bindFieldDrag(el,p.id,p.gk);
     BD.cards.appendChild(el); BD.map.set(p.id,el);
   }
-  const lbl=document.createElement("span"); lbl.className="lbl"; lbl.textContent="控え";
+  const lbl=document.createElement("span"); lbl.className="lbl"; lbl.textContent="SUB";
   BD.bench.appendChild(lbl);
   for(const card of M.home.bench){
     const el=mkCard(card);
