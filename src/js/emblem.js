@@ -364,6 +364,7 @@ function embOrnPad(kind){
     case "crown":  return { t:58, b:0,  x:4 };
     case "ribbon": return { t:0,  b:30, x:12 };
     case "wreath": return { t:52, b:30, x:27 };
+    case "laurel": return { t:10, b:12, x:16 };   // 月桂樹は盾の後ろで円弧に広がる(前は余白が無く、枠をはみ出した)
     default:       return { t:0,  b:0,  x:0 };
   }
 }
@@ -507,6 +508,7 @@ function embMainColor(clubId,name,opts){
   const o=opts||{}, d=embDesign(clubId,name,o.design||null,o.color||null), ph=embHueById(d.home);
   return ph?ph.hex:"oklch(0.72 0.22 "+(hashStr("hue:"+clubId)%360).toFixed(1)+")";
 }
+let EMB_UID=0;
 function embSvg(clubId,name,size,opts){
   const o=opts||{};
   const d=embDesign(clubId,name,o.design||null,o.color||null);
@@ -525,7 +527,9 @@ function embSvg(clubId,name,size,opts){
   const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
   // **idはクラブごとに変える**。同じ画面に2つ出したとき clipPath がぶつかる
-  const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"");
+  // **描くたびに別の id**: 同じクラブのエンブレムが同じ画面に2つ以上あると(見出しと CLUB の欄など)、先に置いた形で切り抜かれ、
+  // 盾なのに丸く塗られることがあった(→docs/14 §14.72)
+  const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"")+"_"+(++EMB_UID);
   const stars=o.stars===false?0:embStars(clubId);
   // ★も外装も**盾の外へ足す**。盾を縮めないので、付いた瞬間に中身が小さくならない
   const orn=(d.orn&&d.orn!=="none")?d.orn:null;
