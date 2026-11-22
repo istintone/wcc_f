@@ -912,7 +912,7 @@ function secHtml(){
 function secClubHtml(){
   const S=CL.S, se=secOf(S), b=secBond(S), lv=secLv(S), t=TUNING.sec.lv;
   if(CL.secOpen)return secPickHtml("秘書を替える");
-  const f=secArt(se.id,"full");
+  const f=secArt(se.id,"bust")||secArt(se.id,"full");
   return '<section class="card sec-card"><h3>秘書 <small><button class="lnk" data-act="secopen">替える</button></small></h3>'+
     '<div class="sc-row">'+(f?'<img class="sp-full" src="'+f+'" alt="">':'')+'<div>'+
     '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
@@ -1259,7 +1259,7 @@ function secPickHtml(title){
   const S=CL.S;
   return '<section class="card secpick"><h3>'+title+' <small>能力の差はなく、口調だけが違う</small></h3>'+SECS.map(x=>{
     const b=S.sec.bond[x.id]||0, t=TUNING.sec.lv; let lv=0; while(lv<t.length&&b>=t[lv])lv++;
-    const f=secArt(x.id,"full");
+    const f=secArt(x.id,"bust")||secArt(x.id,"full");   // 監督と同じバストアップ(→docs/14 §14.73)
     return '<button class="sp'+(S.sec.id===x.id?' on':'')+'" data-act="secpick" data-v="'+x.id+'">'+(f?'<img class="sp-full" src="'+f+'" alt="">':'')+
       '<span class="sp-tx"><b>'+x.name+'</b><small>'+x.desc+' ・ '+SEC_LV_LABEL[lv]+'</small>'+
       '<i>「'+SEC_LINES[x.id].hello+'」</i></span></button>'; }).join("")+'</section>';
@@ -1439,7 +1439,7 @@ function managerTabHtml(){
   const d=CL.draft||(CL.draft={});
   const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
     :'<b>'+embEsc(m.name)+'</b><button class="lnk" data-act="medit">名前を変える</button>';
-  const full=mgrArt(m.av,"full");
+  const full=mgrArt(m.av,"bust");   // バストアップ(秘書と同じ。→docs/14 §14.73)
   return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督 GRADE '+mgrLv(S)+'</small></h3>'+
       '<div class="mg-top">'+(full?'<img class="mg-full" src="'+full+'" alt="">':'')+'<div class="mg-body">'+
       '<div class="mg-name">'+name+'</div>'+

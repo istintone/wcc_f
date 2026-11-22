@@ -8,7 +8,8 @@
   出力  src/js/art-sec.js   SEC_ART = { s0:{ full:"data:…", face:"data:…" }, … }
 
   full … 立ち絵(幅150に縮める)。秘書を選ぶ画面・CLUB の秘書の欄
-  face … 顔の切り抜き(96×96)。秘書の吹き出し・チャットのアイコン
+  face … 顔の切り抜き(96×96)
+  bust … バストアップ(監督と同じ切り方)。秘書を選ぶ画面・MANAGER の秘書の欄
 
 秘書と絵の組(口調に合わせる): s0 白石(丁寧・紺のスーツとメモ帳)= sec01 / s1 ゾーイ・カーター(元気・腕まくりとコーヒー)= sec03 /
 s2 エリカ・ハートマン(クール・眼鏡とタブレット)= sec02 / s3 フィオナ・オコナー(おっとり)= sec04
@@ -48,9 +49,15 @@ def main():
         im = Image.open(p).convert("RGBA")
         full = im.resize((FULL_W, round(im.height * FULL_W / im.width)), Image.LANCZOS)
         face = im.crop((x, y, x + n, y + n)).resize((FACE, FACE), Image.LANCZOS)
-        f1, f2 = enc(full), enc(face)
-        total += len(f1) + len(f2)
-        rows.append('  %s:{ full:"%s",\n    face:"%s" }' % (sid, f1, f2))
+        # バストアップ(監督と同じ切り方: 頭の上から 170px・幅 150px → 幅 220。→docs/14 §14.73)
+        a = im.split()[3]
+        top = a.getbbox()[1]
+        head = a.crop((0, top, im.width, top + 60)).getbbox()
+        cx = (head[0] + head[2]) // 2
+        bust = im.crop((cx - 75, top - 6, cx + 75, top - 6 + 170)).resize((220, round(220 * 170 / 150)), Image.LANCZOS)
+        f1, f2, f3 = enc(full), enc(face), enc(bust)
+        total += len(f1) + len(f2) + len(f3)
+        rows.append('  %s:{ full:"%s",\n    face:"%s",\n    bust:"%s" }' % (sid, f1, f2, f3))
     js = ["/* 生成物。手で編集しない。 python tools/gen_sec_art.py が pftb の秘書の絵から書き出す。 */",
           "const SEC_ART={", ",\n".join(rows), "};", ""]
     OUT.write_bytes("\n".join(js).encode("utf-8"))
