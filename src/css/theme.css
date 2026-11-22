@@ -2331,3 +2331,47 @@ body[class] #pad .btn-kp{background:#16130e!important;color:#f2c14e!important;bo
 body[class] #pad .btn-kp.on{background:#f2c14e!important;color:#2a1d00!important;border-color:#fff3b0!important}
 /* ピッチを画面の中央に(→docs/14 §14.96): 盤面と控えの列は上に寄せ、下はボタンの置き場 */
 #deck{align-items:flex-start!important}
+/* 筐体の操作パネル(→docs/14 §14.97): 画面の左右の端から伸びる、黒い縁のオレンジの板。左に一枚の十字、右に丸いボタン。架空の筐体(ロゴ・本家の文字は入れない) */
+body[class] #pad .cross,body[class] #pad .act{position:absolute;bottom:0;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom);
+  background:linear-gradient(180deg,#f7a640 0%,#ec8a22 55%,#d4701a 100%);border:3px solid #111;
+  box-shadow:0 -2px 10px rgba(0,0,0,.45),inset 0 2px 0 rgba(255,255,255,.35),inset 0 -6px 0 rgba(0,0,0,.12)}
+/* 左の板: 十字。上・左右・下の腕と赤い中央をすき間なくつなげて一枚の十字に */
+body[class] #pad .cross{left:0;width:126px;height:112px;padding:22px 10px 8px 12px;border-left:0;border-bottom:0;border-radius:0 34px 0 0;
+  grid-template-columns:36px 30px 36px!important;grid-template-rows:27px 30px 27px!important;gap:0!important;align-content:start}
+body[class] #pad .cross::before{content:"TACTICS";position:absolute;left:12px;top:5px;font-family:var(--f-num);font-size:8.5px;font-weight:700;letter-spacing:.18em;color:#1a1208;opacity:.8}
+body[class] #pad .cross::after{content:"";position:absolute;left:0;right:22px;top:16px;height:2px;background:#1a1208;opacity:.25}
+body[class] #pad .tac{opacity:1!important;font-size:7.5px!important;line-height:1.05!important;letter-spacing:-.05em!important;
+  color:#2a1d00!important;background:linear-gradient(180deg,#fff27a,#ffd21e 55%,#e9b10a)!important;border:0!important;border-radius:0!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 0 rgba(0,0,0,.18)!important;outline:2px solid #111;outline-offset:-1px;z-index:1}
+body[class] #pad .tac.up{border-radius:6px 6px 0 0!important}
+body[class] #pad .tac.dn{border-radius:0 0 6px 6px!important}
+body[class] #pad .tac.lf{border-radius:6px 0 0 6px!important}
+body[class] #pad .tac.rt{border-radius:0 6px 6px 0!important}
+body[class] #pad .tac.md{border-radius:2px!important;color:#fff!important;font-size:8px!important;background:linear-gradient(180deg,#ff5a4a,#d8141f 60%,#a00d16)!important;z-index:2}
+body[class] #pad .tac.on{color:#fff!important;background:linear-gradient(180deg,#ff8a7e,#e8202e 60%,#b00f1c)!important;box-shadow:0 0 12px rgba(255,80,80,.9),inset 0 1px 0 rgba(255,255,255,.5)!important;z-index:3}
+body[class] #pad .tac.md.on{color:#2a1d00!important;background:linear-gradient(180deg,#fffbe0,#ffe36a 55%,#f2c14e)!important;box-shadow:0 0 12px rgba(255,230,120,.95)!important}
+body[class] #pad .tac:active{transform:translateY(1px)}
+/* 右の板: KEEPER(水色)と SHOOT(赤)の丸。上に小さな黄色の KP */
+body[class] #pad .act{right:0;width:140px;height:104px;padding:0 12px 10px 12px;border-right:0;border-bottom:0;border-radius:34px 0 0 0;
+  display:flex;flex-direction:row;align-items:flex-end;justify-content:flex-end;gap:10px}
+body[class] #pad .act::before{content:"ACTION";position:absolute;right:12px;top:5px;font-family:var(--f-num);font-size:8.5px;font-weight:700;letter-spacing:.18em;color:#1a1208;opacity:.8}
+body[class] #pad .act::after{content:"";position:absolute;left:22px;right:0;top:16px;height:2px;background:#1a1208;opacity:.25}
+body[class] #pad .btn-shoot,body[class] #pad .btn-keeper{opacity:1!important;border:0!important;box-shadow:0 0 0 3px #111,0 4px 0 3px #111,inset 0 3px 0 rgba(255,255,255,.45),inset 0 -4px 0 rgba(0,0,0,.25)!important;margin-bottom:4px}
+body[class] #pad .btn-shoot{width:56px!important;height:56px!important;font-size:9.5px!important;background:radial-gradient(circle at 50% 30%,#ff8a7e,#e8202e 55%,#a00d16)!important}
+body[class] #pad .btn-keeper{width:46px!important;height:46px!important;font-size:7.5px!important;background:radial-gradient(circle at 50% 30%,#bff4ff,#2ec4e6 55%,#0f7fa0)!important}
+body[class] #pad .btn-shoot.armed,body[class] #pad .btn-keeper.on{color:#2a1d00!important;background:radial-gradient(circle at 50% 30%,#fffbe0,#ffe36a 55%,#e9b10a)!important;box-shadow:0 0 0 3px #111,0 4px 0 3px #111,0 0 16px 4px rgba(255,230,120,.9)!important}
+body[class] #pad .mid{right:84px!important;bottom:calc(env(safe-area-inset-bottom) + 62px)!important;z-index:13}
+body[class] #pad .mid .btn-kp{width:30px!important;height:30px!important;border-radius:50%!important;font-size:9.5px!important;opacity:1!important;
+  color:#2a1d00!important;background:radial-gradient(circle at 50% 30%,#fffbe0,#ffd21e 55%,#c99a0a)!important;border:0!important;
+  box-shadow:0 0 0 2.5px #111,0 3px 0 2.5px #111,inset 0 2px 0 rgba(255,255,255,.6)!important}
+body[class] #pad .mid .btn-kp.on{background:radial-gradient(circle at 50% 30%,#fff,#ffe36a 55%,#f2c14e)!important;box-shadow:0 0 0 2.5px #111,0 0 14px 3px rgba(255,230,120,.95)!important}
+/* ピッチになるべくかからないように(下の空き + GK 横の入れない帯に収める) */
+body[class] #pad .cross{width:110px;height:93px;padding:16px 8px 5px 10px;grid-template-columns:32px 28px 32px!important;grid-template-rows:23px 26px 23px!important;border-radius:0 28px 0 0}
+body[class] #pad .cross::before,body[class] #pad .act::before{top:3px;font-size:7.5px}
+body[class] #pad .cross::after,body[class] #pad .act::after{top:12px}
+body[class] #pad .tac{font-size:7px!important}
+body[class] #pad .act{width:124px;height:92px;padding:0 10px 6px 10px;gap:8px;border-radius:28px 0 0 0}
+body[class] #pad .btn-shoot{width:52px!important;height:52px!important;font-size:9px!important}
+body[class] #pad .btn-keeper{width:42px!important;height:42px!important;font-size:7px!important}
+body[class] #pad .mid{right:80px!important;bottom:calc(env(safe-area-inset-bottom) + 58px)!important}
+body[class] #pad .mid .btn-kp{width:28px!important;height:28px!important;font-size:9px!important}
