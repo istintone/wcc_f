@@ -676,7 +676,7 @@ function bizAfterMatch(S,fx,res,out){
   const B=TUNING.biz, Z=S.biz, rng=mulberry32((S.seed^hashStr("biz:"+S.term+":"+S.played))>>>0);
   let gate=0;
   if(fx.home){
-    Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*10)/10;
+    Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*(typeof tagK==="function"?tagK(S,"money"):1)*10)/10;   // スポンサー景気・経営難(→docs/23)
     S.money+=gate;
     out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+gate.toFixed(1)+"億)");
   }else Z.att=0;
@@ -703,7 +703,8 @@ function answerStadium(S,yes){
   if(!yes){ Z.cool=TUNING.biz.cool; return { ok:false }; }
   if(S.money<o.cost){ Z.cool=TUNING.biz.cool; return { ok:false, short:true }; }
   S.money-=o.cost; Z.stad=o.lv; Z.fans+=TUNING.biz.fansStad;
-  return { ok:true, lv:o.lv };
+  const tl=[]; if(typeof addTeamTag==="function"&&S.money<o.cost*0.5)addTeamTag(S,"broke",tl);   // 大きな出費で資金が細ると経営難(→docs/23)
+  return { ok:true, lv:o.lv, tl };
 }
 
 /* ---------- スポンサーとミッション(→docs/08 §8.9・docs/05 §5.14) ----------

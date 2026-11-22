@@ -2645,6 +2645,10 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 /* コンビのタグ(→docs/23 §23.3b): 青緑 */
 #club .tg.cmb{background:linear-gradient(100deg,#0d6e6e,#2fc4b2 55%,#18a090);color:#04201d}
 #club .pt-row .tg.cmb{color:#04201d}
+/* 固有タグ(→docs/23 §23.4): 紅のきらめき */
+#club .tg.unq{background:linear-gradient(100deg,#7a0a3a,#e8457a 45%,#ffb3c9 55%,#c2185b 75%);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+#club .pt-row .tg.unq{color:#fff}
+#club .tag-ev .pl-av img{object-fit:cover;object-position:50% 8%;transform:scale(1.5);transform-origin:50% 15%}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -3319,6 +3323,9 @@ window.addEventListener("error",e=>{ document.documentElement.dataset.boot="err:
 <script>
 /* 生成物。手で編集しない。 python tools/gen_combos.py が tools/combo_source.txt から書き出す(→docs/23 §23.3b)。 */
 const SPECIAL_COMBOS=[{"id": "sp01", "name": "若き指揮者たち", "ids": ["cat06", "cat07", "cat08"], "ax": "R"}, {"id": "sp02", "name": "閃光の三叉槍", "ids": ["cat09", "cat10", "cat11"], "ax": "O"}, {"id": "sp03", "name": "若き防壁", "ids": ["cat03", "cat04"], "ax": "D"}, {"id": "sp04", "name": "双璧", "ids": ["nld03", "nld04"], "ax": "D"}, {"id": "sp05", "name": "北風の三角錐", "ids": ["nld06", "nld07", "nld08"], "ax": "R"}, {"id": "sp06", "name": "巨塔の壁", "ids": ["msd03", "msd04"], "ax": "P"}, {"id": "sp07", "name": "三槍の舞", "ids": ["msd08", "msd09", "msd11"], "ax": "O"}, {"id": "sp08", "name": "鉄の中盤", "ids": ["mdb06", "mdb07", "mdb08"], "ax": "D"}, {"id": "sp09", "name": "疾風の三騎", "ids": ["mdb09", "mdb10", "mdb11"], "ax": "S"}, {"id": "sp10", "name": "三重の城壁", "ids": ["mib02", "mib03", "mib04"], "ax": "D"}, {"id": "sp11", "name": "双頭の竜", "ids": ["mib10", "mib11"], "ax": "O"}, {"id": "sp12", "name": "調律の三角形", "ids": ["par06", "par07", "par08"], "ax": "R"}, {"id": "sp13", "name": "王の矛", "ids": ["mur08", "mur09", "mur11"], "ax": "O"}, {"id": "sp14", "name": "鋼と閃き", "ids": ["mcb08", "mcb10"], "ax": "O"}];
+
+/* 生成物。手で編集しない。 python tools/gen_uniques.py が tools/unique_source.txt から書き出す(→docs/23 §23.4)。 */
+const UNIQUE_CARDS={"mcb10": {"name": "北の巨神", "kind": "striker"}, "mdb10": {"name": "疾風の王", "kind": "speedster"}, "mdb11": {"name": "左の稲妻", "kind": "speedster"}, "cat09": {"name": "至高の神童", "kind": "magic"}, "cat07": {"name": "中盤の魔術師", "kind": "maestro"}, "mur11": {"name": "万能の大砲", "kind": "striker"}, "par10": {"name": "両足の芸術家", "kind": "flair"}, "par02": {"name": "縦の機関車", "kind": "runner"}, "msd08": {"name": "右翼の王", "kind": "flair"}, "msd03": {"name": "大陸の壁", "kind": "wall"}, "nld09": {"name": "右翼の星", "kind": "speedster"}, "nld03": {"name": "若き鉄壁", "kind": "wall"}, "ldb09": {"name": "天才肌の十番", "kind": "flair"}, "mib10": {"name": "不屈の点取り屋", "kind": "striker"}, "mcb01": {"name": "巨大な盾", "kind": "keeper"}, "mdr01": {"name": "鉄の守護者", "kind": "keeper"}};
 
 "use strict";
 /* =========================================================================
@@ -4229,6 +4236,62 @@ for(const [id,name,slots,axes,stat] of COMBO_TYPES)COMBOS["k_"+id]={ id:"k_"+id,
 if(typeof SPECIAL_COMBOS!=="undefined")for(const c of SPECIAL_COMBOS)
   COMBOS[c.id]={ id:c.id, name:c.name, n:c.ids.length, ids:c.ids, axes:[c.ax], stat:[{ st:[AX_STAT[c.ax]], k:"l" }], special:true };
 const comboDesc=C=>(C.special?"特別なコンビ":"コンビ")+"(全員が先発のとき): "+C.stat.map(x=>x.st.map(s=>STAT_LABEL[s]).join("・")+" +"+TUNING.tag.stat[x.k]).join("、");
+
+/* ---- 第5段(→docs/23): 固有・出来事・自動で付くチームのタグ ---- */
+Object.assign(TUNING.tag,{
+  unique:{ kamiAge:20, kamiApp:10, princeApp:50, crybadN:2, academyAge:21 },
+  event:{ p:0.12 },                       // 試合のあとに出来事が起きる率(1つずつ。答えるまで次は起きない)
+  fever:[10000,30000,60000,100000],       // ファンの節目(越えたら「サポーターの熱狂」)
+  crowd:3                                 // カップの試合が続いた数で「過密日程」
+});
+// カードが持つ固有の型(tools/unique_source.txt の「型」)
+const UNIQUE_KIND={
+  striker:  { stat:[{ st:["off","pow"], k:"l" }] },
+  speedster:{ stat:[{ st:["spd","off"], k:"l" }] },
+  magic:    { stat:[{ st:["tec","spd"], k:"l" }] },
+  flair:    { stat:[{ st:["off","tec"], k:"l" }] },
+  maestro:  { stat:[{ st:["tec"], k:"l" }], teamFx:{ motDown:"-s" } },
+  wall:     { stat:[{ st:["def","pow"], k:"l" }] },
+  keeper:   { stat:[{ st:["def","pow","tec"], k:"m" }] },
+  runner:   { stat:[{ st:["spd","sta"], k:"l" }] }
+};
+const statTxt=L=>L.map(x=>(x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・"))+" "+(x.neg?"−":"+")+TUNING.tag.stat[x.k]).join("、");
+// カードが持つ固有はタグ u_カードの id(どの任期でも初めから持つ。保存しない)
+if(typeof UNIQUE_CARDS!=="undefined")for(const id in UNIQUE_CARDS){ const u=UNIQUE_CARDS[id], K=UNIQUE_KIND[u.kind];
+  TAGS["u_"+id]={ name:u.name, scope:"player", kind:"unique", card:true, pol:1, dur:null, stat:K.stat, teamFx:K.teamFx,
+    desc:"固有(このカードだけ): "+statTxt(K.stat)+(K.teamFx?"、SQUAD にいるとチームの調子が落ちにくい":"") }; }
+Object.assign(TAGS,{
+  // 条件で付く固有(チームに1人ずつ。任期の終わりでクリア)
+  kami:    { name:"神の子",           scope:"player", kind:"unique", pol:1, dur:null, stat:[{ st:ALL6, k:"m" },{ when:"final", st:ALL6, k:"s" }], desc:"固有: 20歳以下で能力の合計がチームの頂点。能力すべて +2、決勝ではさらに +1" },
+  prince:  { name:"イル・プリンチペ", scope:"player", kind:"unique", pol:1, dur:null, stat:[{ st:["tec","off"], k:"l" }], teamFx:{ motDown:"-s" }, desc:"固有: 長く出続ける TEC 最上位の攻撃の選手。TEC・OFE +3、チームの調子が落ちにくい" },
+  crybaby: { name:"クライベイビー",   scope:"player", kind:"unique", pol:1, dur:null, stat:[{ when:"hot", st:ALL6, k:"l" },{ when:"cold", st:ALL6, k:"s", neg:true }], desc:"固有: 気分屋のスター。絶好調のとき能力すべて +3、不調以下では −1" },
+  academy: { name:"下部組織の至宝",   scope:"player", kind:"unique", pol:1, dur:null, fx:{ link:"+m" }, stat:[{ st:["tec"], k:"s" }], desc:"固有: 若くして覚醒した生え抜き。連携の経験 ×1.3、TEC +1" },
+  // 出来事・自動で付くチームのタグ
+  camp:    { name:"合宿",             scope:"team", kind:"gen", pol:1,  dur:5, fx:{ exp:"+m", fat:"+m" }, desc:"練習の経験 ×1.3。ただし疲労がたまりやすい" },
+  boom:    { name:"スポンサー景気",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"broke", fx:{ money:"+s" }, desc:"入場料 ×1.15" },
+  broke:   { name:"経営難",           scope:"team", kind:"gen", pol:-1, dur:10, opp:"boom",  fx:{ money:"-s" }, desc:"大きな出費のあと。入場料 ×0.85" },
+  fever:   { name:"サポーターの熱狂", scope:"team", kind:"gen", pol:1,  dur:5,  fx:{ motDown:"-l" }, desc:"ファンが節目を越えた。調子が落ちにくい" },
+  crowded: { name:"過密日程",         scope:"team", kind:"gen", pol:-1, dur:null, endOn:"nocup", fx:{ fat:"+m" }, desc:"カップの試合が続いている。疲労がたまりやすい(カップ以外の試合で消える)" },
+  afterglow:{ name:"優勝の余韻",      scope:"team", kind:"gen", pol:1,  dur:3,  fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい" },
+  // 出来事で付く選手のタグ
+  gossip:  { name:"ゴシップ",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+m" }, desc:"週刊誌に追われている。調子が上下しやすい" },
+  mood:    { name:"ムードメーカー",   scope:"player", kind:"gen", pol:1,  dur:10, teamFx:{ motUp:"+s" }, desc:"ロッカールームの盛り上げ役。SQUAD にいると、勝ったときチームの調子が上がりやすい" },
+  birthday:{ name:"誕生日",           scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"仲間に祝ってもらった。次の試合は絶好調" }
+});
+/*
+ * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
+ *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
+ */
+const TAG_EVENTS=[
+  { k:"camp",   q:"地元の企業から、合宿の申し出が届きました。",           ch:[["受ける",{ team:"camp" }],["断る",{}]] },
+  { k:"boom",   q:"地元の企業が、協賛を増やしたいそうです。広告に {n} を出してほしいとのこと。", p:true,
+    ch:[["受ける",{ team:"boom", player:"gossip" }],["断る",{}]] },
+  { k:"rumor",  q:"{n} が移籍の噂に心を乱しているようです。",              p:true, ch:[["話を聞く",{ bet:[0.6,"growth",null] }],["放っておく",{ player:"rebel" }]] },
+  { k:"press",  q:"{n} の私生活が週刊誌に載りました。",                    p:true, ch:[["かばう",{}],["本人に任せる",{ bet:[0.5,"mood","gossip"] }]] },
+  { k:"mood",   q:"{n} がロッカールームを盛り上げています。",              p:true, ch:[["任せる",{ player:"mood" }],["静かに見守る",{}]] },
+  { k:"bday",   q:"今日は {n} の誕生日です。",                             p:true, ch:[["みんなで祝う",{ player:"birthday" }],["普段どおり",{}]] },
+  { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] }
+];
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -6463,7 +6526,7 @@ function bizAfterMatch(S,fx,res,out){
   const B=TUNING.biz, Z=S.biz, rng=mulberry32((S.seed^hashStr("biz:"+S.term+":"+S.played))>>>0);
   let gate=0;
   if(fx.home){
-    Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*10)/10;
+    Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*(typeof tagK==="function"?tagK(S,"money"):1)*10)/10;   // スポンサー景気・経営難(→docs/23)
     S.money+=gate;
     out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+gate.toFixed(1)+"億)");
   }else Z.att=0;
@@ -6490,7 +6553,8 @@ function answerStadium(S,yes){
   if(!yes){ Z.cool=TUNING.biz.cool; return { ok:false }; }
   if(S.money<o.cost){ Z.cool=TUNING.biz.cool; return { ok:false, short:true }; }
   S.money-=o.cost; Z.stad=o.lv; Z.fans+=TUNING.biz.fansStad;
-  return { ok:true, lv:o.lv };
+  const tl=[]; if(typeof addTeamTag==="function"&&S.money<o.cost*0.5)addTeamTag(S,"broke",tl);   // 大きな出費で資金が細ると経営難(→docs/23)
+  return { ok:true, lv:o.lv, tl };
 }
 
 /* ---------- スポンサーとミッション(→docs/08 §8.9・docs/05 §5.14) ----------
@@ -7196,7 +7260,7 @@ const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.
 function linkExp(S,a,b,v,cap){
   const l=linkSet(S,a,b);
   l.cap=Math.max(l.cap||0,cap);
-  if(l.lv<Math.min(l.cap,2))l.exp+=v*facK(S,"lounge");
+  if(l.lv<Math.min(l.cap,2))l.exp+=v*facK(S,"lounge")*playerTagK(S,a,"link")*playerTagK(S,b,"link");
 }
 /** 試合のあと、たまった経験で連携の段を上げる(黄金線=3 はここでは上がらない) */
 function settleLinks(S,out){
@@ -7230,7 +7294,7 @@ function doTraining(S,i,intensity){
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
-      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
+      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train")*tagK(S,"exp");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
     graphAdd(S,PARAM_AXIS[o.param],R.basic*k*gk); ups=[PARAM_AXIS[o.param]];
@@ -7238,7 +7302,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train");
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train")*tagK(S,"exp");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
       if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
@@ -7574,7 +7638,7 @@ function afterMatchGrowth(S,fx,res){
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
   for(const id in S.g.pl){
     const g=S.g.pl[id];
-    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1)*playerTagK(S,id,"fat"):0))*N.recover*medFat(S));
+    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1)*playerTagK(S,id,"fat")*tagK(S,"fat"):0))*N.recover*medFat(S));
   }
   // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
   const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
@@ -7894,7 +7958,9 @@ function motLockApply(S){ if(tagOn(S,"motLock"))for(const id in S.g.pl)if(S.g.pl
 /** チームのタグの効き目(掛け算)。無ければ 1 */
 function tagK(S,key){
   let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key]&&T.fx[key]!=="on")k*=tagFxK(T.fx[key]); }
-  for(const id of S.sq||[])for(const t of (S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[]){ const T=TAGS[t.id]; if(T&&T.teamFx&&T.teamFx[key])k*=tagFxK(T.teamFx[key]); }
+  for(const id of S.sq||[]){
+    for(const t of (S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[]){ const T=TAGS[t.id]; if(T&&T.teamFx&&T.teamFx[key])k*=tagFxK(T.teamFx[key]); }
+    const U=TAGS["u_"+id]; if(U&&U.teamFx&&U.teamFx[key])k*=tagFxK(U.teamFx[key]); }
   return k;
 }
 /** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
@@ -7935,6 +8001,9 @@ function tagsAfterMatch(S,fx,res,out){
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
   nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
   comboCheck(S,out);                            // コンビ(→docs/23 §23.3b)
+  autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
+  uniqueCheck(S,out);                           // 条件で付く固有
+  tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -7956,7 +8025,8 @@ function playerTagsView(S,id){
   const g=S.g&&S.g.pl[id]; if(!g)return [];
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
-  return cb.concat((g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
+  const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
+  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -8022,6 +8092,7 @@ function addPlayerTag(S,id,tid,out){
   }
   L.push({ id:tid, n:tagDur(T) });
   if(T.onAdd==="mot4"&&g.mot>0)g.mot=4;
+  if(tid==="rebel"||tid==="gossip"||tid==="waiting")pCnt(g).bad=(pCnt(g).bad||0)+1;   // クライベイビーの判定
   out.push("🏷 "+nm+" に「"+T.name+"」 ― "+T.desc);
 }
 function dropPlayerTag(S,id,tid,out){
@@ -8112,15 +8183,17 @@ function applyTagStats(def,tagIds,S,fx,combos){
   const team=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
   const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
   const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
-    const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k]; };
+    const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+(x.neg?-1:1)*T.stat[x.k]; };
+    const U=TAGS["u_"+c.id]; if(U)for(const x of U.stat)put(x);   // カードが持つ固有(どの任期でも・相手のときも)
     for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
     if(start)for(const C of cmb[c.id]||[])for(const x of C.stat)put(x);
     if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
       if(P.kind==="trait"&&!(start&&role&&P.pos.includes(role)))continue;
       if(P.capX)cap=T.statCapX;
-      for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue; put(x); } }
+      for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue;
+        if(x.when==="hot"&&c.gm!==4)continue; if(x.when==="cold"&&!(c.gm<=2))continue; put(x); } }
     if(!Object.keys(add).length)return c;
-    const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.min(cap,add[k]),1,STAT_MAX);
+    const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.max(-cap,Math.min(cap,add[k])),1,STAT_MAX);
     return o; };
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));
@@ -8185,6 +8258,58 @@ function oppCombos(def,strong,gold){
   const sp=findCombos(xi,role,()=>true,()=>true,[],TUNING.tag.combo.max).filter(c=>COMBOS[c.id].special);
   if(!strong)return sp;
   return findCombos(xi,role,()=>true,ax=>ax.some(a=>gold[a]),sp,TUNING.tag.combo.max);
+}
+
+/* ---- 固有タグ(→docs/23 §23.4)---- */
+/** 選手の固有(カードが持つもの → 条件で付いたもの) */
+const cardUnique=id=>TAGS["u_"+id]?"u_"+id:null;
+/** 条件で付く固有(試合のあと)。チームに1人ずつ。カードの固有を持つ選手には付かない */
+function uniqueCheck(S,out){
+  const U=TUNING.tag.unique, sq=S.sq.filter(id=>S.g.pl[id]), got=S.g.uq||(S.g.uq={});
+  const has=id=>cardUnique(id)||pTags(S,id).some(t=>TAGS[t.id].kind==="unique");
+  const give=(tid,id)=>{ if(got[tid]||!id||has(id))return; got[tid]=id; addPlayerTag(S,id,tid,out); };
+  const gc=id=>growCard(S,CARDS[id]), tot=id=>{ const c=gc(id); return STATS.reduce((a,k)=>a+c[k],0); };
+  const app=id=>pCnt(S.g.pl[id]).app;
+  const top=sq.slice().sort((a,b)=>tot(b)-tot(a))[0];
+  if(top&&CARDS[top].age<=U.kamiAge&&app(top)>=U.kamiApp)give("kami",top);
+  const atk=sq.filter(id=>CARDS[id].pos==="FW"||CARDS[id].pos==="MF").sort((a,b)=>gc(b).tec-gc(a).tec)[0];
+  if(atk&&app(atk)>=U.princeApp)give("prince",atk);
+  for(const id of sq){ const c=pCnt(S.g.pl[id]);
+    if((c.bad||0)>=U.crybadN&&/^[KL]$/.test(CARDS[id].rar||""))give("crybaby",id);
+    if(CARDS[id].age<=U.academyAge&&S.g.pl[id].is>=5)give("academy",id); }
+}
+/* ---- 自動で付くチームのタグ・出来事(→docs/23 §23.2) ---- */
+function autoTeamTags(S,fx,res,out){
+  // 優勝の余韻: この試合で大会を取った
+  const n=(S.titles||[]).length; if(S.g.titleN!=null&&n>S.g.titleN)addTeamTag(S,"afterglow",out); S.g.titleN=n;
+  // 過密日程: カップの試合が続いた / カップ以外の試合で消える
+  S.g.cupRun=fx&&fx.kind==="cup"?(S.g.cupRun||0)+1:0;
+  if(!S.g.cupRun)dropTeamTag(S,"crowded",out);
+  else if(S.g.cupRun===TUNING.tag.crowd)addTeamTag(S,"crowded",out);
+  // サポーターの熱狂: ファンが節目を越えた
+  if(S.biz){ const f=S.biz.fans, i=TUNING.tag.fever.filter(v=>f>=v).length; if(S.g.feverN!=null&&i>S.g.feverN)addTeamTag(S,"fever",out); S.g.feverN=i; }
+}
+/** 出来事を起こすか(試合のあと)。答えるまで次は起きない */
+function tagEventRoll(S){
+  if(S.g.tev||S.termOver)return;
+  const r=mulberry32((S.seed^hashStr("tev:"+S.term+":"+S.played))>>>0);
+  if(r()>=TUNING.tag.event.p)return;
+  const ev=TAG_EVENTS[Math.floor(r()*TAG_EVENTS.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
+  S.g.tev={ k:ev.k, id:ev.p&&sq.length?sq[Math.floor(r()*sq.length)]:null };
+}
+const tagEventOf=S=>S.g&&S.g.tev?TAG_EVENTS.find(e=>e.k===S.g.tev.k):null;
+const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"");
+/** 出来事に答える。結果の行を返す */
+function answerTagEvent(S,i){
+  const ev=tagEventOf(S); if(!ev||!ev.ch[i])return [];
+  const id=S.g.tev.id, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  if(R.team)addTeamTag(S,R.team,out);
+  if(R.player&&id)addPlayerTag(S,id,R.player,out);
+  if(R.bet&&id){ const [p,hit,miss]=R.bet, ok=mulberry32((S.seed^hashStr("teb:"+S.term+":"+S.played+":"+id))>>>0)()<p, t=ok?hit:miss;
+    if(t)addPlayerTag(S,id,t,out); else out.push(nameOf(CARDS[id])+" は落ち着いたようだ"); }
+  if(R.fat&&id){ const g=S.g.pl[id]; g.fat=clamp(g.fat+R.fat,0,TUNING.grow.int.fatMax); }
+  if(!out.length)out.push("いつもどおりに戻った");
+  return out;
 }
 
 /* =========================================================================
@@ -9092,6 +9217,9 @@ function makeArticle(S,M,L,RT){
   // 黄金期の到来(この試合の前の練習で、成長グラフの金色が3つそろった。→docs/15 §15.3)
   if(S.g&&S.g.goldenAt!=null&&S.g.goldenAt===S.played-1)side.push("【黄金期到来】"+me+"の成長グラフが黄金に！ 全員が絶好調、手が付けられない");
   for(const x of L.lines){
+    // タグ(→docs/23): 付いたタグをゴシップに
+    { const m=/^🏷 (.+?) に「(.+?)」/.exec(x); if(m&&side.length<3)side.push("【噂】"+m[1]+" に「"+m[2]+"」の声"); }
+    if(/^🏷 .*再現といわれています/.test(x))side.push("【特集】"+x.replace(/^🏷 /,"").replace(/(。|\().*$/,""));
     if(/が覚醒/.test(x))side.push("【独占】"+x.replace(/^⭐ /,"")+" 練習場で異次元の動き");
     else if(/★5 に/.test(x))side.push("【分析】"+x.replace(/^⭐ /,""));
     else if(/黄金の輝き/.test(x))side.push("【話題】"+x.replace(/^✨ /,"")+" ― 名コンビ誕生か");
@@ -10908,8 +11036,9 @@ function oppSquadHtml(S,oppId,def,rep){
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
       '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
       (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
-      ((def.titles||[]).length||(def.combos||[]).length?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
-        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
+      ((def.titles||[]).length||(def.combos||[]).length||def.xi.some(s=>TAGS["u_"+s.card.id])?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
+        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+
+        def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>'<span class="tg up unq" title="'+nameOf(CARDS[x])+'"><b>'+TAGS["u_"+x].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
@@ -10996,10 +11125,18 @@ function teamTagsHtml(){
   return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
+/** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
+function tagEventHtml(){
+  const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
+  const id=S.g.tev.id;
+  return '<section class="sec sec-ev tag-ev">'+(id?'<i class="sec-av pl-av">'+(artSrc(CARDS[id],"stand")?'<img src="'+artSrc(CARDS[id],"stand")+'" alt="">':'')+'</i>':secAv(S))+
+    '<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">EVENT</em></b><p>'+tagEventText(S,ev)+'</p>'+
+    '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="tagev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+}
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
@@ -11090,7 +11227,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+tagEventHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -11304,11 +11441,13 @@ function onClubClick(e){
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
     else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
-  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
+  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); save(); showClub(true);
+    if(r&&r.tl&&r.tl.length)setTimeout(()=>infoBar(r.tl),0); return; }
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
+  if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
   if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }

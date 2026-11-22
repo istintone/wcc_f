@@ -2046,3 +2046,7 @@ body[class] #club .sc-rbox .scout-sec .sec-nm{color:#ff5a6e}
 /* コンビのタグ(→docs/23 §23.3b): 青緑 */
 #club .tg.cmb{background:linear-gradient(100deg,#0d6e6e,#2fc4b2 55%,#18a090);color:#04201d}
 #club .pt-row .tg.cmb{color:#04201d}
+/* 固有タグ(→docs/23 §23.4): 紅のきらめき */
+#club .tg.unq{background:linear-gradient(100deg,#7a0a3a,#e8457a 45%,#ffb3c9 55%,#c2185b 75%);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+#club .pt-row .tg.unq{color:#fff}
+#club .tag-ev .pl-av img{object-fit:cover;object-position:50% 8%;transform:scale(1.5);transform-origin:50% 15%}

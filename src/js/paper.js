@@ -52,6 +52,9 @@ function makeArticle(S,M,L,RT){
   // 黄金期の到来(この試合の前の練習で、成長グラフの金色が3つそろった。→docs/15 §15.3)
   if(S.g&&S.g.goldenAt!=null&&S.g.goldenAt===S.played-1)side.push("【黄金期到来】"+me+"の成長グラフが黄金に！ 全員が絶好調、手が付けられない");
   for(const x of L.lines){
+    // タグ(→docs/23): 付いたタグをゴシップに
+    { const m=/^🏷 (.+?) に「(.+?)」/.exec(x); if(m&&side.length<3)side.push("【噂】"+m[1]+" に「"+m[2]+"」の声"); }
+    if(/^🏷 .*再現といわれています/.test(x))side.push("【特集】"+x.replace(/^🏷 /,"").replace(/(。|\().*$/,""));
     if(/が覚醒/.test(x))side.push("【独占】"+x.replace(/^⭐ /,"")+" 練習場で異次元の動き");
     else if(/★5 に/.test(x))side.push("【分析】"+x.replace(/^⭐ /,""));
     else if(/黄金の輝き/.test(x))side.push("【話題】"+x.replace(/^✨ /,"")+" ― 名コンビ誕生か");

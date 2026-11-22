@@ -907,3 +907,59 @@ for(const [id,name,slots,axes,stat] of COMBO_TYPES)COMBOS["k_"+id]={ id:"k_"+id,
 if(typeof SPECIAL_COMBOS!=="undefined")for(const c of SPECIAL_COMBOS)
   COMBOS[c.id]={ id:c.id, name:c.name, n:c.ids.length, ids:c.ids, axes:[c.ax], stat:[{ st:[AX_STAT[c.ax]], k:"l" }], special:true };
 const comboDesc=C=>(C.special?"特別なコンビ":"コンビ")+"(全員が先発のとき): "+C.stat.map(x=>x.st.map(s=>STAT_LABEL[s]).join("・")+" +"+TUNING.tag.stat[x.k]).join("、");
+
+/* ---- 第5段(→docs/23): 固有・出来事・自動で付くチームのタグ ---- */
+Object.assign(TUNING.tag,{
+  unique:{ kamiAge:20, kamiApp:10, princeApp:50, crybadN:2, academyAge:21 },
+  event:{ p:0.12 },                       // 試合のあとに出来事が起きる率(1つずつ。答えるまで次は起きない)
+  fever:[10000,30000,60000,100000],       // ファンの節目(越えたら「サポーターの熱狂」)
+  crowd:3                                 // カップの試合が続いた数で「過密日程」
+});
+// カードが持つ固有の型(tools/unique_source.txt の「型」)
+const UNIQUE_KIND={
+  striker:  { stat:[{ st:["off","pow"], k:"l" }] },
+  speedster:{ stat:[{ st:["spd","off"], k:"l" }] },
+  magic:    { stat:[{ st:["tec","spd"], k:"l" }] },
+  flair:    { stat:[{ st:["off","tec"], k:"l" }] },
+  maestro:  { stat:[{ st:["tec"], k:"l" }], teamFx:{ motDown:"-s" } },
+  wall:     { stat:[{ st:["def","pow"], k:"l" }] },
+  keeper:   { stat:[{ st:["def","pow","tec"], k:"m" }] },
+  runner:   { stat:[{ st:["spd","sta"], k:"l" }] }
+};
+const statTxt=L=>L.map(x=>(x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・"))+" "+(x.neg?"−":"+")+TUNING.tag.stat[x.k]).join("、");
+// カードが持つ固有はタグ u_カードの id(どの任期でも初めから持つ。保存しない)
+if(typeof UNIQUE_CARDS!=="undefined")for(const id in UNIQUE_CARDS){ const u=UNIQUE_CARDS[id], K=UNIQUE_KIND[u.kind];
+  TAGS["u_"+id]={ name:u.name, scope:"player", kind:"unique", card:true, pol:1, dur:null, stat:K.stat, teamFx:K.teamFx,
+    desc:"固有(このカードだけ): "+statTxt(K.stat)+(K.teamFx?"、SQUAD にいるとチームの調子が落ちにくい":"") }; }
+Object.assign(TAGS,{
+  // 条件で付く固有(チームに1人ずつ。任期の終わりでクリア)
+  kami:    { name:"神の子",           scope:"player", kind:"unique", pol:1, dur:null, stat:[{ st:ALL6, k:"m" },{ when:"final", st:ALL6, k:"s" }], desc:"固有: 20歳以下で能力の合計がチームの頂点。能力すべて +2、決勝ではさらに +1" },
+  prince:  { name:"イル・プリンチペ", scope:"player", kind:"unique", pol:1, dur:null, stat:[{ st:["tec","off"], k:"l" }], teamFx:{ motDown:"-s" }, desc:"固有: 長く出続ける TEC 最上位の攻撃の選手。TEC・OFE +3、チームの調子が落ちにくい" },
+  crybaby: { name:"クライベイビー",   scope:"player", kind:"unique", pol:1, dur:null, stat:[{ when:"hot", st:ALL6, k:"l" },{ when:"cold", st:ALL6, k:"s", neg:true }], desc:"固有: 気分屋のスター。絶好調のとき能力すべて +3、不調以下では −1" },
+  academy: { name:"下部組織の至宝",   scope:"player", kind:"unique", pol:1, dur:null, fx:{ link:"+m" }, stat:[{ st:["tec"], k:"s" }], desc:"固有: 若くして覚醒した生え抜き。連携の経験 ×1.3、TEC +1" },
+  // 出来事・自動で付くチームのタグ
+  camp:    { name:"合宿",             scope:"team", kind:"gen", pol:1,  dur:5, fx:{ exp:"+m", fat:"+m" }, desc:"練習の経験 ×1.3。ただし疲労がたまりやすい" },
+  boom:    { name:"スポンサー景気",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"broke", fx:{ money:"+s" }, desc:"入場料 ×1.15" },
+  broke:   { name:"経営難",           scope:"team", kind:"gen", pol:-1, dur:10, opp:"boom",  fx:{ money:"-s" }, desc:"大きな出費のあと。入場料 ×0.85" },
+  fever:   { name:"サポーターの熱狂", scope:"team", kind:"gen", pol:1,  dur:5,  fx:{ motDown:"-l" }, desc:"ファンが節目を越えた。調子が落ちにくい" },
+  crowded: { name:"過密日程",         scope:"team", kind:"gen", pol:-1, dur:null, endOn:"nocup", fx:{ fat:"+m" }, desc:"カップの試合が続いている。疲労がたまりやすい(カップ以外の試合で消える)" },
+  afterglow:{ name:"優勝の余韻",      scope:"team", kind:"gen", pol:1,  dur:3,  fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい" },
+  // 出来事で付く選手のタグ
+  gossip:  { name:"ゴシップ",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+m" }, desc:"週刊誌に追われている。調子が上下しやすい" },
+  mood:    { name:"ムードメーカー",   scope:"player", kind:"gen", pol:1,  dur:10, teamFx:{ motUp:"+s" }, desc:"ロッカールームの盛り上げ役。SQUAD にいると、勝ったときチームの調子が上がりやすい" },
+  birthday:{ name:"誕生日",           scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"仲間に祝ってもらった。次の試合は絶好調" }
+});
+/*
+ * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
+ *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
+ */
+const TAG_EVENTS=[
+  { k:"camp",   q:"地元の企業から、合宿の申し出が届きました。",           ch:[["受ける",{ team:"camp" }],["断る",{}]] },
+  { k:"boom",   q:"地元の企業が、協賛を増やしたいそうです。広告に {n} を出してほしいとのこと。", p:true,
+    ch:[["受ける",{ team:"boom", player:"gossip" }],["断る",{}]] },
+  { k:"rumor",  q:"{n} が移籍の噂に心を乱しているようです。",              p:true, ch:[["話を聞く",{ bet:[0.6,"growth",null] }],["放っておく",{ player:"rebel" }]] },
+  { k:"press",  q:"{n} の私生活が週刊誌に載りました。",                    p:true, ch:[["かばう",{}],["本人に任せる",{ bet:[0.5,"mood","gossip"] }]] },
+  { k:"mood",   q:"{n} がロッカールームを盛り上げています。",              p:true, ch:[["任せる",{ player:"mood" }],["静かに見守る",{}]] },
+  { k:"bday",   q:"今日は {n} の誕生日です。",                             p:true, ch:[["みんなで祝う",{ player:"birthday" }],["普段どおり",{}]] },
+  { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] }
+];

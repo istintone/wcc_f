@@ -781,7 +781,8 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     const d1=E.playerDef(S).xi.map(x=>x.card.def);
     S.sq=[S.sq[0]].concat(S.sq.slice(1).reverse()); const sw=S.sq.slice(); sw[5]=Object.values(E.CARDS).find(c=>c.nat==="ESP").id; S.sq=sw; S.g=E.newGrowth(S.sq); S.g.tags=[{ id:"n_ITA", n:null }];
     const d2=E.playerDef(S);
-    check("国の称号の効き目: 先発がその国の11人なら全員の DEF +2、そろっていなければ効かない",d1.every((v,k)=>Math.abs(v-d0[k]-2)<1e-9||v===E.STAT_MAX)&&E.nationOf(d2.xi.map(x=>x.card.id))===null,d0[3]+" → "+d1[3]); }
+    const ux=ita.slice(0,11).map(id=>!!E.TAGS["u_"+id]);   // 固有を持つカードは上限(+3)で頭打ちになるので除く
+    check("国の称号の効き目: 先発がその国の11人なら全員の DEF +2、そろっていなければ効かない",d1.every((v,k)=>ux[k]||Math.abs(v-d0[k]-2)<1e-9||v===E.STAT_MAX)&&E.nationOf(d2.xi.map(x=>x.card.id))===null,d0[3]+" → "+d1[3]); }
   check("クラブの称号: 金色の3軸の組み合わせで決まる(8通り)",E.clubTitleOf({ D:true, P:true, C:true })==="c_DPC"&&E.clubTitleOf({ O:true, S:true, R:true })==="c_OSR"&&
     Object.keys(E.TAGS).filter(k=>/^c_/.test(k)).length===8);
   { const S=E.newCareer(9), W=E.worldOf(S); const hi=Object.keys(E.TEAMS).find(k=>E.tierOf(k)>=4), lo=Object.keys(E.TEAMS).find(k=>E.tierOf(k)<=2&&k!=="azr");
@@ -851,6 +852,28 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
     check("相手: 特別なコンビのカードがそろっていれば、そのコンビが効く",(od.combos||[]).some(c=>E.COMBOS[c.id].special),(od.combos||[]).map(c=>E.COMBOS[c.id].name).join(",")); }
   { const S=mk(); S.g.combos=[{ id:"k_kyougeki", ids:[S.sq[2],S.sq[3]] }];
     check("コンビは任期の終わりで消える(新しい育成は空)",!(E.newGrowth(S.sq).combos||[]).length); }
+}
+// 第5段(→docs/23): 固有・出来事・自動で付くチームのタグ
+{
+  console.log("\n■ 固有と出来事");
+  { const S=E.newCareer(4242); S.coll.cat09=1; E.swapSquad(S,S.sq[15],"cat09"); S.sq=[S.sq[0],"cat09"].concat(S.sq.slice(1).filter(x=>x!=="cat09")).slice(0,16);
+    const base=E.growCard(S,E.CARDS.cat09), d=E.playerDef(S,{ kind:"friendly" }), c=d.xi.concat(d.bench.map(x=>({ card:x }))).find(s=>s.card.id==="cat09").card;
+    check("カードが持つ固有: 初めから効く(TEC・SPE +3)",c.tec>base.tec&&E.playerTagsView(S,"cat09").some(t=>t.unique),base.tec+" → "+c.tec); }
+  { const S=E.newCareer(3), od=E.oppDefOf(S,{ opp:"MCB", kind:"cup" }), h=od.xi.find(s=>s.card.id==="mcb10");
+    check("相手のカードの固有も効く",!!h&&h.card.pow>E.CARDS.mcb10.pow,E.CARDS.mcb10.pow+" → "+(h&&h.card.pow)); }
+  { const S=E.newCareer(5), o=[]; const y=S.sq.find(id=>E.CARDS[id].age<=21)||S.sq[3]; S.g.pl[y].is=5;
+    E.uniqueCheck(S,o); const yes=E.CARDS[y].age<=21;
+    check("条件で付く固有: 21歳以下で覚醒すると「下部組織の至宝」(チームに1人)",!yes||(S.g.pl[y].tags||[]).some(t=>t.id==="academy"),yes?E.CARDS[y].age+"歳":"若手なし"); }
+  { const S=E.newCareer(6); S.g.tev={ k:"camp", id:null }; const ln=E.answerTagEvent(S,0);
+    check("出来事: 合宿を受けると「合宿」(練習の経験 ×1.3、疲労がたまりやすい)",S.g.tags.some(t=>t.id==="camp")&&E.tagK(S,"exp")>1&&E.tagK(S,"fat")>1&&!S.g.tev,ln.join(" / "));
+    S.g.tev={ k:"rumor", id:S.sq[9] }; E.answerTagEvent(S,1);
+    check("出来事: 移籍の噂を放っておくと「反抗期」",(S.g.pl[S.sq[9]].tags||[]).some(t=>t.id==="rebel")); }
+  { const S=E.newCareer(7); let n=0; for(let k=0;k<200;k++){ S.played=k; S.g.tev=null; E.tagEventRoll(S); if(S.g.tev)n++; }
+    check("出来事は試合のあとにときどき起きる(200試合で 10〜45回)",n>=10&&n<=45,n+"回"); }
+  { const S=E.newCareer(8), o=[]; S.titles=[]; S.g.titleN=0; S.titles.push({ comp:"PRE" }); E.autoTeamTags(S,{ kind:"cup" },{},o);
+    for(let k=0;k<E.TUNING.tag.crowd-1;k++)E.autoTeamTags(S,{ kind:"cup" },{},o);
+    const crowd=S.g.tags.some(t=>t.id==="crowded"); E.autoTeamTags(S,{ kind:"league" },{},o);
+    check("優勝で「優勝の余韻」、カップが続くと「過密日程」(カップ以外の試合で消える)",S.g.tags.some(t=>t.id==="afterglow")&&crowd&&!S.g.tags.some(t=>t.id==="crowded")); }
 }
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

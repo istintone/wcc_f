@@ -1,0 +1,21 @@
+# カードが初めから持つ固有タグ(→docs/23 §23.4 の固有)。python tools/gen_uniques.py で src/js/uniques.js に書き出す。
+# 1行1枚: カードの id | 固有タグの名前 | 型
+#   型: striker(OFE・POW +3)/ speedster(SPE・OFE +3)/ magic(TEC・SPE +3)/ flair(OFE・TEC +3)/
+#       maestro(TEC +3、SQUAD にいるとチームの調子が落ちにくい)/ wall(DEF・POW +3)/ keeper(DEF・POW・TEC +2)/ runner(SPE・STA +3)
+# 名前は架空。**実在の選手のあだ名そのものは使わない**。どの任期でも初めから持つ(カード自身の性質)。相手のときも効く
+mcb10 | 北の巨神 | striker
+mdb10 | 疾風の王 | speedster
+mdb11 | 左の稲妻 | speedster
+cat09 | 至高の神童 | magic
+cat07 | 中盤の魔術師 | maestro
+mur11 | 万能の大砲 | striker
+par10 | 両足の芸術家 | flair
+par02 | 縦の機関車 | runner
+msd08 | 右翼の王 | flair
+msd03 | 大陸の壁 | wall
+nld09 | 右翼の星 | speedster
+nld03 | 若き鉄壁 | wall
+ldb09 | 天才肌の十番 | flair
+mib10 | 不屈の点取り屋 | striker
+mcb01 | 巨大な盾 | keeper
+mdr01 | 鉄の守護者 | keeper

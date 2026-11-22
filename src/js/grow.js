@@ -200,7 +200,7 @@ const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.
 function linkExp(S,a,b,v,cap){
   const l=linkSet(S,a,b);
   l.cap=Math.max(l.cap||0,cap);
-  if(l.lv<Math.min(l.cap,2))l.exp+=v*facK(S,"lounge");
+  if(l.lv<Math.min(l.cap,2))l.exp+=v*facK(S,"lounge")*playerTagK(S,a,"link")*playerTagK(S,b,"link");
 }
 /** 試合のあと、たまった経験で連携の段を上げる(黄金線=3 はここでは上がらない) */
 function settleLinks(S,out){
@@ -234,7 +234,7 @@ function doTraining(S,i,intensity){
   if(o.sp<0){
     for(const id of ids){
       const g=S.g.pl[id], top=STATS.slice().sort((a,b)=>CARDS[id][b]-CARDS[id][a]).slice(0,2);
-      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train");
+      g.ie+=(I.train+(top.includes(o.param)?I.trainFit:0))*k*growK(id,S)*facK(S,"train")*tagK(S,"exp");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
     }
     graphAdd(S,PARAM_AXIS[o.param],R.basic*k*gk); ups=[PARAM_AXIS[o.param]];
@@ -242,7 +242,7 @@ function doTraining(S,i,intensity){
     const t=TRAIN_SP[o.sp], e=t.eff, all=t.up.length===6;
     for(const id of ids){
       const g=S.g.pl[id];
-      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train");
+      g.ie+=(I.spTrain+(e.ind||0))*k*growK(id,S)*facK(S,"train")*tagK(S,"exp");
       g.tr[o.param]=(g.tr[o.param]||0)+1;
       // 練習で入る特殊能力の経験は、★突破の話(！)の手前で止める。話はミーティングで経験を足して出す(印が増えすぎないように)
       if(e.sp){ const add=e.sp*G0.sp.train*k*facK(S,"tact"); g.se=g.ss<4&&g.se<G0.sp.need[g.ss]?Math.min(g.se+add,G0.sp.need[g.ss]-1):g.se+add; }
@@ -578,7 +578,7 @@ function afterMatchGrowth(S,fx,res){
   // 疲労: 出た選手は試合のぶん溜まり、全員が次までに半分ほど抜ける
   for(const id in S.g.pl){
     const g=S.g.pl[id];
-    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1)*playerTagK(S,id,"fat"):0))*N.recover*medFat(S));
+    g.fat=Math.min(N.fatMax,(g.fat+(played.includes(id)?N.matchLoad*(spBoost(S,"noFat")||1)*playerTagK(S,id,"fat")*tagK(S,"fat"):0))*N.recover*medFat(S));
   }
   // ケガ(→docs/08 §8.8): 試合の中でケガをした選手は「ケガ」に。前からのケガは確率で治る(続いても maxN 試合で治る)
   const J=TUNING.inj, newInj=(res.inj||[]).filter(id=>S.g.pl[id]);
@@ -898,7 +898,9 @@ function motLockApply(S){ if(tagOn(S,"motLock"))for(const id in S.g.pl)if(S.g.pl
 /** チームのタグの効き目(掛け算)。無ければ 1 */
 function tagK(S,key){
   let k=1; for(const t of (S.g&&S.g.tags)||[]){ const T=TAGS[t.id]; if(T&&T.fx&&T.fx[key]&&T.fx[key]!=="on")k*=tagFxK(T.fx[key]); }
-  for(const id of S.sq||[])for(const t of (S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[]){ const T=TAGS[t.id]; if(T&&T.teamFx&&T.teamFx[key])k*=tagFxK(T.teamFx[key]); }
+  for(const id of S.sq||[]){
+    for(const t of (S.g&&S.g.pl[id]&&S.g.pl[id].tags)||[]){ const T=TAGS[t.id]; if(T&&T.teamFx&&T.teamFx[key])k*=tagFxK(T.teamFx[key]); }
+    const U=TAGS["u_"+id]; if(U&&U.teamFx&&U.teamFx[key])k*=tagFxK(U.teamFx[key]); }
   return k;
 }
 /** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
@@ -939,6 +941,9 @@ function tagsAfterMatch(S,fx,res,out){
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
   nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
   comboCheck(S,out);                            // コンビ(→docs/23 §23.3b)
+  autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
+  uniqueCheck(S,out);                           // 条件で付く固有
+  tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
 }
 /** 見せるためのチームのタグ: 保存しているもの + 黄金期 + スポンサーの報酬(施設充実)。{ id, name, pol, desc, left } */
 function teamTagsView(S){
@@ -960,7 +965,8 @@ function playerTagsView(S,id){
   const g=S.g&&S.g.pl[id]; if(!g)return [];
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
-  return cb.concat((g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
+  const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
+  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -1026,6 +1032,7 @@ function addPlayerTag(S,id,tid,out){
   }
   L.push({ id:tid, n:tagDur(T) });
   if(T.onAdd==="mot4"&&g.mot>0)g.mot=4;
+  if(tid==="rebel"||tid==="gossip"||tid==="waiting")pCnt(g).bad=(pCnt(g).bad||0)+1;   // クライベイビーの判定
   out.push("🏷 "+nm+" に「"+T.name+"」 ― "+T.desc);
 }
 function dropPlayerTag(S,id,tid,out){
@@ -1116,15 +1123,17 @@ function applyTagStats(def,tagIds,S,fx,combos){
   const team=tagIds.map(id=>TAGS[id]).filter(t=>t&&t.stat&&(t.sub!=="nation"||t.nat===nat));
   const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
   const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
-    const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+T.stat[x.k]; };
+    const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+(x.neg?-1:1)*T.stat[x.k]; };
+    const U=TAGS["u_"+c.id]; if(U)for(const x of U.stat)put(x);   // カードが持つ固有(どの任期でも・相手のときも)
     for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
     if(start)for(const C of cmb[c.id]||[])for(const x of C.stat)put(x);
     if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
       if(P.kind==="trait"&&!(start&&role&&P.pos.includes(role)))continue;
       if(P.capX)cap=T.statCapX;
-      for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue; put(x); } }
+      for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue;
+        if(x.when==="hot"&&c.gm!==4)continue; if(x.when==="cold"&&!(c.gm<=2))continue; put(x); } }
     if(!Object.keys(add).length)return c;
-    const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.min(cap,add[k]),1,STAT_MAX);
+    const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.max(-cap,Math.min(cap,add[k])),1,STAT_MAX);
     return o; };
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));
@@ -1189,4 +1198,56 @@ function oppCombos(def,strong,gold){
   const sp=findCombos(xi,role,()=>true,()=>true,[],TUNING.tag.combo.max).filter(c=>COMBOS[c.id].special);
   if(!strong)return sp;
   return findCombos(xi,role,()=>true,ax=>ax.some(a=>gold[a]),sp,TUNING.tag.combo.max);
+}
+
+/* ---- 固有タグ(→docs/23 §23.4)---- */
+/** 選手の固有(カードが持つもの → 条件で付いたもの) */
+const cardUnique=id=>TAGS["u_"+id]?"u_"+id:null;
+/** 条件で付く固有(試合のあと)。チームに1人ずつ。カードの固有を持つ選手には付かない */
+function uniqueCheck(S,out){
+  const U=TUNING.tag.unique, sq=S.sq.filter(id=>S.g.pl[id]), got=S.g.uq||(S.g.uq={});
+  const has=id=>cardUnique(id)||pTags(S,id).some(t=>TAGS[t.id].kind==="unique");
+  const give=(tid,id)=>{ if(got[tid]||!id||has(id))return; got[tid]=id; addPlayerTag(S,id,tid,out); };
+  const gc=id=>growCard(S,CARDS[id]), tot=id=>{ const c=gc(id); return STATS.reduce((a,k)=>a+c[k],0); };
+  const app=id=>pCnt(S.g.pl[id]).app;
+  const top=sq.slice().sort((a,b)=>tot(b)-tot(a))[0];
+  if(top&&CARDS[top].age<=U.kamiAge&&app(top)>=U.kamiApp)give("kami",top);
+  const atk=sq.filter(id=>CARDS[id].pos==="FW"||CARDS[id].pos==="MF").sort((a,b)=>gc(b).tec-gc(a).tec)[0];
+  if(atk&&app(atk)>=U.princeApp)give("prince",atk);
+  for(const id of sq){ const c=pCnt(S.g.pl[id]);
+    if((c.bad||0)>=U.crybadN&&/^[KL]$/.test(CARDS[id].rar||""))give("crybaby",id);
+    if(CARDS[id].age<=U.academyAge&&S.g.pl[id].is>=5)give("academy",id); }
+}
+/* ---- 自動で付くチームのタグ・出来事(→docs/23 §23.2) ---- */
+function autoTeamTags(S,fx,res,out){
+  // 優勝の余韻: この試合で大会を取った
+  const n=(S.titles||[]).length; if(S.g.titleN!=null&&n>S.g.titleN)addTeamTag(S,"afterglow",out); S.g.titleN=n;
+  // 過密日程: カップの試合が続いた / カップ以外の試合で消える
+  S.g.cupRun=fx&&fx.kind==="cup"?(S.g.cupRun||0)+1:0;
+  if(!S.g.cupRun)dropTeamTag(S,"crowded",out);
+  else if(S.g.cupRun===TUNING.tag.crowd)addTeamTag(S,"crowded",out);
+  // サポーターの熱狂: ファンが節目を越えた
+  if(S.biz){ const f=S.biz.fans, i=TUNING.tag.fever.filter(v=>f>=v).length; if(S.g.feverN!=null&&i>S.g.feverN)addTeamTag(S,"fever",out); S.g.feverN=i; }
+}
+/** 出来事を起こすか(試合のあと)。答えるまで次は起きない */
+function tagEventRoll(S){
+  if(S.g.tev||S.termOver)return;
+  const r=mulberry32((S.seed^hashStr("tev:"+S.term+":"+S.played))>>>0);
+  if(r()>=TUNING.tag.event.p)return;
+  const ev=TAG_EVENTS[Math.floor(r()*TAG_EVENTS.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
+  S.g.tev={ k:ev.k, id:ev.p&&sq.length?sq[Math.floor(r()*sq.length)]:null };
+}
+const tagEventOf=S=>S.g&&S.g.tev?TAG_EVENTS.find(e=>e.k===S.g.tev.k):null;
+const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"");
+/** 出来事に答える。結果の行を返す */
+function answerTagEvent(S,i){
+  const ev=tagEventOf(S); if(!ev||!ev.ch[i])return [];
+  const id=S.g.tev.id, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  if(R.team)addTeamTag(S,R.team,out);
+  if(R.player&&id)addPlayerTag(S,id,R.player,out);
+  if(R.bet&&id){ const [p,hit,miss]=R.bet, ok=mulberry32((S.seed^hashStr("teb:"+S.term+":"+S.played+":"+id))>>>0)()<p, t=ok?hit:miss;
+    if(t)addPlayerTag(S,id,t,out); else out.push(nameOf(CARDS[id])+" は落ち着いたようだ"); }
+  if(R.fat&&id){ const g=S.g.pl[id]; g.fat=clamp(g.fat+R.fat,0,TUNING.grow.int.fatMax); }
+  if(!out.length)out.push("いつもどおりに戻った");
+  return out;
 }

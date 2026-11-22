@@ -1089,8 +1089,9 @@ function oppSquadHtml(S,oppId,def,rep){
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
       '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
       (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
-      ((def.titles||[]).length||(def.combos||[]).length?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
-        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
+      ((def.titles||[]).length||(def.combos||[]).length||def.xi.some(s=>TAGS["u_"+s.card.id])?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
+        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+
+        def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>'<span class="tg up unq" title="'+nameOf(CARDS[x])+'"><b>'+TAGS["u_"+x].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">控え</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
@@ -1177,10 +1178,18 @@ function teamTagsHtml(){
   return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
     '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
 }
+/** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
+function tagEventHtml(){
+  const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
+  const id=S.g.tev.id;
+  return '<section class="sec sec-ev tag-ev">'+(id?'<i class="sec-av pl-av">'+(artSrc(CARDS[id],"stand")?'<img src="'+artSrc(CARDS[id],"stand")+'" alt="">':'')+'</i>':secAv(S))+
+    '<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">EVENT</em></b><p>'+tagEventText(S,ev)+'</p>'+
+    '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="tagev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+}
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
@@ -1271,7 +1280,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+tagEventHtml()+expTileHtml()+newsLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+stadOfferHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -1485,11 +1494,13 @@ function onClubClick(e){
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
     else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
-  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"]; save(); showClub(true); return; }
+  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); save(); showClub(true);
+    if(r&&r.tl&&r.tl.length)setTimeout(()=>infoBar(r.tl),0); return; }
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
+  if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
   if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }
