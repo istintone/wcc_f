@@ -3701,7 +3701,7 @@ body.th-wl #ovTitle{font-size:32px;letter-spacing:.1em}
   <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
   <div id="ticker">&nbsp;</div>
   <div id="deck">
-    <div id="insTags"><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i></div>
+    <div id="insTags"><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i><i data-k="shoot">シュートを狙え！</i></div>
     <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
     <div id="bench"></div>
     <div id="info"><div id="infoBody"></div>
@@ -13295,7 +13295,7 @@ function bossSay(key,name,extra){
 /** 発動中の指示を、ピッチの左上に札で出し入れする(十字のボタンは字を出さないので。→docs/14 §14.100) */
 function updateInsTags(){
   const box=$("insTags"); if(!box)return;
-  const I=G.ins||{}, side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";
+  const I=Object.assign({},G.ins||{},{ shoot:$("btnShoot").classList.contains("armed") }), side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";   // SHOOT はボタンの光り方に合わせる
   for(const el of box.children){ const k=el.dataset.k, on=k==="side"?!!side:!!I[k];
     if(k==="side"&&side)el.textContent=side;
     el.classList.toggle("on",on); }
@@ -13610,7 +13610,7 @@ function advance(dt){
     if(G.M.over)return;
     if(G.stopAt&&matchMin(G.M)>=G.stopAt){ G.stopAt=0; setPlaying(false); return; }
     G.queue=stepMatch(G.M);
-    $("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0);
+    $("btnShoot").classList.toggle("armed",G.M.home.shootOrder>0); updateInsTags();
     BD.kp=null;                              // KP の指定はエンジンに渡った
     updateStyleBar();
     syncBoard(G.M);
@@ -13659,7 +13659,7 @@ function boot(){
   $("btnShoot").addEventListener("click",()=>{
     const armed=G.M.home.shootOrder>0||$("btnShoot").classList.contains("armed");
     orderMatch(G.M,"H",{ type:armed?"shootCancel":"shoot" });
-    $("btnShoot").classList.toggle("armed",!armed);
+    $("btnShoot").classList.toggle("armed",!armed); updateInsTags();
     bossSay(armed?"shootCancel":"shoot");
   });
   $("btnKp").addEventListener("click",()=>{
