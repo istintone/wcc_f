@@ -2533,3 +2533,7 @@ body[class] #pad .cross,body[class] #pad .act{bottom:calc(env(safe-area-inset-bo
 body[class] #pad .cross{border-radius:0 26px 26px 0!important;padding-top:5px!important;grid-template-columns:repeat(3,26px)!important;grid-template-rows:repeat(3,26px)!important}
 body[class] #pad .act{border-radius:26px 0 0 26px!important;padding-bottom:9px!important}
 body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 58px)!important}
+/* パネルを上に広げる(→docs/14 §14.104): 十字は帯の下に収め、下の ▽ もパネルの中に。KP は ACTION の帯にかからない高さ */
+body[class] #pad .cross,body[class] #pad .act{height:108px!important}
+body[class] #pad .cross{padding-top:17px!important}
+body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 55px)!important}
