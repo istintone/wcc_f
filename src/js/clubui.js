@@ -224,7 +224,7 @@ const chatFace=id=>{ const c=CARDS[id], src=c&&typeof artSrc==="function"?artSrc
   return '<i class="cf pl">'+(src?'<img src="'+src+'" alt="">':'<b>'+(c?c.no:"")+'</b>')+'</i>'; };
 const chatPl=(id,t,first)=>'<div class="cm pl'+(first?' first':'')+'">'+(first?chatFace(id):'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+cname(id)+'</small>':'')+'<p>'+t+'</p></div></div>';
 const chatSec=(t,first)=>'<div class="cm csec'+(first?' first':'')+'">'+(first?'<i class="cf se">'+(secArt(secOf(CL.S).id)?'<img src="'+secArt(secOf(CL.S).id)+'" alt="">':'')+'</i>':'<i class="cf sp"></i>')+'<div>'+(first?'<small>'+secOf(CL.S).name+'</small>':'')+'<p>'+t+'</p></div></div>';
-const chatMe=t=>'<div class="cm me"><p>'+t+'</p></div>';
+const chatMe=t=>{ const f=CL.S&&CL.S.mgr?mgrArt(CL.S.mgr.av,"face"):null; return '<div class="cm me"><p>'+t+'</p>'+(f?'<i class="cf mg"><img src="'+f+'" alt=""></i>':'')+'</div>'; };
 const chatNote=t=>'<div class="cn">'+t+'</div>';
 /** いま開いているやりとり(選手を選んだら)と、答えたあとの結果 */
 function commChatHtml(){
@@ -1214,6 +1214,7 @@ function licenseHtml(){
   return '<section class="card lic"><h3>監督ライセンス <small>初回だけ。名前はあとで MANAGER から変えられる</small></h3>'+
     '<label>監督名<input data-f="mname" maxlength="12" value="'+embEsc(d.mname||"")+'" placeholder="例: 山田 太郎"></label>'+
     '<label>生年月日(任意)<input type="date" data-f="birth" value="'+embEsc(d.birth||"")+'"></label>'+
+    '<p class="lbl2">アバター(あとで MANAGER から変えられる)</p>'+mgrAvPickHtml(d.av|0,"licav")+
     (ani!=null?'<p class="dim">監督の動物: '+ANI_ICON[ani]+ANIMALS[ani].name+'('+ANI_GROUP[ANIMALS[ani].g]+')。同じ群れの選手と相性が良い</p>':'<p class="dim">生年月日を入れると、監督の動物(動物占い)が分かる</p>')+
     '<button class="btn btn-main" data-act="license">登録する</button></section>';
 }
@@ -1241,6 +1242,12 @@ const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
   none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
   laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
+/** 監督の絵(→docs/14 §14.69)。k: full 立ち絵 / bust バストアップ / face 顔 */
+const mgrArt=(av,k)=>typeof MGR_ART!=="undefined"&&MGR_ART.length?MGR_ART[Math.min(MGR_ART.length-1,Math.max(0,av|0))][k||"face"]:null;
+/** アバターを選ぶ列(顔を並べる) */
+function mgrAvPickHtml(cur,act){
+  return typeof MGR_ART==="undefined"?"":'<div class="mg-avs">'+MGR_ART.map((x,i)=>'<button class="mg-av'+(i===cur?' on':'')+'" data-act="'+act+'" data-v="'+i+'"><img src="'+x.face+'" alt=""></button>').join("")+'</div>';
+}
 /** 秘書の顔(→docs/05 §5.12。絵は tools/gen_sec_art.py が pftb から取り込む)。id を省くといまの秘書 */
 const secArt=(id,k)=>typeof SEC_ART!=="undefined"&&SEC_ART[id]?SEC_ART[id][k||"face"]:null;
 const secAv=(S,id)=>{ const a=secArt(id||secOf(S).id); return '<i class="sec-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'; };
@@ -1420,10 +1427,14 @@ function managerTabHtml(){
   const d=CL.draft||(CL.draft={});
   const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
     :'<b>'+embEsc(m.name)+'</b><button class="lnk" data-act="medit">名前を変える</button>';
+  const full=mgrArt(m.av,"full");
   return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督 GRADE '+mgrLv(S)+'</small></h3>'+
+      '<div class="mg-top">'+(full?'<img class="mg-full" src="'+full+'" alt="">':'')+'<div class="mg-body">'+
       '<div class="mg-name">'+name+'</div>'+
       '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
-        '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p></section>'+
+        '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p>'+
+      '<button class="lnk" data-act="avopen">'+(CL.avOpen?'閉じる':'アバターを変える')+'</button></div></div>'+
+      (CL.avOpen?mgrAvPickHtml(m.av|0,"mav"):'')+'</section>'+
     '<section class="card"><h3>生涯成績 <small>'+(S.career.length+(S.termOver?0:1))+'任期 ・ 勝率 '+wr+'%</small></h3>'+
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
       '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+S.salary+'</b><small>累計年俸(億)</small></div></div>'+
@@ -1510,7 +1521,10 @@ function onClubClick(e){
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
   if(act==="medit"){ CL.mEdit=!CL.mEdit; if(CL.draft)CL.draft.mname=null; showClub(true); return; }
   if(act==="mrename"){ const nm=CL.draft&&CL.draft.mname!=null?CL.draft.mname:S.mgr&&S.mgr.name; if(renameManager(S,nm)){ CL.mEdit=false; CL.draft.mname=null; save(); } else infoBar(["監督名を入れてください"]); showClub(true); return; }
-  if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
+  if(act==="licav"){ (CL.draft||(CL.draft={})).av=+b.dataset.v; showClub(true); return; }
+  if(act==="mav"){ if(setManagerAvatar(S,+b.dataset.v)){ CL.avOpen=false; save(); } showClub(true); return; }
+  if(act==="avopen"){ CL.avOpen=!CL.avOpen; showClub(true); return; }
+  if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth,d.av|0)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
   if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)
   if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }
   if(act==="embauto"){ const c=CL.draft.c; c.emb={}; showClub(true); return; }

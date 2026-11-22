@@ -844,13 +844,15 @@ function renameManager(S,name){
   if(!nm||!S.mgr)return false;
   S.mgr.name=nm; return true;
 }
-function registerManager(S,name,birth){
+/** 監督のアバターを選ぶ(MGR_ART の番号) */
+function setManagerAvatar(S,i){ if(!S.mgr||!(i>=0))return false; S.mgr.av=i|0; return true; }
+function registerManager(S,name,birth,av){
   const nm=String(name||"").trim().slice(0,12);
   if(!nm||S.mgr)return false;
   let ani=null;
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(birth||"");
   if(m)ani=aniOfDate(+m[1],+m[2],+m[3]);
-  S.mgr={ name:nm, birth:m?birth:null, ani };
+  S.mgr={ name:nm, birth:m?birth:null, ani, av:av|0 };   // av … 監督のアバター(→docs/14 §14.69)
   return true;
 }
 /** 監督契約を結ぶ。クラブ名は必須。略称は英字3字(無ければクラブ名から作る) */

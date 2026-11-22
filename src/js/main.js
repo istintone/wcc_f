@@ -311,11 +311,15 @@ function startEvent(ev){
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
-    // ハーフタイムの指示(→docs/10 §10.8): 登録した3つ + 「このまま維持しろ」(何も変えない)。時間が来たら維持のまま後半へ
+    // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
+    // 「このまま維持しろ」は無くした(選ばずに時間が来れば、何も変えずに後半へ)
     const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
-    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("")+'<button class="htb none" data-ht="">このまま維持しろ<i>変化なし</i></button>';
+    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
+    const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
     overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
-      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small><div class="ht-btns">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
+      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
+      '<div class="ht-boss">'+(bust?'<img class="ht-bust" src="'+bust+'" alt="">':'')+
+        '<div class="ht-bubble"><em>後半はこれでいく！</em><div class="ht-btns">'+btns+'</div><small>選ばなければ、このまま後半へ</small></div></div>',TUNING.ht.timer,()=>setPlaying(true));
     return;
   }
   if(ev.type==="fulltime"){
@@ -458,7 +462,6 @@ function boot(){
     const b=e.target.closest("[data-ht]"); if(!b)return;
     const h=htOf(b.dataset.ht);
     if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
-    else say("監督「このまま維持しろ！」",false,"boss");
     sndUi("ok"); closeOverlay();
   });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する

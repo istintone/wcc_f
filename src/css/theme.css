@@ -2090,3 +2090,24 @@ body.th-wr:not(.th-bk) #scene.sc-vs .touch{color:var(--t-sub);text-shadow:none}
 #scene .res-div.down b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:20px;letter-spacing:.06em;color:#c8ccd4}
 /* 監督室の中身は縮めない(スポンサーの候補など長い中身が来ても、次の試合の札などが潰れないように。→docs/14 §14.68) */
 #club .cl-main>*{flex-shrink:0}
+/* 監督のアバター(→docs/14 §14.69) */
+#club .mg-avs{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:6px 0}
+#club .mg-av{padding:0;border:2px solid transparent;border-radius:50%;overflow:hidden;background:#2a2f3c;aspect-ratio:1;cursor:pointer}
+#club .mg-av img{display:block;width:100%;height:100%;image-rendering:pixelated}
+#club .mg-av.on{border-color:var(--t-sub,#c8102e);box-shadow:0 0 0 2px rgba(200,16,46,.25)}
+#club .lic .lbl2{margin:8px 0 2px;font-size:12px;font-weight:700}
+#club .mgr-card .mg-top{display:flex;gap:10px;align-items:flex-end;overflow:hidden}
+#club .mgr-card .mg-full{flex:0 0 auto;width:74px;height:auto;margin-bottom:-34px;image-rendering:pixelated}
+#club .mgr-card .mg-body{flex:1;min-width:0;padding-bottom:4px}
+#club .cf.mg{background:linear-gradient(160deg,#3a3f52,#1c2030)}
+#club .cf.mg img{width:100%;height:100%;image-rendering:pixelated}
+/* ハーフタイム: 監督のバストアップ + 吹き出しの指示 */
+#cap .ht-boss{display:flex;align-items:flex-end;gap:0;width:100%;margin-top:6px;pointer-events:auto}
+#cap .ht-bust{flex:0 0 auto;width:118px;height:auto;margin:0 -4px -4px -6px;image-rendering:pixelated;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+#cap .ht-bubble{position:relative;flex:1;min-width:0;margin-bottom:22px;padding:8px 8px 6px;border-radius:12px;background:#fff;color:#141414;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#cap .ht-bubble::before{content:"";position:absolute;left:-9px;bottom:18px;border:6px solid transparent;border-right:10px solid #fff;border-left:0}
+#cap .ht-bubble em{display:block;font-style:normal;font-size:12.5px;font-weight:900;margin:0 0 5px 2px}
+#cap .ht-bubble .ht-btns{display:flex;flex-direction:column;gap:4px;width:100%;margin:0}
+#cap .ht-bubble .htb{text-align:left;padding:6px 8px;font-size:12.5px}
+#cap .ht-bubble small{display:block;margin:5px 0 0 2px;font-size:9.5px;color:#666}
+#club .mgr-card .mg-full{width:96px;margin-bottom:-46px}
