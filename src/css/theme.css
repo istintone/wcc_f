@@ -2523,3 +2523,6 @@ body[class] #pad .tac.md.on{background:linear-gradient(180deg,#ffc93a,#f29a00 60
 body[class] #pad .cross{grid-template-columns:repeat(3,28px)!important;grid-template-rows:repeat(3,28px)!important;padding-top:9px!important}
 body[class] #pad .tac.up::after{inset:6px 6px 3px 6px!important} body[class] #pad .tac.dn::after{inset:3px 6px 6px 6px!important}
 body[class] #pad .tac.lf::after{inset:6px 3px 6px 6px!important} body[class] #pad .tac.rt::after{inset:6px 6px 6px 3px!important}
+/* 三角は点いたら赤(→docs/14 §14.103) */
+body[class] #pad .tac:not(.md).on::after{background:linear-gradient(180deg,#ff6a7e,#e8202e 55%,#a50e25)!important}
+body[class] #pad .tac:not(.md).on{filter:drop-shadow(0 0 4px rgba(240,42,72,1)) drop-shadow(0 0 8px rgba(240,42,72,.8))!important}
