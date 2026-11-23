@@ -293,7 +293,7 @@ function sceneCard(id,isNew,go){
   sceneShow("sc-card",
     '<div class="pk-head"><b>CARD</b><small>試合のあとに1枚</small></div>'+
     '<div class="pk-mouth top"><i></i></div>'+
-    '<div class="pk-slot st0">'+(r==="L"?'<div class="rays"></div>':'')+'<i class="pk-aura"></i>'+
+    '<div class="pk-slot st0"><i class="pk-aura"></i>'+   // 金の放射(rays)はやめた。ゴールドパックが予兆の役目(→docs/14 §14.118)
       '<div class="pk-pack" data-sc="flip">'+
         '<div class="pk-cardin r-'+r+'">'+cardHtml(id,"m")+'</div>'+
         '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"><span>ここから破る ✂</span></div>'+
@@ -322,14 +322,14 @@ function sceneCard(id,isNew,go){
   pack.addEventListener("dragstart",e=>e.preventDefault());
   pack.addEventListener("pointerdown",e=>{ if(SC.card&&SC.card.stage===2)t0={ x:e.clientX, y:e.clientY }; });
   pack.addEventListener("pointermove",e=>{
-    const K=SC.card, kc=tiltKc(); if(!K||K.stage!==2||!kc)return;
+    const K=SC.card, kc=tiltKc(), box=kc&&kc.closest(".pk-cardin"); if(!K||K.stage!==2||!kc)return;   // 縁(囲み)ごと傾ける
     if(!t0&&e.pointerType!=="mouse")return;
     if(t0&&Math.hypot(e.clientX-t0.x,e.clientY-t0.y)>8)SC.packMoved=true;
     const r=kc.getBoundingClientRect(), px=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), py=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
-    kc.style.transition="none"; kc.style.transform="perspective(700px) rotateX("+(-(py-0.5)*30).toFixed(1)+"deg) rotateY("+((px-0.5)*36).toFixed(1)+"deg)";
+    box.style.transition="none"; box.style.transform="perspective(700px) rotateX("+(-(py-0.5)*30).toFixed(1)+"deg) rotateY("+((px-0.5)*36).toFixed(1)+"deg)";
     kc.style.setProperty("--mx",(px*100).toFixed(1)+"%"); kc.style.setProperty("--my",(py*100).toFixed(1)+"%"); kc.classList.add("touch");
   });
-  const untilt=()=>{ t0=null; const kc=tiltKc(); if(!kc)return; kc.style.transition="transform .45s cubic-bezier(.2,.8,.2,1.2)"; kc.style.transform=""; kc.classList.remove("touch"); };
+  const untilt=()=>{ t0=null; const kc=tiltKc(); if(!kc)return; const box=kc.closest(".pk-cardin"); box.style.transition="transform .45s cubic-bezier(.2,.8,.2,1.2)"; box.style.transform=""; kc.classList.remove("touch"); };
   pack.addEventListener("pointerup",untilt); pack.addEventListener("pointercancel",untilt); pack.addEventListener("pointerleave",untilt);
   sndUi("tap");
 }

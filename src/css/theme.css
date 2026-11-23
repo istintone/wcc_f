@@ -2688,3 +2688,7 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .kc .k-emb2::after{color:rgba(0,0,0,.2);transform:translate(-.7px,-.7px)}
 .kc .k-emb2{right:auto!important;left:7%!important;top:24%!important}   /* 左側: ポジションの札の下からスキルの手前まで(オーナー) */
 #sc-card .pk-pack,.pk-pack{touch-action:none} .pk-cardin .kc img{pointer-events:none;-webkit-user-drag:none} .pk-cardin .kc{transform-style:preserve-3d;will-change:transform}
+/* パックの後ろの金・虹の予兆の光はやめる(ゴールドパックが予兆の役目。→docs/14 §14.118)。銀(SPECIAL)は残す */
+.om-K .pk-aura,.om-L .pk-aura,.om-K.promo .pk-aura,.om-L.promo .pk-aura{display:none!important}
+.pk-slot .rays{display:none!important}
+.pk-cardin{will-change:transform}
