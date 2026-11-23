@@ -262,9 +262,9 @@ const TUNING={
   //   facCost … 施設の段ごとの費用 / facK … 練習場・戦術室・ラウンジの効き目(経験の倍率)/ medFat … 疲労の残り方 / medHeal … ケガの治りやすさ
   biz:{ fans0:6000, fansMin:2000, fill:0.9, price:0.00006, cupK:1.25, finalK:1.6, friendlyK:0.6,
         fansWin:260, fansDraw:60, fansLose:-120, fansStadK:0.15, fansTitle:2500, fansPromo:4000, fansStad:3000,
-        stad:[ { cap:8000,  cost:0,   name:"地方の小さなスタジアム" }, { cap:15000, cost:40,  name:"スタンドを広げたスタジアム" },
-               { cap:25000, cost:90,  name:"照明塔の立つスタジアム" }, { cap:40000, cost:180, name:"大きなスタジアム" },
-               { cap:60000, cost:320, name:"屋根付きの大スタジアム" } ],
+        stad:[ { cap:8000,  cost:0,   name:"地方の小さなスタジアム" }, { cap:15000, cost:20,  name:"スタンドを広げたスタジアム" },
+               { cap:25000, cost:40,  name:"照明塔の立つスタジアム" }, { cap:40000, cost:80,  name:"大きなスタジアム" },
+               { cap:60000, cost:130, name:"屋根付きの大スタジアム" } ],   // 費用は1任期の稼ぎ(80〜250億)で配分する前提(→docs/05 §5.13 2026-11-23)
         // sp … スポンサー(→docs/05 §5.14)。マスタは club.js の SP_IND(業種 × ☆1〜5)
         //   rankFans … ☆2〜5 が届くファン数(その7割でも、リーグの格 rankGrade か今の任期の優勝 rankTitles があれば届く)/ pay … ☆ごとの1試合の収入
         //   eff … 報酬の効果の大きさ(☆1〜5)。care・careSec・indSec・loungeSec は率、loungeOk は大成功に足す率、indExp・loungeExp は経験の倍率、
@@ -274,7 +274,7 @@ const TUNING={
              eff:{ care:[0.3,0.45,0.6,0.8,1], careSec:[0.15,0.25,0.35,0.45,0.6], indExp:[1.1,1.15,1.2,1.3,1.4], indSec:[0.15,0.25,0.35,0.45,0.6],
                    loungeOk:[0.05,0.08,0.12,0.16,0.2], loungeExp:[1.1,1.15,1.2,1.3,1.4], loungeSec:[0.1,0.15,0.2,0.3,0.4],
                    noFat:[0.85,0.75,0.65,0.5,0.35], injury:[0.8,0.65,0.5,0.35,0.2], bench:[0.7,0.5,0.35,0.2,0], keepForm:[0.7,0.5,0.35,0.2,0] } },
-        chanceK:0.8, cool:8, facCost:[20,50,100,160,240], facK:[1,1.1,1.2,1.3,1.4,1.5], medFat:[1,0.9,0.8,0.7,0.6,0.5], medHeal:[0,0.1,0.2,0.3,0.4,0.5] },
+        chanceK:0.8, cool:8, facCost:[15,35,60,90,130], facK:[1,1.1,1.2,1.3,1.4,1.5], medFat:[1,0.9,0.8,0.7,0.6,0.5], medHeal:[0,0.1,0.2,0.3,0.4,0.5] },
   // 称号のセット(→docs/10 §10.2 B)。favorW … 系統に合う特殊練習の重み / 称号ごとの効き目:
   //   spK 特殊練習が出る率の倍率 / cupKeep 大会で負けたときにやる気が下がる率の倍率 / qOk ★突破の成功率に足す / indK 個人練習の経験の倍率
   //   meetK ミーティングの経験の倍率 / loungeOk ラウンジの大成功に足す / giant 格上に勝ったとき出た選手のやる気が上がる率 / setK セットプレイの伸びの倍率
