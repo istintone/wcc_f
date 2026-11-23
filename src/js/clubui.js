@@ -89,6 +89,10 @@ const batteryHtml=(g,to)=>{
   const n=batteryOf(g), m=to!=null?to:n;
   if(m<n)return '<i class="bat b'+m+' bdrop" title="疲労">'+[0,1,2].map(k=>'<u class="'+(k<m?'on':k<n?'dn':'')+'"></u>').join("")+'</i>';
   return '<i class="bat b'+m+(m>n?' brec':'')+'" title="疲労">'+[0,1,2].map(k=>'<u class="'+(k<n?'on':k<m?'on up':'')+'"></u>').join("")+'</i>'; };
+/** 開く ▽ / 閉じる ▲(字で説明しない。→docs/14 §14.107)。open … いま開いているか */
+const foldBtn=(act,open,label)=>'<button class="fold'+(open?' up':'')+'" data-act="'+act+'" aria-label="'+(label||(open?'閉じる':'開く'))+'"></button>';
+/** 閉じる □×(浮いている窓・カードの右上。→docs/14 §14.107) */
+const xBtn=act=>'<button class="xb" data-act="'+act+'" aria-label="閉じる">×</button>';
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
 /** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
@@ -244,7 +248,7 @@ function commChatHtml(){
   if(CL.chat){
     const K=CL.chat;
     const PR=S.g.prop&&S.g.prop.id===K.who[0]?S.g.prop:null;   // 選手からの提案(→docs/23 §23.2 の 5)
-    return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b></div><div class="ch-log">'+
+    return '<div class="chat-sheet"><div class="ch-head"><b>'+K.title+'</b>'+(PR||commLeft(S)?'':'<button class="ch-x" data-act="chatok" aria-label="閉じる">×</button>')+'</div><div class="ch-log">'+
       K.who.map((x,i)=>chatPl(x,"「"+voiceOf(S,x)+"」",true)).join("")+chatMe(K.said)+
       K.lines.map(chatNote).join("")+(K.react?chatPl(K.who[0],K.react,true):"")+
       (PR?chatPl(PR.id,"「監督、自分はこんな選手になりたいんです。どの道がいいと思いますか？」",true)+
@@ -252,7 +256,7 @@ function commChatHtml(){
       '</div><div class="ch-acts">'+(PR?PR.opts.map((k,i)=>'<button class="cr prop" data-act="propick" data-i="'+i+'"><b>'+TAGS[k].name+'</b><small>'+TAGS[k].desc.replace(/^特性/,"")+'</small></button>').join("")+
           '<button class="cr" data-act="propick" data-i="-1">今は見送る</button>'
       :commLeft(S)?'<button class="cr ok" data-act="chatok">OK</button>'
-        :'<button class="cr ok" data-act="chatok">閉じる</button><button class="cr ok ko" data-act="chatgo">視察へ</button>')+'</div></div>';
+        :'<button class="cr ok ko" data-act="chatgo">視察へ</button>')+'</div></div>';
   }
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
@@ -456,7 +460,7 @@ function htSetHtml(){
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
   return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
-    (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div><button class="lnk" data-act="htopen">閉じる</button>'
+    (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
 }
@@ -1172,7 +1176,7 @@ function mabHtml(){
     return '<button class="mab'+(on?' on':'')+'" data-act="mab" data-v="'+k+'"><b>'+a.name+'</b><i>'+MAB_RANK[r]+'</i>'+
       '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
   return '<section class="card mabs"><h3>監督能力 <small>試合に軽く効く ・ '+set.length+'/'+M.max+' ・ 使うほどランクが上がる</small></h3>'+
-    (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div><button class="lnk" data-act="mabopen">閉じる</button>'
+    (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div>'+foldBtn("mabopen",true)
       :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">監督能力を選ぶ</button>')+'</section>';
 }
 /* ---- 称号のセット(→docs/10 §10.2 B) ---- */
@@ -1407,7 +1411,7 @@ function seasonHtml(){
       const zc=(i+1<=TUNING.club.promoteRank&&S.grade<3?' up':'')+(i+1>=TUNING.club.relegateRank&&S.grade>1?' down':'');   // 昇格・降格の圏内(→docs/19)
       return '<tr class="'+(id==="me"?'me':'')+zc+'"><td>'+(i+1)+'</td><td class="nm2">'+(id==="me"?clubName(id):'<button class="lnk oppv" data-act="oppview" data-id="'+id+'">'+clubName(id)+'</button>')+'</td><td>'+r.p+
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
-    '</table><button class="lnk more" data-act="fulltable">'+(CL.fullTable?'畳む':'全部見る')+'</button></section>';
+    '</table>'+foldBtn("fulltable",CL.fullTable)+'</section>';
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
   // 「S の大会への道」は大会表と同じ中身なので、大会表にまとめた(条件は名前の下の行。→docs/14 第2弾)
   // 大会は日程の順に。次の試合の大会に印
@@ -1513,7 +1517,7 @@ function managerTabHtml(){
       '<div class="mg-name">'+name+'</div>'+
       '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
         '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p>'+
-      '<button class="lnk" data-act="avopen">'+(CL.avOpen?'閉じる':'アバターを変える')+'</button></div></div>'+
+      (CL.avOpen?foldBtn("avopen",true):'<button class="lnk" data-act="avopen">アバターを変える</button>')+'</div></div>'+
       (CL.avOpen?mgrAvPickHtml(m.av|0,"mav"):'')+'</section>'+
     '<section class="card"><h3>生涯成績 <small>'+(S.career.length+(S.termOver?0:1))+'任期 ・ 勝率 '+wr+'%</small></h3>'+
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
