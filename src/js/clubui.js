@@ -783,7 +783,7 @@ function k3dHtml(id,fk,tag){
   return '<div class="k3d"'+(fk==="kFlip"?' id="k3d"':'')+' data-fk="'+fk+'"><div class="k3d-in'+(CL[fk]?' flip':'')+'">'+
     '<div class="k3d-f">'+add(cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"'))+'</div>'+
     '<div class="k3d-b">'+add(kBackHtml(id))+'</div></div>'+
-    '<i class="k3d-hint" aria-label="はじくと裏返る">↻</i></div>';   // 字で説明せず、回転の印だけ
+    '</div>';   // 裏返しの目印(↻)は出さない(オーナー。→docs/14 §14.123)
 }
 /**
  * カードの裏面(→docs/14 §14.115)。表と同じ形・大きさで、印刷されたカードの裏のように並べる。
