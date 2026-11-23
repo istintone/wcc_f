@@ -2699,3 +2699,4 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .step-h.sc-h .sc-rep{flex:0 0 auto;margin-left:auto;padding:4px 12px!important;min-height:0!important;font-size:12px!important}
 #club .step-h.sc-h .sc-rep{width:auto!important;max-width:none!important;height:28px!important;line-height:1!important;flex:0 0 auto!important;white-space:nowrap;clip-path:none;border-radius:2px} #club .step-h.sc-h>b{flex:0 0 auto;white-space:nowrap}
 #club .step-h.sc-h .sc-rep{min-width:0!important;margin-top:0!important;display:inline-block!important}
+.pk-cardin .kc .kcnt{display:none!important}   /* パックの登場では枚数(×2)は出さない(→docs/14 §14.118) */
