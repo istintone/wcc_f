@@ -754,8 +754,7 @@ function cardModalHtml(id,list){
   let h='<div class="kmodal" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id);
-  if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"SUB")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
-  else{
+  if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
     h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
     if(CL.kSwap){
       h+='<p class="hint">交代させる選手を選ぶ(その選手の育成は消える)</p>'+
