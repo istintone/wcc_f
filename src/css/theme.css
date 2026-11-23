@@ -2829,6 +2829,12 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .sq-mini{margin-top:2px!important}
 /* SQUAD: 右の列を上段の右端まで伸ばし、グラフをトレーニングと同じ 132px に(→docs/14 §14.128) */
 
-#club .tab-squad .sq-top .tf-radar{width:102px!important}   /* SUB はほかの画面と同じくピッチの上辺から(→docs/14 §14.130) */
-
-
+#club .tab-squad .sq-top .tf-radar{width:132px!important}   /* SUB はピッチの上辺から。グラフはチーム練習と同じ 132px(→docs/14 §14.131) */
+#club .sq-mini.sq-mini-b{flex-direction:row!important;gap:6px;width:calc(100% - 58px);margin:6px 0 0!important}
+#club .sq-mini-b .sq-mb{flex:1;height:30px!important;font-size:12px}
+#club .tab-squad .sq-2col{align-items:flex-start}
+/* 盤面の下にボタン、右の列は2段ぶん通す(グリッド) */
+#club .tab-squad .sq-3col.sq-2col{display:grid!important;grid-template-columns:minmax(0,1fr) 54px;grid-template-rows:auto auto;column-gap:4px;row-gap:0;align-items:start}
+#club .tab-squad .sq-2col .sq-pitch{grid-column:1;grid-row:1;width:auto!important}
+#club .tab-squad .sq-2col .sq-mini-b{grid-column:1;grid-row:2;width:auto!important}
+#club .tab-squad .sq-2col .sq-side{grid-column:2;grid-row:1/3}

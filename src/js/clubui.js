@@ -497,8 +497,9 @@ function squadHtml(){
       '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
     '<div class="sq-side"><div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>'+sqRolesHtml()+
-      // KP の設定と最適配置は ORDER の下に小さく(下の操作列はやめた。→docs/14 §14.128)
-      '<div class="sq-mini"><button class="sq-mb" data-act="kpopen">KP設定</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div></div>';
+      '</div>'+
+    // KP設定と最適配置は盤面のすぐ下に横並び(右の列が長いぶん空いていた所。→docs/14 §14.131)
+    '<div class="sq-mini sq-mini-b"><button class="sq-mb" data-act="kpopen">KP設定</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div>';
   // 選手の詳細はフロート(sqModalHtml)、任命の案内と結果はインフォバー(→docs/14 §14.48)
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   return h;
