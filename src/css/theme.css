@@ -2597,3 +2597,17 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .gg-ovrw .gg-leg{position:static!important;display:block;margin-top:8px;text-align:center} #club .gg-ovrw .radar{margin-bottom:4px}
 /* WORLD CLASS(キラ)の縁は LEGENDS と同じ細い二重線に(虹の太い枠は光りすぎ。→docs/14 §14.112) */
 .kc.r-K::after{inset:2px!important;border:3px double #8a5cd6!important;border-image:none!important}
+/* LEGENDS の特別な演出(→docs/14 §14.113)
+   ① 縁を走る光: 金の二重線(inset 2px・3px)の上を、光の粒が数秒おきに一周する。カードごとに時間をずらす
+   ② 後光: カードを開いたとき・パックから出たときだけ、選手の後ろで金の光がゆっくり脈打つ */
+@property --ra{syntax:"<angle>";inherits:false;initial-value:0deg}
+.kc .k-run{position:absolute;inset:1.5px;z-index:7;border-radius:3px;padding:4px;pointer-events:none;
+  background:conic-gradient(from var(--ra),transparent 0deg,transparent 275deg,rgba(255,255,255,.12) 300deg,rgba(255,255,255,.7) 335deg,#fff 350deg,#fff 357deg,transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px rgba(255,210,90,1));animation:kRun 7s linear infinite;animation-delay:var(--rd,0s)}
+@keyframes kRun{0%{--ra:0deg;opacity:0}4%{opacity:1}40%{--ra:360deg;opacity:1}46%{--ra:400deg;opacity:0}100%{--ra:400deg;opacity:0}}
+.cb-front .kc.r-L .k-art::before,.pk-cardin .kc.r-L .k-art::before{content:"";position:absolute;left:-10%;right:-10%;top:-6%;bottom:-6%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 55% 50% at 50% 48%,rgba(255,236,160,.95),rgba(242,193,78,.55) 45%,rgba(242,193,78,0) 72%);animation:kAura 2.8s ease-in-out infinite}
+.cb-front .kc.r-L .k-img,.pk-cardin .kc.r-L .k-img{z-index:1}
+@keyframes kAura{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.kc .k-run{animation:none;opacity:0}.cb-front .kc.r-L .k-art::before,.pk-cardin .kc.r-L .k-art::before{animation:none;opacity:.6}}

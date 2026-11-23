@@ -719,6 +719,8 @@ function cardHtml(id,size,extra){
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
     '<i class="k-cno">'+cardNoOf(c)+'</i>'+
+    // LEGENDS だけ: 金の二重線の上を光が一周する(カードごとに時間をずらす。→docs/14 §14.113)
+    (r==="L"?'<i class="k-run" style="--rd:-'+(hashStr("run:"+id)%70/10).toFixed(1)+'s"></i>':'')+
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
