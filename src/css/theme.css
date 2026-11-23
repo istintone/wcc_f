@@ -2769,3 +2769,26 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .hold-btn span{position:relative;font-size:14px}
 #club .kmod-box{overflow-x:hidden!important}   /* 大きなカードを傾けても横スクロールのバーを出さない(→docs/14 §14.125) */
 #scene .pk-slot{overflow:visible}
+/* 4回目の会議の直し(→docs/24) */
+#stylebar #styH{visibility:hidden}   /* A4: 自チームの KP は左端の発動中の札で出す */
+#club .sd-n{font-style:italic;font-family:var(--f-num);font-weight:800;color:var(--t-sub,#c8102e);margin-left:2px}   /* A2 */
+#scene .pk-go small,.th-wr #scene .pk-go small{color:#ffe28a!important}   /* A3: 紺の地で読めるように金 */
+/* 4回目の会議の直し・第3段(→docs/24) */
+#club .ebtn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:6px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.07);color:#c8102e;font-size:14px;cursor:pointer;vertical-align:middle}
+body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
+#club .bk{align-self:center;margin-top:4px;padding:4px 14px;border:0;border-radius:14px;background:rgba(0,0,0,.06);color:var(--t-mute,#777);font-size:12px;font-weight:700;cursor:pointer}
+#club .prep-bot .btn-main:disabled{opacity:.35;cursor:default}
+#club .ko-dots{display:flex;justify-content:center;gap:4px;margin:2px 0 8px}
+#club .ko-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55)}
+#club .ko-dots i.sb{background:rgba(255,255,255,.18)}
+#club .ko-dots i.on{background:#e8304a;box-shadow:0 0 6px #e8304a;transform:scale(1.3)}
+#club .ko-dots i:nth-child(11){margin-right:6px}
+/* C2: 大きなカードの能力3つの後ろに淡い帯 */
+:is(#club,#scene) .k3d-f .kc .k-st{padding:3px 5px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.6) 30%)}
+:is(#club,#scene) .k3d-f .kc.r-B .k-st{background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.45) 30%)}
+/* C3: パックでは輝きを弱める / U7: 開いたらカードを少し下げる */
+.pk-cardin .k-holo{opacity:.4!important}
+.pk-cardin .kc.touch .k-glare{opacity:.55!important}
+.pk-slot.st2 .pk-cardin{top:20px!important;bottom:-8px!important}
+/* C4: 裏面のいちばん下を一回り大きく */
+:is(#club,#scene) .kb-foot{font-size:9.5px!important}

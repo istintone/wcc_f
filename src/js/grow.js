@@ -481,6 +481,7 @@ function doMeeting(S,id,choice){
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
+      (S.persSeen||(S.persSeen={}))[id]=true;   // 性格が分かった(カードの裏面に載る。任期をまたいで残る。→docs/24 G3)
       out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;

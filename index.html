@@ -3368,6 +3368,29 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .hold-btn span{position:relative;font-size:14px}
 #club .kmod-box{overflow-x:hidden!important}   /* 大きなカードを傾けても横スクロールのバーを出さない(→docs/14 §14.125) */
 #scene .pk-slot{overflow:visible}
+/* 4回目の会議の直し(→docs/24) */
+#stylebar #styH{visibility:hidden}   /* A4: 自チームの KP は左端の発動中の札で出す */
+#club .sd-n{font-style:italic;font-family:var(--f-num);font-weight:800;color:var(--t-sub,#c8102e);margin-left:2px}   /* A2 */
+#scene .pk-go small,.th-wr #scene .pk-go small{color:#ffe28a!important}   /* A3: 紺の地で読めるように金 */
+/* 4回目の会議の直し・第3段(→docs/24) */
+#club .ebtn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:6px;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.07);color:#c8102e;font-size:14px;cursor:pointer;vertical-align:middle}
+body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
+#club .bk{align-self:center;margin-top:4px;padding:4px 14px;border:0;border-radius:14px;background:rgba(0,0,0,.06);color:var(--t-mute,#777);font-size:12px;font-weight:700;cursor:pointer}
+#club .prep-bot .btn-main:disabled{opacity:.35;cursor:default}
+#club .ko-dots{display:flex;justify-content:center;gap:4px;margin:2px 0 8px}
+#club .ko-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55)}
+#club .ko-dots i.sb{background:rgba(255,255,255,.18)}
+#club .ko-dots i.on{background:#e8304a;box-shadow:0 0 6px #e8304a;transform:scale(1.3)}
+#club .ko-dots i:nth-child(11){margin-right:6px}
+/* C2: 大きなカードの能力3つの後ろに淡い帯 */
+:is(#club,#scene) .k3d-f .kc .k-st{padding:3px 5px;border-radius:4px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.6) 30%)}
+:is(#club,#scene) .k3d-f .kc.r-B .k-st{background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.45) 30%)}
+/* C3: パックでは輝きを弱める / U7: 開いたらカードを少し下げる */
+.pk-cardin .k-holo{opacity:.4!important}
+.pk-cardin .kc.touch .k-glare{opacity:.55!important}
+.pk-slot.st2 .pk-cardin{top:20px!important;bottom:-8px!important}
+/* C4: 裏面のいちばん下を一回り大きく */
+:is(#club,#scene) .kb-foot{font-size:9.5px!important}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8355,6 +8378,7 @@ function doMeeting(S,id,choice){
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
+      (S.persSeen||(S.persSeen={}))[id]=true;   // 性格が分かった(カードの裏面に載る。任期をまたいで残る。→docs/24 G3)
       out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;
@@ -11474,11 +11498,11 @@ function prepHtml(){
     '<footer class="prep-bot">'+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
-          :'<span class="dim">練習と強さを選んで決定する</span>')
-        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+'<button class="lnk" data-act="stratback">‹ 視察に戻る</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="lnk" data-act="scoutback">‹ 個別指導に戻る</button>':'')
+          :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
+        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+'<button class="bk" data-act="stratback">‹ 視察</button>'
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="bk" data-act="scoutback">‹ 個別指導</button>':'')
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ(個別指導はあと '+commLeft(CL.S)+' 回)</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
+            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
@@ -11616,7 +11640,7 @@ function squadHtml(){
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
-      '<small class="gg-leg2"><span>成長</span><span>戦力</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><i class="p"></i></small></button>'+
+      '<small class="gg-leg2"><span>成長グラフ</span><span>OVR</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><i class="p"></i></small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
@@ -11673,7 +11697,7 @@ function ggModalHtml(){
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
     '<header class="km-head"><span></span><b>OVR</b><small>先発11人の能力</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
     '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:base, color:gr, fill:gr, op:0.25 },{ v:cur, color:col, fill:col, op:0.18 }],{ vals:pw, cls:"gg-vals" })+
-      '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b><span>(<i style="color:'+gr+'">'+p0.toFixed(1)+'</i> '+(d>=0?'+':'−')+' <i style="color:'+col+'">'+Math.abs(d).toFixed(1)+'</i>)</span></div>'+
+      '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b>'+(Math.abs(d)>=0.05?'<span>(<i style="color:'+gr+'">'+p0.toFixed(1)+'</i> '+(d>=0?'+':'−')+' <i style="color:'+col+'">'+Math.abs(d).toFixed(1)+'</i>)</span>':'')+'</div>'+   // 育成が 0 のときは内訳を出さない(→docs/24 U5)
       '<small class="gg-leg"><i class="p" style="background:'+gr+'"></i>任期の始め <i class="g" style="background:'+col+'"></i>育成</small></div>'+
     '</div></div>';
 }
@@ -11909,6 +11933,7 @@ function cardModalHtml(id,list){
       if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];
       h+='<div class="km-cmp"><div class="ko-row"><button class="ko-arw" data-act="koutnav" data-d="-1" aria-label="前の選手">‹</button>'+
         k3dHtml(CL.kOut,"kFlip2","out")+'<button class="ko-arw" data-act="koutnav" data-d="1" aria-label="次の選手">›</button></div>'+
+        '<div class="ko-dots">'+S.sq.map((x,j)=>'<i class="'+(j<11?'st':'sb')+(x===CL.kOut?' on':'')+'"></i>').join("")+'</div>'+   // 先発か SUB か・何人目か(→docs/24 U1)
         // 長押しで入れ替える: 押している間、左から緑のゲージが満ちて、満ちたら交代(間違いを防ぐ。→docs/14 §14.124)
         '<button class="btn btn-main hold-btn" data-hold="swap" data-id="'+CL.kOut+'"><span>長押しで入れ替える(経験が失われます)</span></button></div>';
     }
@@ -11942,8 +11967,9 @@ function kBackHtml(id){
     '<div class="kb-txt">'+(sk?'<p><b>★'+sk.label+'</b>'+sk.desc+'</p>':'')+
       (st?'<p><b>KP</b>'+st.name+' <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (RK?'<p class="rkp"><b>RARE KP</b>'+((g?g.ss:0)>=5?RK.name:'？？？')+'</p>':'')+
+      (S.persSeen&&S.persSeen[id]?'<p><b>性格</b>'+PERS_LABEL[persOf(id)]+'</p>':'')+   // ★突破に成功すると分かる(→docs/24 G3)
       '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
-    '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
+    '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%':'')+'</span></div>'+
     '<i class="k-glare"></i></div>';
 }
 /** 長押しのボタン(→docs/14 §14.124): 押している間ゲージが満ち、HOLD_MS 押し続けたら data-hold の動き(クリックと同じ)をする。離すと戻る */
@@ -11969,6 +11995,9 @@ function k3dBindOne(st){
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
   const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("touch"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
   set(0,base(),false);
+  // 初めて大きなカードを開いたときだけ、一度ゆっくり傾いて裏をのぞかせる(はじくと裏返ると気づけるように。→docs/24 U4)
+  if(fk==="kFlip"&&!st.closest(".pk-slot")){ let seen=false; try{ seen=!!localStorage.getItem("wcc_f.k3dPeek"); localStorage.setItem("wcc_f.k3dPeek","1"); }catch(_){ seen=true; }
+    if(!seen){ setTimeout(()=>{ inner.style.transition="transform .7s ease-in-out"; inner.style.transform="rotateY(70deg)"; setTimeout(()=>set(0,base(),true),750); },400); } }
   // 画像のドラッグ・文字の選択を止める(止めないとブラウザが操作を打ち切る)
   st.addEventListener("dragstart",e=>e.preventDefault());
   const live=()=>{ const sl=st.closest(".pk-slot"); return !sl||sl.classList.contains("st2"); };   // パックの中は破ったあとだけ
@@ -12394,7 +12423,7 @@ function oppCardModalHtml(){
 }
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
-  return '<div class="step-h"><b>戦略方針</b><small>この試合で使う監督能力とハーフタイムの指示を選ぶ。選んだまま次の試合にも引き継ぐ</small></div>'+mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
+  return '<div class="step-h"><b>戦略方針</b><small></small></div>'+mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
 function mabHtml(){
   const S=CL.S, set=S.mab.set, M=TUNING.mab;
@@ -12608,7 +12637,7 @@ function schedRowHtml(r){
   const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'+(r.pk?'<small class="sd-pk">'+r.pk+'</small>':'')
     :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'<i class="sd-if">—</i>');
   return '<li class="sd-row'+(r.res?' past':'')+(r.next?' next':'')+(r.comp==="FR"?' fr':'')+'"><i class="sd-no">'+r.no+'</i>'+
-    '<span class="sd-comp"><b>'+(g&&g!=="-"?gradeTag(g):'')+schedComp(r.comp)+'</b><small>'+(r.label||(r.comp==="FR"?"親善試合":""))+'</small></span>'+
+    '<span class="sd-comp"><b>'+(g&&g!=="-"?gradeTag(g):'')+schedComp(r.comp)+(r.n>1?' <em class="sd-n">×'+r.n+'</em>':'')+'</b><small>'+(r.label||(r.comp==="FR"?"親善試合":""))+'</small></span>'+
     '<i class="sd-ha'+(T?(r.home?' h':' a'):'')+'">'+(T?(r.home?'H':'A'):'')+'</i>'+
     opp+'<span class="sd-r">'+res+'</span></li>';
 }
@@ -12620,9 +12649,11 @@ function scheduleHtml(){
       sc:h[2]+" - "+h[3], pk:pso?"PK "+pso[0]+"-"+pso[1]:"" }; });
   const fut=S.termOver?[]:upcoming(S,10).map((r,i)=>Object.assign(r,{ next:i===0 }));
   if(!past.length&&!fut.length)return "";
+  // この先の続くフレンドリー(次の試合を除く)は1行にまとめて ×N(→docs/24 A2)。下の注記は出さない(字で説明しない)
+  const grp=[]; for(const r of fut){ const l=grp[grp.length-1];
+    if(r.comp==="FR"&&!r.next&&l&&l.comp==="FR"&&!l.next){ l.n=(l.n||1)+1; continue; } grp.push(r); }
   return '<section class="card sched"><h3>日程 <small>過去5試合と、この先10試合 ・ 第'+S.played+'/'+TUNING.club.termLen+'試合</small></h3><ol class="sd-list">'+
-    past.map(schedRowHtml).join("")+fut.map(schedRowHtml).join("")+'</ol>'+
-    '<p class="dim">カップの相手は出場が決まったときに抽選。出ない・出られない大会の枠は、フレンドリーマッチか、休んで節を進められる(・の行。任期の試合は減らない)</p></section>';
+    past.map(schedRowHtml).join("")+grp.map(schedRowHtml).join("")+'</ol></section>';
 }
 function seasonHtml(){
   const S=CL.S, L=S.league, order=sortTable(L.table);
@@ -12715,7 +12746,7 @@ function clubInfoHtml(){
   const T=myTeam(S);
   return '<section class="card club-card"><h3>クラブ <small>'+(S.cprof&&S.cprof.name?S.cprof.name:'第'+S.term+'任期')+'</small></h3>'+
     '<div class="cc-top">'+emblemSvg(T,72)+'<div><b>'+embEsc(T.name)+'</b><small>'+embEsc(T.short)+' ・ '+(leagueOf(S.cprof)?leagueOf(S.cprof)+' ':'')+divName(S.grade)+'</small>'+
-      '<button class="lnk" data-act="cedit">クラブを編集する</button></div></div></section>';
+      '<button class="ebtn" data-act="cedit" aria-label="クラブを編集する">✎</button></div></div></section>';
 }
 function clubTabHtml(){
   const S=CL.S, r=S.rec, names=S.titles.filter(t=>t.term===S.term).map(t=>trophyName(trophyKey(t)));
@@ -12737,14 +12768,14 @@ function managerTabHtml(){
   const last=S.career.length?titleOf(S.career[S.career.length-1].title).name:"—";
   const d=CL.draft||(CL.draft={});
   const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
-    :'<b>'+embEsc(m.name)+'</b><button class="lnk" data-act="medit">名前を変える</button>';
+    :'<b>'+embEsc(m.name)+'</b><button class="ebtn" data-act="medit" aria-label="名前を変える">✎</button>';
   const full=mgrArt(m.av,"full");
   return '<section class="card mgr-card"><h3>監督 <small>第'+S.term+'任期 ・ 監督 GRADE '+mgrLv(S)+'</small></h3>'+
       '<div class="mg-top">'+(full?'<img class="mg-full" src="'+full+'" alt="">':'')+'<div class="mg-body">'+
       '<div class="mg-name">'+name+'</div>'+
       '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
         '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p>'+
-      (CL.avOpen?foldBtn("avopen",true):'<button class="lnk" data-act="avopen">アバターを変える</button>')+'</div></div>'+
+      (CL.avOpen?foldBtn("avopen",true):'<button class="ebtn" data-act="avopen" aria-label="アバターを変える">✎</button>')+'</div></div>'+
       (CL.avOpen?mgrAvPickHtml(m.av|0,"mav"):'')+'</section>'+
     '<section class="card"><h3>生涯成績 <small>'+(S.career.length+(S.termOver?0:1))+'任期 ・ 勝率 '+wr+'%</small></h3>'+
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
