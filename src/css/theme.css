@@ -2687,3 +2687,4 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .kc .k-emb2::before{color:rgba(255,255,255,.7);transform:translate(.7px,.7px)}
 .kc .k-emb2::after{color:rgba(0,0,0,.2);transform:translate(-.7px,-.7px)}
 .kc .k-emb2{right:auto!important;left:7%!important;top:24%!important}   /* 左側: ポジションの札の下からスキルの手前まで(オーナー) */
+#sc-card .pk-pack,.pk-pack{touch-action:none} .pk-cardin .kc img{pointer-events:none;-webkit-user-drag:none} .pk-cardin .kc{transform-style:preserve-3d;will-change:transform}

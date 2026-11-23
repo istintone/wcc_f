@@ -317,6 +317,20 @@ function sceneCard(id,isNew,go){
     if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ if(SC.busy)return; p0=null; SC.packMoved=true; packStep(); }   // 待ちの間のなぞりは、明けてから効く
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
+  // 破ったあと(中身が見えたら)カードをぐりぐり傾けられる。輝きと光沢が指に付いてくる(→docs/14 §14.118)。なぞった直後のタップでは進まない
+  const tiltKc=()=>SC.el&&SC.el.querySelector(".pk-cardin .kc"); let t0=null;
+  pack.addEventListener("dragstart",e=>e.preventDefault());
+  pack.addEventListener("pointerdown",e=>{ if(SC.card&&SC.card.stage===2)t0={ x:e.clientX, y:e.clientY }; });
+  pack.addEventListener("pointermove",e=>{
+    const K=SC.card, kc=tiltKc(); if(!K||K.stage!==2||!kc)return;
+    if(!t0&&e.pointerType!=="mouse")return;
+    if(t0&&Math.hypot(e.clientX-t0.x,e.clientY-t0.y)>8)SC.packMoved=true;
+    const r=kc.getBoundingClientRect(), px=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), py=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+    kc.style.transition="none"; kc.style.transform="perspective(700px) rotateX("+(-(py-0.5)*30).toFixed(1)+"deg) rotateY("+((px-0.5)*36).toFixed(1)+"deg)";
+    kc.style.setProperty("--mx",(px*100).toFixed(1)+"%"); kc.style.setProperty("--my",(py*100).toFixed(1)+"%"); kc.classList.add("touch");
+  });
+  const untilt=()=>{ t0=null; const kc=tiltKc(); if(!kc)return; kc.style.transition="transform .45s cubic-bezier(.2,.8,.2,1.2)"; kc.style.transform=""; kc.classList.remove("touch"); };
+  pack.addEventListener("pointerup",untilt); pack.addEventListener("pointercancel",untilt); pack.addEventListener("pointerleave",untilt);
   sndUi("tap");
 }
 /**
