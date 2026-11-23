@@ -260,7 +260,8 @@ function commChatHtml(){
   }
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
-  let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+"」",true)+chatNote("信頼度: "+TRUST_LABEL[trustLv(S.g.pl[x])])).join(""), acts="";
+  // 信頼度は注記で見せず、選手の言葉の距離感で伝える(→docs/14 §14.109)
+  let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+trustSay(S,x)+"」",true)).join(""), acts="";
   if(CL.comm==="lounge"){
     const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
     log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:REL_LABEL[f.lv]+(f.gold?"(信頼の兆し)":"") }),true)+

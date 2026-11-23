@@ -340,7 +340,7 @@ function voiceOf(S,id){
   const k=spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
     :ck<1?"rebel":(ck>1||ek>1)?"grow"
     :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
-    :trustLv(g)>=2?"trust":(g.bond||0)===0?"new":c.age<=21?"young":c.age>=31?"vet":"plain";
+    :c.age<=21?"young":c.age>=31?"vet":"plain";   // 信頼の深さは trustSay で添える(→docs/14 §14.109)
   const list=(VOICE_P[persOf(id)]||{})[k]||VOICE[k]||VOICE.plain, r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
 }
@@ -1534,4 +1534,18 @@ function meetOpts(S,id){
   const h=hashStr("mq:"+S.term+":"+S.played+":"+id), q=MEET_Q[h%MEET_Q.length];
   const ord=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]][(h>>>4)%6];
   return ord.map(i=>({ i, t:q[i] }));
+}
+/* 信頼度は数字や段の名前で見せず、選手の言葉の距離感で伝える(→docs/14 §14.109)。性格 × 段(まだ遠い / 打ち解けてきた / 信頼している / 心酔している) */
+const TRUST_SAY=[
+  [["……まだ少し緊張しますね。","監督とは、まだあまり話せてないですよね。"],["監督と話すの、だんだん慣れてきました。","最近、話しやすくなってきました。"],
+   ["監督になら、なんでも相談できます。","監督のこと、頼りにしてます。"],["監督についていきます。どこまでも！","監督のためなら、なんだってやります！"]],
+  [["……まだあんたを認めたわけじゃない。","あんたの実力、見せてもらうぜ。"],["あんたの采配、悪くないと思い始めてる。","少しは話がわかるようだな。"],
+   ["あんたの言うことなら聞く。","あんたとなら、上に行ける。"],["あんたのためなら、命がけで走る。","最後まであんたについていく。"]],
+  [["監督のこと、まだよく知らないんですよね〜。","まあ、お手柔らかにお願いします〜。"],["監督のペース、ちょっとわかってきました。","監督と話すの、わりと好きかもです。"],
+   ["監督とは、気楽に話せますね〜。","監督の言うことなら、まあ聞きますよ。"],["監督と一緒なら、どこでもいいですよ〜。","監督のこと、けっこう信じてますから。"]]
+];
+function trustSay(S,id){
+  const g=S.g.pl[id]; if(!g)return "";
+  const a=TRUST_SAY[persOf(id)][trustLv(g)];
+  return a[hashStr("ts:"+S.term+":"+S.played+":"+id)%a.length];
 }
