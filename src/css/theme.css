@@ -2754,11 +2754,11 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 @keyframes xDn{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
 @keyframes xUp{0%,100%{transform:translateY(2px)}50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){#club .km-xchg i{animation:none}}
-/* 交代の印をスタイリッシュな矢印に(緑の ↑ IN・赤の ↓ OUT)。飾りで押せない */
+/* 交代の印をスタイリッシュな矢印に(赤の ↑ OUT・緑の ↓ IN)。飾りで押せない */
 #club .km-xchg{background:none!important;width:auto!important;height:46px!important;gap:6px!important;cursor:default;pointer-events:none;transform:skewX(-12deg)}
 #club .km-xchg svg{display:block;width:14px;height:40px;filter:drop-shadow(0 0 4px rgba(0,0,0,.5))}
-#club .km-xchg svg.up{filter:drop-shadow(0 0 5px rgba(47,179,106,.7));animation:xUp 1.4s ease-in-out infinite}
-#club .km-xchg svg.dn{filter:drop-shadow(0 0 5px rgba(232,48,74,.7));animation:xDn 1.4s ease-in-out infinite}
+#club .km-xchg svg.up{filter:drop-shadow(0 0 5px rgba(232,48,74,.7));animation:xUp 1.4s ease-in-out infinite}
+#club .km-xchg svg.dn{filter:drop-shadow(0 0 5px rgba(47,179,106,.7));animation:xDn 1.4s ease-in-out infinite}
 @keyframes xUp{0%,100%{transform:translateY(3px)}50%{transform:translateY(-3px)}}
 @keyframes xDn{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}
 @media (prefers-reduced-motion:reduce){#club .km-xchg svg{animation:none}}

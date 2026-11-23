@@ -760,10 +760,10 @@ function cardModalHtml(id,list){
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null);
   if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
-    // 交代中は「交代をやめる」と分離線の代わりに、2枚の間に交代の印(緑の ↑ = IN・赤の ↓ = OUT。サッカーの交代表示と同じ)。飾りで押しても何も起きない(→docs/14 §14.122)
+    // 交代中は「交代をやめる」と分離線の代わりに、2枚の間に交代の印(赤の ↑ = OUT・緑の ↓ = IN。OUT が赤なのに合わせる)。飾りで押しても何も起きない(→docs/14 §14.122)
     const arw=(d,c1,c2)=>'<svg class="'+d+'" viewBox="0 0 20 40" aria-hidden="true"><defs><linearGradient id="xg'+d+'" x1="0" y1="'+(d==="up"?1:0)+'" x2="0" y2="'+(d==="up"?0:1)+'"><stop offset="0" stop-color="'+c1+'" stop-opacity=".15"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs>'+
       '<path d="'+(d==="up"?'M10 1 L19 14 L13 14 L13 39 L7 39 L7 14 L1 14 Z':'M10 39 L19 26 L13 26 L13 1 L7 1 L7 26 L1 26 Z')+'" fill="url(#xg'+d+')"/></svg>';
-    h+=CL.kSwap?'<div class="km-xchg" role="img" aria-label="交代(IN と OUT)">'+arw("up","#2fb36a","#7dffb0")+arw("dn","#e8304a","#ff8a9a")+'</div>'
+    h+=CL.kSwap?'<div class="km-xchg" role="img" aria-label="交代(IN と OUT)">'+arw("up","#e8304a","#ff8a9a")+arw("dn","#2fb36a","#7dffb0")+'</div>'
       :'<button class="btn btn-main km-swap" data-act="kswap">⇄ SQUAD と交代</button>';
     if(CL.kSwap){
       // 交代の相手は、下のカードの左右の ‹ › で登録の順に切り替える(16人の札の並びはやめた。→docs/14 §14.122)
