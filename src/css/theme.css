@@ -2828,7 +2828,7 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .sq-2col .sq-side .sq-roles .rs .nm{line-height:11px!important}
 #club .sq-mini{margin-top:2px!important}
 /* SQUAD: 右の列を上段の右端まで伸ばし、グラフをトレーニングと同じ 132px に(→docs/14 §14.128) */
-#club .tab-squad .sq-top{margin-right:58px}
-#club .tab-squad .sq-top .tf-radar{width:132px!important}
-#club .tab-squad .sq-2col{align-items:flex-start}
-#club .tab-squad .sq-2col .sq-side{margin-top:var(--sq-lift,-137px)}
+
+#club .tab-squad .sq-top .tf-radar{width:102px!important}   /* SUB はほかの画面と同じくピッチの上辺から(→docs/14 §14.130) */
+
+

@@ -480,7 +480,7 @@ function squadHtml(){
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
-      '<small class="gg-leg2"><span>グラフ</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><span>選手</span><i class="p"></i></small></button>'+
+      '<small class="gg-leg2"><span>育成</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><span>選手</span><i class="p"></i></small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamOvr(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
@@ -536,10 +536,10 @@ function ggModalHtml(){
   const cur={}, gv={}; for(const a in pw){ cur[a]=(pw[a]-8)/9; gv[a]=(G[a]||0)/R.max; }
   const col=teamColor(myTeam(S)), gry="#9aa1ad";
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
-    '<header class="km-head"><span></span><b>OVR</b><small>選手 + 成長</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
+    '<header class="km-head"><span></span><b>OVR</b><small>選手 + 育成</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
     '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:cur, color:gry, fill:gry, op:0.25 },{ v:gv, color:col, fill:col, op:0.2 }],{ vals:pw, cls:"gg-vals", gold:S.g.gold })+
       '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b><span>(<i style="color:'+gry+'">'+pl.toFixed(1)+'</i> + <i style="color:'+col+'">'+gr.toFixed(1)+'</i>)</span></div>'+
-      '<small class="gg-leg"><i class="p" style="background:'+gry+'"></i>選手 <i class="g" style="background:'+col+'"></i>成長(グラフ)</small></div>'+
+      '<small class="gg-leg"><i class="p" style="background:'+gry+'"></i>選手 <i class="g" style="background:'+col+'"></i>育成</small></div>'+
     '</div></div>';
 }
 function growGraphHtml(S){
