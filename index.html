@@ -3361,6 +3361,11 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 @keyframes xUp{0%,100%{transform:translateY(3px)}50%{transform:translateY(-3px)}}
 @keyframes xDn{0%,100%{transform:translateY(-3px)}50%{transform:translateY(3px)}}
 @media (prefers-reduced-motion:reduce){#club .km-xchg svg{animation:none}}
+/* 長押しのボタン(→docs/14 §14.124): 押している間、左から緑のゲージが満ちる */
+#club .hold-btn{position:relative;overflow:hidden;isolation:isolate;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#club .hold-btn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;z-index:-1;background:linear-gradient(90deg,#16723e,#1f8a4c 70%,#2fb36a);transition:width .25s ease-out}
+#club .hold-btn.holding::before,#club .hold-btn.done::before{width:100%;transition:width 1.2s linear}
+#club .hold-btn span{position:relative;font-size:14px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11195,6 +11200,7 @@ function showClub(keepScroll){
   const pitch=document.getElementById("sqPitch");
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
+  holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); }
 
@@ -11896,7 +11902,8 @@ function cardModalHtml(id,list){
       if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];
       h+='<div class="km-cmp"><div class="ko-row"><button class="ko-arw" data-act="koutnav" data-d="-1" aria-label="前の選手">‹</button>'+
         k3dHtml(CL.kOut,"kFlip2","out")+'<button class="ko-arw" data-act="koutnav" data-d="1" aria-label="次の選手">›</button></div>'+
-        '<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
+        // 長押しで入れ替える: 押している間、左から緑のゲージが満ちて、満ちたら交代(間違いを防ぐ。→docs/14 §14.124)
+        '<button class="btn btn-main hold-btn" data-hold="swap" data-id="'+CL.kOut+'"><span>長押しで入れ替える(経験が失われます)</span></button></div>';
     }
   }
   return h+'</div></div>';
@@ -11931,6 +11938,19 @@ function kBackHtml(id){
       '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
     '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
     '<i class="k-glare"></i></div>';
+}
+/** 長押しのボタン(→docs/14 §14.124): 押している間ゲージが満ち、HOLD_MS 押し続けたら data-hold の動き(クリックと同じ)をする。離すと戻る */
+const HOLD_MS=1200;
+function holdBind(){
+  document.querySelectorAll("#club [data-hold]").forEach(b=>{
+    let t=null;
+    const stop=()=>{ clearTimeout(t); t=null; b.classList.remove("holding"); };
+    b.addEventListener("contextmenu",e=>e.preventDefault());
+    b.addEventListener("pointerdown",e=>{ e.preventDefault(); b.classList.add("holding");
+      t=setTimeout(()=>{ t=null; b.classList.add("done"); if(navigator.vibrate)try{ navigator.vibrate(30); }catch(_){}
+        b.dataset.act=b.dataset.hold; b.click(); },HOLD_MS); });
+    ["pointerup","pointerleave","pointercancel"].forEach(k=>b.addEventListener(k,()=>{ if(!b.classList.contains("done"))stop(); }));
+  });
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
 function k3dBind(){ document.querySelectorAll("#club .k3d").forEach(k3dBindOne); }
