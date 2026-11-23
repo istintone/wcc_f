@@ -760,7 +760,9 @@ function cardModalHtml(id,list){
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null);
   if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
-    h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
+    // 交代中は「交代をやめる」と分離線の代わりに、2枚の間に交代の印(↓ IN が入る・↑ OUT が出る)。押すと交代をやめる(→docs/14 §14.122)
+    h+=CL.kSwap?'<button class="km-xchg" data-act="kswap" aria-label="交代をやめる"><i class="dn">↓</i><i class="up">↑</i></button>'
+      :'<button class="btn btn-main km-swap" data-act="kswap">⇄ SQUAD と交代</button>';
     if(CL.kSwap){
       // 交代の相手は、下のカードの左右の ‹ › で登録の順に切り替える(16人の札の並びはやめた。→docs/14 §14.122)
       if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];

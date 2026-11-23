@@ -3341,6 +3341,18 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .km-cmp{border-top:2px dashed rgba(200,16,46,.6);margin-top:8px;padding-top:8px}
 .k-rib{top:4.5cqw!important;width:40cqw!important;padding:1cqw 0!important;font-size:5.2cqw!important}
 .k-rib.in{right:-12.5cqw!important} .k-rib.out{left:-12.5cqw!important}
+/* IN は右下(→docs/14 §14.122) */
+.k-rib.in{top:auto!important;bottom:4.5cqw!important;right:-12.5cqw!important;transform:rotate(-45deg)!important}
+/* 交代の印: 2枚のカードの間に ↓(IN が入る・緑)↑(OUT が出る・赤)。分離線と「交代をやめる」の代わり */
+#club .km-cmp{border-top:0!important;margin-top:0!important;padding-top:0!important}
+#club .km-xchg{display:flex;justify-content:center;align-items:center;gap:2px;margin:2px auto -2px;width:64px;height:40px;padding:0;border:0;border-radius:20px;
+  background:rgba(255,255,255,.08);cursor:pointer}
+#club .km-xchg i{font-style:normal;font-family:var(--f-num);font-weight:900;font-size:26px;line-height:1}
+#club .km-xchg .dn{color:#2fb36a} #club .km-xchg .up{color:#e8304a}
+#club .km-xchg .dn{animation:xDn 1.4s ease-in-out infinite} #club .km-xchg .up{animation:xUp 1.4s ease-in-out infinite}
+@keyframes xDn{0%,100%{transform:translateY(-2px)}50%{transform:translateY(3px)}}
+@keyframes xUp{0%,100%{transform:translateY(2px)}50%{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){#club .km-xchg i{animation:none}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11866,7 +11878,9 @@ function cardModalHtml(id,list){
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null);
   if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
-    h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
+    // 交代中は「交代をやめる」と分離線の代わりに、2枚の間に交代の印(↓ IN が入る・↑ OUT が出る)。押すと交代をやめる(→docs/14 §14.122)
+    h+=CL.kSwap?'<button class="km-xchg" data-act="kswap" aria-label="交代をやめる"><i class="dn">↓</i><i class="up">↑</i></button>'
+      :'<button class="btn btn-main km-swap" data-act="kswap">⇄ SQUAD と交代</button>';
     if(CL.kSwap){
       // 交代の相手は、下のカードの左右の ‹ › で登録の順に切り替える(16人の札の並びはやめた。→docs/14 §14.122)
       if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];
