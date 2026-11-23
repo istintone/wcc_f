@@ -1776,7 +1776,8 @@ function onClubClick(e){
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
     if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
-      if(S.joinLines&&S.joinLines.length){ const jl=S.joinLines; setTimeout(()=>infoBar(jl),0); } S.joinLines=null; }
+      // 通知バーで「〇〇 がチームに参加しました」(加わった選手のタグの知らせが続く。→docs/14 §14.126)
+      { const jl=[nameOf(CARDS[inn])+" がチームに参加しました"].concat(S.joinLines||[]); setTimeout(()=>infoBar(jl),0); } S.joinLines=null; }
     showClub(true);
   }
   else if(act==="sqpick")sqPick(b.dataset.id);
