@@ -208,7 +208,7 @@ const TUNING={
          // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
          link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
                 pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60], trustK:0.04 },
-         graph:{ basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
+         graph:{ ovrDiv:20, basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
          set:{ per:0.02, max:0.2 },
          mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
            // 控え(→docs/08 §8.4): 出番の無い試合が benchGrace 続くと下がり始める。勝てば控えも少し上がる。

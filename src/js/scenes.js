@@ -66,7 +66,7 @@ function vsAxes(T,mine){
 /** 対戦カードの先発11人(自チームは育成込み) */
 function vsCards(T,mine){ const S=CL.S; return mine&&S?S.sq.slice(0,11).map(id=>growCard(S,CARDS[id])):(T.xi||[]).slice(0,11).map(id=>CARDS[id]); }
 /** OVR = 先発11人の6能力の合計の平均(teamPower と同じ) */
-const vsOvr=(T,mine)=>{ const cs=vsCards(T,mine); return cs.reduce((s,c)=>s+STATS.reduce((a,k)=>a+c[k],0),0)/(cs.length||1); };
+const vsOvr=(T,mine,g)=>{ const cs=vsCards(T,mine); return cs.reduce((s,c)=>s+STATS.reduce((a,k)=>a+c[k],0),0)/(cs.length||1)+graphOvr(g); };   // OVR = 選手 + 成長(→docs/14 §14.129)
 function axisBars(T){
   // 戦力(能力の上位6人の平均)を6本の短い帯で
   const t=0;
@@ -97,9 +97,9 @@ function sceneMatchup(fx,go){
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
     // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
     // VS を挟んで、左に自チーム・右に相手のレーダー
-    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:teamColor(me) }],{ short:true })+'<p><i style="background:'+teamColor(me)+'"></i>'+me.short+'<b class="vs-ovr">OVR '+vsOvr(me,true).toFixed(1)+'</b></p></div>'+
+    '<div class="vs-mid"><div class="vs-radar">'+radarSvg([{ v:vsAxes(me,true), color:teamColor(me) }],{ short:true })+'<p><i style="background:'+teamColor(me)+'"></i>'+me.short+'<b class="vs-ovr">OVR '+vsOvr(me,true,S.g&&S.g.graph).toFixed(1)+'</b></p></div>'+
       '<div class="vs-mark">VS</div>'+
-      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:teamColor(opp) }],{ short:true })+'<p><i style="background:'+teamColor(opp)+'"></i>'+opp.short+'<b class="vs-ovr">OVR '+vsOvr(opp,false).toFixed(1)+'</b></p></div></div>'+
+      '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:teamColor(opp) }],{ short:true })+'<p><i style="background:'+teamColor(opp)+'"></i>'+opp.short+'<b class="vs-ovr">OVR '+vsOvr(opp,false,(oppDefOf(S,fx)||{}).graph).toFixed(1)+'</b></p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
     (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
     '<div class="touch sm">TOUCH</div>',

@@ -480,8 +480,8 @@ function squadHtml(){
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
-      '<small class="gg-leg2"><span>成長グラフ</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><span>OVR</span><i class="p"></i></small></button>'+
-    '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
+      '<small class="gg-leg2"><span>グラフ</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><span>選手</span><i class="p"></i></small></button>'+
+    '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamOvr(S).toFixed(1)+'</b></div>'+
       (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
       '</div></section>';
   // 2列: 左にピッチ、右に控え(SUB)とその下に任命(ORDER)。ピッチはチーム練習・個別指導の盤面と同じ大きさ(→docs/14 §14.89)
@@ -531,16 +531,15 @@ function teamAxisPower(S){
  * 大きなレーダー(成長 + 戦力)と、軸ごとの 成長(0〜100・MAX・GOLD)/ 戦力(能力の平均。足すと OVR)
  */
 function ggModalHtml(){
-  // OVR(→docs/14 §14.111): グラフの項目の近くに各軸の数値、右下に OVR と内訳(任期の始め + 育成)をグラフの色で。表・KP・成長グラフは出さない
-  const S=CL.S, pw=teamAxisPower(S), ovr=teamPower(S), p0=S.ts&&S.ts.pow0!=null?S.ts.pow0:ovr, d=ovr-p0;
-  const ax0=S.ts&&S.ts.ax0?S.ts.ax0:Object.fromEntries(Object.keys(pw).map(a=>[a,pw[a]*p0/(ovr||1)]));   // 古いセーブは比で戻す
-  const sc=v=>(v-8)/9, cur={}, base={}; for(const a in pw){ cur[a]=sc(pw[a]); base[a]=sc(ax0[a]); }
-  const col=teamColor(myTeam(S)), gr="#9aa1ad";
+  // OVR = 選手 + 成長(→docs/14 §14.129)。グレー = 選手(6能力・項目の下に数値)、チーム色 = グラフ(成長)。右下に OVR と内訳をグラフの色で
+  const S=CL.S, pw=teamAxisPower(S), pl=teamPower(S), gr=graphOvr(S.g.graph), ovr=pl+gr, G=S.g.graph, R=TUNING.grow.graph;
+  const cur={}, gv={}; for(const a in pw){ cur[a]=(pw[a]-8)/9; gv[a]=(G[a]||0)/R.max; }
+  const col=teamColor(myTeam(S)), gry="#9aa1ad";
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
-    '<header class="km-head"><span></span><b>OVR</b><small>先発11人の能力</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
-    '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:base, color:gr, fill:gr, op:0.25 },{ v:cur, color:col, fill:col, op:0.18 }],{ vals:pw, cls:"gg-vals" })+
-      '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b>'+(Math.abs(d)>=0.05?'<span>(<i style="color:'+gr+'">'+p0.toFixed(1)+'</i> '+(d>=0?'+':'−')+' <i style="color:'+col+'">'+Math.abs(d).toFixed(1)+'</i>)</span>':'')+'</div>'+   // 育成が 0 のときは内訳を出さない(→docs/24 U5)
-      '<small class="gg-leg"><i class="p" style="background:'+gr+'"></i>任期の始め <i class="g" style="background:'+col+'"></i>育成</small></div>'+
+    '<header class="km-head"><span></span><b>OVR</b><small>選手 + 成長</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
+    '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:cur, color:gry, fill:gry, op:0.25 },{ v:gv, color:col, fill:col, op:0.2 }],{ vals:pw, cls:"gg-vals", gold:S.g.gold })+
+      '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b><span>(<i style="color:'+gry+'">'+pl.toFixed(1)+'</i> + <i style="color:'+col+'">'+gr.toFixed(1)+'</i>)</span></div>'+
+      '<small class="gg-leg"><i class="p" style="background:'+gry+'"></i>選手 <i class="g" style="background:'+col+'"></i>成長(グラフ)</small></div>'+
     '</div></div>';
 }
 function growGraphHtml(S){
@@ -965,7 +964,7 @@ function homeHeadHtml(){
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
   return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
-    '<div class="num pw"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+   // 合算値だけ。伸びの内訳は SQUAD の窓(→docs/14 §14.110)
+    '<div class="num pw"><small>OVR</small><b>'+teamOvr(S).toFixed(1)+'</b></div>'+   // 合算値だけ。伸びの内訳は SQUAD の窓(→docs/14 §14.110)
     '<div class="num"><small>任期</small><b>'+S.played+'<i>/'+C.termLen+'</i></b></div>'+
     '<div class="num"><small>資金</small><b>'+S.money.toFixed(0)+'<i>億</i></b></div>'+
     (S.biz?'<div class="num"><small>サポーター</small><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b></div>':'')+'</header>';
@@ -1182,7 +1181,7 @@ function oppRoles(def){
 /** 秘書の報告(相手の情報を整理した数行)。数字は出さず、たとえで伝える(→docs/18 §18.4) */
 function scoutReport(S,fx,def){
   const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
-  const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length, ovM=teamPower(S);
+  const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length+graphOvr(def.graph), ovM=teamOvr(S);   // OVR = 選手 + 成長
   const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]);
   const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
   const pick=(f,g)=>xi.filter(f).sort((a,b)=>g(b)-g(a))[0];
@@ -1221,7 +1220,7 @@ function oppTokenHtml(c,h,x,OR,on){
  */
 function oppSquadHtml(S,oppId,def,rep){
   const t=TEAMS[oppId], OR=oppRoles(def), xi=def.xi.map(x=>x.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
-  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length, kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
   const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, v1={}, v2={};
   for(const a in opw){ v1[a]=opw[a]/STAT_MAX; v2[a]=mpw[a]/STAT_MAX; }
   const team=Object.assign({ id:oppId },t);

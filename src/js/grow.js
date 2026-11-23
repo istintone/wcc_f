@@ -764,6 +764,10 @@ function secFollow(S,drops,ups,out,salt,plus){
 }
 
 /** チーム力 = 先発11人の、育成を反映した能力の合計の平均(→docs/09 第2弾)。任期の始めからの伸びを見せる */
+/* OVR = 選手 + 成長(→docs/14 §14.129)。選手 = 先発11人の6能力の合計の平均(teamPower)、成長 = 成長グラフ6軸の合計 ÷ ovrDiv(最大 +約20)。
+ * 表示の物差し。試合の強さの計算は変えない */
+const graphOvr=g=>g?["O","D","R","C","S","P"].reduce((s,a)=>s+(+g[a]||0),0)/TUNING.grow.graph.ovrDiv:0;
+const teamOvr=S=>teamPower(S)+graphOvr(S.g&&S.g.graph);
 function teamPower(S){
   const xi=S.sq.slice(0,11); let t=0;
   for(const id of xi){ const c=growCard(S,CARDS[id]); t+=STATS.reduce((a,k)=>a+c[k],0); }
