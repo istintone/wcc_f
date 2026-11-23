@@ -833,7 +833,7 @@ function k3dBindOne(st){
   let d=null;
   const base=()=>CL[fk]?180:0;
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
-  const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("touch"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
+  const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("tilting"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("tilting",px!=null); };
   set(0,base(),false);
   // 初めて大きなカードを開いたときだけ、一度ゆっくり傾いて裏をのぞかせる(はじくと裏返ると気づけるように。→docs/24 U4)
   if(fk==="kFlip"&&!st.closest(".pk-slot")){ let seen=false; try{ seen=!!localStorage.getItem("wcc_f.k3dPeek"); localStorage.setItem("wcc_f.k3dPeek","1"); }catch(_){ seen=true; }

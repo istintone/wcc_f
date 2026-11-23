@@ -1461,9 +1461,9 @@ body.th-bk{
 /* 中のカード(破るまでは包みの下) */
 .pk-cardin{position:absolute;inset:6px 8px;border-radius:10px;overflow:hidden}
 .pk-cardin .kc{position:absolute;inset:0;aspect-ratio:auto;border-radius:10px}
-.pk-cardin .kc .k-no{font-size:44px} .pk-cardin .kc .k-pos{font-size:12px}
-.pk-cardin .kc .k-name b{font-size:19px} .pk-cardin .kc .k-name small{font-size:10px}
-.pk-cardin .kc .k-st b{font-size:24px} .pk-cardin .kc .k-st i{font-size:9px} .pk-cardin .kc .k-sk{font-size:11px}
+.pk-cardin>.kc .k-no{font-size:44px} .pk-cardin>.kc .k-pos{font-size:12px}
+.pk-cardin>.kc .k-name b{font-size:19px} .pk-cardin>.kc .k-name small{font-size:10px}
+.pk-cardin>.kc .k-st b{font-size:24px} .pk-cardin>.kc .k-st i{font-size:9px} .pk-cardin>.kc .k-sk{font-size:11px}
 /* 包み(アルミのパック): 上の切り口と本体 */
 .pk-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
 .pk-top{position:absolute;left:0;right:0;top:0;height:16%;border-radius:8px 8px 0 0;
@@ -3205,8 +3205,8 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 @keyframes kHolo{0%{background-position:0% 0%}100%{background-position:100% 100%}}
 .kc .k-glare{position:absolute;inset:0;z-index:6;pointer-events:none;opacity:0;transition:opacity .2s;mix-blend-mode:overlay;
   background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.75),rgba(255,255,255,0) 45%)}
-.kc.touch .k-glare{opacity:1}
-.kc.touch .k-holo{animation:none;background-position:var(--mx,50%) var(--my,50%)}
+.kc.tilting .k-glare{opacity:1}
+.kc.tilting .k-holo{animation:none;background-position:var(--mx,50%) var(--my,50%)}
 @media (prefers-reduced-motion:reduce){.kc .k-holo{animation:none}}
 /* 大きなカード: ぐりぐり傾け、はじくと裏返る */
 :is(#club,#scene) .k3d{position:relative;margin:6px 0 4px;perspective:900px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
@@ -3260,7 +3260,7 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 :is(#club,#scene) .kb-foot{display:flex;justify-content:space-between;align-items:center;gap:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,.15);font-family:var(--f-num);font-size:8px;opacity:.85}
 :is(#club,#scene) .kb-foot b{font-weight:800;letter-spacing:.1em}
 :is(#club,#scene) .kb.r-B .kb-head{border-color:var(--tc)} :is(#club,#scene) .kb.r-B .kb-foot{border-color:rgba(255,255,255,.2)}
-:is(#club,#scene) .kb.touch .k-glare{opacity:1}
+:is(#club,#scene) .kb.tilting .k-glare{opacity:1}
 /* 大きなカード: 選手を中央にやや大きく。能力3つは右端に寄せて手前に(→docs/14 §14.116) */
 :is(#club,#scene) .k3d-f .kc .k-st{right:6%;z-index:4;text-shadow:0 1px 2px rgba(255,255,255,.9),0 0 6px rgba(255,255,255,.8)}
 :is(#club,#scene) .k3d-f .kc.r-B .k-st{text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.8)}
@@ -3286,11 +3286,11 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .kc .k-emb2::before{color:rgba(255,255,255,.7);transform:translate(.7px,.7px)}
 .kc .k-emb2::after{color:rgba(0,0,0,.2);transform:translate(-.7px,-.7px)}
 .kc .k-emb2{right:auto!important;left:7%!important;top:24%!important}   /* 左側: ポジションの札の下からスキルの手前まで(オーナー) */
-#sc-card .pk-pack,.pk-pack{touch-action:none} .pk-cardin .kc img{pointer-events:none;-webkit-user-drag:none} .pk-cardin .kc{transform-style:preserve-3d;will-change:transform}
+#sc-card .pk-pack,.pk-pack{touch-action:none} .pk-cardin .kc img{pointer-events:none;-webkit-user-drag:none}
 /* パックの後ろの金・虹の予兆の光はやめる(ゴールドパックが予兆の役目。→docs/14 §14.118)。銀(SPECIAL)は残す */
 .om-K .pk-aura,.om-L .pk-aura,.om-K.promo .pk-aura,.om-L.promo .pk-aura{display:none!important}
 .pk-slot .rays{display:none!important}
-.pk-cardin{will-change:transform}
+.pk-cardin{will-change:auto}
 .pk-slot.st2 .pk-pack{clip-path:none!important;overflow:visible}   /* 開いたあとはパックで切り取らない(傾けたカードの端が切れないように) */
 /* 視察レポートのボタンは見出しの右端に(→docs/14 §14.119) */
 #club .step-h.sc-h{display:flex;align-items:center;flex-wrap:nowrap}
@@ -3387,7 +3387,7 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 :is(#club,#scene) .k3d-f .kc.r-B .k-st{background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.45) 30%)}
 /* C3: パックでは輝きを弱める / U7: 開いたらカードを少し下げる */
 .pk-cardin .k-holo{opacity:.4!important}
-.pk-cardin .kc.touch .k-glare{opacity:.55!important}
+.pk-cardin .kc.tilting .k-glare{opacity:.55!important}
 .pk-slot.st2 .pk-cardin{top:20px!important;bottom:-8px!important}
 /* C4: 裏面のいちばん下を一回り大きく */
 :is(#club,#scene) .kb-foot{font-size:9.5px!important}
@@ -3399,6 +3399,9 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .prep .tr-top2 .ints .tab small{font-size:8px;letter-spacing:-.03em;white-space:nowrap}
 #club .prep .tr-top2 .trs.two{gap:3px}
 #club .prep .tr-top2 .trs.two .tr b{font-size:12px}
+/* パックの大きなカードは CARDS と全く同じ見た目に(→docs/14 §14.118): 字の大きさの基準と色を CARDS(監督室)にそろえる。パック用の古い字の指定は掛けない */
+.pk-cardin .k3d{font-size:13px;color:#eef0f4;line-height:1.4}
+.pk-cardin,.pk-cardin *{will-change:auto!important}   /* 先に描いた粗い絵を拡大して使わない(字がにじむため。→docs/14 §14.118) */
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12003,7 +12006,7 @@ function k3dBindOne(st){
   let d=null;
   const base=()=>CL[fk]?180:0;
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
-  const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("touch"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
+  const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("tilting"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("tilting",px!=null); };
   set(0,base(),false);
   // 初めて大きなカードを開いたときだけ、一度ゆっくり傾いて裏をのぞかせる(はじくと裏返ると気づけるように。→docs/24 U4)
   if(fk==="kFlip"&&!st.closest(".pk-slot")){ let seen=false; try{ seen=!!localStorage.getItem("wcc_f.k3dPeek"); localStorage.setItem("wcc_f.k3dPeek","1"); }catch(_){ seen=true; }
