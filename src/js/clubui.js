@@ -1529,8 +1529,9 @@ function tabbarHtml(){
 function clubHtml(){
   if(CL.paperI!=null)return paperHtml(CL.paperI);
   if(CL.flow==="prep"&&!CL.S.termOver)return prepHtml();
-  const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?collectionHtml():CL.tab==="season"?seasonHtml()
-    :CL.tab==="club"?clubTabHtml():CL.tab==="mgr"?managerTabHtml():homeHtml();
+  // フッターのタブの画面には、どれも HOME と同じヘッダ(HOME と SQUAD は自分で出す。→docs/14 §14.105)
+  const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?homeHeadHtml()+collectionHtml():CL.tab==="season"?homeHeadHtml()+seasonHtml()
+    :CL.tab==="club"?homeHeadHtml()+clubTabHtml():CL.tab==="mgr"?homeHeadHtml()+managerTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
     (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
 }
