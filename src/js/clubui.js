@@ -760,14 +760,15 @@ function cardModalHtml(id,list){
       h+='<p class="hint">交代させる選手を選ぶ(その選手の育成は消える)</p>'+
         chipsHtml(S.sq,CL.kOut?[CL.kOut]:[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"SUB ")+(g?"個★"+g.is:""),"kout");
       if(CL.kOut&&S.sq.includes(CL.kOut))h+='<div class="km-cmp"><p class="km-vs"><b>'+nameOf(c)+'</b> ⇄ <b>'+cname(CL.kOut)+'</b> <small>いまの登録</small></p>'+
-        cardBackOf(CL.kOut)+'<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
+        k3dHtml(CL.kOut,"kFlip2")+'<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
     }
   }
   return h+'</div></div>';
 }
 /** 大きなカード(→docs/14 §14.114)。表 = カード、裏 = 情報(cardBackOf)。指でぐりぐり傾き、横にはじくと裏返る */
-function k3dHtml(id){
-  return '<div class="k3d" id="k3d"><div class="k3d-in'+(CL.kFlip?' flip':'')+'">'+
+function k3dHtml(id,fk){
+  fk=fk||"kFlip";   // 裏返しの状態を持つ CL の項目(交代の相手は kFlip2)
+  return '<div class="k3d"'+(fk==="kFlip"?' id="k3d"':'')+' data-fk="'+fk+'"><div class="k3d-in'+(CL[fk]?' flip':'')+'">'+
     '<div class="k3d-f">'+cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"')+'</div>'+
     '<div class="k3d-b">'+kBackHtml(id)+'</div></div>'+
     '<i class="k3d-hint" aria-label="はじくと裏返る">↻</i></div>';   // 字で説明せず、回転の印だけ
@@ -794,11 +795,12 @@ function kBackHtml(id){
     '<i class="k-glare"></i></div>';
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
-function k3dBind(){
-  const st=document.getElementById("k3d"); if(!st)return;
-  const inner=st.querySelector(".k3d-in"), face=()=>st.querySelector(CL.kFlip?".k3d-b .kb":".k3d-f .kc");   // 見えている面に光沢
+function k3dBind(){ document.querySelectorAll("#club .k3d").forEach(k3dBindOne); }
+function k3dBindOne(st){
+  const fk=st.dataset.fk||"kFlip";
+  const inner=st.querySelector(".k3d-in"), face=()=>st.querySelector(CL[fk]?".k3d-b .kb":".k3d-f .kc");   // 見えている面に光沢
   let d=null;
-  const base=()=>CL.kFlip?180:0;
+  const base=()=>CL[fk]?180:0;
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
   const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("touch"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
   set(0,base(),false);
@@ -819,7 +821,7 @@ function k3dBind(){
   const end=e=>{ if(!d)return;
     const h=d.hx, a=h[0], z=h[h.length-1], v=(z[0]-a[0])/Math.max(1,z[1]-a[1]), dx=e.clientX-d.x; d=null;
     // ピン！とはじいたら裏返る(速さ 0.6px/ms 以上・30px 以上)
-    if(Math.abs(v)>0.6&&Math.abs(dx)>30){ CL.kFlip=!CL.kFlip; inner.classList.toggle("flip",CL.kFlip);
+    if(Math.abs(v)>0.6&&Math.abs(dx)>30){ CL[fk]=!CL[fk]; inner.classList.toggle("flip",CL[fk]);
     }
     set(0,base(),true); shine(null,null); };
   st.addEventListener("pointerup",end); st.addEventListener("pointercancel",end);
@@ -1739,7 +1741,7 @@ function onClubClick(e){
   else if(act==="ggclose"){ CL.ggOpen=false; showClub(true); }
   else if(act==="kclose"){ CL.sel=null; CL.kSwap=false; CL.kOut=null; showClub(true); }
   else if(act==="kswap"){ CL.kSwap=!CL.kSwap; CL.kOut=null; if(CL.kSwap)CL.kTo=".km-swap"; showClub(true); }
-  else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kTo=".km-cmp"; showClub(true); }
+  else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kFlip2=false; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
     if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
