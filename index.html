@@ -3432,11 +3432,13 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .sq-mini.sq-mini-b{flex-direction:row!important;gap:6px;width:calc(100% - 58px);margin:6px 0 0!important}
 #club .sq-mini-b .sq-mb{flex:1;height:30px!important;font-size:12px}
 #club .tab-squad .sq-2col{align-items:flex-start}
-/* 盤面の下にボタン、右の列は2段ぶん通す(グリッド) */
-#club .tab-squad .sq-3col.sq-2col{display:grid!important;grid-template-columns:minmax(0,1fr) 54px;grid-template-rows:auto auto;column-gap:4px;row-gap:0;align-items:start}
-#club .tab-squad .sq-2col .sq-pitch{grid-column:1;grid-row:1;width:auto!important}
-#club .tab-squad .sq-2col .sq-mini-b{grid-column:1;grid-row:2;width:auto!important}
-#club .tab-squad .sq-2col .sq-side{grid-column:2;grid-row:1/3}
+#club .sq-2col .sq-side .sq-roles .rs{height:34px!important;grid-template-rows:10px 13px 10px!important}
+#club .sq-2col .sq-side .sq-roles .rs .nm{line-height:10px!important;font-size:8px!important}
+#club .sq-side .sq-mb{height:25px!important}
+#club .tab-squad .sq-top{margin-bottom:2px!important}
+#club .sq-2col .sq-side .sq-bench{gap:0!important}
+#club .sq-side .sq-mb{height:23px!important}
+#club .sq-2col .sq-side .sq-roles{gap:2px!important;padding:3px 2px!important}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11709,9 +11711,8 @@ function squadHtml(){
       '<span class="tgs"><span><small>覚醒</small><button class="lk-tg'+(CL.noStars?' off':'')+'" data-act="sttoggle" aria-label="覚醒の★の表示"><i></i></button></span>'+
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
     '<div class="sq-side"><div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>'+sqRolesHtml()+
-      '</div>'+
-    // KP設定と最適配置は盤面のすぐ下に横並び(右の列が長いぶん空いていた所。→docs/14 §14.131)
-    '<div class="sq-mini sq-mini-b"><button class="sq-mb" data-act="kpopen">KP設定</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div>';
+      // KP設定と最適配置は ORDER の下に1段ずつ(→docs/14 §14.132)
+      '<div class="sq-mini"><button class="sq-mb" data-act="kpopen">KP設定</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div></div>';
   // 選手の詳細はフロート(sqModalHtml)、任命の案内と結果はインフォバー(→docs/14 §14.48)
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   return h;

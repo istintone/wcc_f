@@ -2833,8 +2833,10 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .sq-mini.sq-mini-b{flex-direction:row!important;gap:6px;width:calc(100% - 58px);margin:6px 0 0!important}
 #club .sq-mini-b .sq-mb{flex:1;height:30px!important;font-size:12px}
 #club .tab-squad .sq-2col{align-items:flex-start}
-/* 盤面の下にボタン、右の列は2段ぶん通す(グリッド) */
-#club .tab-squad .sq-3col.sq-2col{display:grid!important;grid-template-columns:minmax(0,1fr) 54px;grid-template-rows:auto auto;column-gap:4px;row-gap:0;align-items:start}
-#club .tab-squad .sq-2col .sq-pitch{grid-column:1;grid-row:1;width:auto!important}
-#club .tab-squad .sq-2col .sq-mini-b{grid-column:1;grid-row:2;width:auto!important}
-#club .tab-squad .sq-2col .sq-side{grid-column:2;grid-row:1/3}
+#club .sq-2col .sq-side .sq-roles .rs{height:34px!important;grid-template-rows:10px 13px 10px!important}
+#club .sq-2col .sq-side .sq-roles .rs .nm{line-height:10px!important;font-size:8px!important}
+#club .sq-side .sq-mb{height:25px!important}
+#club .tab-squad .sq-top{margin-bottom:2px!important}
+#club .sq-2col .sq-side .sq-bench{gap:0!important}
+#club .sq-side .sq-mb{height:23px!important}
+#club .sq-2col .sq-side .sq-roles{gap:2px!important;padding:3px 2px!important}
