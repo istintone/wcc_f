@@ -2619,3 +2619,46 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .k3d-b .kdet{margin:0}
 #club .k3d-hint{display:block;margin-top:4px;text-align:center;font-style:normal;font-size:18px;line-height:1;opacity:.45}
 #club .k3d *{-webkit-user-drag:none;-webkit-touch-callout:none} #club .k3d img{pointer-events:none}
+/* カードの裏面(→docs/14 §14.115): 表と同じ形・大きさの紙のカードに、情報を印刷したように */
+#club .k3d-b{display:flex;justify-content:center;align-items:center}
+#club .kb{position:relative;width:62%;max-width:230px;aspect-ratio:5/7;box-sizing:border-box;border-radius:9px;overflow:hidden;isolation:isolate;
+  display:flex;flex-direction:column;padding:9px 9px 7px;gap:6px;color:#1a1a1a;
+  background:radial-gradient(circle,rgba(0,0,0,.06) .8px,transparent 1.1px) 0 0/5px 5px,linear-gradient(160deg,#fbfaf7,#efe9df);
+  box-shadow:0 14px 30px rgba(0,0,0,.45)}
+#club .kb::before{content:"";position:absolute;right:-30%;top:-10%;width:40%;height:130%;background:var(--tc);opacity:.14;transform:skewX(-16deg);z-index:-1}
+#club .kb::after{content:"";position:absolute;inset:3px;border:1px solid rgba(0,0,0,.18);border-radius:6px;pointer-events:none}
+#club .kb.r-K::after{inset:2px;border:3px double #8a5cd6}
+#club .kb.r-L{background:radial-gradient(circle,rgba(90,60,10,.12) .8px,transparent 1.1px) 0 0/5px 5px,linear-gradient(160deg,#f6e7b6,#e2c376)}
+#club .kb.r-L::after{inset:2px;border:3px double #7d5a14}
+#club .kb.r-B{background:radial-gradient(circle,rgba(255,255,255,.08) .8px,transparent 1.1px) 0 0/5px 5px,linear-gradient(160deg,#242424,#111);color:#eee}
+#club .kb.r-B::after{border-color:rgba(220,220,220,.45)}
+#club .kb-head{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;padding-bottom:5px;border-bottom:2px solid var(--tc)}
+#club .kb-no{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:24px;line-height:1;color:var(--tc)}
+#club .kb-nm{min-width:0}
+#club .kb-nm b{display:block;font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .kb-nm small{display:block;font-size:8px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .kb-pos{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:10px;color:#fff;padding:1px 5px;border-radius:2px;background:#555}
+#club .kb-pos.gk{background:#c79a1e} #club .kb-pos.df{background:#1d5fbf} #club .kb-pos.mf{background:#1f8a4c} #club .kb-pos.fw{background:#c8102e}
+#club .kb-mid{display:grid;grid-template-columns:38% 1fr;gap:6px;align-items:start}
+#club .kb-map svg{display:block;width:100%;height:auto;border-radius:2px}
+#club .kb-map small{display:block;margin-top:2px;font-size:7.5px;text-align:center;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .kb-sts{display:flex;flex-direction:column;gap:2px}
+#club .kb-st{display:grid;grid-template-columns:22px 1fr 16px;align-items:center;gap:4px}
+#club .kb-st i{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:8px;letter-spacing:.04em;opacity:.7}
+#club .kb-st em{height:4px;background:rgba(0,0,0,.12);border-radius:2px;overflow:hidden}
+#club .kb-st em u{display:block;height:100%;background:linear-gradient(90deg,#d4a843,#f0cf75)}
+#club .kb-st b{font-family:var(--f-num);font-size:10px;text-align:right}
+#club .kb-tot{display:flex;justify-content:space-between;align-items:baseline;margin-top:2px;padding-top:2px;border-top:1px solid rgba(0,0,0,.15)}
+#club .kb-tot i{font-style:normal;font-family:var(--f-num);font-size:8px;font-weight:700;letter-spacing:.1em;opacity:.7}
+#club .kb-tot b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:15px}
+#club .kb.r-B .kb-st em,#club .kb.r-B .kb-tot{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2)}
+#club .kb.r-B .kb-tot{background:none}
+#club .kb-txt{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:3px;font-size:8.5px;line-height:1.3}
+#club .kb-txt p{margin:0}
+#club .kb-txt b{margin-right:4px;font-weight:900}
+#club .kb-txt small{opacity:.65;font-size:7.5px}
+#club .kb-txt .rkp b{color:#8a5cd6}
+#club .kb-foot{display:flex;justify-content:space-between;align-items:center;gap:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,.15);font-family:var(--f-num);font-size:8px;opacity:.85}
+#club .kb-foot b{font-weight:800;letter-spacing:.1em}
+#club .kb.r-B .kb-head{border-color:var(--tc)} #club .kb.r-B .kb-foot{border-color:rgba(255,255,255,.2)}
+#club .kb.touch .k-glare{opacity:1}

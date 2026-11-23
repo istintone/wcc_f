@@ -770,17 +770,38 @@ function cardModalHtml(id,list){
 function k3dHtml(id){
   return '<div class="k3d" id="k3d"><div class="k3d-in'+(CL.kFlip?' flip':'')+'">'+
     '<div class="k3d-f">'+cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"')+'</div>'+
-    '<div class="k3d-b">'+cardBackOf(id)+'</div></div>'+
+    '<div class="k3d-b">'+kBackHtml(id)+'</div></div>'+
     '<i class="k3d-hint" aria-label="はじくと裏返る">↻</i></div>';   // 字で説明せず、回転の印だけ
+}
+/**
+ * カードの裏面(→docs/14 §14.115)。表と同じ形・大きさで、印刷されたカードの裏のように並べる。
+ * 上の帯 = 背番号・名前・ポジション / クラブ・年齢・国籍、中段 = 適性マップと6能力、下段 = スキル・KP・RARE KP・キャプテンシー、いちばん下 = レアリティ・番号・枚数。
+ * 登録中の選手は育成を入れた値
+ */
+function kBackHtml(id){
+  const S=CL.S, c0=CARDS[id], g=S.g.pl[id], c=g?growCard(S,c0):c0, r=c0.rar||"B";
+  const sk=c0.skill?SKILLS[c0.skill]:null, st=styleOfCard(c0), RK=rareOfCard(c0), tot=Math.round(STATS.reduce((a,k)=>a+c[k],0));
+  const bar=k=>'<div class="kb-st"><i>'+STAT_LABEL[k]+'</i><em><u style="width:'+(c[k]/STAT_MAX*100).toFixed(0)+'%"></u></em><b>'+Math.round(c[k])+'</b></div>';
+  return '<div class="kb r-'+r+'" style="--tc:'+cardColor(c0)+'">'+
+    '<div class="kb-head"><b class="kb-no">'+c0.no+'</b><div class="kb-nm"><b>'+nameOf(c0)+'</b><small>'+clubOfCard(c0)+(c0.age?' ・ '+c0.age+'歳':'')+' ・ '+natTxt(c0)+'</small></div>'+
+      '<i class="kb-pos '+c0.pos.toLowerCase()+'">'+c0.pos+'</i></div>'+
+    '<div class="kb-mid"><div class="kb-map">'+aptMapSvg(c)+'<small>'+c0.roles.join(" / ")+'</small></div>'+
+      '<div class="kb-sts">'+STATS.map(bar).join("")+'<div class="kb-tot"><i>TOTAL</i><b>'+tot+'</b></div></div></div>'+
+    '<div class="kb-txt">'+(sk?'<p><b>★'+sk.label+'</b>'+sk.desc+'</p>':'')+
+      (st?'<p><b>KP</b>'+st.name+' <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
+      (RK?'<p class="rkp"><b>RARE KP</b>'+((g?g.ss:0)>=5?RK.name:'？？？')+'</p>':'')+
+      '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
+    '<div class="kb-foot"><b>'+RAR_TAG[r]+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
+    '<i class="k-glare"></i></div>';
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
 function k3dBind(){
   const st=document.getElementById("k3d"); if(!st)return;
-  const inner=st.querySelector(".k3d-in"), card=st.querySelector(".k3d-f .kc");
+  const inner=st.querySelector(".k3d-in"), face=()=>st.querySelector(CL.kFlip?".k3d-b .kb":".k3d-f .kc");   // 見えている面に光沢
   let d=null;
   const base=()=>CL.kFlip?180:0;
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
-  const shine=(px,py)=>{ if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
+  const shine=(px,py)=>{ const card=face(); for(const x of st.querySelectorAll(".kc,.kb"))if(x!==card)x.classList.remove("touch"); if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
   set(0,base(),false);
   // 画像のドラッグ・文字の選択を止める(止めないとブラウザが操作を打ち切る)
   st.addEventListener("dragstart",e=>e.preventDefault());
