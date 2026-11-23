@@ -729,7 +729,8 @@ function cardHtml(id,size,extra){
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
-    '<i class="k-foil"></i>'+(n>1?'<i class="kcnt">×'+n+'</i>':'')+
+    // 重なったカード: 右下に白いカードのアイコンを枚数ぶん(最大5枚)、手札のように少し重ねて扇に(正確な数は詳細で。→docs/14 §14.121)
+    '<i class="k-foil"></i>'+(n>1?'<i class="k-dup" aria-label="'+n+'枚">'+Array.from({ length:Math.min(5,n) },(_,i,a)=>'<u style="--r:'+((i-(Math.min(5,n)-1)/2)*9).toFixed(1)+'deg"></u>').join("")+'</i>':'')+
     '</div>';
 }
 /** その選手のレアKP が、いま KP にすれば発動するか(★5) */

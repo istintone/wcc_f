@@ -3317,6 +3317,16 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .pk-cardin .kb{position:absolute!important;inset:0!important;width:auto!important;max-width:none!important;aspect-ratio:auto!important;border-radius:10px}
 .pk-cardin .k3d-hint{display:none!important}
 .pk-slot.st2 .pk-cardin .kb{box-shadow:0 0 0 2px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.5)}
+/* 重なったカードの印(→docs/14 §14.121): 黒い「×N」の札をやめ、右下に白いカードのアイコンを手札のように */
+.kc .kcnt{display:none!important}
+.kc .k-dup{position:absolute;right:6%;bottom:8.5%;z-index:7;display:flex;align-items:flex-end;pointer-events:none;font-style:normal}
+.kc .k-dup u{display:block;width:6.5cqw;height:9cqw;margin-left:-3.6cqw;background:linear-gradient(160deg,#fff,#e9e9e9);border:1px solid rgba(0,0,0,.55);border-radius:1.5px;
+  box-shadow:0 1px 2px rgba(0,0,0,.35);transform:rotate(var(--r,0deg));transform-origin:50% 120%}
+.kc .k-dup u:first-child{margin-left:0}
+.kc .k-dup{bottom:2.6%!important;right:5%!important}
+.kc .k-dup u{width:8cqw!important;height:11cqw!important;margin-left:-4.6cqw!important}
+.kc .k-dup u:first-child{margin-left:0!important}
+.kc:has(.k-dup) .k-cno{display:none}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11811,7 +11821,8 @@ function cardHtml(id,size,extra){
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
-    '<i class="k-foil"></i>'+(n>1?'<i class="kcnt">×'+n+'</i>':'')+
+    // 重なったカード: 右下に白いカードのアイコンを枚数ぶん(最大5枚)、手札のように少し重ねて扇に(正確な数は詳細で。→docs/14 §14.121)
+    '<i class="k-foil"></i>'+(n>1?'<i class="k-dup" aria-label="'+n+'枚">'+Array.from({ length:Math.min(5,n) },(_,i,a)=>'<u style="--r:'+((i-(Math.min(5,n)-1)/2)*9).toFixed(1)+'deg"></u>').join("")+'</i>':'')+
     '</div>';
 }
 /** その選手のレアKP が、いま KP にすれば発動するか(★5) */
