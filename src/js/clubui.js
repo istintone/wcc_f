@@ -782,8 +782,15 @@ function k3dBind(){
   const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
   const shine=(px,py)=>{ if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
   set(0,base(),false);
-  st.addEventListener("pointerdown",e=>{ d={ x:e.clientX, y:e.clientY, t:performance.now(), hx:[[e.clientX,performance.now()]] }; st.setPointerCapture(e.pointerId); });
-  st.addEventListener("pointermove",e=>{ if(!d)return;
+  // 画像のドラッグ・文字の選択を止める(止めないとブラウザが操作を打ち切る)
+  st.addEventListener("dragstart",e=>e.preventDefault());
+  st.addEventListener("pointerdown",e=>{ e.preventDefault(); d={ x:e.clientX, y:e.clientY, t:performance.now(), hx:[[e.clientX,performance.now()]] }; try{ st.setPointerCapture(e.pointerId); }catch(_){} });
+  // マウスは押さずに上を動かすだけでも傾く(サンプルと同じ)
+  st.addEventListener("pointerleave",()=>{ if(!d){ set(0,base(),true); shine(null,null); } });
+  st.addEventListener("pointermove",e=>{
+    if(!d){ if(e.pointerType!=="mouse")return;
+      const r=st.getBoundingClientRect(), px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+      set(-(py-0.5)*28,base()+(px-0.5)*28,false); shine(px,py); return; }
     const r=st.getBoundingClientRect(), dx=e.clientX-d.x, dy=e.clientY-d.y;
     const ry=base()+Math.max(-40,Math.min(40,dx*0.35)), rx=Math.max(-28,Math.min(28,-dy*0.3));
     set(rx,ry,false);

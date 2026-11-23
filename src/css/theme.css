@@ -2618,3 +2618,4 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .k3d-b{transform:rotateY(180deg)}
 #club .k3d-b .kdet{margin:0}
 #club .k3d-hint{display:block;margin-top:4px;text-align:center;font-style:normal;font-size:18px;line-height:1;opacity:.45}
+#club .k3d *{-webkit-user-drag:none;-webkit-touch-callout:none} #club .k3d img{pointer-events:none}
