@@ -68,6 +68,7 @@ function showClub(keepScroll){
   if(kb2){ kb2.scrollTop=keepScroll?ky:0; if(CL.kTo){ const t=kb2.querySelector(CL.kTo); if(t)kb2.scrollTop=t.offsetTop-8; CL.kTo=null; } }
   const pitch=document.getElementById("sqPitch");
   if(pitch)sqBind(pitch);
+  k3dBind();                                   // 大きなカード(→docs/14 §14.114)
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); }
 
@@ -719,8 +720,8 @@ function cardHtml(id,size,extra){
     '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
     '<i class="k-cno">'+cardNoOf(c)+'</i>'+
-    // LEGENDS だけ: 金の二重線の上を光が一周する(カードごとに時間をずらす。→docs/14 §14.113)
-    (r==="L"?'<i class="k-run" style="--rd:-'+(hashStr("run:"+id)%70/10).toFixed(1)+'s"></i>':'')+
+    // WORLD CLASS・LEGENDS: メタリックの輝き(一覧ではゆっくり流れ、大きく開くと指に合わせて動く。→docs/14 §14.114)
+    (r==="K"||r==="L"?'<i class="k-holo" style="--hd:-'+(hashStr("holo:"+id)%90/10).toFixed(1)+'s"></i>':'')+'<i class="k-glare"></i>'+
     (size==="m"?'<div class="k-st">'+top.map(k=>'<span><i>'+STAT_LABEL[k]+'</i><b>'+c[k]+'</b></span>').join("")+'</div>'+
       '<div class="k-sk">'+(sk?sk.label:"")+'<em>'+(st?st.name:"")+'</em></div>'
       :'<div class="k-sk">'+(sk?sk.label:"")+'</div>')+
@@ -752,7 +753,7 @@ function cardModalHtml(id,list){
   const nav=(d,t)=>{ const j=i+d; return '<button class="km-nav" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+'>'+t+'</button>'; };
   let h='<div class="kmodal" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
-      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+cardBackOf(id);
+      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id);
   if(inSq)h+='<p class="dim km-note">登録中の選手('+(S.sq.indexOf(id)<11?"先発":"SUB")+')。外すときは、登録していないカードから「SQUAD と交代」でこの選手を選ぶ</p>';
   else{
     h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
@@ -764,6 +765,37 @@ function cardModalHtml(id,list){
     }
   }
   return h+'</div></div>';
+}
+/** 大きなカード(→docs/14 §14.114)。表 = カード、裏 = 情報(cardBackOf)。指でぐりぐり傾き、横にはじくと裏返る */
+function k3dHtml(id){
+  return '<div class="k3d" id="k3d"><div class="k3d-in'+(CL.kFlip?' flip':'')+'">'+
+    '<div class="k3d-f">'+cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"')+'</div>'+
+    '<div class="k3d-b">'+cardBackOf(id)+'</div></div>'+
+    '<i class="k3d-hint" aria-label="はじくと裏返る">↻</i></div>';   // 字で説明せず、回転の印だけ
+}
+/** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
+function k3dBind(){
+  const st=document.getElementById("k3d"); if(!st)return;
+  const inner=st.querySelector(".k3d-in"), card=st.querySelector(".k3d-f .kc");
+  let d=null;
+  const base=()=>CL.kFlip?180:0;
+  const set=(rx,ry,ease)=>{ inner.style.transition=ease?"transform .45s cubic-bezier(.2,.8,.2,1.2)":"none"; inner.style.transform="rotateX("+rx+"deg) rotateY("+ry+"deg)"; };
+  const shine=(px,py)=>{ if(!card)return; card.style.setProperty("--mx",(px*100).toFixed(1)+"%"); card.style.setProperty("--my",(py*100).toFixed(1)+"%"); card.classList.toggle("touch",px!=null); };
+  set(0,base(),false);
+  st.addEventListener("pointerdown",e=>{ d={ x:e.clientX, y:e.clientY, t:performance.now(), hx:[[e.clientX,performance.now()]] }; st.setPointerCapture(e.pointerId); });
+  st.addEventListener("pointermove",e=>{ if(!d)return;
+    const r=st.getBoundingClientRect(), dx=e.clientX-d.x, dy=e.clientY-d.y;
+    const ry=base()+Math.max(-40,Math.min(40,dx*0.35)), rx=Math.max(-28,Math.min(28,-dy*0.3));
+    set(rx,ry,false);
+    shine(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)));
+    d.hx.push([e.clientX,performance.now()]); if(d.hx.length>6)d.hx.shift(); });
+  const end=e=>{ if(!d)return;
+    const h=d.hx, a=h[0], z=h[h.length-1], v=(z[0]-a[0])/Math.max(1,z[1]-a[1]), dx=e.clientX-d.x; d=null;
+    // ピン！とはじいたら裏返る(速さ 0.6px/ms 以上・30px 以上)
+    if(Math.abs(v)>0.6&&Math.abs(dx)>30){ CL.kFlip=!CL.kFlip; inner.classList.toggle("flip",CL.kFlip);
+    }
+    set(0,base(),true); shine(null,null); };
+  st.addEventListener("pointerup",end); st.addEventListener("pointercancel",end);
 }
 /** コレクション(持っているカード全部。登録中のカードには印) */
 function collectionHtml(){
@@ -1668,7 +1700,7 @@ function onClubClick(e){
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
-    CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; if(nav)CL.kTo=".km-head"; showClub(true); }
+    CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; CL.kFlip=false; if(nav)CL.kTo=".km-head"; showClub(true); }
   else if(act==="sqclose"){ CL.sqSel=null; showClub(true); }
   else if(act==="sqnav"){ if(b.dataset.id){ CL.sqSel=b.dataset.id; CL.kTo=".km-head"; showClub(true); } }
   else if(act==="kpopen"){ CL.kpOpen=true; showClub(true); }
