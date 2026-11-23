@@ -2544,3 +2544,10 @@ body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 55px)!important}
 /* ヘッダの地に TOP と同じ薄いドット(→docs/14 §14.105) */
 body[class] #club .chd{background-image:radial-gradient(rgba(0,0,0,.08) 1px,transparent 1.3px),linear-gradient(180deg,#fff,#f4f1ec)!important;background-size:6px 6px,auto!important}
 body.th-bk #club .chd{background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1.3px),linear-gradient(180deg,rgba(10,13,23,.96),rgba(10,13,23,.82))!important}
+/* ヘッダのドットは上へ行くほど淡く(→docs/14 §14.106) */
+body[class] #club .chd{position:relative;isolation:isolate;background-image:linear-gradient(180deg,#fff,#f4f1ec)!important;background-size:auto!important}
+body[class] #club .chd::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(rgba(0,0,0,.11) 1px,transparent 1.3px) 0 0/6px 6px;
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.35) 55%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.35) 55%,transparent 100%)}
+body.th-bk #club .chd{background-image:linear-gradient(180deg,rgba(10,13,23,.96),rgba(10,13,23,.82))!important}
+body.th-bk #club .chd::before{background:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1.3px) 0 0/6px 6px}
