@@ -179,7 +179,8 @@ const TUNING={
   //          failKeep=失敗で残る経験の割合 / star5P=フレンドリー勝利で★5になる率 / buff=★1つでバフが強まる割合
   //   link … 連携。need=薄線・太線に要る経験 / match=一緒に試合に出た経験 / lounge=大成功・成功・失敗の経験
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
-  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
+  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率 / trustK=2人の信頼度の段(平均)1つごとに、失敗のぶんが成功に回る率
+  //   ★突破(→docs/14 §14.108): qOk・qNg に、信頼度の段 qTrust[段]・監督と選手の動物の相性 qAni[悪い/ふつう/良い] を足し、qMin〜qMax に収める
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
   //   graph… チームの成長グラフ(→docs/15)。軸は 0〜max。対角の2軸の合計は器 cap(+ 戦術室の段ごとに capFac)を超えない
   //          basic=基本練習 / up・upAll・down=特殊練習(上げる軸・全軸のとき・下げる軸)。戦術室の facK が掛かる
@@ -200,13 +201,13 @@ const TUNING={
          //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
          commSignK:0.8,   // コミュニケーションの「！」: 次の★・連携の段まで 80% 以上なら付ける
          dup:{ indK:0.1, max:5, awakeP:[0.7,0.25,0.05], awakeStep:[-0.08,0.03,0.05] },
-         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.70, qNg:0.30, qTrust:[0,0.05,0.10,0.15], qAni:[-0.05,0,0.08], qMin:0.10, qMax:0.95, failKeep:0.5, star5P:0.6, buff:0.05,
               // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
               //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
               near:{ r:0.35, max:3, se:0.35, up:0.5, down:0.3 } },
          // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
          link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
-                pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
+                pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60], trustK:0.04 },
          graph:{ basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
          set:{ per:0.02, max:0.2 },
          mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,

@@ -4026,7 +4026,8 @@ const TUNING={
   //          failKeep=失敗で残る経験の割合 / star5P=フレンドリー勝利で★5になる率 / buff=★1つでバフが強まる割合
   //   link … 連携。need=薄線・太線に要る経験 / match=一緒に試合に出た経験 / lounge=大成功・成功・失敗の経験
   //          pFit・pMid・pBad=3択が合う手・次点・合わない手のときの [大成功, 成功, 失敗] の率
-  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率
+  //          hintNoise=ラウンジの様子の文が、本当の相性と1つずれて見える率 / trustK=2人の信頼度の段(平均)1つごとに、失敗のぶんが成功に回る率
+  //   ★突破(→docs/14 §14.108): qOk・qNg に、信頼度の段 qTrust[段]・監督と選手の動物の相性 qAni[悪い/ふつう/良い] を足し、qMin〜qMax に収める
   //          goldP=黄金線になる率(**1試合に生まれる黄金線は1本まで**)
   //   graph… チームの成長グラフ(→docs/15)。軸は 0〜max。対角の2軸の合計は器 cap(+ 戦術室の段ごとに capFac)を超えない
   //          basic=基本練習 / up・upAll・down=特殊練習(上げる軸・全軸のとき・下げる軸)。戦術室の facK が掛かる
@@ -4047,13 +4048,13 @@ const TUNING={
          //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
          commSignK:0.8,   // コミュニケーションの「！」: 次の★・連携の段まで 80% 以上なら付ける
          dup:{ indK:0.1, max:5, awakeP:[0.7,0.25,0.05], awakeStep:[-0.08,0.03,0.05] },
-         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.85, qNg:0.35, failKeep:0.5, star5P:0.6, buff:0.05,
+         sp:{ need:[12,18,24,30], awake:30, meet:14, train:1, qOk:0.70, qNg:0.30, qTrust:[0,0.05,0.10,0.15], qAni:[-0.05,0,0.08], qMin:0.10, qMax:0.95, failKeep:0.5, star5P:0.6, buff:0.05,
               // ミーティングは周りにも効く(→docs/08 §8.3・docs/05)。呼んだ先発の、SQUAD の盤面で近い先発 max 人まで(距離 r 以内)
               //   se … 周りに入る特殊能力の経験(meet に対する割合) / up … ★突破が成功したとき周りのやる気が上がる率 / down … 失敗で下がる率
               near:{ r:0.35, max:3, se:0.35, up:0.5, down:0.3 } },
          // bonus … 試合で入る連携の経験の倍率(重なる)。同じ国籍 / 同じ実在クラブ / 同じ動物。nat・club が同じなら相性が悪くても薄線まで育つ
          link:{ need:[10,30], match:1, lounge:[8,4,0], goldP:0.5, hintNoise:0.25, bonus:{ nat:1.5, club:1.5, ani:1.3 },
-                pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60] },
+                pFit:[0.60,0.35,0.05], pMid:[0.15,0.60,0.25], pBad:[0.05,0.35,0.60], trustK:0.04 },
          graph:{ basic:4.5, up:4, upAll:1.7, down:2.5, max:100, cap:130, capFac:[0,4,8,12], breakP:0.3, golden:3 },
          set:{ per:0.02, max:0.2 },
          mot:{ mul:[0.80,0.92,0.97,1.02,1.06], start:3, winUp:0.35, loseDown:0.30, drawSwing:0.15,
@@ -8006,10 +8007,13 @@ const VOICE={
 function voiceOf(S,id){
   const g=S.g.pl[id], c=CARDS[id], G0=TUNING.grow;
   if(!g)return "";
+  // 性格で話し方が変わる。成長期・反抗期などのタグの影響も言葉に出す(→docs/14 §14.108)
+  const ck=playerTagK(S,id,"comm"), ek=playerTagK(S,id,"exp");
   const k=spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
+    :ck<1?"rebel":(ck>1||ek>1)?"grow"
     :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
     :trustLv(g)>=2?"trust":(g.bond||0)===0?"new":c.age<=21?"young":c.age>=31?"vet":"plain";
-  const list=VOICE[k], r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
+  const list=(VOICE_P[persOf(id)]||{})[k]||VOICE[k]||VOICE.plain, r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
 }
 /** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・ケアは成功) */
@@ -8020,7 +8024,7 @@ const REACT={
   lounge:[["あいつとは息が合いそうです！"],["悪くない時間でした。"],["……どうも噛み合わないな。"]]
 };
 function reactOf(S,id,kind,res){
-  const t=REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;
+  const t=REACT_P[persOf(id)]||REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;   // 性格で返事が変わる(→docs/14 §14.108)
   return nameOf(CARDS[id])+"「"+list[r]+"」";
 }
 
@@ -8101,6 +8105,7 @@ function doLounge(S,a,b,choice){
   const p0=choice===best?L.pFit:choice===(best+1)%3?L.pMid:L.pBad, ok=(spBoost(S,"loungeOk")||0)+(tsetOf(S,"loungeOk")||0);
   const ck=playerTagK(S,a,"comm")*playerTagK(S,b,"comm"), f=Math.min(1,Math.max(0,p0[2]-ok)*(ck>0?1/ck:1));   // 反抗期は失敗しやすく、成長期は失敗しにくい
   const p=[Math.max(0,p0[0]+ok-(f-Math.max(0,p0[2]-ok))),p0[1],f];   // スポンサーの効果: 失敗のぶんが大成功に回る
+  const tr=Math.min(p[2],L.trustK*(trustLv(S.g.pl[a])+trustLv(S.g.pl[b]))/2); p[2]-=tr; p[1]+=tr;   // 信頼が深い2人は失敗しにくい(→docs/14 §14.108)
   const r=mulberry32((S.seed^hashStr("lg:"+S.term+":"+S.played+":"+S.g.cn+":"+lkey(a,b)+":"+choice))>>>0)();
   const res=r<p[0]?0:r<p[0]+p[1]?1:2, l=linkSet(S,a,b);
   out.push(["大成功！","成功","失敗…"][res]);
@@ -8142,7 +8147,9 @@ function doMeeting(S,id,choice){
   const mot0=g.mot;
   let res=1;
   if(spReady(S,id)){
-    const p=Math.min(0.95,((choice===persOf(id)?P.qOk:P.qNg)+(tsetOf(S,"qOk")||0))*playerTagK(S,id,"comm"));   // 名将: ★突破が成功しやすい / 反抗期・成長期
+    // 性格に合う言い方は成功しやすいが外れることもある。合わなくても、信頼が深い・監督と動物の相性がよいと通ることがある(→docs/14 §14.108)
+    const ma=S.mgr&&S.mgr.ani!=null&&ANIMALS[S.mgr.ani]&&ANIMALS[CARDS[id].ani]?aniCompat(S.mgr.ani,CARDS[id].ani):1;
+    const p=clamp(((choice===persOf(id)?P.qOk:P.qNg)+P.qTrust[trustLv(g)]+P.qAni[ma]+(tsetOf(S,"qOk")||0))*playerTagK(S,id,"comm"),P.qMin,P.qMax);   // 名将 / 反抗期・成長期
     const r=mulberry32((S.seed^hashStr("mt:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+choice))>>>0)();
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
@@ -9059,6 +9066,146 @@ function playerVoiceRoll(S){
   vars.me=PV_ME[hashStr("me:"+id)%PV_ME.length];
   let t=pick(PV_LINES[kind]); for(const k in vars)t=t.split("{"+k+"}").join(vars[k]);
   S.g.pvoice={ id, text:t, kind };
+}
+/* ---- 個別指導の会話(→docs/14 §14.108) ----
+ * 選手は性格で話し方が変わる(0 褒められて伸びる = 素直でほめてほしい / 1 負けず嫌い = 強気 / 2 マイペース = のんびり)。
+ * 性格の名前は出さない。話し方から読み取る(★突破の3択の手がかり)。どの言葉も2通り以上から、たねで選ぶ */
+const VOICE_P=[
+  { ready:["監督、少しだけお時間いいですか？ 聞いてほしいことがあって……。","最近、何かつかめそうなんです。監督に見てもらえたら、きっと……。"],
+    awake:["なんだか体が軽いんです。次の試合、見ててくださいね！","今ならやれる気がします。監督、期待してもらえますか？"],
+    near:["練習の手応えが変わってきました。……気づいてもらえてました？","もう少しで何か届きそうなんです。"],
+    tired:["すみません、脚が少し重くて……。","正直、ちょっと疲れちゃいました。"],
+    low:["最近うまくいかなくて……自信なくしちゃいそうです。","僕、ちゃんとやれてますか……？"],
+    bench:["いつか試合に出られるように、頑張ってます。","ベンチから見てて、出たいなって思ってます。"],
+    high:["今日は調子いいです！ 見ててください！","絶好調です。監督に褒めてもらえるようにがんばります！"],
+    young:["もっと上手くなりたいです。教えてください！","先輩たちみたいになれるように、がんばります！"],
+    vet:["若い子たちのお手本になれるよう、がんばります。","経験だけは、少しは役に立てると思います。"],
+    trust:["監督の言うことなら、信じてやります。","監督に認めてもらえるのが、一番うれしいです。"],
+    new:["よろしくお願いします。……ちゃんと見ててもらえると、うれしいです。","まだ緊張してます。よろしくお願いします。"],
+    plain:["はい、なんでしょう？","次の試合もがんばります。見ててくださいね。"],
+    rebel:["……別に、話すことなんてないです。","どうせ僕のことなんて、見てないじゃないですか。"],
+    grow:["最近、練習が楽しくて仕方ないんです！","教わったこと、どんどん吸収できてる気がします！"] },
+  { ready:["監督、話がある。もう一段上に行きたいんだ。","今の自分じゃ満足できない。足りないものを教えてくれ。"],
+    awake:["次の試合、俺にボールを集めてくれ。何かが起きる。","今の俺なら誰にも負けない。試させてくれ。"],
+    near:["もうすぐだ。あと少しで壁を越えられる。","手応えはある。あとは結果で示すだけだ。"],
+    tired:["……疲れてなんかいない、と言いたいところだが、脚が重い。","休みたくはないが、正直きつい。"],
+    low:["くそっ、こんなはずじゃない……。","このままで終わるつもりはない。"],
+    bench:["なんで俺が出られないんだ。納得いかない。","ベンチなんて俺の居場所じゃない。"],
+    high:["今日の俺は止められないぜ。","絶好調だ。全部ぶち抜いてやる。"],
+    young:["先輩だろうが関係ない。ポジションは俺が取る。","若いからって甘く見ないでくれ。"],
+    vet:["若い連中にはまだ負けん。","経験の差ってやつを見せてやる。"],
+    trust:["監督のためなら、最後まで走る。","あんたの采配なら勝てる。信じてる。"],
+    new:["実力で認めさせる。それだけだ。","どこで使ってもらっても、結果を出す。"],
+    plain:["で、何の話だ？","次も勝つ。それだけだ。"],
+    rebel:["話すことなんてない。試合に出せばわかる。","今の扱いには納得してない。"],
+    grow:["最近、自分でも驚くくらい伸びてる。もっとやらせてくれ。","まだまだ行ける。限界なんて感じない。"] },
+  { ready:["あ、監督。ちょっと思いついたことがあるんですけど〜。","最近、自分の型が見えてきた気がするんですよね。"],
+    awake:["なんか今、すごく自然体でいられるんですよ。","次の試合、なんとなくいけそうな気がします〜。"],
+    near:["焦らずやってたら、ちょっとずつ見えてきました。","あと少しな気がします。のんびり待っててください。"],
+    tired:["ちょっと疲れたんで、休ませてもらえると助かります〜。","今日は脚が重いですね〜。"],
+    low:["まあ、こういう時期もありますよね……たぶん。","最近ちょっと噛み合わないんですよね〜。"],
+    bench:["出番は……まあ、そのうち来ますよね？","ベンチもいいですけど、そろそろ走りたいかな〜。"],
+    high:["今日は体がよく動きますね〜。","調子いいですよ。いつも通りやります。"],
+    young:["自分のペースで、ちゃんと上手くなります。","先輩たちのいいとこ、こっそり盗んでます。"],
+    vet:["まあ、長くやってるとわかることもありますよ。","若い子には若い子のペースがありますからね〜。"],
+    trust:["監督のやり方、けっこう好きですよ。","監督となら、気楽にやれます。"],
+    new:["どうも〜。マイペースにやらせてもらいます。","まだ様子見中です。よろしくお願いします。"],
+    plain:["はーい、なんですか？","いつも通り、自分のペースでいきます。"],
+    rebel:["……今は、ちょっとほっといてください。","言われてもなあ……気が乗らないんですよね。"],
+    grow:["最近、なんか楽しいんですよね〜。どんどん覚えられて。","不思議と、言われたことがすっと入ってきます。"] }
+];
+/** 手を打ったあとの返事(性格 × 0=大成功 / 1=成功 / 2=失敗) */
+const REACT_P=[
+  [["ほんとですか！ うれしいです、がんばります！","監督にそう言ってもらえると、力が出ます！"],["はい、やってみます。","ありがとうございます。考えてみます。"],["……すみません、ちょっとよくわからなくて。","……はい。"]],
+  [["当然だ。見てろよ。","火がついた。次で証明してやる。"],["わかった。結果で返す。","悪くない話だ。"],["……納得いかないな。","それは違うだろ。"]],
+  [["なるほど〜、それいいですね！ やってみます。","なんかすっきりしました。ありがとうございます〜。"],["は〜い、了解です。","まあ、やってみますね。"],["う〜ん……ちょっとピンとこないです。","……まあ、考えておきます。"]]
+];
+/** 監督の言葉(選んだ手を、そのまま貼らずに話し言葉で) */
+const MGR_SAY={
+  ind:["よし、今日は付きっきりで見てやる。","居残りだ。基礎からもう一度やるぞ。","いい機会だ。じっくり見せてもらおう。"],
+  meet:["今日は戦術の話をしよう。","相手の崩し方について、少し話そうか。","次の試合の狙いを共有しておきたい。"],
+  talk:["どうした、少し話そうか。","最近どうだ。無理はしてないか。","顔色が気になってな。座れよ。"],
+  heal:["まずは治すことだけ考えろ。","焦らなくていい。しっかり治してこい。"],
+  lounge:[["二人で合わせてみろ。息が合えば武器になる。","今日の練習は二人一組だ。"],
+          ["今日は二人で飯でも行ってこい。","たまには練習を忘れて、ゆっくり話してこい。"],
+          ["どっちが上か、勝負してみろ。","負けた方が片付けだ。本気でやれ。"]]
+};
+/** ★突破の3択(→docs/14 §14.108)。どの型も [褒める, 厳しく, 任せる] の順。並びは毎回入れ替える */
+const MEET_Q=[
+  ["お前ならできる。俺は信じてるぞ。","甘えるな。壁は自分で越えるものだ。","お前の思うようにやってみろ。"],
+  ["ここまでよく頑張ってきたな。自信を持て。","まだ足りない。もっと貪欲になれ。","焦らなくていい。自分のタイミングでいい。"],
+  ["最近のプレー、見てるぞ。いい感じだ。","今のままじゃ通用しない。もっと上を目指せ。","答えはお前の中にある。好きにやれ。"],
+  ["チームはお前を頼りにしてる。","結果を出せ。話はそれからだ。","型にはまらなくていい。自由にやってみろ。"],
+  ["お前の成長が楽しみなんだ。","練習量が足りない。明日から倍だ。","俺は口を出さない。任せるよ。"]
+];
+/** 秘書が伝える育成の様子(秘書ごとの口調。→docs/14 §14.108)。is・ss … 段階 0〜4 の言葉 / mot … 調子 0〜4 */
+const SEC_GROW={
+  s0:{ is:[["{n}選手はまだ発展途上にあるようです。","{n}選手は、これからが楽しみな段階ですね。"],["{n}選手は今、成長期にあります。伸びしろですね。","{n}選手は、練習の成果がよく表れている時期です。"],
+           ["{n}選手は、ひとつ大きな壁の手前まで来ているようです。","{n}選手は、もう一段上が見えてきました。"],["{n}選手に覚醒の兆しが出ています。フレンドリーマッチで試す好機です。","{n}選手、何かが目覚めかけているようです。"],
+           ["{n}選手は、個人の力はもう完成の域にあります。","{n}選手は十分に仕上がっています。"]],
+       ss:[["{n}選手は、戦術の理解はまだこれからのようです。","{n}選手には、もう少し戦術の話をしておきたいですね。"],["{n}選手は、戦術の飲み込みが早くなってきました。","{n}選手、ミーティングの内容がよく身についています。"],
+           ["{n}選手は、特殊能力の壁の手前にいるようです。","{n}選手は、あと一歩で一段上の戦い方ができそうです。"],["{n}選手に覚醒の兆しが出ています。","{n}選手、戦い方に新しい何かが芽生えています。"],
+           ["{n}選手は、特殊能力を極めています。","{n}選手の戦術理解は、もう申し分ありません。"]],
+       ready:["{n}選手が、壁を越える話をしたがっています。言葉を選んであげてください。","{n}選手、一段上へのきっかけを求めているようです。"],
+       expUp:"今は吸収の早い時期のようです。", expDn:"ただ、少し伸び悩んでいる様子もあります。", commUp:"今なら素直に話を聞いてくれそうです。", commDn:"最近は反抗的で、言葉が届きにくいかもしれません。",
+       mot:["{n}選手はケガをしています。まずは手当てが必要です。","{n}選手はかなり落ち込んでいるようです。","{n}選手は少し元気がないようです。","{n}選手の調子は悪くありません。","{n}選手は絶好調です。"],
+       tired:"疲れもたまっているようです。" },
+  s1:{ is:[["{n}選手はまだまだ発展途上って感じです！","{n}選手、これからがすっごく楽しみです！"],["{n}選手、いま成長期ですよ！ 伸びしろですね！","{n}選手、練習の成果がどんどん出てます！"],
+           ["{n}選手、大きな壁の手前まで来てますよ！","{n}選手、もう一段上が見えてきました！"],["{n}選手に覚醒の兆しです！ フレンドリーマッチで試しましょう！","{n}選手、何かが目覚めそうですよ！"],
+           ["{n}選手、もう完成形って感じです！","{n}選手はばっちり仕上がってます！"]],
+       ss:[["{n}選手は、戦術はまだまだこれからですね！","{n}選手、もっと戦術のお話が必要かもです！"],["{n}選手、戦術の飲み込みが早くなってきました！","{n}選手、ミーティングの内容しっかり覚えてますよ！"],
+           ["{n}選手、特殊能力の壁の手前です！","{n}選手、あと一歩で一段上に行けそうです！"],["{n}選手に覚醒の兆しです！","{n}選手、新しい戦い方が芽生えてますよ！"],
+           ["{n}選手、特殊能力はもう極めてます！","{n}選手の戦術理解、文句なしです！"]],
+       ready:["{n}選手が壁を越える話をしたいみたいです！ 言葉選び、大事ですよ！","{n}選手、一段上へのきっかけを探してるみたいです！"],
+       expUp:"今は吸収がすっごく早い時期みたいです！", expDn:"でも、ちょっと伸び悩んでるかもです……。", commUp:"今なら素直に聞いてくれそうですよ！", commDn:"最近ちょっと反抗的で、言葉が届きにくいかもです……。",
+       mot:["{n}選手、ケガしちゃってます！ まずは手当てを！","{n}選手、かなり落ち込んでるみたいです……。","{n}選手、ちょっと元気ないです。","{n}選手、調子は悪くないですよ！","{n}選手、絶好調です！"],
+       tired:"疲れもたまってるみたいです！" },
+  s2:{ is:[["{n}、育成段階は初期。発展途上です。","{n}、今後の伸びに期待できる段階です。"],["{n}、現在は成長期。伸びしろは十分です。","{n}、練習の成果が表れています。"],
+           ["{n}、ひとつ上の段階の手前に到達しています。","{n}、次の段階が視野に入りました。"],["{n}、覚醒の兆候あり。フレンドリーマッチでの起用を推奨します。","{n}、覚醒の兆候を確認しました。"],
+           ["{n}、個人能力は完成段階です。","{n}、仕上がりは十分です。"]],
+       ss:[["{n}、戦術理解は初期段階です。","{n}、戦術面の指導を継続してください。"],["{n}、戦術理解が進んでいます。","{n}、ミーティング内容の定着を確認しました。"],
+           ["{n}、特殊能力の壁の手前です。","{n}、次の段階まであと一歩です。"],["{n}、覚醒の兆候あり。","{n}、新たな戦術適性が見えています。"],
+           ["{n}、特殊能力は最終段階です。","{n}、戦術理解に不足はありません。"]],
+       ready:["{n}から壁を越えるための相談です。言葉の選択が結果を左右します。","{n}、一段上への契機を求めています。"],
+       expUp:"現在、吸収の早い時期です。", expDn:"ただし伸び悩みの傾向があります。", commUp:"現在は指導を受け入れやすい状態です。", commDn:"反抗的な傾向あり。指導が届きにくい可能性があります。",
+       mot:["{n}、負傷中。処置が必要です。","{n}、精神状態は低調です。","{n}、やや不調です。","{n}、状態は良好です。","{n}、絶好調です。"],
+       tired:"疲労の蓄積も見られます。" },
+  s3:{ is:[["{n}はまだ発展途上ね。","{n}、これからが楽しみな子よ。"],["{n}は今、成長期よ。伸びしろたっぷりね。","{n}、練習の成果がちゃんと出てるわ。"],
+           ["{n}、大きな壁の手前まで来てるわね。","{n}、もう一段上が見えてきたみたい。"],["{n}に覚醒の兆しが出てるわ。フレンドリーマッチで試してみて。","{n}、何かが目覚めかけてるわね。"],
+           ["{n}はもう完成の域ね。","{n}はしっかり仕上がってるわ。"]],
+       ss:[["{n}は、戦術はまだこれからね。","{n}には、もう少し戦術の話をしてあげて。"],["{n}、戦術の飲み込みが早くなってきたわ。","{n}、ミーティングの話がちゃんと身についてるわね。"],
+           ["{n}、特殊能力の壁の手前にいるわ。","{n}、あと一歩で一段上に行けそうよ。"],["{n}に覚醒の兆しよ。","{n}、新しい戦い方が芽生えてるわ。"],
+           ["{n}は特殊能力を極めてるわ。","{n}の戦術理解は、もう申し分ないわね。"]],
+       ready:["{n}が壁を越える話をしたがってるわ。言葉は選んであげてね。","{n}、一段上へのきっかけを探してるみたい。"],
+       expUp:"今は吸収の早い時期みたいね。", expDn:"でも、少し伸び悩んでるみたい。", commUp:"今なら素直に聞いてくれそうよ。", commDn:"最近ちょっと反抗的で、言葉が届きにくいかも。",
+       mot:["{n}、ケガをしてるの。まずは手当てしてあげて。","{n}、かなり落ち込んでるみたい。","{n}、少し元気がないわね。","{n}の調子は悪くないわ。","{n}は絶好調よ。"],
+       tired:"疲れもたまってるみたい。" }
+};
+/** 会話の言葉を選ぶ(同じ試合・同じ選手・同じ回なら同じ言葉) */
+const talkPick=(S,a,key)=>a[hashStr("tk:"+key+":"+S.term+":"+S.played+":"+(S.g?S.g.cn:0))%a.length];
+/** 段階 0〜4: 0 = ★0〜1 / 1 = ★2〜3 / 2 = ★4(兆しなし)/ 3 = 覚醒の兆し / 4 = ★5 */
+const growStage=(st,sign)=>st>=5?4:sign?3:st>=4?2:st>=2?1:0;
+/** 秘書が伝える育成の様子。kind = "ind" | "meet" | "talk"。タグの影響(経験・話の通りやすさ)も添える */
+function growLine(S,id,kind){
+  const g=S.g.pl[id]; if(!g)return "";
+  const L=SEC_GROW[secOf(S).id]||SEC_GROW.s0, n=cname0(id), f=t=>t.split("{n}").join(n);
+  if(kind==="talk")return f(L.mot[g.mot])+(g.fat>=TUNING.grow.int.tiredSign?L.tired:"");
+  const tx=kind==="meet"&&spReady(S,id)?talkPick(S,L.ready,"r"+id):talkPick(S,L[kind==="meet"?"ss":"is"][growStage(kind==="meet"?g.ss:g.is,kind==="meet"?g.sq:g.q)],kind+id);
+  const ek=playerTagK(S,id,"exp"), ck=playerTagK(S,id,"comm");
+  return f(tx)+(ck<1?L.commDn:ck>1?L.commUp:"")+(ek>1&&ck<=1?L.expUp:ek<1?L.expDn:"");
+}
+const cname0=id=>nameOf(CARDS[id]);
+/** 監督の言葉。kind と選んだ手(ラウンジは 0〜2) */
+function mgrSay(S,kind,choice,id){
+  if(kind==="lounge")return talkPick(S,MGR_SAY.lounge[choice]||MGR_SAY.lounge[0],"ml"+choice);
+  if(kind==="talk"&&S.g.pl[id]&&S.g.pl[id].mot===0)return talkPick(S,MGR_SAY.heal,"mh"+id);
+  return talkPick(S,MGR_SAY[kind]||MGR_SAY.ind,"m"+kind+id);
+}
+/** ★突破の3択: [{ i:言い方(0 褒める / 1 厳しく / 2 任せる), t:監督の言葉 }]。型と並びは試合と選手ごとに変わる */
+function meetOpts(S,id){
+  const h=hashStr("mq:"+S.term+":"+S.played+":"+id), q=MEET_Q[h%MEET_Q.length];
+  const ord=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]][(h>>>4)%6];
+  return ord.map(i=>({ i, t:q[i] }));
 }
 
 /* =========================================================================
@@ -11038,17 +11185,17 @@ function commChatHtml(){
     acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
   }else if(CL.comm==="meet"){
     const f=meetInfo(S,id);
-    log+=chatSec("特殊能力 "+stars(f.ss)+(f.ss<5&&S.g.pl[id].sq?"(覚醒の兆し)":"")+"。",true);   // 経験の数字・周りで聞いている選手は出さない(→docs/14 §14.78)
-    if(f.ready){ log+=chatSec(secSay(S,"chReady",{ p:f.pers }),false);
-      acts=f.choices.map((t,i)=>'<button class="cr" data-act="meet" data-i="'+i+'">'+t+'</button>').join(""); }
+    // 育成の様子を秘書の言葉で(★の数・性格の名前は出さない。性格は選手の話し方から。→docs/14 §14.108)
+    log+=chatSec(growLine(S,id,"meet"),true);
+    if(f.ready)acts=meetOpts(S,id).map(o=>'<button class="cr" data-act="meet" data-i="'+o.i+'">'+o.t+'</button>').join("");
     else acts='<button class="cr" data-act="meet" data-i="0">戦術の話をする</button>';
   }else if(CL.comm==="ind"){
     const p=S.g.pl[id];
-    log+=chatSec("個人能力 "+stars(p.is)+(p.q?"(覚醒の兆し)":"")+(dupOf(S,id)?" ・ 重なり ×"+dupOf(S,id):"")+"。",true);   // 次の★までの % は出さない(→docs/14 §14.78)
+    log+=chatSec(growLine(S,id,"ind"),true);   // 育成の様子を秘書の言葉で(→docs/14 §14.108)
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
-    log+=chatSec(secSay(S,"chMot",{ m:"<b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b>", f:Math.round(p.fat*100) }),true);
+    log+=chatSec(growLine(S,id,"talk"),true);   // 調子と疲れを秘書の言葉で(→docs/14 §14.108)
     acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
@@ -12472,11 +12619,11 @@ function onClubClick(e){
   }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doIndTrain(S,id); chatResult("ind",[id],b.textContent,r,reactOf(S,id,"ind",r.res===1?1:0));
+    const id=CL.pick[0], said=mgrSay(S,"ind",0,id), r=doIndTrain(S,id); chatResult("ind",[id],said,r,reactOf(S,id,"ind",hashStr("ri:"+S.term+":"+S.played+":"+id)%2));
     save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doTalk(S,id); chatResult("talk",[id],b.textContent,r,reactOf(S,id,"talk",0));
+    const id=CL.pick[0], said=mgrSay(S,"talk",0,id), r=doTalk(S,id); chatResult("talk",[id],said,r,reactOf(S,id,"talk",0));
     save(); showClub(true);
   }
   else if(act==="pick"){
@@ -12485,13 +12632,13 @@ function onClubClick(e){
     showClub(true);
   }
   else if(act==="lounge"&&CL.pick.length===2){
-    const who=CL.pick.slice(), r=doLounge(S,who[0],who[1],+b.dataset.i);
-    chatResult("lounge",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"lounge",r.res):"");
+    const who=CL.pick.slice(), said=mgrSay(S,"lounge",+b.dataset.i,who[0]), r=doLounge(S,who[0],who[1],+b.dataset.i);
+    chatResult("lounge",who,said,r,r.res>=0?reactOf(S,who[0],"lounge",r.res):"");
     save(); showClub(true);
   }
   else if(act==="meet"&&CL.pick.length===1){
-    const who=CL.pick.slice(), r=doMeeting(S,who[0],+b.dataset.i);
-    chatResult("meet",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"meet",r.res):"");
+    const who=CL.pick.slice(), ready=spReady(S,who[0]), said=ready?b.textContent:mgrSay(S,"meet",0,who[0]), r=doMeeting(S,who[0],+b.dataset.i);
+    chatResult("meet",who,said,r,r.res>=0?reactOf(S,who[0],"meet",r.res):"");
     save(); showClub(true);
   }
   else if(act==="reset"){

@@ -268,17 +268,17 @@ function commChatHtml(){
     acts=f.choices.map((t,i)=>'<button class="cr" data-act="lounge" data-i="'+i+'">'+t+'</button>').join("");
   }else if(CL.comm==="meet"){
     const f=meetInfo(S,id);
-    log+=chatSec("特殊能力 "+stars(f.ss)+(f.ss<5&&S.g.pl[id].sq?"(覚醒の兆し)":"")+"。",true);   // 経験の数字・周りで聞いている選手は出さない(→docs/14 §14.78)
-    if(f.ready){ log+=chatSec(secSay(S,"chReady",{ p:f.pers }),false);
-      acts=f.choices.map((t,i)=>'<button class="cr" data-act="meet" data-i="'+i+'">'+t+'</button>').join(""); }
+    // 育成の様子を秘書の言葉で(★の数・性格の名前は出さない。性格は選手の話し方から。→docs/14 §14.108)
+    log+=chatSec(growLine(S,id,"meet"),true);
+    if(f.ready)acts=meetOpts(S,id).map(o=>'<button class="cr" data-act="meet" data-i="'+o.i+'">'+o.t+'</button>').join("");
     else acts='<button class="cr" data-act="meet" data-i="0">戦術の話をする</button>';
   }else if(CL.comm==="ind"){
     const p=S.g.pl[id];
-    log+=chatSec("個人能力 "+stars(p.is)+(p.q?"(覚醒の兆し)":"")+(dupOf(S,id)?" ・ 重なり ×"+dupOf(S,id):"")+"。",true);   // 次の★までの % は出さない(→docs/14 §14.78)
+    log+=chatSec(growLine(S,id,"ind"),true);   // 育成の様子を秘書の言葉で(→docs/14 §14.108)
     acts='<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
-    log+=chatSec(secSay(S,"chMot",{ m:"<b class=\"mot m"+p.mot+"\">"+MOT_LABEL[p.mot]+"</b>", f:Math.round(p.fat*100) }),true);
+    log+=chatSec(growLine(S,id,"talk"),true);   // 調子と疲れを秘書の言葉で(→docs/14 §14.108)
     acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
@@ -1702,11 +1702,11 @@ function onClubClick(e){
   }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doIndTrain(S,id); chatResult("ind",[id],b.textContent,r,reactOf(S,id,"ind",r.res===1?1:0));
+    const id=CL.pick[0], said=mgrSay(S,"ind",0,id), r=doIndTrain(S,id); chatResult("ind",[id],said,r,reactOf(S,id,"ind",hashStr("ri:"+S.term+":"+S.played+":"+id)%2));
     save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
-    const id=CL.pick[0], r=doTalk(S,id); chatResult("talk",[id],b.textContent,r,reactOf(S,id,"talk",0));
+    const id=CL.pick[0], said=mgrSay(S,"talk",0,id), r=doTalk(S,id); chatResult("talk",[id],said,r,reactOf(S,id,"talk",0));
     save(); showClub(true);
   }
   else if(act==="pick"){
@@ -1715,13 +1715,13 @@ function onClubClick(e){
     showClub(true);
   }
   else if(act==="lounge"&&CL.pick.length===2){
-    const who=CL.pick.slice(), r=doLounge(S,who[0],who[1],+b.dataset.i);
-    chatResult("lounge",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"lounge",r.res):"");
+    const who=CL.pick.slice(), said=mgrSay(S,"lounge",+b.dataset.i,who[0]), r=doLounge(S,who[0],who[1],+b.dataset.i);
+    chatResult("lounge",who,said,r,r.res>=0?reactOf(S,who[0],"lounge",r.res):"");
     save(); showClub(true);
   }
   else if(act==="meet"&&CL.pick.length===1){
-    const who=CL.pick.slice(), r=doMeeting(S,who[0],+b.dataset.i);
-    chatResult("meet",who,b.textContent,r,r.res>=0?reactOf(S,who[0],"meet",r.res):"");
+    const who=CL.pick.slice(), ready=spReady(S,who[0]), said=ready?b.textContent:mgrSay(S,"meet",0,who[0]), r=doMeeting(S,who[0],+b.dataset.i);
+    chatResult("meet",who,said,r,r.res>=0?reactOf(S,who[0],"meet",r.res):"");
     save(); showClub(true);
   }
   else if(act==="reset"){

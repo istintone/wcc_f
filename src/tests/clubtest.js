@@ -367,7 +367,11 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   check("相性に合う手は大成功しやすく、合わない手は失敗しやすい",good[0]>0.5&&bad[2]>0.5);
   const mt=ok=>cnt(T=>{ T.g.pl.h10.se=99; return E.doMeeting(T,"h10",ok?E.persOf("h10"):(E.persOf("h10")+1)%3).res; },600);
   const mOk=mt(true), mNg=mt(false);
-  check("ミーティングの★突破は、性格に合う言い方で成功しやすい",mOk[0]>0.75&&mNg[0]<0.45,pc(mOk[0])+" / "+pc(mNg[0]));
+  // 性格に合う言い方は成功しやすいが外れることもあり、合わなくても通ることがある(→docs/14 §14.108)
+  check("ミーティングの★突破は、性格に合う言い方で成功しやすい(外れも・合わなくても通ることも)",mOk[0]>0.6&&mOk[0]<0.95&&mNg[0]>0.15&&mNg[0]<0.45,pc(mOk[0])+" / "+pc(mNg[0]));
+  { const tr=lv=>cnt(T=>{ T.g.pl.h10.se=99; T.g.pl.h10.bond=lv; return E.doMeeting(T,"h10",(E.persOf("h10")+1)%3).res; },600)[0];
+    const lo=tr(0), hi=tr(999);
+    check("信頼が深いと、合わない言い方でも通りやすくなる",hi>lo+0.08,pc(lo)+" → "+pc(hi)); }
   { // ミーティングは周りにも効く(→docs/08 §8.3): 盤面で近い先発に経験。控えを呼んでも周りはいない
     const T=E.newCareer(88); T.g.step="comm";
     const near=E.meetNear(T,"h10"), far=T.sq.slice(0,11).filter(x=>x!=="h10"&&!near.includes(x));
