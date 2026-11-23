@@ -2767,3 +2767,5 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .hold-btn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;z-index:-1;background:linear-gradient(90deg,#16723e,#1f8a4c 70%,#2fb36a);transition:width .25s ease-out}
 #club .hold-btn.holding::before,#club .hold-btn.done::before{width:100%;transition:width 1.2s linear}
 #club .hold-btn span{position:relative;font-size:14px}
+#club .kmod-box{overflow-x:hidden!important}   /* 大きなカードを傾けても横スクロールのバーを出さない(→docs/14 §14.125) */
+#scene .pk-slot{overflow:visible}
