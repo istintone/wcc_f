@@ -1011,4 +1011,4 @@ const PV_ME=["俺","僕","私","自分"];
 /* 話題のタグ(→docs/23 §23.11)
  *   star … スター1人ごとの入場料とスポンサー収入の倍率 / trouble … 問題児1人ごとのスポンサー収入の倍率
  *   giantN・titleN・promoN … ジャイアントキリング・大会の優勝・昇格の試合でスターになる人数 / gossipN … 問題児になるゴシップの回数(任期の中) */
-TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2 };
+TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2, starCap:4, starGossip:0.02 };   // starCap … スターの倍率の上限 / starGossip … スターが試合のたびにゴシップを付けられる率(→docs/24 §24.6)

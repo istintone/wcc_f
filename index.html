@@ -5060,7 +5060,7 @@ const PV_ME=["俺","僕","私","自分"];
 /* 話題のタグ(→docs/23 §23.11)
  *   star … スター1人ごとの入場料とスポンサー収入の倍率 / trouble … 問題児1人ごとのスポンサー収入の倍率
  *   giantN・titleN・promoN … ジャイアントキリング・大会の優勝・昇格の試合でスターになる人数 / gossipN … 問題児になるゴシップの回数(任期の中) */
-TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2 };
+TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2, starCap:4, starGossip:0.02 };   // starCap … スターの倍率の上限 / starGossip … スターが試合のたびにゴシップを付けられる率(→docs/24 §24.6)
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -8977,14 +8977,19 @@ const isFinal=fx=>!!(fx&&fx.kind==="cup"&&/決勝/.test(fx.label||"")&&!/準決�
 /* ---- 話題のタグ(→docs/23 §23.11) ---- */
 /** お金の倍率。key = "gate"(入場料: スター)/ "sp"(スポンサー収入: スターと問題児)。SQUAD にいる人数ぶん掛け算 */
 function fameK(S,key){
-  const F=TUNING.tag.fame; let k=1;
+  // スターの掛け算は上限 starCap(×4)で止め、そのあとに問題児を掛ける(→docs/24 §24.6)
+  const F=TUNING.tag.fame; let k=1, tr=1;
   for(const id of S.sq||[])for(const t of pTags(S,id)){
-    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")k*=F.trouble; }
-  return k;
+    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }
+  return Math.min(F.starCap,k)*tr;
 }
 /** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */
 function fameAfterMatch(S,res,out){
-  const F=TUNING.tag.fame, f=res.fame; if(!f)return;
+  const F=TUNING.tag.fame, f=res.fame;
+  // スターは週刊誌に追われる: 試合のたびに starGossip の率でゴシップ(同じ任期に2回で問題児。→docs/24 §24.6)
+  const rg=mulberry32((S.seed^hashStr("sg:"+S.term+":"+S.played))>>>0);
+  for(const id of S.sq)if(pHas(S,id,"star")&&rg()<F.starGossip)addPlayerTag(S,id,"gossip",out);
+  if(!f)return;
   const n=Math.max(f.giant?F.giantN:0,f.titles?F.titleN:0,f.promo?F.promoN:0); if(!n)return;
   const why=f.promo?"昇格":f.titles?"優勝":"ジャイアントキリング", goals=res.goals||{}, rate=res.rate||{};
   // 活躍: MVP → 得点 → 採点の順。得点も採点も無ければ(検証の試合など)出場した順

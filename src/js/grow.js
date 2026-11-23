@@ -1103,14 +1103,19 @@ const isFinal=fx=>!!(fx&&fx.kind==="cup"&&/決勝/.test(fx.label||"")&&!/準決�
 /* ---- 話題のタグ(→docs/23 §23.11) ---- */
 /** お金の倍率。key = "gate"(入場料: スター)/ "sp"(スポンサー収入: スターと問題児)。SQUAD にいる人数ぶん掛け算 */
 function fameK(S,key){
-  const F=TUNING.tag.fame; let k=1;
+  // スターの掛け算は上限 starCap(×4)で止め、そのあとに問題児を掛ける(→docs/24 §24.6)
+  const F=TUNING.tag.fame; let k=1, tr=1;
   for(const id of S.sq||[])for(const t of pTags(S,id)){
-    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")k*=F.trouble; }
-  return k;
+    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }
+  return Math.min(F.starCap,k)*tr;
 }
 /** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */
 function fameAfterMatch(S,res,out){
-  const F=TUNING.tag.fame, f=res.fame; if(!f)return;
+  const F=TUNING.tag.fame, f=res.fame;
+  // スターは週刊誌に追われる: 試合のたびに starGossip の率でゴシップ(同じ任期に2回で問題児。→docs/24 §24.6)
+  const rg=mulberry32((S.seed^hashStr("sg:"+S.term+":"+S.played))>>>0);
+  for(const id of S.sq)if(pHas(S,id,"star")&&rg()<F.starGossip)addPlayerTag(S,id,"gossip",out);
+  if(!f)return;
   const n=Math.max(f.giant?F.giantN:0,f.titles?F.titleN:0,f.promo?F.promoN:0); if(!n)return;
   const why=f.promo?"昇格":f.titles?"優勝":"ジャイアントキリング", goals=res.goals||{}, rate=res.rate||{};
   // 活躍: MVP → 得点 → 採点の順。得点も採点も無ければ(検証の試合など)出場した順
