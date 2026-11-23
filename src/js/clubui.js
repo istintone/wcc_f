@@ -758,24 +758,27 @@ function cardModalHtml(id,list){
   const nav=(d,t)=>{ const j=i+d; return '<button class="km-nav" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+'>'+t+'</button>'; };
   let h='<div class="kmodal" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
-      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id);
+      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null);
   if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
     h+='<button class="btn '+(CL.kSwap?'btn-sub':'btn-main')+' km-swap" data-act="kswap">'+(CL.kSwap?'交代をやめる':'⇄ SQUAD と交代')+'</button>';
     if(CL.kSwap){
-      h+='<p class="hint">交代させる選手を選ぶ(その選手の育成は消える)</p>'+
-        chipsHtml(S.sq,CL.kOut?[CL.kOut]:[],(g,x)=>(S.sq.indexOf(x)<11?"先発 ":"SUB ")+(g?"個★"+g.is:""),"kout");
-      if(CL.kOut&&S.sq.includes(CL.kOut))h+='<div class="km-cmp"><p class="km-vs"><b>'+nameOf(c)+'</b> ⇄ <b>'+cname(CL.kOut)+'</b> <small>いまの登録</small></p>'+
-        k3dHtml(CL.kOut,"kFlip2")+'<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
+      // 交代の相手は、下のカードの左右の ‹ › で登録の順に切り替える(16人の札の並びはやめた。→docs/14 §14.122)
+      if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];
+      h+='<div class="km-cmp"><div class="ko-row"><button class="ko-arw" data-act="koutnav" data-d="-1" aria-label="前の選手">‹</button>'+
+        k3dHtml(CL.kOut,"kFlip2","out")+'<button class="ko-arw" data-act="koutnav" data-d="1" aria-label="次の選手">›</button></div>'+
+        '<button class="btn btn-main" data-act="swap" data-id="'+CL.kOut+'">入れ替える('+cname(CL.kOut)+' → '+nameOf(c)+')</button></div>';
     }
   }
   return h+'</div></div>';
 }
 /** 大きなカード(→docs/14 §14.114)。表 = カード、裏 = 情報(cardBackOf)。指でぐりぐり傾き、横にはじくと裏返る */
-function k3dHtml(id,fk){
+function k3dHtml(id,fk,tag){
   fk=fk||"kFlip";   // 裏返しの状態を持つ CL の項目(交代の相手は kFlip2)
+  // tag … 交代のときの角の帯 "in"(右上・入る)/ "out"(左上・出る)。表と裏の両方に付ける(→docs/14 §14.122)
+  const rib=tag?'<b class="k-rib '+tag+'">'+tag.toUpperCase()+'</b>':'', add=h=>rib?h.slice(0,-6)+rib+'</div>':h;
   return '<div class="k3d"'+(fk==="kFlip"?' id="k3d"':'')+' data-fk="'+fk+'"><div class="k3d-in'+(CL[fk]?' flip':'')+'">'+
-    '<div class="k3d-f">'+cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"')+'</div>'+
-    '<div class="k3d-b">'+kBackHtml(id)+'</div></div>'+
+    '<div class="k3d-f">'+add(cardHtml(id,"m"," big").replace('data-act="card"','data-act="none"'))+'</div>'+
+    '<div class="k3d-b">'+add(kBackHtml(id))+'</div></div>'+
     '<i class="k3d-hint" aria-label="はじくと裏返る">↻</i></div>';   // 字で説明せず、回転の印だけ
 }
 /**
@@ -1749,6 +1752,7 @@ function onClubClick(e){
   else if(act==="ggclose"){ CL.ggOpen=false; showClub(true); }
   else if(act==="kclose"){ CL.sel=null; CL.kSwap=false; CL.kOut=null; showClub(true); }
   else if(act==="kswap"){ CL.kSwap=!CL.kSwap; CL.kOut=null; if(CL.kSwap)CL.kTo=".km-swap"; showClub(true); }
+  else if(act==="koutnav"){ const q=S.sq, i=q.indexOf(CL.kOut); CL.kOut=q[(i+(+b.dataset.d)+q.length)%q.length]; CL.kFlip2=false; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kFlip2=false; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;

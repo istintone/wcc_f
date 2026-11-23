@@ -2728,3 +2728,17 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .kc .k-dup u{width:8cqw!important;height:11cqw!important;margin-left:-4.6cqw!important}
 .kc .k-dup u:first-child{margin-left:0!important}
 .kc:has(.k-dup) .k-cno{display:none}
+/* 交代の画面(→docs/14 §14.122): 下のカードの左右に ‹ ›、角に IN / OUT の帯(45°) */
+#club .ko-row{display:grid;grid-template-columns:36px 1fr 36px;align-items:center}
+#club .ko-row .k3d{margin:4px 0}
+#club .ko-row .k3d-f .kc,#club .ko-row .kb{width:86%}
+#club .ko-arw{height:56px;border:0;border-radius:4px;background:rgba(255,255,255,.08);color:inherit;font-size:28px;font-weight:700;line-height:1;cursor:pointer}
+#club .ko-arw:active{transform:translateY(1px)}
+.k-rib{position:absolute;top:7cqw;z-index:9;width:46cqw;padding:1.4cqw 0;text-align:center;pointer-events:none;
+  font-family:"Oswald","Arial Narrow",sans-serif;font-style:italic;font-weight:800;font-size:6.5cqw;line-height:1;letter-spacing:.2em;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.k-rib.in{right:-12cqw;transform:rotate(45deg);background:linear-gradient(90deg,#16723e,#1f8a4c 50%,#16723e)}
+.k-rib.out{left:-12cqw;transform:rotate(-45deg);background:linear-gradient(90deg,#9a0c23,#c8102e 50%,#9a0c23)}
+.kb{container-type:inline-size}
+#club .km-cmp{border-top:2px dashed rgba(200,16,46,.6);margin-top:8px;padding-top:8px}
+.k-rib{top:4.5cqw!important;width:40cqw!important;padding:1cqw 0!important;font-size:5.2cqw!important}
+.k-rib.in{right:-12.5cqw!important} .k-rib.out{left:-12.5cqw!important}
