@@ -810,18 +810,20 @@ function k3dBindOne(st){
   set(0,base(),false);
   // 画像のドラッグ・文字の選択を止める(止めないとブラウザが操作を打ち切る)
   st.addEventListener("dragstart",e=>e.preventDefault());
-  st.addEventListener("pointerdown",e=>{ e.preventDefault(); d={ x:e.clientX, y:e.clientY, t:performance.now(), hx:[[e.clientX,performance.now()]] }; try{ st.setPointerCapture(e.pointerId); }catch(_){} });
+  const live=()=>{ const sl=st.closest(".pk-slot"); return !sl||sl.classList.contains("st2"); };   // パックの中は破ったあとだけ
+  st.addEventListener("pointerdown",e=>{ if(!live())return; e.preventDefault(); d={ x:e.clientX, y:e.clientY, t:performance.now(), hx:[[e.clientX,performance.now()]] }; try{ st.setPointerCapture(e.pointerId); }catch(_){} });
   // マウスは押さずに上を動かすだけでも傾く(サンプルと同じ)
   st.addEventListener("pointerleave",()=>{ if(!d){ set(0,base(),true); shine(null,null); } });
   st.addEventListener("pointermove",e=>{
-    if(!d){ if(e.pointerType!=="mouse")return;
+    if(!d){ if(e.pointerType!=="mouse"||!live())return;
       const r=st.getBoundingClientRect(), px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
       set(-(py-0.5)*28,base()+(px-0.5)*28,false); shine(px,py); return; }
     const r=st.getBoundingClientRect(), dx=e.clientX-d.x, dy=e.clientY-d.y;
     const ry=base()+Math.max(-40,Math.min(40,dx*0.35)), rx=Math.max(-28,Math.min(28,-dy*0.3));
     set(rx,ry,false);
     shine(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)));
-    d.hx.push([e.clientX,performance.now()]); if(d.hx.length>6)d.hx.shift(); });
+    d.hx.push([e.clientX,performance.now()]); if(d.hx.length>6)d.hx.shift();
+    if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>8&&typeof SC!=="undefined")SC.packMoved=true; });   // つまんで動かしたあとのタップでは進まない
   const end=e=>{ if(!d)return;
     const h=d.hx, a=h[0], z=h[h.length-1], v=(z[0]-a[0])/Math.max(1,z[1]-a[1]), dx=e.clientX-d.x; d=null;
     // ピン！とはじいたら裏返る(速さ 0.6px/ms 以上・30px 以上)
