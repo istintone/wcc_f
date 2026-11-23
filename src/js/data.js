@@ -950,6 +950,9 @@ Object.assign(TAGS,{
   // 出来事で付く選手のタグ
   gossip:  { name:"ゴシップ",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+m" }, desc:"週刊誌に追われている。調子が上下しやすい" },
   mood:    { name:"ムードメーカー",   scope:"player", kind:"gen", pol:1,  dur:10, teamFx:{ motUp:"+s" }, desc:"ロッカールームの盛り上げ役。SQUAD にいると、勝ったときチームの調子が上がりやすい" },
+  // 話題のタグ(白。→docs/23 §23.11): 能力には効かず、クラブのお金に効く。SQUAD にいる人数ぶん掛け算
+  star:    { name:"スター選手",       scope:"player", kind:"fame", pol:0, dur:null, desc:"話題の中心。SQUAD にいると、入場料とスポンサー収入 ×1.3(何人でも掛け算。年俸の稼ぎには数えない)" },
+  trouble: { name:"問題児",           scope:"player", kind:"fame", pol:0, bad:true, dur:null, desc:"スポンサーが嫌がる。SQUAD にいると、スポンサー収入 ×0.85(何人でも掛け算)" },
   birthday:{ name:"誕生日",           scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"仲間に祝ってもらった。次の試合は絶好調" }
 });
 /*
@@ -971,6 +974,7 @@ const TAG_EVENTS=[
  * 見つけたタグを任期をまたいで覚える手帳。付き方(how)と効き目(desc)を見せて、プレイヤーの知識とスキルを育てる。
  * 汎用・条件の固有の付き方はここに書く。称号・特性・カードの固有・コンビは決まりから文を作る(noteHow) */
 const NOTE_HOW={
+  star:"格上に勝つ・大会で優勝する・昇格を決める試合で活躍する", trouble:"同じ任期にゴシップが2回付く",
   golden:"成長グラフの金色が3つそろう(黄金期)",
   momentum:"3連勝する", slump:"3連敗する",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
@@ -1003,3 +1007,7 @@ const PV_LINES={
   comp:["{n}とは、なんだか気が合う気がします。","{n}とは、もっと一緒にプレーしてみたいです。"]
 };
 const PV_ME=["俺","僕","私","自分"];
+/* 話題のタグ(→docs/23 §23.11)
+ *   star … スター1人ごとの入場料とスポンサー収入の倍率 / trouble … 問題児1人ごとのスポンサー収入の倍率
+ *   giantN・titleN・promoN … ジャイアントキリング・大会の優勝・昇格の試合でスターになる人数 / gossipN … 問題児になるゴシップの回数(任期の中) */
+TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2 };

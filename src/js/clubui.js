@@ -390,8 +390,10 @@ function sqTokenHtml(id,i,on,o){
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; if(!v.length)return '';
-      const up=v.filter(t=>t.pol>0).length, dn=v.length-up;
-      return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+'</span>'; })()+
+      const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
+      // 話題のタグ(白。→docs/23 §23.11): スターは ★、問題児は ✖
+      return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+
+        fm.map(t=>'<i class="t fm'+(t.bad?' bad':'')+'">'+(t.bad?'✖':'★')+'</i>').join("")+'</span>'; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -1215,7 +1217,7 @@ function noteHtml(){
   const S=CL.S, N=S.note||{}, all=noteAll(), tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
   const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:TAGS[id].name;
   const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):TAGS[id].desc;
-  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].pol<0?'dn':'up';
+  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
   let h='<section class="card note"><h3>COACHING NOTE <small>見つけたタグ '+got+' / '+tot+' ・ 任期をまたいで残る</small></h3>'+
     '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
       return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
@@ -1253,7 +1255,7 @@ function tagEventHtml(){
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.fame?'fm':t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";

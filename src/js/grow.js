@@ -618,6 +618,7 @@ function afterMatchGrowth(S,fx,res){
   // 黄金期(タグ「黄金期到来」。→docs/15 §15.3)の残りのあいだは、ケガ以外の全員が絶好調のまま
   tagsAfterMatch(S,fx,res,out);
   playerTagsAfterMatch(S,fx,res,out,st0);      // 選手のタグ(→docs/23 §23.4)
+  fameAfterMatch(S,res,out);                    // スター選手(→docs/23 §23.11)
   motLockApply(S);
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
@@ -1010,7 +1011,7 @@ function playerTagsView(S,id){
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
   const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
-  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
+  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"", fame:TAGS[t.id].kind==="fame", bad:!!TAGS[t.id].bad })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -1063,10 +1064,12 @@ function addPlayerTag(S,id,tid,out){
   const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
   const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
   if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 "+nm+" の「"+TAGS[T.opp].name+"」が消えた"); } }
+  // ゴシップが重なると問題児(→docs/23 §23.11)。付いている間にまた付いても1回と数える
+  if(tid==="gossip"&&++pCnt(g).gos>=TUNING.tag.fame.gossipN&&!pHas(S,id,"trouble"))addPlayerTag(S,id,"trouble",out);
   const cur=L.find(t=>t.id===tid);
   if(cur){ cur.n=tagDur(T); return; }
   if(T.kind==="trait"){ const j=L.findIndex(t=>TAGS[t.id]&&TAGS[t.id].kind==="trait"); if(j>=0){ out.push("🏷 "+nm+" の特性「"+TAGS[L[j].id].name+"」を付け替えた"); L.splice(j,1); } }
-  else{
+  else if(T.kind==="gen"){
     // 汎用は「任期まで続くもの」と「一過性(期限・条件で消える)」で別の枠。続くものは一過性に押し出されない(→docs/23 §23.1)
     const last=x=>x.dur==null&&!x.endOn, mine=L.filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="gen"&&last(TAGS[t.id])===last(T));
     if(mine.length>=TUNING.tag.playerMax){
@@ -1085,12 +1088,30 @@ function dropPlayerTag(S,id,tid,out){
   L.splice(j,1); out.push("🏷 "+nameOf(CARDS[id])+" の「"+TAGS[tid].name+"」が消えた");
 }
 /** 選手の数え(この任期): 出場・先発の連続・得点・キャプテン・KP の勝ち・ケガ・ケア・好採点の連続 */
-const pCnt=g=>g.c||(g.c={ app:0, startRun:0, startGoals:0, subGoals:0, cap:0, kpW:0, inj:0, care:0, rateRun:0, scored:false });
+const pCnt=g=>{ const c=g.c||(g.c={ app:0, startRun:0, startGoals:0, subGoals:0, cap:0, kpW:0, inj:0, care:0, rateRun:0, scored:false }); if(c.gos==null)c.gos=0; return c; };
 /** 決勝か(大会の最後の段) */
 const isFinal=fx=>!!(fx&&fx.kind==="cup"&&/決勝/.test(fx.label||"")&&!/準決勝/.test(fx.label||""));
 /**
  * 試合のあとの選手のタグ(afterMatchGrowth の最後)。res に goals:{id:点}・rate:{id:採点}・mvp・kpEnd があれば使う。st0 … 試合の前の★の合計
  */
+/* ---- 話題のタグ(→docs/23 §23.11) ---- */
+/** お金の倍率。key = "gate"(入場料: スター)/ "sp"(スポンサー収入: スターと問題児)。SQUAD にいる人数ぶん掛け算 */
+function fameK(S,key){
+  const F=TUNING.tag.fame; let k=1;
+  for(const id of S.sq||[])for(const t of pTags(S,id)){
+    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")k*=F.trouble; }
+  return k;
+}
+/** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */
+function fameAfterMatch(S,res,out){
+  const F=TUNING.tag.fame, f=res.fame; if(!f)return;
+  const n=Math.max(f.giant?F.giantN:0,f.titles?F.titleN:0,f.promo?F.promoN:0); if(!n)return;
+  const why=f.promo?"昇格":f.titles?"優勝":"ジャイアントキリング", goals=res.goals||{}, rate=res.rate||{};
+  // 活躍: MVP → 得点 → 採点の順。得点も採点も無ければ(検証の試合など)出場した順
+  const sc=id=>(id===res.mvp?100:0)+(goals[id]||0)*10+(rate[id]||0);
+  const cand=(res.played||[]).filter(id=>S.sq.includes(id)&&S.g.pl[id]&&!pHas(S,id,"star")).sort((a,b)=>sc(b)-sc(a));
+  for(const id of cand.slice(0,n)){ addPlayerTag(S,id,"star",out); out[out.length-1]+="("+why+"の立役者)"; }
+}
 function playerTagsAfterMatch(S,fx,res,out,st0){
   const P=TUNING.tag.player, played=res.played||[], starters=res.starters||[], goals=res.goals||{}, fin=isFinal(fx);
   for(const id of S.sq){

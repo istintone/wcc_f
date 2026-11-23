@@ -897,5 +897,28 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   const A=E.noteAll(), miss=[]; for(const k in A)for(const id of A[k])if(!E.noteHow(id))miss.push(id);
   check("手帳に載るタグ・コンビのすべてに付き方の文がある",!miss.length,miss.join(","));
 }
+// 話題のタグ(→docs/23 §23.11): スターは入場料とスポンサー収入に掛け算(年俸の稼ぎには数えない)・ゴシップ2回で問題児
+{
+  console.log("\n■ 話題のタグ(スター選手・問題児)");
+  const S=E.newCareer(777), o=[], F=E.TUNING.tag.fame;
+  S.biz.fans=200000; S.biz.stad=5; S.biz.sp={ name:"テスト", pay:1, ms:[], rank:3, ind:"food" };
+  const fx={ home:true, kind:"league" }, run=()=>{ const m0=S.money, e0=S.biz.earn; E.bizAfterMatch(S,fx,{ titles:0, prize:0 },[]); return [S.money-m0,S.biz.earn-e0]; };
+  const [g0,e0]=run();
+  E.addPlayerTag(S,S.sq[1],"star",o); E.addPlayerTag(S,S.sq[2],"star",o);
+  const [g1,e1]=run();
+  check("スター2人で入場料 ×1.3²(資金)",Math.abs(g1/g0-F.star*F.star)<0.02,g0.toFixed(1)+" → "+g1.toFixed(1)+"億");
+  check("年俸の稼ぎには数えない(元の入場料のまま)",Math.abs(e1-e0)<1e-9,e0.toFixed(1)+" / "+e1.toFixed(1));
+  E.addPlayerTag(S,S.sq[3],"gossip",o); E.addPlayerTag(S,S.sq[3],"gossip",o);
+  const tr=(S.g.pl[S.sq[3]].tags||[]).some(t=>t.id==="trouble");
+  check("同じ任期にゴシップ2回で問題児",tr);
+  check("スポンサー収入の倍率 = スター² × 問題児",Math.abs(E.fameK(S,"sp")-F.star*F.star*F.trouble)<1e-9&&Math.abs(E.fameK(S,"gate")-F.star*F.star)<1e-9,
+    "sp ×"+E.fameK(S,"sp").toFixed(3)+" ・ 入場料 ×"+E.fameK(S,"gate").toFixed(3));
+  const mvp=S.sq[6]; E.fameAfterMatch(S,{ fame:{ giant:true }, played:S.sq.slice(0,11), mvp },o);
+  check("ジャイアントキリングで MVP がスターに",(S.g.pl[mvp].tags||[]).some(t=>t.id==="star"));
+  const n0=S.sq.filter(id=>(S.g.pl[id].tags||[]).some(t=>t.id==="star")).length;
+  E.fameAfterMatch(S,{ fame:{ titles:1 }, played:S.sq.slice(0,11) },o);
+  const n1=S.sq.filter(id=>(S.g.pl[id].tags||[]).some(t=>t.id==="star")).length;
+  check("優勝でスターが "+F.titleN+" 人増える(もうスターの選手は除く)",n1-n0===F.titleN,n0+" → "+n1+"人");
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

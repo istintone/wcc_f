@@ -464,7 +464,8 @@ function applyResult(S,W,fx,res){
   misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
   const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[],
-    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd };   // 選手のタグの判定に(→docs/23)
+    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd,   // 選手のタグの判定に(→docs/23)
+    fame:{ giant:(hg>ag||win)&&!!fx.opp&&!!TEAMS[fx.opp]&&tierOf(fx.opp)>=S.grade+2, titles:out.filter(x=>/^🏆 /.test(x)).length, promo:out.some(x=>/^⬆ 昇格/.test(x)) } };   // スター選手(→docs/23 §23.11)
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
   // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ
@@ -678,8 +679,10 @@ function bizAfterMatch(S,fx,res,out){
   let gate=0;
   if(fx.home){
     Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*(typeof tagK==="function"?tagK(S,"money"):1)*10)/10;   // スポンサー景気・経営難(→docs/23)
-    S.money+=gate;
-    out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+gate.toFixed(1)+"億)");
+    // スター選手の倍率は資金だけに掛ける(年俸の稼ぎ earn には元の入場料を数える。→docs/23 §23.11)
+    const fk=typeof fameK==="function"?fameK(S,"gate"):1, paid=Math.round(gate*fk*10)/10;
+    S.money+=paid;
+    out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+paid.toFixed(1)+"億"+(fk!==1?" ・ スター ×"+fk.toFixed(2):"")+")");
   }else Z.att=0;
   Z.earn+=(res.prize||0)+gate;
   // ファン: 勝てば増え(スタジアムが大きいほど多く)、負ければ少し減る。優勝・昇格で大きく増える
@@ -825,8 +828,9 @@ function spAfterMatch(S,fx,r,out){
   const Z=S.biz, sp=Z.sp;
   for(const k in Z.boost)if(Z.boost[k]>0)Z.boost[k]--;
   if(!sp)return 0;
-  const pay=sp.pay; S.money+=pay;
-  out.push("スポンサー収入 +"+pay.toFixed(2)+"億("+sp.name+")");
+  // スター・問題児の倍率は資金だけに掛ける(返り値 = 年俸の稼ぎに数える元の額。→docs/23 §23.11)
+  const pay=sp.pay, fk=typeof fameK==="function"?fameK(S,"sp"):1, paid=Math.round(pay*fk*100)/100; S.money+=paid;
+  out.push("スポンサー収入 +"+paid.toFixed(2)+"億("+sp.name+(fk!==1?" ・ ×"+fk.toFixed(2):"")+")");
   const won=r.hg>r.ag||r.winPso, lost=r.hg<r.ag&&!r.winPso, ind=spIndOf(sp.ind);
   for(const m of sp.ms){
     if(m.done||m.fail)continue;

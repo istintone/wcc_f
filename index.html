@@ -3136,6 +3136,10 @@ body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 58px)!important}
 body[class] #pad .cross,body[class] #pad .act{height:108px!important}
 body[class] #pad .cross{padding-top:17px!important}
 body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 55px)!important}
+/* 話題のタグ(白。→docs/23 §23.11): バフ(金)・デバフ(紫)と別の第3の色 */
+#club .tg.fm{background:linear-gradient(180deg,#fff,#eeeae3);color:#1a1a1a;box-shadow:inset 0 0 0 1px #bdb6aa}
+.ptags .t.fm{color:#b8860b;background:#fff;box-shadow:inset 0 0 0 1px #bdb6aa}
+.ptags .t.fm.bad{color:#c8102e}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4767,6 +4771,9 @@ Object.assign(TAGS,{
   // 出来事で付く選手のタグ
   gossip:  { name:"ゴシップ",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+m" }, desc:"週刊誌に追われている。調子が上下しやすい" },
   mood:    { name:"ムードメーカー",   scope:"player", kind:"gen", pol:1,  dur:10, teamFx:{ motUp:"+s" }, desc:"ロッカールームの盛り上げ役。SQUAD にいると、勝ったときチームの調子が上がりやすい" },
+  // 話題のタグ(白。→docs/23 §23.11): 能力には効かず、クラブのお金に効く。SQUAD にいる人数ぶん掛け算
+  star:    { name:"スター選手",       scope:"player", kind:"fame", pol:0, dur:null, desc:"話題の中心。SQUAD にいると、入場料とスポンサー収入 ×1.3(何人でも掛け算。年俸の稼ぎには数えない)" },
+  trouble: { name:"問題児",           scope:"player", kind:"fame", pol:0, bad:true, dur:null, desc:"スポンサーが嫌がる。SQUAD にいると、スポンサー収入 ×0.85(何人でも掛け算)" },
   birthday:{ name:"誕生日",           scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"仲間に祝ってもらった。次の試合は絶好調" }
 });
 /*
@@ -4788,6 +4795,7 @@ const TAG_EVENTS=[
  * 見つけたタグを任期をまたいで覚える手帳。付き方(how)と効き目(desc)を見せて、プレイヤーの知識とスキルを育てる。
  * 汎用・条件の固有の付き方はここに書く。称号・特性・カードの固有・コンビは決まりから文を作る(noteHow) */
 const NOTE_HOW={
+  star:"格上に勝つ・大会で優勝する・昇格を決める試合で活躍する", trouble:"同じ任期にゴシップが2回付く",
   golden:"成長グラフの金色が3つそろう(黄金期)",
   momentum:"3連勝する", slump:"3連敗する",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
@@ -4820,6 +4828,10 @@ const PV_LINES={
   comp:["{n}とは、なんだか気が合う気がします。","{n}とは、もっと一緒にプレーしてみたいです。"]
 };
 const PV_ME=["俺","僕","私","自分"];
+/* 話題のタグ(→docs/23 §23.11)
+ *   star … スター1人ごとの入場料とスポンサー収入の倍率 / trouble … 問題児1人ごとのスポンサー収入の倍率
+ *   giantN・titleN・promoN … ジャイアントキリング・大会の優勝・昇格の試合でスターになる人数 / gossipN … 問題児になるゴシップの回数(任期の中) */
+TUNING.tag.fame={ star:1.3, trouble:0.85, giantN:1, titleN:2, promoN:2, gossipN:2 };
 
 /* 生成物。手で編集しない。 python tools/gen_trainings.py が tools/train_source.txt から書き出す。
    特殊練習(→docs/05 §5.3)。基本練習6種の上位として、同じ slot の枠に差し替わって出る。
@@ -6842,7 +6854,8 @@ function applyResult(S,W,fx,res){
   misAfterMatch(S,fx,out);                       // オーナーの指令(→docs/16 §16.3)
   // 育成(→grow.js)。フレンドリーマッチの勝利で、覚醒・★5・黄金線が開花する
   const gr={ played:res.played, onPitch:res.onPitch||res.played, win:hg>ag, lose:hg<ag, inj:res.inj||[], starters:res.starters||[],
-    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd };   // 選手のタグの判定に(→docs/23)
+    goals:res.goals, rate:res.rate, mvp:res.mvp, kpEnd:res.kpEnd,   // 選手のタグの判定に(→docs/23)
+    fame:{ giant:(hg>ag||win)&&!!fx.opp&&!!TEAMS[fx.opp]&&tierOf(fx.opp)>=S.grade+2, titles:out.filter(x=>/^🏆 /.test(x)).length, promo:out.some(x=>/^⬆ 昇格/.test(x)) } };   // スター選手(→docs/23 §23.11)
   const gl=res.played?afterMatchGrowth(S,fx,gr):[];
   gl.forEach(x=>out.push(x));
   // 経営(→docs/05 §5.13): 入場料・ファン・スタジアム改修の知らせ
@@ -7056,8 +7069,10 @@ function bizAfterMatch(S,fx,res,out){
   let gate=0;
   if(fx.home){
     Z.att=attendanceOf(S,fx,rng); gate=Math.round(Z.att*B.price*(typeof tagK==="function"?tagK(S,"money"):1)*10)/10;   // スポンサー景気・経営難(→docs/23)
-    S.money+=gate;
-    out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+gate.toFixed(1)+"億)");
+    // スター選手の倍率は資金だけに掛ける(年俸の稼ぎ earn には元の入場料を数える。→docs/23 §23.11)
+    const fk=typeof fameK==="function"?fameK(S,"gate"):1, paid=Math.round(gate*fk*10)/10;
+    S.money+=paid;
+    out.push("観客 "+(Z.att/10000).toFixed(1)+"万人(入場料 +"+paid.toFixed(1)+"億"+(fk!==1?" ・ スター ×"+fk.toFixed(2):"")+")");
   }else Z.att=0;
   Z.earn+=(res.prize||0)+gate;
   // ファン: 勝てば増え(スタジアムが大きいほど多く)、負ければ少し減る。優勝・昇格で大きく増える
@@ -7203,8 +7218,9 @@ function spAfterMatch(S,fx,r,out){
   const Z=S.biz, sp=Z.sp;
   for(const k in Z.boost)if(Z.boost[k]>0)Z.boost[k]--;
   if(!sp)return 0;
-  const pay=sp.pay; S.money+=pay;
-  out.push("スポンサー収入 +"+pay.toFixed(2)+"億("+sp.name+")");
+  // スター・問題児の倍率は資金だけに掛ける(返り値 = 年俸の稼ぎに数える元の額。→docs/23 §23.11)
+  const pay=sp.pay, fk=typeof fameK==="function"?fameK(S,"sp"):1, paid=Math.round(pay*fk*100)/100; S.money+=paid;
+  out.push("スポンサー収入 +"+paid.toFixed(2)+"億("+sp.name+(fk!==1?" ・ ×"+fk.toFixed(2):"")+")");
   const won=r.hg>r.ag||r.winPso, lost=r.hg<r.ag&&!r.winPso, ind=spIndOf(sp.ind);
   for(const m of sp.ms){
     if(m.done||m.fail)continue;
@@ -8247,6 +8263,7 @@ function afterMatchGrowth(S,fx,res){
   // 黄金期(タグ「黄金期到来」。→docs/15 §15.3)の残りのあいだは、ケガ以外の全員が絶好調のまま
   tagsAfterMatch(S,fx,res,out);
   playerTagsAfterMatch(S,fx,res,out,st0);      // 選手のタグ(→docs/23 §23.4)
+  fameAfterMatch(S,res,out);                    // スター選手(→docs/23 §23.11)
   motLockApply(S);
   S.g.step="train"; S.g.opts=null; S.g.cn=0; S.g.done=[];
   GROW_NEWS=null;
@@ -8639,7 +8656,7 @@ function playerTagsView(S,id){
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
   const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
-  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"" })));
+  return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"", fame:TAGS[t.id].kind==="fame", bad:!!TAGS[t.id].bad })));
 }
 
 /* ---- チームの称号(→docs/23 §23.3) ---- */
@@ -8692,10 +8709,12 @@ function addPlayerTag(S,id,tid,out){
   const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
   const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
   if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 "+nm+" の「"+TAGS[T.opp].name+"」が消えた"); } }
+  // ゴシップが重なると問題児(→docs/23 §23.11)。付いている間にまた付いても1回と数える
+  if(tid==="gossip"&&++pCnt(g).gos>=TUNING.tag.fame.gossipN&&!pHas(S,id,"trouble"))addPlayerTag(S,id,"trouble",out);
   const cur=L.find(t=>t.id===tid);
   if(cur){ cur.n=tagDur(T); return; }
   if(T.kind==="trait"){ const j=L.findIndex(t=>TAGS[t.id]&&TAGS[t.id].kind==="trait"); if(j>=0){ out.push("🏷 "+nm+" の特性「"+TAGS[L[j].id].name+"」を付け替えた"); L.splice(j,1); } }
-  else{
+  else if(T.kind==="gen"){
     // 汎用は「任期まで続くもの」と「一過性(期限・条件で消える)」で別の枠。続くものは一過性に押し出されない(→docs/23 §23.1)
     const last=x=>x.dur==null&&!x.endOn, mine=L.filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="gen"&&last(TAGS[t.id])===last(T));
     if(mine.length>=TUNING.tag.playerMax){
@@ -8714,12 +8733,30 @@ function dropPlayerTag(S,id,tid,out){
   L.splice(j,1); out.push("🏷 "+nameOf(CARDS[id])+" の「"+TAGS[tid].name+"」が消えた");
 }
 /** 選手の数え(この任期): 出場・先発の連続・得点・キャプテン・KP の勝ち・ケガ・ケア・好採点の連続 */
-const pCnt=g=>g.c||(g.c={ app:0, startRun:0, startGoals:0, subGoals:0, cap:0, kpW:0, inj:0, care:0, rateRun:0, scored:false });
+const pCnt=g=>{ const c=g.c||(g.c={ app:0, startRun:0, startGoals:0, subGoals:0, cap:0, kpW:0, inj:0, care:0, rateRun:0, scored:false }); if(c.gos==null)c.gos=0; return c; };
 /** 決勝か(大会の最後の段) */
 const isFinal=fx=>!!(fx&&fx.kind==="cup"&&/決勝/.test(fx.label||"")&&!/準決勝/.test(fx.label||""));
 /**
  * 試合のあとの選手のタグ(afterMatchGrowth の最後)。res に goals:{id:点}・rate:{id:採点}・mvp・kpEnd があれば使う。st0 … 試合の前の★の合計
  */
+/* ---- 話題のタグ(→docs/23 §23.11) ---- */
+/** お金の倍率。key = "gate"(入場料: スター)/ "sp"(スポンサー収入: スターと問題児)。SQUAD にいる人数ぶん掛け算 */
+function fameK(S,key){
+  const F=TUNING.tag.fame; let k=1;
+  for(const id of S.sq||[])for(const t of pTags(S,id)){
+    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")k*=F.trouble; }
+  return k;
+}
+/** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */
+function fameAfterMatch(S,res,out){
+  const F=TUNING.tag.fame, f=res.fame; if(!f)return;
+  const n=Math.max(f.giant?F.giantN:0,f.titles?F.titleN:0,f.promo?F.promoN:0); if(!n)return;
+  const why=f.promo?"昇格":f.titles?"優勝":"ジャイアントキリング", goals=res.goals||{}, rate=res.rate||{};
+  // 活躍: MVP → 得点 → 採点の順。得点も採点も無ければ(検証の試合など)出場した順
+  const sc=id=>(id===res.mvp?100:0)+(goals[id]||0)*10+(rate[id]||0);
+  const cand=(res.played||[]).filter(id=>S.sq.includes(id)&&S.g.pl[id]&&!pHas(S,id,"star")).sort((a,b)=>sc(b)-sc(a));
+  for(const id of cand.slice(0,n)){ addPlayerTag(S,id,"star",out); out[out.length-1]+="("+why+"の立役者)"; }
+}
 function playerTagsAfterMatch(S,fx,res,out,st0){
   const P=TUNING.tag.player, played=res.played||[], starters=res.starters||[], goals=res.goals||{}, fin=isFinal(fx);
   for(const id of S.sq){
@@ -11097,8 +11134,10 @@ function sqTokenHtml(id,i,on,o){
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; if(!v.length)return '';
-      const up=v.filter(t=>t.pol>0).length, dn=v.length-up;
-      return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+'</span>'; })()+
+      const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
+      // 話題のタグ(白。→docs/23 §23.11): スターは ★、問題児は ✖
+      return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+
+        fm.map(t=>'<i class="t fm'+(t.bad?' bad':'')+'">'+(t.bad?'✖':'★')+'</i>').join("")+'</span>'; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
@@ -11922,7 +11961,7 @@ function noteHtml(){
   const S=CL.S, N=S.note||{}, all=noteAll(), tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
   const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:TAGS[id].name;
   const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):TAGS[id].desc;
-  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].pol<0?'dn':'up';
+  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
   let h='<section class="card note"><h3>COACHING NOTE <small>見つけたタグ '+got+' / '+tot+' ・ 任期をまたいで残る</small></h3>'+
     '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
       return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
@@ -11960,7 +11999,7 @@ function tagEventHtml(){
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.fame?'fm':t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";

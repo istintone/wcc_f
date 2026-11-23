@@ -2537,3 +2537,7 @@ body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 58px)!important}
 body[class] #pad .cross,body[class] #pad .act{height:108px!important}
 body[class] #pad .cross{padding-top:17px!important}
 body[class] #pad .mid{bottom:calc(env(safe-area-inset-bottom) + 55px)!important}
+/* 話題のタグ(白。→docs/23 §23.11): バフ(金)・デバフ(紫)と別の第3の色 */
+#club .tg.fm{background:linear-gradient(180deg,#fff,#eeeae3);color:#1a1a1a;box-shadow:inset 0 0 0 1px #bdb6aa}
+.ptags .t.fm{color:#b8860b;background:#fff;box-shadow:inset 0 0 0 1px #bdb6aa}
+.ptags .t.fm.bad{color:#c8102e}
