@@ -3391,6 +3391,14 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 .pk-slot.st2 .pk-cardin{top:20px!important;bottom:-8px!important}
 /* C4: 裏面のいちばん下を一回り大きく */
 :is(#club,#scene) .kb-foot{font-size:9.5px!important}
+/* チーム練習: グラフを左に大きく、右に4択と練習のボタン(→docs/14 §14.127) */
+#club .prep .tr-top.tr-top2{display:grid;grid-template-columns:132px minmax(0,1fr)!important;gap:6px;align-items:center;margin:0 0 4px}
+#club .prep .tr-top.tr-top2 .tf-radar{width:132px!important}
+#club .prep .tr-top2 .ints{margin:0 0 4px!important;gap:3px}
+#club .prep .tr-top2 .ints .tab{padding-left:0;padding-right:0;font-size:12px}
+#club .prep .tr-top2 .ints .tab small{font-size:8px;letter-spacing:-.03em;white-space:nowrap}
+#club .prep .tr-top2 .trs.two{gap:3px}
+#club .prep .tr-top2 .trs.two .tr b{font-size:12px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -10573,7 +10581,7 @@ function radarSvg(sets,opts){
     g+='<polygon points="'+pts+'" fill="'+(s.fill||s.color)+'" fill-opacity="'+(s.op!=null?s.op:0.35)+'" stroke="'+s.color+'" stroke-width="1.4"/>';
   }
   if(opts.labels!==false)g+=RADAR_AX.map((a,i)=>{ const p=pt(i,R+7); return '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+2).toFixed(1)+'" text-anchor="middle" font-size="6.5" font-weight="700" '+(opts.hl&&opts.hl[a]?'class="h'+opts.hl[a]+'"':opts.gold&&opts.gold[a]?'class="gd" fill="#e8b11c"':'fill="currentColor"')+'>'+AXIS_ABBR[a]+(opts.vals&&opts.vals[a]!=null?'<tspan class="vv" x="'+p[0].toFixed(1)+'" dy="6.6">'+opts.vals[a].toFixed(1)+'</tspan>':'')+(opts.delta&&opts.delta[a]?'<tspan class="dv '+(opts.delta[a]>0?'u':'d')+'" x="'+p[0].toFixed(1)+'" dy="6.6">'+(opts.delta[a]>0?'+':'')+opts.delta[a].toFixed(1)+'</tspan>':'')+'</text>'; }).join("");
-  return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 '+(opts.vals?112:104)+'">'+g+'</svg>';
+  return '<svg class="radar'+(opts.cls?' '+opts.cls:'')+'" viewBox="-6 -2 112 '+(opts.vals||opts.delta?112:104)+'">'+g+'</svg>';
 }
 /** チームの戦力の6軸を 0〜1 に(先発の能力の上位6人の平均)。cards … 先発11人のカード */
 function teamAxes(cards){
@@ -11390,12 +11398,14 @@ function restEffectHtml(){
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
   return '<div class="step-h one"><b>チーム練習</b><small>強いほど伸びるが疲れる ・ 疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
+    // グラフを左に大きく、右に強さの4択と練習のボタンを詰める(→docs/14 §14.127)
+    '<div class="tr-top tr-top2">'+trainEffectHtml("graph")+'<div class="tr-right">'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
       INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
-      ?'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
-      :'<div class="tr-top">'+trainEffectHtml("graph")+'<div class="tr-right"><div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
+      :'<div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */

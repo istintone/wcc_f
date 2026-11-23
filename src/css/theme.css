@@ -2792,3 +2792,11 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 .pk-slot.st2 .pk-cardin{top:20px!important;bottom:-8px!important}
 /* C4: 裏面のいちばん下を一回り大きく */
 :is(#club,#scene) .kb-foot{font-size:9.5px!important}
+/* チーム練習: グラフを左に大きく、右に4択と練習のボタン(→docs/14 §14.127) */
+#club .prep .tr-top.tr-top2{display:grid;grid-template-columns:132px minmax(0,1fr)!important;gap:6px;align-items:center;margin:0 0 4px}
+#club .prep .tr-top.tr-top2 .tf-radar{width:132px!important}
+#club .prep .tr-top2 .ints{margin:0 0 4px!important;gap:3px}
+#club .prep .tr-top2 .ints .tab{padding-left:0;padding-right:0;font-size:12px}
+#club .prep .tr-top2 .ints .tab small{font-size:8px;letter-spacing:-.03em;white-space:nowrap}
+#club .prep .tr-top2 .trs.two{gap:3px}
+#club .prep .tr-top2 .trs.two .tr b{font-size:12px}
