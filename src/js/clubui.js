@@ -1194,7 +1194,7 @@ function oppSquadHtml(S,oppId,def,rep){
   return '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
       '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
-      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b>'+(rep?'<button class="btn btn-main sc-rep" data-act="screp">視察レポート</button>':'')+'</div>'+
+      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b></div>'+   // 視察レポートのボタンは見出しの右端へ(→docs/14 §14.119)
       (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
       ((def.titles||[]).length||(def.combos||[]).length||def.xi.some(s=>TAGS["u_"+s.card.id])?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
         (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+
@@ -1205,7 +1205,7 @@ function oppSquadHtml(S,oppId,def,rep){
 }
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;
-  return '<div class="step-h one"><b>視察</b><small>秘書が相手の SQUAD を整理した</small></div>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
+  return '<div class="step-h one sc-h"><b>視察</b><small>秘書が相手の SQUAD を整理した</small><button class="btn btn-main sc-rep" data-act="screp">視察レポート</button></div>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
 }
 /** SEASON から見る相手の SQUAD(フロート。視察レポートは出さない)。リーグの相手は、Premier Div なら育成レベル最大で */
 function oppViewModalHtml(){
