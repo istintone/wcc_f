@@ -2670,3 +2670,20 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 /* 選手をもう少し小さく、カードの高さの中央に(→docs/14 §14.116) */
 #club .k3d-f .kc .k-art{top:14%!important;bottom:16%!important}
 #club .k3d-f .kc .k-img{top:0!important;bottom:0!important;height:94%!important;margin:auto!important;object-position:50% 50%!important}
+/* レアカードの刻印(→docs/14 §14.117): 右側にカテゴリと同じ縦書きで「WC DEFENDER」「LE MIDFIELDER」。
+   ポジションの札の高さからスキルの手前まで。選手の絵の後ろ・名前の帯の下に潜る。型押し(エンボス)に薄い光が流れる。
+   字の大きさはカードの幅に対する割合(cqw)で、どの大きさのカード・どのポジションでも同じ比率 */
+.kc{container-type:inline-size}
+.kc .k-emb2{position:absolute;right:7%;top:19%;bottom:11%;z-index:1;pointer-events:none;writing-mode:vertical-rl;
+  font-family:"Oswald","Arial Narrow",system-ui,sans-serif;font-style:normal;font-weight:700;font-size:9cqw;letter-spacing:.06em;line-height:1;white-space:nowrap;
+  color:transparent;-webkit-background-clip:text;background-clip:text;background-size:100% 300%;
+  animation:kEmb 6s ease-in-out infinite}
+.kc.r-L .k-emb2{background-image:linear-gradient(180deg,rgba(150,105,20,.35) 0%,rgba(150,105,20,.35) 40%,rgba(255,250,220,.95) 50%,rgba(150,105,20,.35) 60%,rgba(150,105,20,.35) 100%)}
+.kc.r-K .k-emb2{background-image:linear-gradient(180deg,rgba(110,80,180,.3) 0%,rgba(110,80,180,.3) 40%,rgba(255,255,255,.95) 50%,rgba(110,80,180,.3) 60%,rgba(110,80,180,.3) 100%)}
+@keyframes kEmb{0%{background-position:0 100%}60%,100%{background-position:0 0%}}
+@media (prefers-reduced-motion:reduce){.kc .k-emb2{animation:none;background-position:0 100%}}
+/* 型押しの影は、同じ文字を少しずらした ::before / ::after で(背景で文字を切り抜くと影のフィルターが効かないため) */
+.kc .k-emb2::before,.kc .k-emb2::after{content:attr(data-t);position:absolute;inset:0;z-index:-1;-webkit-background-clip:border-box;background:none;writing-mode:vertical-rl}
+.kc .k-emb2::before{color:rgba(255,255,255,.7);transform:translate(.7px,.7px)}
+.kc .k-emb2::after{color:rgba(0,0,0,.2);transform:translate(-.7px,-.7px)}
+.kc .k-emb2{right:12%!important}   /* カテゴリの列(右端)の内側に並べる */

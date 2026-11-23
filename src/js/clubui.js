@@ -702,6 +702,10 @@ const artSrc=(c,kind)=>{ const k=artKeyOf(c); return k&&PLAYER_ART[k+"_"+kind]||
 const cardTeam=c=>c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
 // レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
 const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
+/** カードのシーズン(活躍した年。カテゴリの後ろに付ける。→docs/14 §14.117)。シーズンを足すときはここから */
+const CARD_SEASON="25-26";
+/** レアカードの刻印: WC / LE + メインポジション */
+const EMB_PRE={ K:"WC", L:"LE" }, EMB_POS={ GK:"GOALKEEPER", DF:"DEFENDER", MF:"MIDFIELDER", FW:"FORWARD" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
 const cardColor=c=>(c.team&&TEAMS[c.team]?TEAMS[c.team].color:c.id&&c.id[0]==="h"?TEAMS.azr.color:"#888");
 /**
@@ -714,10 +718,10 @@ function cardHtml(id,size,extra){
   const top=STATS.slice().sort((a,b)=>c[b]-c[a]).slice(0,3);
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
-    '<i class="k-band"></i><div class="k-art">'+(artSrc(c,"play")?'<img class="k-img" src="'+artSrc(c,"play")+'" alt="">':poseSvg(c))+'</div>'+
+    '<i class="k-band"></i>'+(EMB_PRE[r]?'<i class="k-emb2" data-t="'+EMB_PRE[r]+' '+(EMB_POS[c.pos]||c.pos)+'">'+EMB_PRE[r]+' '+(EMB_POS[c.pos]||c.pos)+'</i>':'')+'<div class="k-art">'+(artSrc(c,"play")?'<img class="k-img" src="'+artSrc(c,"play")+'" alt="">':poseSvg(c))+'</div>'+
     (cardTeam(c)?'<i class="k-emb">'+emblemSvg(cardTeam(c),size==="m"?22:13)+'</i>':'')+
     '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
-    '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
+    '<div class="k-rar">'+RAR_TAG[r]+' '+CARD_SEASON+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
     '<i class="k-cno">'+cardNoOf(c)+'</i>'+
     // WORLD CLASS・LEGENDS: メタリックの輝き(一覧ではゆっくり流れ、大きく開くと指に合わせて動く。→docs/14 §14.114)
@@ -791,7 +795,7 @@ function kBackHtml(id){
       (st?'<p><b>KP</b>'+st.name+' <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (RK?'<p class="rkp"><b>RARE KP</b>'+((g?g.ss:0)>=5?RK.name:'？？？')+'</p>':'')+
       '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
-    '<div class="kb-foot"><b>'+RAR_TAG[r]+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
+    '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
     '<i class="k-glare"></i></div>';
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */

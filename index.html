@@ -3269,6 +3269,23 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 /* 選手をもう少し小さく、カードの高さの中央に(→docs/14 §14.116) */
 #club .k3d-f .kc .k-art{top:14%!important;bottom:16%!important}
 #club .k3d-f .kc .k-img{top:0!important;bottom:0!important;height:94%!important;margin:auto!important;object-position:50% 50%!important}
+/* レアカードの刻印(→docs/14 §14.117): 右側にカテゴリと同じ縦書きで「WC DEFENDER」「LE MIDFIELDER」。
+   ポジションの札の高さからスキルの手前まで。選手の絵の後ろ・名前の帯の下に潜る。型押し(エンボス)に薄い光が流れる。
+   字の大きさはカードの幅に対する割合(cqw)で、どの大きさのカード・どのポジションでも同じ比率 */
+.kc{container-type:inline-size}
+.kc .k-emb2{position:absolute;right:7%;top:19%;bottom:11%;z-index:1;pointer-events:none;writing-mode:vertical-rl;
+  font-family:"Oswald","Arial Narrow",system-ui,sans-serif;font-style:normal;font-weight:700;font-size:9cqw;letter-spacing:.06em;line-height:1;white-space:nowrap;
+  color:transparent;-webkit-background-clip:text;background-clip:text;background-size:100% 300%;
+  animation:kEmb 6s ease-in-out infinite}
+.kc.r-L .k-emb2{background-image:linear-gradient(180deg,rgba(150,105,20,.35) 0%,rgba(150,105,20,.35) 40%,rgba(255,250,220,.95) 50%,rgba(150,105,20,.35) 60%,rgba(150,105,20,.35) 100%)}
+.kc.r-K .k-emb2{background-image:linear-gradient(180deg,rgba(110,80,180,.3) 0%,rgba(110,80,180,.3) 40%,rgba(255,255,255,.95) 50%,rgba(110,80,180,.3) 60%,rgba(110,80,180,.3) 100%)}
+@keyframes kEmb{0%{background-position:0 100%}60%,100%{background-position:0 0%}}
+@media (prefers-reduced-motion:reduce){.kc .k-emb2{animation:none;background-position:0 100%}}
+/* 型押しの影は、同じ文字を少しずらした ::before / ::after で(背景で文字を切り抜くと影のフィルターが効かないため) */
+.kc .k-emb2::before,.kc .k-emb2::after{content:attr(data-t);position:absolute;inset:0;z-index:-1;-webkit-background-clip:border-box;background:none;writing-mode:vertical-rl}
+.kc .k-emb2::before{color:rgba(255,255,255,.7);transform:translate(.7px,.7px)}
+.kc .k-emb2::after{color:rgba(0,0,0,.2);transform:translate(-.7px,-.7px)}
+.kc .k-emb2{right:12%!important}   /* カテゴリの列(右端)の内側に並べる */
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -11736,6 +11753,10 @@ const artSrc=(c,kind)=>{ const k=artKeyOf(c); return k&&PLAYER_ART[k+"_"+kind]||
 const cardTeam=c=>c.team&&TEAMS[c.team]?TEAMS[c.team]:c.id[0]==="h"?TEAMS.azr:c.id[0]==="a"?TEAMS.ros:null;
 // レアリティの呼び方(→docs/08 §8.10): 白 = REGULAR / 黒 = SPECIAL / キラ = WORLD CLASS / レジェンド = LEGENDS
 const RAR_TAG={ W:"REGULAR", B:"SPECIAL", K:"WORLD CLASS", L:"LEGENDS" };
+/** カードのシーズン(活躍した年。カテゴリの後ろに付ける。→docs/14 §14.117)。シーズンを足すときはここから */
+const CARD_SEASON="25-26";
+/** レアカードの刻印: WC / LE + メインポジション */
+const EMB_PRE={ K:"WC", L:"LE" }, EMB_POS={ GK:"GOALKEEPER", DF:"DEFENDER", MF:"MIDFIELDER", FW:"FORWARD" };
 /** カードのクラブの色(実在クラブ・アズーロFC) */
 const cardColor=c=>(c.team&&TEAMS[c.team]?TEAMS[c.team].color:c.id&&c.id[0]==="h"?TEAMS.azr.color:"#888");
 /**
@@ -11748,10 +11769,10 @@ function cardHtml(id,size,extra){
   const top=STATS.slice().sort((a,b)=>c[b]-c[a]).slice(0,3);
   const n=CL.S&&CL.S.coll[id]||0;
   return '<div class="kc r-'+r+' kc-'+size+(extra||"")+'" data-act="card" data-id="'+id+'" style="--tc:'+cardColor(c)+'">'+
-    '<i class="k-band"></i><div class="k-art">'+(artSrc(c,"play")?'<img class="k-img" src="'+artSrc(c,"play")+'" alt="">':poseSvg(c))+'</div>'+
+    '<i class="k-band"></i>'+(EMB_PRE[r]?'<i class="k-emb2" data-t="'+EMB_PRE[r]+' '+(EMB_POS[c.pos]||c.pos)+'">'+EMB_PRE[r]+' '+(EMB_POS[c.pos]||c.pos)+'</i>':'')+'<div class="k-art">'+(artSrc(c,"play")?'<img class="k-img" src="'+artSrc(c,"play")+'" alt="">':poseSvg(c))+'</div>'+
     (cardTeam(c)?'<i class="k-emb">'+emblemSvg(cardTeam(c),size==="m"?22:13)+'</i>':'')+
     '<div class="k-top"><b class="k-no">'+statTotal(c)+'</b><i class="k-pos '+c.pos.toLowerCase()+'">'+c.pos+'</i></div>'+
-    '<div class="k-rar">'+RAR_TAG[r]+'</div>'+
+    '<div class="k-rar">'+RAR_TAG[r]+' '+CARD_SEASON+'</div>'+
     '<div class="k-name"><b>'+nameOf(c)+'</b><small>'+clubOfCard(c)+'<em class="k-num">'+c.no+'</em></small></div>'+
     '<i class="k-cno">'+cardNoOf(c)+'</i>'+
     // WORLD CLASS・LEGENDS: メタリックの輝き(一覧ではゆっくり流れ、大きく開くと指に合わせて動く。→docs/14 §14.114)
@@ -11825,7 +11846,7 @@ function kBackHtml(id){
       (st?'<p><b>KP</b>'+st.name+' <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (RK?'<p class="rkp"><b>RARE KP</b>'+((g?g.ss:0)>=5?RK.name:'？？？')+'</p>':'')+
       '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
-    '<div class="kb-foot"><b>'+RAR_TAG[r]+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
+    '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 重なり×'+dupOf(S,id):'')+'</span></div>'+
     '<i class="k-glare"></i></div>';
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
