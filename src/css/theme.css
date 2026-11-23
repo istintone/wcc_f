@@ -2692,3 +2692,4 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 .om-K .pk-aura,.om-L .pk-aura,.om-K.promo .pk-aura,.om-L.promo .pk-aura{display:none!important}
 .pk-slot .rays{display:none!important}
 .pk-cardin{will-change:transform}
+.pk-slot.st2 .pk-pack{clip-path:none!important;overflow:visible}   /* 開いたあとはパックで切り取らない(傾けたカードの端が切れないように) */
