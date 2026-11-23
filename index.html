@@ -12595,12 +12595,13 @@ function trophyIconSvg(id,won){
   else body='<path fill="'+(won?'#c8102e':'currentColor')+'" d="M13 2h6l3 12h-6zM27 2h-6l-3 12h6z"/><circle cx="20" cy="27" r="11" fill="'+f+'"/><path fill="'+(won?'rgba(0,0,0,.28)':'none')+'" d="M20 20.5l2 4.2 4.5.6-3.3 3.1.8 4.5-4-2.1-4 2.1.8-4.5-3.3-3.1 4.5-.6z"/>';
   return '<svg class="tro-ic'+(won?'':' off')+'" viewBox="0 0 40 48">'+body+(g==="B"||g==="D"||g==="E"?'':base)+'</svg>';
 }
-function trophyShelfHtml(){
-  const S=CL.S, n={}, now={};
-  for(const t of S.titles){ const k=trophyKey(t); n[k]=(n[k]||0)+1; if(t.term===S.term)now[k]=1; }
+/** トロフィーの棚。termOnly … CLUB(この任期のクラブのぶんだけ。任期ごとに別のクラブなのでリセット)/ なし … MANAGER(監督の通算。→docs/14 §14.120) */
+function trophyShelfHtml(termOnly){
+  const S=CL.S, n={}, now={}, list=termOnly?S.titles.filter(t=>t.term===S.term):S.titles;
+  for(const t of list){ const k=trophyKey(t); n[k]=(n[k]||0)+1; if(!termOnly&&t.term===S.term)now[k]=1; }
   const kinds=TROPHY_ORDER.filter(id=>n[id]).length;
   const stop=(o,c)=>'<stop offset="'+o+'" stop-color="'+c+'"/>', grad=(k,cs)=>'<linearGradient id="tm-'+k+'" x1="0" x2="1">'+cs.map((c,i)=>stop(i/(cs.length-1),c)).join("")+'</linearGradient>';
-  return '<section class="card troph"><h3>トロフィー <small>獲得 '+kinds+' / '+TROPHY_ORDER.length+' 種 ・ 通算 '+S.titles.length+' 回</small></h3>'+
+  return '<section class="card troph"><h3>トロフィー <small>'+(termOnly?'第'+S.term+'任期 ・ ':'')+'獲得 '+kinds+' / '+TROPHY_ORDER.length+' 種 ・ '+(termOnly?'':'通算 ')+list.length+' 回</small></h3>'+
     '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+grad("g",["#8a6414","#ffe9a3","#e2b84a","#7a5510"])+
       grad("s",["#5d6470","#f4f6fa","#b8bec9","#555c68"])+grad("b",["#5a2f10","#f3c08e","#c07a3e","#5a2f10"])+'</defs></svg>'+
     '<div class="tro-grid">'+TROPHY_ORDER.map(id=>'<div class="tro'+(n[id]?' won':'')+'" title="'+trophyName(id)+'">'+trophyIconSvg(id,!!n[id])+
@@ -12623,7 +12624,7 @@ function clubTabHtml(){
     '<div><b>'+r.gf+'</b><small>得点</small></div><div><b>'+r.ga+'</b><small>失点</small></div></div>'+
     '<p class="dim">タイトル '+names.length+(names.length?': '+names.join(" / "):'')+'</p>'+
     '<p class="dim">'+divName(S.grade)+(S.cprof&&S.cprof.name?' ・ '+S.cprof.name:'')+'</p></section>'+
-    trophyShelfHtml()+spTileHtml()+bizClubHtml();
+    trophyShelfHtml(true)+spTileHtml()+bizClubHtml();   // クラブのトロフィーはこの任期のぶんだけ
 }
 /**
  * MANAGER(→docs/07 §7.9): 監督の情報(名前は変えられる)・生涯成績・称号・歴代・秘書・設定。
