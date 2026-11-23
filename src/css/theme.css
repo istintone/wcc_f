@@ -2567,3 +2567,22 @@ body.th-bk .xb{background:#e01f3d!important}
 body[class] #club .tbl tr.me td{background:transparent!important}
 body[class] #club .tbl tr.me{background:linear-gradient(90deg,rgba(208,16,47,.16),rgba(208,16,47,.02) 85%)}
 body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24),rgba(255,42,80,.03) 85%)}
+/* OVR と成長グラフの窓・マッチアップの OVR(→docs/14 §14.110) */
+#club .gg-h{margin:10px 0 4px;font-size:13px;font-weight:900}
+#club .gg-h small{margin-left:6px;font-size:10px;font-weight:600;opacity:.7}
+#club .gg-tbl.ovr td.p{text-align:right}
+#club .gg-calc{margin:6px 0 2px;text-align:center;font-family:var(--f-num);font-size:12px}
+#club .gg-calc b{font-size:16px;font-style:italic;margin:0 2px}
+#club .gg-calc b.up{color:#1f8a4c} #club .gg-calc b.dn{color:#c8102e}
+#club .gg-calc i{font-style:normal;opacity:.6;margin:0 4px}
+#club .gg-gr{margin:0;padding:0}
+.vs-ovr{display:block;margin-top:2px;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:13px;letter-spacing:.04em}
+#club .gg-gr{list-style:none}
+#club .gg-gr li{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(127,127,127,.25)}
+#club .gg-gr li>span{display:flex;align-items:baseline;gap:8px}
+#club .gg-gr li>span:last-child{justify-content:flex-end}
+#club .gg-gr i{font-style:normal;font-family:var(--f-num);font-weight:700;font-size:11px;letter-spacing:.1em;opacity:.75}
+#club .gg-gr b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:17px}
+#club .gg-gr .pr{opacity:.45;font-size:13px}
+#club .gg-gr em{font-style:normal;font-family:var(--f-num);font-size:9px;font-weight:800;padding:0 4px;border-radius:2px;background:#e8b11c;color:#2a1a00}
+#club .gg-gr .mx em{background:#888;color:#fff}

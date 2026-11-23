@@ -528,19 +528,24 @@ function ggModalHtml(){
   const S=CL.S, G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, gv={}, pv={}, pw=teamAxisPower(S);
   for(const a in G){ gv[a]=G[a]/R.max; pv[a]=pw[a]/STAT_MAX; }
   const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
-  const row=a=>'<tr class="'+(gold[a]?'gd':'')+'"><th>'+AXIS_ABBR[a]+'</th><td class="g"><b>'+Math.round(G[a])+'</b>'+(gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</td>'+
-    '<td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
+  // OVR(戦力)の内訳と成長グラフを分けて見せる。成長グラフは OVR に足さない(KP のランクだけを決める。→docs/14 §14.110)
+  const ovr=teamPower(S), p0=S.ts&&S.ts.pow0!=null?S.ts.pow0:ovr, d=ovr-p0;
+  const prow=a=>'<tr><th>'+AXIS_ABBR[a]+'</th><td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
+  const gax=a=>'<span class="'+(gold[a]?'gd':G[a]>=R.max-1e-9?'mx':'')+'"><i>'+AXIS_ABBR[a]+'</i><b>'+Math.round(G[a])+'</b>'+(gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
-    '<header class="km-head"><span></span><b>成長グラフと戦力</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
+    '<header class="km-head"><span></span><b>OVR と成長グラフ</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
     goldenLineHtml(S)+
     '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#9aa1ad", fill:"#9aa1ad", op:0.2 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
-      '<small class="gg-leg"><i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(練習で伸びる・KP のランクを決める) <i class="p"></i>戦力(選手の能力)</small></div>'+
-    '<table class="gg-tbl"><tr><th></th><th>成長</th><th>戦力</th></tr>'+["O","D","S","P","R","C"].map(row).join("")+
-      '<tr class="sum"><th>合計</th><td class="g"></td><td class="p"><b>OVR '+teamPower(S).toFixed(1)+'</b></td></tr></table>'+
+      '<small class="gg-leg"><i class="p"></i>OVR(先発11人の能力) <i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(KP のランク)</small></div>'+
+    '<h4 class="gg-h">OVR の内訳 <small>先発11人の能力の平均を、6つ足す</small></h4>'+
+    '<table class="gg-tbl ovr">'+["O","D","S","P","R","C"].map(prow).join("")+
+      '<tr class="sum"><th>合計</th><td class="p"><b>OVR '+ovr.toFixed(1)+'</b></td></tr></table>'+
+    '<p class="gg-calc">任期の始め <b>'+p0.toFixed(1)+'</b> <i>'+(d>=0?'+':'−')+'</i> 育成 <b class="'+(d>=0?'up':'dn')+'">'+Math.abs(d).toFixed(1)+'</b> <i>=</i> いま <b>'+ovr.toFixed(1)+'</b></p>'+
+    '<h4 class="gg-h">成長グラフ <small>練習で伸び縮み・KP のランクを決める(OVR には足さない)</small></h4>'+
+    '<ul class="gr-list gg-gr">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+gax(p[0])+'<i class="pr">⇄</i>'+gax(p[1])+'</li>').join("")+'</ul>'+
     (st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
       (rk==="G"?'':' が '+(rk==="B"?TUNING.rank.th[0]+' で A':rk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'')+
-    '<p class="dim gr-note">成長: 向かい合う2軸(OFE⇄DEF・SPE⇄POW・TEC⇄STA)で器 '+graphCap(S)+' を分け合う。MAX の軸をさらに伸ばす練習で限界突破して金色に。'+
-      '戦力: 盤面の11人の能力の平均。6つを足すと OVR</p></div></div>';
+    '<p class="dim gr-note">向かい合う2軸で器 '+graphCap(S)+' を分け合う。MAX の軸をさらに伸ばす練習で限界突破して金色に</p></div></div>';
 }
 function growGraphHtml(S){
   const G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, v={};
@@ -869,7 +874,7 @@ function homeHeadHtml(){
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
   return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
-    '<div class="num pw"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'<i>'+powDelta(S)+'</i></b></div>'+
+    '<div class="num pw"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+   // 合算値だけ。伸びの内訳は SQUAD の窓(→docs/14 §14.110)
     '<div class="num"><small>任期</small><b>'+S.played+'<i>/'+C.termLen+'</i></b></div>'+
     '<div class="num"><small>資金</small><b>'+S.money.toFixed(0)+'<i>億</i></b></div>'+
     (S.biz?'<div class="num"><small>サポーター</small><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b></div>':'')+'</header>';
