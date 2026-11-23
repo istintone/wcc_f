@@ -2586,3 +2586,12 @@ body.th-bk #club .tbl tr.me{background:linear-gradient(90deg,rgba(255,42,80,.24)
 #club .gg-gr .pr{opacity:.45;font-size:13px}
 #club .gg-gr em{font-style:normal;font-family:var(--f-num);font-size:9px;font-weight:800;padding:0 4px;border-radius:2px;background:#e8b11c;color:#2a1a00}
 #club .gg-gr .mx em{background:#888;color:#fff}
+/* OVR の窓(→docs/14 §14.111): 項目の下に数値、右下に OVR と内訳 */
+#club .gg-ovrw{position:relative}
+#club .gg-vals .vv{font-size:6px;font-weight:800;font-style:italic;fill:currentColor;opacity:.85}
+#club .gg-ovr{position:absolute;right:6px;bottom:22px;text-align:right;line-height:1.05}
+#club .gg-ovr small{display:block;font-family:var(--f-num);font-size:10px;font-weight:700;letter-spacing:.16em;opacity:.7}
+#club .gg-ovr b{display:block;font-family:var(--f-num);font-style:italic;font-weight:800;font-size:30px;color:#e8b11c}
+#club .gg-ovr span{display:block;font-family:var(--f-num);font-style:italic;font-weight:700;font-size:13px}
+#club .gg-ovr i{font-style:italic}
+#club .gg-ovrw .gg-leg{position:static!important;display:block;margin-top:8px;text-align:center} #club .gg-ovrw .radar{margin-bottom:4px}

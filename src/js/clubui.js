@@ -474,7 +474,7 @@ function squadHtml(){
   const G=S.g.graph, R=TUNING.grow.graph, gv={}; for(const a in G)gv[a]=G[a]/R.max;
   const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst):null;
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
-  let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="成長グラフと戦力を開く">'+
+  let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
       '<small class="gg-leg2"><span>成長</span><span>戦力</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><i class="p"></i></small></button>'+
     '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamPower(S).toFixed(1)+'</b></div>'+
@@ -525,27 +525,17 @@ function teamAxisPower(S){
  * 大きなレーダー(成長 + 戦力)と、軸ごとの 成長(0〜100・MAX・GOLD)/ 戦力(能力の平均。足すと OVR)
  */
 function ggModalHtml(){
-  const S=CL.S, G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, gv={}, pv={}, pw=teamAxisPower(S);
-  for(const a in G){ gv[a]=G[a]/R.max; pv[a]=pw[a]/STAT_MAX; }
-  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
-  // OVR(戦力)の内訳と成長グラフを分けて見せる。成長グラフは OVR に足さない(KP のランクだけを決める。→docs/14 §14.110)
-  const ovr=teamPower(S), p0=S.ts&&S.ts.pow0!=null?S.ts.pow0:ovr, d=ovr-p0;
-  const prow=a=>'<tr><th>'+AXIS_ABBR[a]+'</th><td class="p"><b>'+pw[a].toFixed(1)+'</b></td></tr>';
-  const gax=a=>'<span class="'+(gold[a]?'gd':G[a]>=R.max-1e-9?'mx':'')+'"><i>'+AXIS_ABBR[a]+'</i><b>'+Math.round(G[a])+'</b>'+(gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
+  // OVR(→docs/14 §14.111): グラフの項目の近くに各軸の数値、右下に OVR と内訳(任期の始め + 育成)をグラフの色で。表・KP・成長グラフは出さない
+  const S=CL.S, pw=teamAxisPower(S), ovr=teamPower(S), p0=S.ts&&S.ts.pow0!=null?S.ts.pow0:ovr, d=ovr-p0;
+  const ax0=S.ts&&S.ts.ax0?S.ts.ax0:Object.fromEntries(Object.keys(pw).map(a=>[a,pw[a]*p0/(ovr||1)]));   // 古いセーブは比で戻す
+  const sc=v=>(v-8)/9, cur={}, base={}; for(const a in pw){ cur[a]=sc(pw[a]); base[a]=sc(ax0[a]); }
+  const col=teamColor(myTeam(S)), gr="#9aa1ad";
   return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
-    '<header class="km-head"><span></span><b>OVR と成長グラフ</b><small></small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
-    goldenLineHtml(S)+
-    '<div class="gg-radar">'+radarSvg([{ v:pv, color:"#9aa1ad", fill:"#9aa1ad", op:0.2 },{ v:gv, color:all?'#e8b11c':teamColor(myTeam(S)), op:all?0.55:0.35 }],{ gold, cls:all?'gold':'' })+
-      '<small class="gg-leg"><i class="p"></i>OVR(先発11人の能力) <i class="g" style="background:'+(all?'#e8b11c':teamColor(myTeam(S)))+'"></i>成長グラフ(KP のランク)</small></div>'+
-    '<h4 class="gg-h">OVR の内訳 <small>先発11人の能力の平均を、6つ足す</small></h4>'+
-    '<table class="gg-tbl ovr">'+["O","D","S","P","R","C"].map(prow).join("")+
-      '<tr class="sum"><th>合計</th><td class="p"><b>OVR '+ovr.toFixed(1)+'</b></td></tr></table>'+
-    '<p class="gg-calc">任期の始め <b>'+p0.toFixed(1)+'</b> <i>'+(d>=0?'+':'−')+'</i> 育成 <b class="'+(d>=0?'up':'dn')+'">'+Math.abs(d).toFixed(1)+'</b> <i>=</i> いま <b>'+ovr.toFixed(1)+'</b></p>'+
-    '<h4 class="gg-h">成長グラフ <small>練習で伸び縮み・KP のランクを決める(OVR には足さない)</small></h4>'+
-    '<ul class="gr-list gg-gr">'+[["O","D"],["S","P"],["R","C"]].map(p=>'<li>'+gax(p[0])+'<i class="pr">⇄</i>'+gax(p[1])+'</li>').join("")+'</ul>'+
-    (st?'<p class="gr-kp">KP '+nameOf(kc)+' ・ '+st.name+' '+rankChip(rk)+' <small>'+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+
-      (rk==="G"?'':' が '+(rk==="B"?TUNING.rank.th[0]+' で A':rk==="A"?TUNING.rank.th[1]+' で S':'金色で G'))+'</small></p>':'')+
-    '<p class="dim gr-note">向かい合う2軸で器 '+graphCap(S)+' を分け合う。MAX の軸をさらに伸ばす練習で限界突破して金色に</p></div></div>';
+    '<header class="km-head"><span></span><b>OVR</b><small>先発11人の能力</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
+    '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:base, color:gr, fill:gr, op:0.25 },{ v:cur, color:col, fill:col, op:0.18 }],{ vals:pw, cls:"gg-vals" })+
+      '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b><span>(<i style="color:'+gr+'">'+p0.toFixed(1)+'</i> '+(d>=0?'+':'−')+' <i style="color:'+col+'">'+Math.abs(d).toFixed(1)+'</i>)</span></div>'+
+      '<small class="gg-leg"><i class="p" style="background:'+gr+'"></i>任期の始め <i class="g" style="background:'+col+'"></i>育成</small></div>'+
+    '</div></div>';
 }
 function growGraphHtml(S){
   const G=S.g.graph, gold=S.g.gold, R=TUNING.grow.graph, all=graphGoldN(S)>=3, v={};
@@ -870,7 +860,7 @@ function hypeOf(S,fx){
 /** HOME の見出し(クラブと任期) */
 const powDelta=S=>{ const d=teamPower(S)-(S.ts.pow0||teamPower(S)); return d>=0.05?" +"+d.toFixed(1):d<=-0.05?" "+d.toFixed(1):""; };
 function homeHeadHtml(){
-  if(CL.S.ts&&CL.S.ts.pow0==null)CL.S.ts.pow0=teamPower(CL.S);   // 任期の始め(または初めて見たとき)のチーム力
+  if(CL.S.ts&&CL.S.ts.pow0==null){ CL.S.ts.pow0=teamPower(CL.S); CL.S.ts.ax0=teamAxisPower(CL.S); }   // 任期の始め(または初めて見たとき)のチーム力と6軸(→docs/14 §14.111)
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
   return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
