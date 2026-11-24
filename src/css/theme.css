@@ -2895,3 +2895,13 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .paper.v2 .pp-score.sm small{display:none}
 #club .paper.v2 .pp-stad{position:absolute;left:8%;right:8%;bottom:6px;top:36px}
 #club .paper.v2 .pp-stad svg{width:100%;height:100%}
+/* カードの窓は枠なし(→docs/14 §14.136): 箱・見出しの帯を透明にし、カードとボタンだけ */
+#club .kmodal.kcard{background:rgba(8,10,16,.82)!important;backdrop-filter:blur(3px)}
+#club .kmodal.kcard .kmod-box{background:transparent!important;border:0!important;box-shadow:none!important;padding-top:4px}
+#club .kmodal.kcard .km-head{background:transparent!important;border:0!important;box-shadow:none!important;color:#fff}
+#club .kmodal.kcard .km-head b{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+#club .kmodal.kcard .km-head small{color:rgba(255,255,255,.6)}
+#club .kmodal.kcard .km-nav,#club .kmodal.kcard .km-x{width:34px!important;height:34px!important;border-radius:50%!important;background:rgba(255,255,255,.14)!important;color:#fff!important;clip-path:none!important}
+#club .kmodal.kcard .km-x{background:rgba(200,16,46,.9)!important}
+#club .kmodal.kcard .km-nav:disabled{opacity:.25}
+#club .kmodal.kcard .km-cmp{background:transparent!important}
