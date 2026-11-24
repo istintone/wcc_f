@@ -339,7 +339,7 @@ function prepHtml(){
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
-        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'+'<button class="bk" data-act="stratback">‹ 視察</button>'
+        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'
         :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="bk" data-act="scoutback">‹ 個別指導</button>':'')
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
             :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
@@ -1289,7 +1289,8 @@ function oppCardModalHtml(){
 }
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
-  return '<div class="step-h"><b>戦略方針</b><small></small></div>'+mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
+  return '<div class="step-h one sc-h"><b>戦略方針</b><small></small><button class="bk" data-act="stratback">‹ 視察</button></div>'+   // 戻るは見出しの右端(→docs/14 §14.148)
+    mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
 function mabHtml(){
   const S=CL.S, set=S.mab.set, M=TUNING.mab;
