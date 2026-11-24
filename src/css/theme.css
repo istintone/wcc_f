@@ -2943,3 +2943,12 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .opp-vbox .tinfo{color:#eef0f4}
 #club .pt-row.tt-row{display:flex!important;flex-direction:row!important;flex-wrap:wrap;gap:5px;margin:6px 8px}
 #club .pt-row.tt-row .tg{cursor:pointer;padding:revert-layer;flex-wrap:nowrap}
+/* SQUAD: 右の列をピッチの高さいっぱいに(→docs/14 §14.142)。列の高さはピッチに合わせ(列の中身でピッチを伸ばさない)、余った高さは SUB の札の間と各段の間に配る */
+#club .tab-squad .sq-3col.sq-2col{align-items:stretch!important}
+#club .tab-squad .sq-2col .sq-side{display:flex!important;flex-direction:column;justify-content:space-between;contain:size;min-height:100%}
+#club .tab-squad .sq-2col .sq-side .sq-bench{flex:1 1 auto;justify-content:space-evenly!important}
+#club .tab-squad .sq-2col .sq-side .sq-roles{flex:0 1 auto;justify-content:space-evenly}
+#club .tab-squad .sq-2col .sq-side .sq-bench{height:auto!important;max-height:none!important;display:flex!important;flex-direction:column}
+#club .tab-squad .sq-2col .sq-side .sq-bench{flex:3 1 auto!important;justify-content:space-around!important}
+#club .tab-squad .sq-2col .sq-side .sq-roles{flex:2 1 auto!important;display:flex!important;flex-direction:column;justify-content:space-around!important}
+#club .tab-squad .sq-2col .sq-side{gap:4px!important;justify-content:flex-start!important}
