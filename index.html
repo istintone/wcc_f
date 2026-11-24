@@ -3439,6 +3439,51 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .sq-2col .sq-side .sq-bench{gap:0!important}
 #club .sq-side .sq-mb{height:23px!important}
 #club .sq-2col .sq-side .sq-roles{gap:2px!important;padding:3px 2px!important}
+/* ---- クラブ新聞: ヨーロッパのスポーツ日刊紙の紙面(→docs/14 §14.134) ---- */
+#club .paper.v2{--pp-ink:#141414;--pp-red:#d2101f;--pp-pink:#f6dde2;position:relative;width:100%;max-width:380px;padding:0 0 10px;color:var(--pp-ink);border-radius:0;
+  background:radial-gradient(rgba(120,40,60,.10) .7px,transparent 1px) 0 0/4px 4px,linear-gradient(180deg,#f9e6ea,var(--pp-pink) 40%,#f1d3d9);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);font-family:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif}
+#club .paper.v2::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.05),transparent 6%,transparent 94%,rgba(0,0,0,.06))}
+#club .paper.v2 .pp-strip{display:flex;justify-content:space-between;padding:4px 10px;font-family:var(--f-num);font-size:9.5px;font-weight:700;letter-spacing:.08em;border-bottom:1px solid var(--pp-ink)}
+#club .paper.v2 .pp-mast{padding:4px 10px 5px;text-align:center;border-bottom:4px solid var(--pp-ink);background:linear-gradient(180deg,transparent 0 82%,rgba(210,16,31,.12))}
+#club .paper.v2 .pp-mast b{display:block;font-family:var(--f-num);font-style:italic;font-weight:900;font-size:44px;line-height:.95;letter-spacing:-.02em;color:var(--pp-red);
+  text-shadow:2px 2px 0 rgba(0,0,0,.12)}
+#club .paper.v2 .pp-mast b em{font-style:italic;color:var(--pp-ink);margin-left:4px}
+#club .paper.v2 .pp-mast small{display:block;margin-top:2px;font-family:var(--f-num);font-size:8.5px;font-weight:700;letter-spacing:.28em}
+#club .paper.v2 .pp-hero{position:relative;height:210px;margin:8px 10px 0;overflow:hidden;border-bottom:3px solid var(--pp-red);
+  background:radial-gradient(ellipse 70% 80% at 45% 60%,rgba(255,255,255,.9),rgba(246,221,226,0) 70%),repeating-linear-gradient(115deg,rgba(210,16,31,.07) 0 10px,transparent 10px 22px)}
+#club .paper.v2 .k-lose .pp-hero,#club .paper.v2.k-lose .pp-hero,#club .paper.v2.k-crash .pp-hero,#club .paper.v2.k-pklose .pp-hero{filter:grayscale(.85)}
+#club .paper.v2 .pp-ph{position:absolute;left:4%;bottom:-6px;height:118%;image-rendering:pixelated;filter:drop-shadow(4px 6px 0 rgba(0,0,0,.18))}
+#club .paper.v2 .pp-kick{position:absolute;left:0;top:8px;z-index:2;margin:0;padding:2px 10px 2px 8px;font-family:var(--f-num);font-weight:800;font-size:11px;letter-spacing:.04em;color:#fff;background:var(--pp-red);
+  clip-path:polygon(0 0,100% 0,calc(100% - 7px) 100%,0 100%)}
+#club .paper.v2 .pp-score{position:absolute;right:6px;top:8px;z-index:2;display:flex;align-items:center;gap:4px;padding:4px 8px;background:var(--pp-ink);color:#fff;box-shadow:3px 3px 0 var(--pp-red)}
+#club .paper.v2 .pp-score b{font-family:var(--f-num);font-style:italic;font-weight:900;font-size:34px;line-height:1;letter-spacing:-.02em}
+#club .paper.v2 .pp-score b i{font-style:normal;margin:0 3px;opacity:.6}
+#club .paper.v2 .pp-score small{position:absolute;left:0;right:0;bottom:-14px;text-align:center;font-family:var(--f-num);font-size:9px;font-weight:800;color:var(--pp-ink)}
+#club .paper.v2 .pp-score.r-l{box-shadow:3px 3px 0 #5a5a5a}
+#club .paper.v2 .pp-voto{position:absolute;left:52%;top:70px;z-index:2;width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--pp-red);color:#fff;box-shadow:0 0 0 3px #fff,2px 4px 0 3px rgba(0,0,0,.2);transform:rotate(-8deg)}
+#club .paper.v2 .pp-voto small{font-family:var(--f-num);font-size:8px;font-weight:800;letter-spacing:.14em;line-height:1}
+#club .paper.v2 .pp-voto b{font-family:var(--f-num);font-style:italic;font-weight:900;font-size:22px;line-height:1}
+#club .paper.v2 .pp-cap{position:absolute;right:6px;bottom:6px;z-index:2;margin:0;padding:1px 6px;font-family:var(--f-num);font-weight:800;font-size:11px;background:#fff;border-left:3px solid var(--pp-red)}
+#club .paper.v2 .pp-h1{margin:8px 10px 0;font-family:var(--f-num),"Hiragino Sans",sans-serif;font-weight:900;font-size:31px;line-height:1.08;letter-spacing:-.02em;transform:scaleY(1.08);transform-origin:top left}
+#club .paper.v2 .pp-sub{margin:8px 10px 0;padding:4px 0 6px;font-weight:700;font-size:13px;line-height:1.45;border-top:2px solid var(--pp-ink);border-bottom:1px solid var(--pp-ink)}
+#club .paper.v2 .pp-body{margin:8px 10px 0;column-count:2;column-gap:12px;column-rule:1px solid rgba(0,0,0,.35);font-size:12px;line-height:1.7;text-align:justify}
+#club .paper.v2 .pp-lead{margin:0}
+#club .paper.v2 .pp-drop{float:left;margin:2px 4px 0 0;padding:0 4px;font-family:var(--f-num);font-weight:900;font-size:34px;line-height:1;color:#fff;background:var(--pp-red)}
+#club .paper.v2 .pp-q{margin:8px 0 0;padding:6px 0 0;break-inside:avoid;border-top:3px solid var(--pp-red);font-weight:900;font-size:14px;line-height:1.45;color:var(--pp-red);font-style:normal}
+#club .paper.v2 .pp-gos{margin:12px 10px 0;border:2px solid var(--pp-ink);background:rgba(255,255,255,.55)}
+#club .paper.v2 .pp-gos header{display:flex;align-items:baseline;gap:8px;padding:3px 8px;background:var(--pp-ink)}
+#club .paper.v2 .pp-gos header b{font-family:var(--f-num);font-style:italic;font-weight:900;font-size:18px;letter-spacing:.06em;color:#ffd21e}
+#club .paper.v2 .pp-gos header span{font-size:11px;font-weight:700;color:#fff}
+#club .paper.v2 .pp-gos ol{margin:0;padding:4px 8px 6px;list-style:none;counter-reset:g}
+#club .paper.v2 .pp-gos li{counter-increment:g;position:relative;padding:5px 0 5px 24px;font-size:12px;line-height:1.5;border-bottom:1px dotted rgba(0,0,0,.4)}
+#club .paper.v2 .pp-gos li:last-child{border-bottom:0}
+#club .paper.v2 .pp-gos li::before{content:counter(g);position:absolute;left:0;top:5px;width:17px;height:17px;border-radius:50%;background:var(--pp-red);color:#fff;font-family:var(--f-num);font-weight:900;font-size:11px;line-height:17px;text-align:center}
+#club .paper.v2 .pp-foot{display:flex;justify-content:flex-end;padding:8px 10px 0}
+#club .pp-nav button{min-width:44px;font-size:18px;font-weight:900}
+#club .paper.v2 .pp-ph{height:100%!important;bottom:0!important;top:auto}
+#club .paper.v2.k-lose .pp-ph,#club .paper.v2.k-crash .pp-ph,#club .paper.v2.k-pklose .pp-ph{filter:grayscale(1) drop-shadow(4px 6px 0 rgba(0,0,0,.18))}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12645,19 +12690,33 @@ function secPickHtml(title){
       '<i>「'+SEC_LINES[x.id].hello+'」</i></span></button>'; }).join("")+'</section>';
 }
 /** クラブ新聞の紙面(ヨーロッパのタブロイド紙風)。i … S.paper の番号 */
+/**
+ * クラブ新聞(→docs/14 §14.134)。ヨーロッパのスポーツ日刊紙のような紙面(淡いピンクの新聞紙・太い斜体の題字・写真の上に大きなスコア・採点の丸札・ゴシップ欄)。
+ * 紙名は架空(略称 + SPORT)。実在の新聞の名前・ロゴ・意匠は使わない
+ */
 function paperHtml(i){
   const S=CL.S, a=S.paper[i]; if(!a)return "";
-  const club=S.club?S.club.name:TEAMS.azr.name, ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
-  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+'>‹ 前の号</button>'+
-    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+'>次の号 ›</button></nav>';
-  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper k-'+a.kind+'" data-act="none">'+
-    '<header class="mast"><small>第'+a.term+'任期 ・ 第'+a.no+'試合 ・ ¥150</small><b>'+club+' タイムズ</b><i>THE '+(S.club?S.club.short:"AZR")+' TIMES ・ '+(S.club?S.club.town:"")+'</i></header>'+
-    '<p class="kicker">'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</p>'+
-    '<h1>'+a.head+'</h1><p class="sub">'+a.sub+'</p>'+
-    (img?'<figure><img src="'+img+'" alt=""><figcaption>'+(a.mvp?nameOf(CARDS[a.mvp.id])+' ・ 採点 '+a.mvp.r.toFixed(1):'')+'</figcaption></figure>':'')+
-    '<div class="cols"><p>'+a.lead+'</p>'+(a.quote?'<p class="q">'+a.quote+'</p>':'')+'</div>'+
-    (a.side.length?'<aside id="ppGossip"><b>ゴシップ</b>'+a.side.map(x=>'<p>'+x+'</p>').join("")+'</aside>':'')+
-    '<footer><button class="btn btn-sub" data-act="paperclose">新聞をたたむ</button></footer></article></div>';
+  const me=myTeam(S), opp=a.opp&&TEAMS[a.opp], ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
+  const short=(S.club?S.club.short:"AZR"), town=(S.club?S.club.town:"");
+  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
+    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button></nav>';
+  const res=a.hg>a.ag||(a.pso&&a.pso[0]>a.pso[1])?"w":a.hg<a.ag||(a.pso&&a.pso[0]<a.pso[1])?"l":"d";
+  const score='<div class="pp-score r-'+res+'">'+emblemSvg(me,30)+'<b>'+a.hg+'<i>-</i>'+a.ag+'</b>'+(opp?emblemSvg(Object.assign({ id:a.opp },opp),30):'')+
+    (a.pso?'<small>PK '+a.pso[0]+'-'+a.pso[1]+'</small>':'')+'</div>';
+  const voto=a.mvp&&CARDS[a.mvp.id]?'<div class="pp-voto"><small>VOTO</small><b>'+a.mvp.r.toFixed(1)+'</b></div>':'';
+  const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper v2 k-'+a.kind+'" data-act="none">'+
+    '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
+    '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
+    '<div class="pp-hero">'+
+      '<p class="pp-kick">'+COMPS[a.comp].name+(a.label?' ・ '+a.label:'')+'</p>'+
+      (img?'<img class="pp-ph" src="'+img+'" alt="">':'')+voto+score+
+      (a.mvp&&CARDS[a.mvp.id]?'<p class="pp-cap">'+nameOf(CARDS[a.mvp.id])+'</p>':'')+
+    '</div>'+
+    '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
+    '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
+    (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
+    '<footer class="pp-foot"><button class="xb" data-act="paperclose" aria-label="新聞をたたむ">×</button></footer></article></div>';
 }
 function homeHtml(){
   const S=CL.S;

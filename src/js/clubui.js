@@ -1433,19 +1433,33 @@ function secPickHtml(title){
       '<i>「'+SEC_LINES[x.id].hello+'」</i></span></button>'; }).join("")+'</section>';
 }
 /** クラブ新聞の紙面(ヨーロッパのタブロイド紙風)。i … S.paper の番号 */
+/**
+ * クラブ新聞(→docs/14 §14.134)。ヨーロッパのスポーツ日刊紙のような紙面(淡いピンクの新聞紙・太い斜体の題字・写真の上に大きなスコア・採点の丸札・ゴシップ欄)。
+ * 紙名は架空(略称 + SPORT)。実在の新聞の名前・ロゴ・意匠は使わない
+ */
 function paperHtml(i){
   const S=CL.S, a=S.paper[i]; if(!a)return "";
-  const club=S.club?S.club.name:TEAMS.azr.name, ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
-  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+'>‹ 前の号</button>'+
-    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+'>次の号 ›</button></nav>';
-  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper k-'+a.kind+'" data-act="none">'+
-    '<header class="mast"><small>第'+a.term+'任期 ・ 第'+a.no+'試合 ・ ¥150</small><b>'+club+' タイムズ</b><i>THE '+(S.club?S.club.short:"AZR")+' TIMES ・ '+(S.club?S.club.town:"")+'</i></header>'+
-    '<p class="kicker">'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</p>'+
-    '<h1>'+a.head+'</h1><p class="sub">'+a.sub+'</p>'+
-    (img?'<figure><img src="'+img+'" alt=""><figcaption>'+(a.mvp?nameOf(CARDS[a.mvp.id])+' ・ 採点 '+a.mvp.r.toFixed(1):'')+'</figcaption></figure>':'')+
-    '<div class="cols"><p>'+a.lead+'</p>'+(a.quote?'<p class="q">'+a.quote+'</p>':'')+'</div>'+
-    (a.side.length?'<aside id="ppGossip"><b>ゴシップ</b>'+a.side.map(x=>'<p>'+x+'</p>').join("")+'</aside>':'')+
-    '<footer><button class="btn btn-sub" data-act="paperclose">新聞をたたむ</button></footer></article></div>';
+  const me=myTeam(S), opp=a.opp&&TEAMS[a.opp], ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
+  const short=(S.club?S.club.short:"AZR"), town=(S.club?S.club.town:"");
+  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
+    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button></nav>';
+  const res=a.hg>a.ag||(a.pso&&a.pso[0]>a.pso[1])?"w":a.hg<a.ag||(a.pso&&a.pso[0]<a.pso[1])?"l":"d";
+  const score='<div class="pp-score r-'+res+'">'+emblemSvg(me,30)+'<b>'+a.hg+'<i>-</i>'+a.ag+'</b>'+(opp?emblemSvg(Object.assign({ id:a.opp },opp),30):'')+
+    (a.pso?'<small>PK '+a.pso[0]+'-'+a.pso[1]+'</small>':'')+'</div>';
+  const voto=a.mvp&&CARDS[a.mvp.id]?'<div class="pp-voto"><small>VOTO</small><b>'+a.mvp.r.toFixed(1)+'</b></div>':'';
+  const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper v2 k-'+a.kind+'" data-act="none">'+
+    '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
+    '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
+    '<div class="pp-hero">'+
+      '<p class="pp-kick">'+COMPS[a.comp].name+(a.label?' ・ '+a.label:'')+'</p>'+
+      (img?'<img class="pp-ph" src="'+img+'" alt="">':'')+voto+score+
+      (a.mvp&&CARDS[a.mvp.id]?'<p class="pp-cap">'+nameOf(CARDS[a.mvp.id])+'</p>':'')+
+    '</div>'+
+    '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
+    '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
+    (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
+    '<footer class="pp-foot"><button class="xb" data-act="paperclose" aria-label="新聞をたたむ">×</button></footer></article></div>';
 }
 function homeHtml(){
   const S=CL.S;
