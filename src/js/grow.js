@@ -1345,6 +1345,7 @@ function noteTag(S,id){
 /** 手帳の区分 */
 function noteCat(id){
   if(/^cb:/.test(id))return "combo";
+  if(/^mt:/.test(id))return typeof TITLES!=="undefined"&&TITLES.some(t=>t.id===id.slice(3))?"mgr":null;   // 監督称号(→docs/14 §14.147)
   const T=TAGS[id]; if(!T)return null;
   return T.kind==="title"?"title":T.kind==="trait"?"trait":T.kind==="unique"?"unique":T.scope==="team"?"team":"player";
 }
@@ -1354,6 +1355,7 @@ function noteHow(id){
     const ax=C.axes.map(a=>AXIS_ABBR[a]).join(" か ");
     return C.special?"決められた選手の組("+C.ids.map(x=>nameOf(CARDS[x])).join("・")+")が全員先発で黄金線・信頼でつながり、"+ax+" が金色"
       :C.slots.length+"人("+C.slots.map(s=>COMBO_SLOT[s].join("/")).join(" + ")+")が黄金線・信頼でつながり、"+ax+" が金色"; }
+  if(/^mt:/.test(id)){ const t=TITLES.find(x=>x.id===id.slice(3)); return t?"任期の終わりに: "+t.need:""; }
   const T=TAGS[id]; if(!T)return "";
   if(NOTE_HOW[id])return NOTE_HOW[id];
   if(T.sub==="nation")return "先発の11人をすべて "+(NAT_NAME[T.nat]||T.nat)+" の選手にして戦い続ける";
@@ -1367,6 +1369,7 @@ function noteAll(){
   const out={}; for(const [k] of NOTE_CAT)out[k]=[];
   for(const id in TAGS){ const c=noteCat(id); if(c)out[c].push(id); }
   for(const id in COMBOS)out.combo.push("cb:"+id);
+  if(typeof TITLES!=="undefined")for(const t of TITLES)out.mgr.push("mt:"+t.id);   // 監督称号
   return out;
 }
 /** 試合のあとに、見えているタグ(施設充実・オイルマネー・カードの固有)も手帳に書く */

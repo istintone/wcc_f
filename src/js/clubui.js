@@ -1339,10 +1339,14 @@ function offerHtml(){
  * COACHING NOTE(→docs/23 §23.10): 見つけたタグの付き方と効き目。任期をまたいで残る。区分を押すと開く
  */
 function noteHtml(){
-  const S=CL.S, N=S.note||{}, all=noteAll(), tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
-  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:TAGS[id].name;
-  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):TAGS[id].desc;
-  const cls=id=>/^cb:/.test(id)?'cmb':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
+  const S=CL.S, N=Object.assign({},S.note||{}), all=noteAll();
+  // 監督称号は歴代(S.career)から: 初めて獲った任期と回数(→docs/14 §14.147)
+  for(const c of S.career||[]){ const k="mt:"+c.title; if(!N[k])N[k]={ term:c.term, n:0 }; N[k].n++; }
+  const tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
+  const ttl=id=>TITLES.find(x=>x.id===id.slice(3))||{};
+  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:/^mt:/.test(id)?ttl(id).name:TAGS[id].name;
+  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):/^mt:/.test(id)?(TITLE_FX[id.slice(3)]?'セットすると: '+TITLE_FX[id.slice(3)].desc+' ・ ':'')+'年俸 +'+ttl(id).bonus+'億 ・ 監督の格 '+ttl(id).grade:TAGS[id].desc;
+  const cls=id=>/^cb:/.test(id)?'cmb':/^mt:/.test(id)?'up ttl':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
   let h='<section class="card note"><h3>COACHING NOTE <small>見つけたタグ '+got+' / '+tot+' ・ 任期をまたいで残る</small></h3>'+
     '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
       return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
