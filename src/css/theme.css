@@ -2941,3 +2941,5 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .tinfo .ti-tags::-webkit-scrollbar{display:none}
 #club .tinfo .ti-tags .tg{flex:0 0 auto;font-size:10.5px;padding:2px 7px;white-space:nowrap}
 #club .opp-vbox .tinfo{color:#eef0f4}
+#club .pt-row.tt-row{display:flex!important;flex-direction:row!important;flex-wrap:wrap;gap:5px;margin:6px 8px}
+#club .pt-row.tt-row .tg{cursor:pointer;padding:revert-layer;flex-wrap:nowrap}

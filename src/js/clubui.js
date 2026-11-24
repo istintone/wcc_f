@@ -478,12 +478,15 @@ function teamInfoHtml(o){
   const kp=o.kc&&o.st?'<div class="ti-kp"><i>KP</i><b>'+nameOf(o.kc)+'</b><span>'+o.st.name+' '+rankChip(o.rk)+'</span></div>':'<div class="ti-kp none"><i>KP</i><span>なし</span></div>';
   return '<div class="tinfo"><div class="ti-head">'+emblemSvg(o.team,30)+'<div><b>'+o.name+'</b><small>'+o.sub+'</small></div></div>'+
     '<div class="ti-mid"><div class="ti-ovr"><small>OVR</small><b>'+o.ovr.toFixed(1)+'</b></div>'+kp+'</div>'+
-    (o.tags&&o.tags.length?'<div class="ti-tags">'+o.tags.map(t=>'<span class="tg up '+(t.cls||'')+'"'+(t.title?' title="'+t.title+'"':'')+'><b>'+t.name+'</b></span>').join("")+'</div>':'')+'</div>';
+    (o.tags&&o.tags.length?'<div class="ti-tags">'+o.tags.map(tagChip).join("")+'</div>':'')+'</div>';
 }
+/** タグの札(HOME・SQUAD・視察・選手で共通。押すと通知バーで効き目。→docs/14 §14.141)。t = { name, cls, desc, left } */
+const tagEsc=s=>String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const tagChip=t=>'<button class="tg '+(t.cls||'up')+'" data-act="tagtip" data-n="'+tagEsc(t.name)+'" data-d="'+tagEsc(t.desc)+'" data-l="'+tagEsc(t.left)+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>';
 /** 自分のチームのタグ(称号・コンビ・固有)を、チーム情報の3段目の形で */
 function myTagChips(S){
-  const v=teamTagsView(S).filter(t=>t.title||t.combo||(TAGS[t.id]&&TAGS[t.id].pol>0)).map(t=>({ name:t.name, cls:t.title?'ttl':t.combo?'cmb':'', title:t.desc }));
-  for(const id of S.sq.slice(0,11))if(TAGS["u_"+id])v.push({ name:TAGS["u_"+id].name, cls:'unq', title:nameOf(CARDS[id]) });
+  const v=teamTagsView(S).filter(t=>t.title||t.combo||(TAGS[t.id]&&TAGS[t.id].pol>0)).map(t=>({ name:t.name, cls:'up'+(t.title?' ttl':t.combo?' cmb':''), desc:t.desc, left:t.left }));
+  for(const id of S.sq.slice(0,11))if(TAGS["u_"+id])v.push({ name:TAGS["u_"+id].name, cls:'up unq', desc:nameOf(CARDS[id])+" ― "+TAGS["u_"+id].desc });
   return v;
 }
 function squadHtml(){
@@ -1245,9 +1248,9 @@ function oppSquadHtml(S,oppId,def,rep){
   return '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
       teamInfoHtml({ team, name:teamNameOf(t), sub:"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型', ovr:ovO, kc, st, rk,
-        tags:(def.titles||[]).map(id=>({ name:TAGS[id].name, cls:'ttl', title:TAGS[id].desc }))
-          .concat((def.combos||[]).map(c=>({ name:COMBOS[c.id].name, cls:'cmb', title:c.ids.map(x=>nameOf(CARDS[x])).join("・") })))
-          .concat(def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>({ name:TAGS["u_"+x].name, cls:'unq', title:nameOf(CARDS[x]) }))) })+'</section>'+
+        tags:(def.titles||[]).map(id=>({ name:TAGS[id].name, cls:'up ttl', desc:TAGS[id].desc }))
+          .concat((def.combos||[]).map(c=>({ name:COMBOS[c.id].name, cls:'up cmb', desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]) })))
+          .concat(def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>({ name:TAGS["u_"+x].name, cls:'up unq', desc:nameOf(CARDS[x])+" ― "+TAGS["u_"+x].desc }))) })+'</section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">SUB</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
@@ -1350,8 +1353,7 @@ function goldenLineHtml(S){ const t=(S.g.tags||[]).find(x=>x.id==="golden"); ret
 /** HOME のチームのタグ(→docs/23 §23.6)。押すと説明がインフォバーで出る */
 function teamTagsHtml(){
   const v=teamTagsView(CL.S); if(!v.length||CL.S.termOver)return "";
-  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>'<button class="tg '+(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':'')+'" data-act="taginfo" data-v="'+t.id+'">'+
-    '<b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>').join("")+'</section>';
+  return '<section class="tt-row"><small>TEAM</small>'+v.map(t=>tagChip({ name:t.name, cls:(t.pol<0?'dn':'up')+(t.title?' ttl':'')+(t.combo?' cmb':''), desc:t.desc, left:t.left })).join("")+'</section>';
 }
 /** 選手の声(→docs/14 §14.79)。試合のあとに、ときどき選手が自分のことを伝えてくる(次の試合まで) */
 function playerVoiceHtml(){
@@ -1371,7 +1373,7 @@ function tagEventHtml(){
 /** 選手のタグの札(選手の窓)。第3段から付く */
 function playerTagsHtml(id){
   const v=playerTagsView(CL.S,id); if(!v.length)return "";
-  return '<div class="pt-row">'+v.map(t=>'<span class="tg '+(t.fame?'fm':t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':'')+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'<small>'+t.desc+'</small></span>').join("")+'</div>';
+  return '<div class="pt-row tt-row">'+v.map(t=>tagChip({ name:t.name, cls:(t.fame?'fm':t.pol<0?'dn':'up')+(t.combo?' cmb':'')+(t.unique?' unq':''), desc:t.desc, left:t.left })).join("")+'</div>';
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
@@ -1771,6 +1773,7 @@ function onClubClick(e){
   if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
+  if(act==="tagtip"){ infoBar(["🏷 "+b.dataset.n+" ― "+b.dataset.d+(b.dataset.l?"(あと "+b.dataset.l+")":"")]); return; }
   if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }
   if(act==="skipslot"){ const r=skipSlot(S,CL.W); if(r){ save(); showClub(true); infoBar(r); } return; }
   if(act==="go"){ CL.flow="prep"; CL.comm=null; CL.pick=[]; showClub(); return; }
