@@ -469,6 +469,23 @@ function htSetHtml(){
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
 }
+/**
+ * チームの情報(グラフの右。SQUAD・視察・相手の SQUAD で共通。→docs/14 §14.140)
+ * o = { team, name, sub, ovr, kc:KP のカード, st:スタイル, rk:ランク, tags:[{ name, cls, title }] }
+ * 1段目 エンブレム・名前 / 小さな説明、2段目 OVR と KP(右)、3段目 タグを1行(はみ出す分は横にスクロール)
+ */
+function teamInfoHtml(o){
+  const kp=o.kc&&o.st?'<div class="ti-kp"><i>KP</i><b>'+nameOf(o.kc)+'</b><span>'+o.st.name+' '+rankChip(o.rk)+'</span></div>':'<div class="ti-kp none"><i>KP</i><span>なし</span></div>';
+  return '<div class="tinfo"><div class="ti-head">'+emblemSvg(o.team,30)+'<div><b>'+o.name+'</b><small>'+o.sub+'</small></div></div>'+
+    '<div class="ti-mid"><div class="ti-ovr"><small>OVR</small><b>'+o.ovr.toFixed(1)+'</b></div>'+kp+'</div>'+
+    (o.tags&&o.tags.length?'<div class="ti-tags">'+o.tags.map(t=>'<span class="tg up '+(t.cls||'')+'"'+(t.title?' title="'+t.title+'"':'')+'><b>'+t.name+'</b></span>').join("")+'</div>':'')+'</div>';
+}
+/** 自分のチームのタグ(称号・コンビ・固有)を、チーム情報の3段目の形で */
+function myTagChips(S){
+  const v=teamTagsView(S).filter(t=>t.title||t.combo||(TAGS[t.id]&&TAGS[t.id].pol>0)).map(t=>({ name:t.name, cls:t.title?'ttl':t.combo?'cmb':'', title:t.desc }));
+  for(const id of S.sq.slice(0,11))if(TAGS["u_"+id])v.push({ name:TAGS["u_"+id].name, cls:'unq', title:nameOf(CARDS[id]) });
+  return v;
+}
 function squadHtml(){
   const S=CL.S, G0=TUNING.grow;
   fillLayout(S);
@@ -481,9 +498,7 @@ function squadHtml(){
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
       '<small class="gg-leg2"><span>育成</span><i class="g" style="background:'+(allG?'#e8b11c':teamColor(myTeam(S)))+'"></i><span>選手</span><i class="p"></i></small></button>'+
-    '<div class="sq-info"><div class="sq-ovr"><small>OVR</small><b>'+teamOvr(S).toFixed(1)+'</b></div>'+
-      (kst?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+kst.name+' '+rankChip(krk)+'</span></p>':'<p class="sq-kp none">KP なし(選手を選んで「KP にする」)</p>')+
-      '</div></section>';
+    teamInfoHtml({ team:myTeam(S), name:myTeam(S).name, sub:S.form+' ・ 監督 '+(S.mgr?S.mgr.name:''), ovr:teamOvr(S), kc, st:kst, rk:krk, tags:myTagChips(S) })+'</section>';
   // 2列: 左にピッチ、右に控え(SUB)とその下に任命(ORDER)。ピッチはチーム練習・個別指導の盤面と同じ大きさ(→docs/14 §14.89)
   h+='<div class="sq-3col sq-2col">'+
     '<div class="sq-pitch" id="sqPitch">'+
@@ -1229,12 +1244,10 @@ function oppSquadHtml(S,oppId,def,rep){
   const team=Object.assign({ id:oppId },t);
   return '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
       '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
-      '<div class="sq-info"><div class="sc-team">'+emblemSvg(team,34)+'<div><b>'+teamNameOf(t)+'</b><small>'+"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型</small></div></div>'+
-      '<div class="sq-ovr sc-ovr"><small>OVR</small><b>'+ovO.toFixed(1)+'</b></div>'+   // 視察レポートのボタンは見出しの右端へ(→docs/14 §14.119)
-      (st?'<p class="sq-kp"><i>KP</i><b>'+nameOf(kc)+'</b><span>'+st.name+' '+rankChip(rk)+'</span></p>':'')+
-      ((def.titles||[]).length||(def.combos||[]).length||def.xi.some(s=>TAGS["u_"+s.card.id])?'<p class="opp-ttl">'+(def.titles||[]).map(id=>'<span class="tg up ttl" title="'+TAGS[id].desc+'"><b>'+TAGS[id].name+'</b></span>').join("")+
-        (def.combos||[]).map(c=>'<span class="tg up cmb" title="'+c.ids.map(x=>nameOf(CARDS[x])).join("・")+'"><b>'+COMBOS[c.id].name+'</b></span>').join("")+
-        def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>'<span class="tg up unq" title="'+nameOf(CARDS[x])+'"><b>'+TAGS["u_"+x].name+'</b></span>').join("")+'</p>':'')+'</div></section>'+
+      teamInfoHtml({ team, name:teamNameOf(t), sub:"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型', ovr:ovO, kc, st, rk,
+        tags:(def.titles||[]).map(id=>({ name:TAGS[id].name, cls:'ttl', title:TAGS[id].desc }))
+          .concat((def.combos||[]).map(c=>({ name:COMBOS[c.id].name, cls:'cmb', title:c.ids.map(x=>nameOf(CARDS[x])).join("・") })))
+          .concat(def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>({ name:TAGS["u_"+x].name, cls:'unq', title:nameOf(CARDS[x]) }))) })+'</section>'+
     '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
       def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
       '<div class="sq-bench cm-bench"><span class="lbl">SUB</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
