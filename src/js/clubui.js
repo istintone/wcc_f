@@ -487,7 +487,7 @@ const tagChip=t=>'<button class="tg '+(t.cls||'up')+'" data-act="tagtip" data-n=
 function mgrTitleChip(S){
   const set=S.tset&&titleOf(S.tset)&&TITLE_FX[S.tset], last=S.career&&S.career.length?S.career[S.career.length-1].title:null;
   const id=set?S.tset:last; if(!id||!titleOf(id))return "";
-  return tagChip({ name:titleOf(id).name, cls:'mgr'+(set?'':' off'), desc:set?'監督称号(この任期に効く): '+TITLE_FX[id].desc:'前の任期の監督称号(効き目は任期の始めにセットしたときだけ)' });
+  return tagChip({ name:titleOf(id).name, cls:'up ttl mgr'+(set?'':' off'), desc:set?'監督称号(この任期に効く): '+TITLE_FX[id].desc:'前の任期の監督称号(効き目は任期の始めにセットしたときだけ)' });
 }
 /** 自分のチームのタグ(称号・コンビ・固有)を、チーム情報の3段目の形で */
 function myTagChips(S){
