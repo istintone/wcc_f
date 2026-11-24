@@ -2909,3 +2909,14 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .kmodal.kcard .ko-arw{background:rgba(255,255,255,.1);color:#fff}
 #club .kmodal.kcard .ko-arw:disabled{opacity:.2}
 #club .kmodal.kcard .ko-row .k3d-f .kc,#club .kmodal.kcard .ko-row .kb{width:86%}
+/* 新聞もカードと同じ配置(→docs/14 §14.138) */
+#club .paper-wrap{background:rgba(8,10,16,.82)!important;backdrop-filter:blur(3px);padding:8px 0 30px!important}
+#club .paper-wrap .pp-top{display:flex;align-items:center;justify-content:space-between;width:calc(100% - 84px);max-width:380px;margin:0 auto 8px;color:#fff}
+#club .paper-wrap .pp-top b{font-family:var(--f-num);font-size:13px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.06em}
+#club .paper-wrap .pp-top .km-x{width:34px!important;height:34px!important;border:0;border-radius:50%!important;background:rgba(200,16,46,.9)!important;color:#fff!important;font-size:18px;font-weight:700;clip-path:none!important;cursor:pointer}
+#club .paper-wrap .paper.v2{width:calc(100% - 84px);max-width:380px}
+#club .pp-arw{position:fixed;top:50%;z-index:82;width:36px;height:56px;margin-top:-28px;border:0;border-radius:4px;background:rgba(255,255,255,.1);color:#fff;font-size:28px;font-weight:700;line-height:1;cursor:pointer}
+#club .pp-arw.l{left:4px} #club .pp-arw.r{right:4px}
+#club .pp-arw:disabled{opacity:.2}
+#club .paper-wrap{justify-content:flex-start!important;padding-top:12px!important}
+#club .paper-wrap .pp-top{flex:0 0 auto}

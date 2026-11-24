@@ -1444,8 +1444,10 @@ function paperHtml(i){
   const S=CL.S, a=S.paper[i]; if(!a)return "";
   const me=myTeam(S), opp=a.opp&&TEAMS[a.opp], ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
   const short=(S.club?S.club.short:"AZR"), town=(S.club?S.club.town:"");
-  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
-    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button></nav>';
+  // カードを開いたときと同じ配置: 上に号数と赤い丸の ×、前後の号は画面の縦の中央・新聞の左右に縦長の ‹ ›(→docs/14 §14.138)
+  const nav='<header class="pp-top" data-act="none"><b>'+(i+1)+' / '+S.paper.length+'</b><button class="km-x" data-act="paperclose" aria-label="新聞をたたむ">×</button></header>'+
+    '<button class="ko-arw pp-arw l" data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
+    '<button class="ko-arw pp-arw r" data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button>';
   const res=a.hg>a.ag||(a.pso&&a.pso[0]>a.pso[1])?"w":a.hg<a.ag||(a.pso&&a.pso[0]<a.pso[1])?"l":"d";
   const score='<div class="pp-score r-'+res+'">'+emblemSvg(me,30)+'<b>'+a.hg+'<i>-</i>'+a.ag+'</b>'+(opp?emblemSvg(Object.assign({ id:a.opp },opp),30):'')+
     (a.pso?'<small>PK '+a.pso[0]+'-'+a.pso[1]+'</small>':'')+'</div>';
@@ -1466,7 +1468,7 @@ function paperHtml(i){
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
     (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
-    '<footer class="pp-foot"><button class="xb" data-act="paperclose" aria-label="新聞をたたむ">×</button></footer></article></div>';
+    '</article></div>';
 }
 function homeHtml(){
   const S=CL.S;

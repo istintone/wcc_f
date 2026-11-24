@@ -3508,6 +3508,17 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .kmodal.kcard .ko-arw{background:rgba(255,255,255,.1);color:#fff}
 #club .kmodal.kcard .ko-arw:disabled{opacity:.2}
 #club .kmodal.kcard .ko-row .k3d-f .kc,#club .kmodal.kcard .ko-row .kb{width:86%}
+/* 新聞もカードと同じ配置(→docs/14 §14.138) */
+#club .paper-wrap{background:rgba(8,10,16,.82)!important;backdrop-filter:blur(3px);padding:8px 0 30px!important}
+#club .paper-wrap .pp-top{display:flex;align-items:center;justify-content:space-between;width:calc(100% - 84px);max-width:380px;margin:0 auto 8px;color:#fff}
+#club .paper-wrap .pp-top b{font-family:var(--f-num);font-size:13px;font-weight:700;color:rgba(255,255,255,.75);letter-spacing:.06em}
+#club .paper-wrap .pp-top .km-x{width:34px!important;height:34px!important;border:0;border-radius:50%!important;background:rgba(200,16,46,.9)!important;color:#fff!important;font-size:18px;font-weight:700;clip-path:none!important;cursor:pointer}
+#club .paper-wrap .paper.v2{width:calc(100% - 84px);max-width:380px}
+#club .pp-arw{position:fixed;top:50%;z-index:82;width:36px;height:56px;margin-top:-28px;border:0;border-radius:4px;background:rgba(255,255,255,.1);color:#fff;font-size:28px;font-weight:700;line-height:1;cursor:pointer}
+#club .pp-arw.l{left:4px} #club .pp-arw.r{right:4px}
+#club .pp-arw:disabled{opacity:.2}
+#club .paper-wrap{justify-content:flex-start!important;padding-top:12px!important}
+#club .paper-wrap .pp-top{flex:0 0 auto}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12790,8 +12801,10 @@ function paperHtml(i){
   const S=CL.S, a=S.paper[i]; if(!a)return "";
   const me=myTeam(S), opp=a.opp&&TEAMS[a.opp], ph=a.photo&&CARDS[a.photo], img=ph&&artSrc(ph,"play");
   const short=(S.club?S.club.short:"AZR"), town=(S.club?S.club.town:"");
-  const nav='<nav class="pp-nav" data-act="none"><button data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
-    '<span>'+(i+1)+' / '+S.paper.length+'</span><button data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button></nav>';
+  // カードを開いたときと同じ配置: 上に号数と赤い丸の ×、前後の号は画面の縦の中央・新聞の左右に縦長の ‹ ›(→docs/14 §14.138)
+  const nav='<header class="pp-top" data-act="none"><b>'+(i+1)+' / '+S.paper.length+'</b><button class="km-x" data-act="paperclose" aria-label="新聞をたたむ">×</button></header>'+
+    '<button class="ko-arw pp-arw l" data-act="paper" data-i="'+(i-1)+'"'+(i>0?'':' disabled')+' aria-label="前の号">‹</button>'+
+    '<button class="ko-arw pp-arw r" data-act="paper" data-i="'+(i+1)+'"'+(i<S.paper.length-1?'':' disabled')+' aria-label="次の号">›</button>';
   const res=a.hg>a.ag||(a.pso&&a.pso[0]>a.pso[1])?"w":a.hg<a.ag||(a.pso&&a.pso[0]<a.pso[1])?"l":"d";
   const score='<div class="pp-score r-'+res+'">'+emblemSvg(me,30)+'<b>'+a.hg+'<i>-</i>'+a.ag+'</b>'+(opp?emblemSvg(Object.assign({ id:a.opp },opp),30):'')+
     (a.pso?'<small>PK '+a.pso[0]+'-'+a.pso[1]+'</small>':'')+'</div>';
@@ -12812,7 +12825,7 @@ function paperHtml(i){
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
     (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
-    '<footer class="pp-foot"><button class="xb" data-act="paperclose" aria-label="新聞をたたむ">×</button></footer></article></div>';
+    '</article></div>';
 }
 function homeHtml(){
   const S=CL.S;
