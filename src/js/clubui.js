@@ -759,11 +759,13 @@ function cardBackOf(id){
  */
 function cardModalHtml(id,list){
   const S=CL.S, c=CARDS[id], inSq=S.sq.includes(id), i=list.indexOf(id);
-  const nav=(d,t)=>{ const j=i+d; return '<button class="km-nav" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+'>'+t+'</button>'; };
+  // 前後送りは、交代の相手と同じくカードの左右の縦長のボタン(→docs/14 §14.137)
+  const nav=(d,t)=>{ const j=i+d; return '<button class="ko-arw kn" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+' aria-label="'+(d<0?'前のカード':'次のカード')+'">'+t+'</button>'; };
   // 枠のない窓: 暗くした背景にカードとボタンだけを浮かべる(→docs/14 §14.136)
   let h='<div class="kmodal kcard" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
-    '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small>'+nav(1,"›")+
-      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null);
+    '<header class="km-head"><span></span><b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small><span></span>'+
+      '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+
+    '<div class="ko-row">'+nav(-1,"‹")+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null)+nav(1,"›")+'</div>';
   if(!inSq){   // 登録中の選手の説明文は出さない(→docs/14 §14.115)
     // 交代中は「交代をやめる」と分離線の代わりに、2枚の間に交代の印(赤の ↑ = OUT・緑の ↓ = IN。OUT が赤なのに合わせる)。飾りで押しても何も起きない(→docs/14 §14.122)
     const arw=(d,c1,c2)=>'<svg class="'+d+'" viewBox="0 0 20 40" aria-hidden="true"><defs><linearGradient id="xg'+d+'" x1="0" y1="'+(d==="up"?1:0)+'" x2="0" y2="'+(d==="up"?0:1)+'"><stop offset="0" stop-color="'+c1+'" stop-opacity=".15"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs>'+
@@ -1787,7 +1789,7 @@ function onClubClick(e){
   else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
-  else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav");
+  else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav")||b.classList.contains("kn");
     CL.sel=!nav&&CL.sel===nx?null:nx; CL.kSwap=false; CL.kOut=null; CL.kFlip=false; if(nav)CL.kTo=".km-head"; showClub(true); }
   else if(act==="sqclose"){ CL.sqSel=null; showClub(true); }
   else if(act==="sqnav"){ if(b.dataset.id){ CL.sqSel=b.dataset.id; CL.kTo=".km-head"; showClub(true); } }

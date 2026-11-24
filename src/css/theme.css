@@ -2905,3 +2905,7 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .kmodal.kcard .km-x{background:rgba(200,16,46,.9)!important}
 #club .kmodal.kcard .km-nav:disabled{opacity:.25}
 #club .kmodal.kcard .km-cmp{background:transparent!important}
+/* 上のカードも左右の縦長のボタンで前後送り(→docs/14 §14.137) */
+#club .kmodal.kcard .ko-arw{background:rgba(255,255,255,.1);color:#fff}
+#club .kmodal.kcard .ko-arw:disabled{opacity:.2}
+#club .kmodal.kcard .ko-row .k3d-f .kc,#club .kmodal.kcard .ko-row .kb{width:86%}
