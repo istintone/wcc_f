@@ -25,6 +25,40 @@ const PAPER_RUMOR=["{p}に国外のビッグクラブが関心か? 関係者は�
   "秘書の{sec}さん、試合前にスタジアム周辺でサポーターと記念撮影","{p}と{q}、オフに一緒に食事か 連携の秘密はここに?",
   "{town}の街で{me}のユニフォームが品薄に"];
 
+/* ---- 一面の話題(→docs/14 §14.135)。試合の結果だけでなく、その試合のあとに起きたいちばん大きな話題を一面にする ----
+ * 優先: 優勝 > 覚醒 > 昇格 > 新加入 > スタジアム > 施設拡充 > スター誕生 > カップ戦突破 > (ときどき)次の相手の分析 > 試合の結果
+ * 新加入・スタジアム・施設は試合の外で起きるので、起きたときに S.pnews に積んでおき、次の号で使う */
+const PAPER_TOPIC={
+  awaken:{ tag:"ESCLUSIVA", head:["覚醒！ {p}、別次元へ","{p}が覚醒 ― 指揮官も「想像以上だ」","もう誰にも止められない {p}、ついに目覚める"],
+    sub:["練習場で異次元の動き。{me}に新たな切り札が生まれた","チームメイトも驚く変貌ぶり。次の試合で真価が問われる"],
+    lead:["{pos}の{p}({age}歳)がついに覚醒した。関係者によれば、ここ数週間の練習から「何かが違う」と噂になっていたという。{mgr}監督は多くを語らないが、起用法に変化があるかもしれない。",
+          "これまで{me}を支えてきた{p}が、殻を破った。持ち味にさらに磨きがかかり、練習ではベテランをも圧倒。{town}のサポーターの期待は高まるばかりだ。"] },
+  promo:{ tag:"PROMOZIONE", head:["{me}、{div}へ昇格！","昇格決定 {me}が次のステージへ","{town}が歓喜 {me}、{div}の扉を開く"],
+    sub:["{mgr}監督の下、一丸となってつかんだ昇格","より強い相手との戦いが待つ。真価が問われるのはここから"],
+    lead:["{me}が{div}への昇格を決めた。最終節までもつれた争いを制し、クラブは新たな舞台へ。{mgr}監督は「選手たちが自分たちの力で勝ち取った」と胸を張った。"] },
+  join:{ tag:"MERCATO", head:["新戦力 {p}、{me}に加入","{me}が{p}を獲得 ― {pos}の補強に成功","電撃加入！ {p}が{me}のユニフォームに袖を通す"],
+    sub:["{club}から加わった{age}歳。{mgr}監督の構想の中心に","即戦力の補強。ポジション争いがさらに激しくなる"],
+    lead:["{me}は{p}の加入を発表した。{club}でプレーしてきた{age}歳の{pos}で、{rar}のカード。クラブ関係者は「チームに足りなかったピース」と期待を寄せる。"] },
+  stad:{ tag:"CLUB", head:["新スタジアム「{st}」がお披露目","{me}の本拠地が生まれ変わる 収容{cap}万人に","{town}に新たな聖地 ― {st}"],
+    sub:["より多くのサポーターが {me} の戦いを見届ける","改修でファンの熱も一段と高まりそうだ"],
+    lead:["{me}の本拠地が「{st}」へと改修された。収容人数は{cap}万人。入場料収入の増加も見込まれ、クラブの経営にも追い風となりそうだ。"] },
+  fac:{ tag:"CLUB", head:["{me}、{fac}を拡充","{fac}がリニューアル ― {me}の本気度","設備投資の加速 {me}の{fac}がLv{lv}に"],
+    sub:["{eff}。選手の成長に期待がかかる","クラブは育成への投資を惜しまない"],
+    lead:["{me}は{fac}をLv{lv}へと拡充した。{eff}とされ、選手たちからも歓迎の声が上がっている。{mgr}監督は「環境は整った。あとは結果で示すだけ」と話した。"] },
+  star:{ tag:"PERSONAGGIO", head:["{p}、スターの階段を駆け上がる","街は{p}一色 ― ユニフォームが品切れ","新たなスター誕生 {p}の名が響く"],
+    sub:["大一番での活躍で、一躍{town}の顔に","スポンサーの視線も熱い。人気は留まるところを知らない"],
+    lead:["{p}の人気が止まらない。大舞台での活躍で一気に注目を集め、{town}の街では{p}の名を口にするサポーターが後を絶たない。クラブにとっても収入面で大きな追い風だ。"] },
+  cup:{ tag:"COPPA", head:["{comp}、{label}突破！","{me}、{comp}で勝ち上がる","{comp}の頂点へ一歩前進 {me}が{opp}を下す"],
+    sub:["次の相手も手強い。勢いをどこまで保てるか","トロフィーまであと少し。{town}の期待が膨らむ"],
+    lead:["{me}が{comp}の{label}を突破した。{opp}との一戦を制し、次のラウンドへ駒を進める。{mvp}の活躍が光った。"] },
+  preview:{ tag:"ANALISI", head:["次の相手は{nopp} ― 徹底分析","{nopp}を丸裸に 鍵を握るのは{nkp}","要注意！ {nopp}の{nkp}を止められるか"],
+    sub:["{ncomp}で激突。{me}はどう立ち向かうのか","{nkp}を封じれば勝機はある ― 本紙の分析"],
+    lead:["{me}の次の相手は{nopp}。{nstr}と評されるチームで、注目はKPの{nkp}({nst})。{mgr}監督がどんな対策を打つか、戦術にも注目が集まる。"] }
+};
+const POS_JA={ GK:"ゴールキーパー", DF:"ディフェンダー", MF:"ミッドフィルダー", FW:"フォワード" };
+/** 試合の外で起きたこと(新加入・スタジアム・施設)を次の号のために積む */
+function paperNews(S,n){ (S.pnews||(S.pnews=[])).push(n); if(S.pnews.length>8)S.pnews.shift(); }
+
 /** 文の型の {キー} を当てはめる */
 const paperFill=(t,v)=>String(t).replace(/\{(\w+)\}/g,(m,k)=>v[k]!=null?v[k]:m);
 
@@ -64,8 +98,39 @@ function makeArticle(S,M,L,RT){
   }
   const q=mine[1]?nameOf(CARDS[mine[1].id]):v.p;
   if(v.p)side.push("【うわさ】"+paperFill(pick(PAPER_RUMOR),Object.assign({},v,{ q })));
-  return { no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind,
+  const art={ no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind, topic:"match",
     head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null };
+  paperTopic(S,L,art,v,pick,rng);
+  return art;
+}
+/** 一面の話題を選び、見出し・リード・写真を差し替える(試合の結果は art.brief に残す) */
+function paperTopic(S,L,art,v,pick,rng){
+  if(art.kind==="title"){ S.pnews=[]; return; }   // 優勝は試合の記事が主役
+  const pc=id=>{ const c=CARDS[id]; return { p:nameOf(c), pos:POS_JA[c.pos]||c.pos, age:c.age||"", club:typeof clubOfCard==="function"?clubOfCard(c):"", rar:typeof RAR_TAG!=="undefined"?RAR_TAG[c.rar||"W"]:"" }; };
+  const find=re=>{ for(const x of L.lines){ const m=re.exec(x); if(m)return m; } return null; };
+  const news=S.pnews||[]; S.pnews=[];
+  let t=null, x={}, photo=art.photo;
+  let m;
+  if((m=find(/^⭐ (.+?) が覚醒/))){ const id=S.sq.find(i=>nameOf(CARDS[i])===m[1]); if(id){ t="awaken"; x=pc(id); photo=id; } }
+  if(!t&&find(/^⬆ 昇格/)&&typeof divName==="function"){ t="promo"; x={ div:divName(S.grade+1) }; }
+  if(!t){ const j=news.filter(n=>n.t==="join"&&CARDS[n.id]).pop(); if(j){ t="join"; x=pc(j.id); photo=j.id; } }
+  if(!t){ const n=news.filter(n=>n.t==="stad").pop(); if(n&&typeof TUNING!=="undefined"){ const sd=TUNING.biz.stad[n.lv-1]; t="stad"; x={ st:sd.name, cap:(sd.cap/10000).toFixed(1), lv:n.lv }; photo=null; art.stadLv=n.lv; } }
+  if(!t){ const n=news.filter(n=>n.t==="fac").pop(); if(n&&typeof FAC_INFO!=="undefined"&&FAC_INFO[n.k]){ t="fac"; x={ fac:FAC_INFO[n.k].name, lv:n.lv, eff:FAC_INFO[n.k].eff }; photo=null; art.stadLv=S.biz?S.biz.stad:1; } }
+  if(!t&&(m=find(/^🏷 (.+?) に「スター選手」/))){ const id=S.sq.find(i=>nameOf(CARDS[i])===m[1]); if(id){ t="star"; x=pc(id); photo=id; } }
+  if(!t&&COMPS[L.comp]&&COMPS[L.comp].kind!=="league"&&L.comp!=="FR"&&L.comp!=="LG"&&art.kind!=="lose"&&art.kind!=="crash"&&art.kind!=="pklose"&&art.kind!=="draw"&&L.label&&!/グループ/.test(L.label)){ t="cup"; }
+  if(!t&&typeof upcoming==="function"&&rng()<0.3){
+    const nx=(upcoming(S,1)||[])[0], T=nx&&nx.opp&&TEAMS[nx.opp];
+    if(T&&T.kp&&CARDS[T.kp]){ const st=typeof styleOfCard==="function"?styleOfCard(CARDS[T.kp]):null, tr=typeof tierOf==="function"?tierOf(nx.opp):3;
+      t="preview"; x={ nopp:teamNameOf(T), nkp:nameOf(CARDS[T.kp]), nst:st?st.name:"", ncomp:COMPS[nx.comp]?COMPS[nx.comp].name:"", nstr:["発展途上","中堅","粘り強い","上位をうかがう","優勝候補の"][Math.max(0,Math.min(4,tr-1))] };
+      photo=T.kp; art.prevOpp=nx.opp; } }
+  if(!t)return;
+  const P=PAPER_TOPIC[t], w=Object.assign({},v,x,{ label:L.label||"" });
+  art.topic=t; art.tag=P.tag; art.photo=photo;
+  art.head=paperFill(pick(P.head),w); art.sub=paperFill(pick(P.sub),w); art.lead=paperFill(pick(P.lead),w)+" "+art.lead;
+  art.brief=art.subMatch=COMPS[L.comp].name+(L.label?" "+L.label:"");
+  if(t!=="cup")art.quote="";
+  // 一面と同じ話はゴシップ欄から外す
+  art.side=art.side.filter(y=>!(t==="awaken"&&/覚醒/.test(y))&&!(t==="star"&&/スター選手/.test(y)));
 }
 /** 記事を残す(古いものから消す) */
 function addArticle(S,a){

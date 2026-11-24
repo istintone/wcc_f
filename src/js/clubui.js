@@ -1446,16 +1446,20 @@ function paperHtml(i){
   const res=a.hg>a.ag||(a.pso&&a.pso[0]>a.pso[1])?"w":a.hg<a.ag||(a.pso&&a.pso[0]<a.pso[1])?"l":"d";
   const score='<div class="pp-score r-'+res+'">'+emblemSvg(me,30)+'<b>'+a.hg+'<i>-</i>'+a.ag+'</b>'+(opp?emblemSvg(Object.assign({ id:a.opp },opp),30):'')+
     (a.pso?'<small>PK '+a.pso[0]+'-'+a.pso[1]+'</small>':'')+'</div>';
-  const voto=a.mvp&&CARDS[a.mvp.id]?'<div class="pp-voto"><small>VOTO</small><b>'+a.mvp.r.toFixed(1)+'</b></div>':'';
+  const tp=a.topic||"match", isM=tp==="match"||tp==="cup";
+  const voto=isM&&a.mvp&&CARDS[a.mvp.id]?'<div class="pp-voto"><small>VOTO</small><b>'+a.mvp.r.toFixed(1)+'</b></div>':'';
+  // 写真: 選手(話題の選手・相手の KP)か、スタジアム・施設ならスタジアムの絵(→docs/14 §14.135)
+  const heroArt=img?'<img class="pp-ph" src="'+img+'" alt="">':(a.stadLv?'<div class="pp-stad">'+stadiumSvg(a.stadLv)+'</div>':'');
   const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
   return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper v2 k-'+a.kind+'" data-act="none">'+
     '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
     '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
     '<div class="pp-hero">'+
-      '<p class="pp-kick">'+COMPS[a.comp].name+(a.label?' ・ '+a.label:'')+'</p>'+
-      (img?'<img class="pp-ph" src="'+img+'" alt="">':'')+voto+score+
-      (a.mvp&&CARDS[a.mvp.id]?'<p class="pp-cap">'+nameOf(CARDS[a.mvp.id])+'</p>':'')+
+      '<p class="pp-kick">'+(isM?COMPS[a.comp].name+(a.label?' ・ '+a.label:''):a.tag)+'</p>'+
+      heroArt+voto+(isM?score:'')+
+      (ph?'<p class="pp-cap">'+nameOf(ph)+'</p>':'')+
     '</div>'+
+    (isM?'':'<div class="pp-res"><b>RISULTATO</b><span>'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</span>'+score.replace('pp-score','pp-score sm')+'</div>')+
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
     (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
@@ -1740,12 +1744,12 @@ function onClubClick(e){
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
     else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
-  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); save(); showClub(true);
+  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r&&r.ok&&typeof paperNews==="function")paperNews(S,{ t:"stad", lv:S.biz.stad });   // 次の号の話題 if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); save(); showClub(true);
     if(r&&r.tl&&r.tl.length)setTimeout(()=>infoBar(r.tl),0); return; }
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
-  if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k))CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"]; save(); showClub(true); return; }
+  if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k)){ CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"];  if(typeof paperNews==="function")paperNews(S,{ t:"fac", k, lv:S.biz.fac[k] }); } save(); showClub(true); return; }
   if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
   if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
@@ -1799,7 +1803,7 @@ function onClubClick(e){
   else if(act==="kout"){ CL.kOut=b.dataset.id; CL.kFlip2=false; CL.kTo=".km-cmp"; showClub(true); }
   else if(act==="swap"&&CL.sel){
     const out=b.dataset.id, inn=CL.sel;
-    if(swapSquad(S,out,inn)){ CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
+    if(swapSquad(S,out,inn)){ if(typeof paperNews==="function")paperNews(S,{ t:"join", id:inn });   // 次の号の話題 CL.msg=["登録: "+cname(out)+" → "+cname(inn)+"(次の試合から使える)"].concat(S.joinLines||[]); CL.sel=null; CL.kSwap=false; CL.kOut=null; save();
       // 通知バーで「〇〇 がチームに参加しました」(加わった選手のタグの知らせが続く。→docs/14 §14.126)
       { const jl=[nameOf(CARDS[inn])+" がチームに参加しました"].concat(S.joinLines||[]); setTimeout(()=>infoBar(jl),0); } S.joinLines=null; }
     showClub(true);

@@ -2885,3 +2885,13 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .pp-nav button{min-width:44px;font-size:18px;font-weight:900}
 #club .paper.v2 .pp-ph{height:100%!important;bottom:0!important;top:auto}
 #club .paper.v2.k-lose .pp-ph,#club .paper.v2.k-crash .pp-ph,#club .paper.v2.k-pklose .pp-ph{filter:grayscale(1) drop-shadow(4px 6px 0 rgba(0,0,0,.18))}
+/* 一面の話題(→docs/14 §14.135): 試合以外の話題は、試合の結果を小さな帯で */
+#club .paper.v2 .pp-res{display:flex;align-items:center;gap:6px;margin:6px 10px 0;padding:3px 6px;background:var(--pp-ink);color:#fff;font-family:var(--f-num);font-size:10px;font-weight:700}
+#club .paper.v2 .pp-res>b{font-style:italic;font-weight:900;letter-spacing:.08em;color:#ffd21e}
+#club .paper.v2 .pp-res>span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .paper.v2 .pp-score.sm{position:static;padding:0;gap:3px;box-shadow:none;background:none}
+#club .paper.v2 .pp-score.sm b{font-size:16px}
+#club .paper.v2 .pp-score.sm svg{width:16px;height:16px}
+#club .paper.v2 .pp-score.sm small{display:none}
+#club .paper.v2 .pp-stad{position:absolute;left:8%;right:8%;bottom:6px;top:36px}
+#club .paper.v2 .pp-stad svg{width:100%;height:100%}
