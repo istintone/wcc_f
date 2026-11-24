@@ -2952,3 +2952,14 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .tab-squad .sq-2col .sq-side .sq-bench{flex:3 1 auto!important;justify-content:space-around!important}
 #club .tab-squad .sq-2col .sq-side .sq-roles{flex:2 1 auto!important;display:flex!important;flex-direction:column;justify-content:space-around!important}
 #club .tab-squad .sq-2col .sq-side{gap:4px!important;justify-content:flex-start!important}
+/* 監督称号のタグ(→docs/14 §14.143): ヘッダの監督名の右に小さく。黒地に金(セット中)・灰(前の任期の称号) */
+#club .chd small .tg.mgr{display:inline-flex;align-items:center;margin-left:6px;padding:0 6px;height:16px;vertical-align:1px;font-size:9.5px;border:0;border-radius:2px;
+  background:linear-gradient(100deg,#16130e,#3a2f12);color:#f3cf6a;clip-path:none;cursor:pointer}
+#club .chd small .tg.mgr b{font-weight:800}
+#club .chd small .tg.mgr.off{background:#8a8580;color:#fff;opacity:.85}
+#club .chd small.chd-mgr{display:flex!important;align-items:center;min-width:0;overflow:visible!important}
+#club .chd small.chd-mgr>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .chd small.chd-mgr .tg.mgr{flex:0 0 auto;margin-left:4px}
+#club .chd small.chd-mgr .tg.mgr{font-size:8px!important;height:14px!important;padding:0 4px!important;letter-spacing:-.02em}
+#club .chd small.chd-mgr>span{flex:0 1 auto}
+body[class] #club .chd{gap:5px!important;padding-left:10px!important;padding-right:10px!important}   /* 監督名と称号の札が並ぶ幅を空ける */

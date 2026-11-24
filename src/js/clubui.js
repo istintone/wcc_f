@@ -483,6 +483,12 @@ function teamInfoHtml(o){
 /** タグの札(HOME・SQUAD・視察・選手で共通。押すと通知バーで効き目。→docs/14 §14.141)。t = { name, cls, desc, left } */
 const tagEsc=s=>String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const tagChip=t=>'<button class="tg '+(t.cls||'up')+'" data-act="tagtip" data-n="'+tagEsc(t.name)+'" data-d="'+tagEsc(t.desc)+'" data-l="'+tagEsc(t.left)+'"><b>'+t.name+'</b>'+(t.left?'<i>'+t.left+'</i>':'')+'</button>';
+/** 監督称号のタグ(ヘッダの監督名の右。→docs/14 §14.143)。任期の始めにセットした称号(この任期に効く)。セットしていなければ前の任期の称号(効き目なし) */
+function mgrTitleChip(S){
+  const set=S.tset&&titleOf(S.tset)&&TITLE_FX[S.tset], last=S.career&&S.career.length?S.career[S.career.length-1].title:null;
+  const id=set?S.tset:last; if(!id||!titleOf(id))return "";
+  return tagChip({ name:titleOf(id).name, cls:'mgr'+(set?'':' off'), desc:set?'監督称号(この任期に効く): '+TITLE_FX[id].desc:'前の任期の監督称号(効き目は任期の始めにセットしたときだけ)' });
+}
 /** 自分のチームのタグ(称号・コンビ・固有)を、チーム情報の3段目の形で */
 function myTagChips(S){
   const v=teamTagsView(S).filter(t=>t.title||t.combo||(TAGS[t.id]&&TAGS[t.id].pol>0)).map(t=>({ name:t.name, cls:'up'+(t.title?' ttl':t.combo?' cmb':''), desc:t.desc, left:t.left }));
@@ -984,9 +990,9 @@ function homeHeadHtml(){
   if(CL.S.ts&&CL.S.ts.pow0==null){ CL.S.ts.pow0=teamPower(CL.S); CL.S.ts.ax0=teamAxisPower(CL.S); }   // 任期の始め(または初めて見たとき)のチーム力と6軸(→docs/14 §14.111)
   const S=CL.S, C=TUNING.club, last=S.career.length?titleOf(S.career[S.career.length-1].title).name:null;
   // 2行目は1行に収まる分だけ(格・ランク・称号は CLUB にある。→docs/14 第2弾)
-  return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small>第'+S.term+'任期'+(S.mgr?' ・ 監督 '+S.mgr.name:'')+'</small></div>'+
+  return '<header class="chd">'+emblemSvg(myTeam(S),30)+'<div><b>'+myTeam(S).name+'</b><small class="chd-mgr"><span>'+(S.mgr?S.mgr.name+' 監督':'')+'</span>'+mgrTitleChip(S)+'</small></div>'+
     '<div class="num pw"><small>OVR</small><b>'+teamOvr(S).toFixed(1)+'</b></div>'+   // 合算値だけ。伸びの内訳は SQUAD の窓(→docs/14 §14.110)
-    '<div class="num"><small>任期</small><b>'+S.played+'<i>/'+C.termLen+'</i></b></div>'+
+    '<div class="num"><small>第'+S.term+'任期</small><b>'+S.played+'<i>/'+C.termLen+'</i></b></div>'+
     '<div class="num"><small>資金</small><b>'+S.money.toFixed(0)+'<i>億</i></b></div>'+
     (S.biz?'<div class="num"><small>サポーター</small><b>'+(S.biz.fans/10000).toFixed(1)+'<i>万</i></b></div>':'')+'</header>';
 }
