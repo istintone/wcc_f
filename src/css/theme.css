@@ -2920,3 +2920,4 @@ body.th-bk #club .ebtn{background:rgba(255,255,255,.1);color:#ff5a7c}
 #club .pp-arw:disabled{opacity:.2}
 #club .paper-wrap{justify-content:flex-start!important;padding-top:12px!important}
 #club .paper-wrap .pp-top{flex:0 0 auto}
+#club .sq-pitch .sq-form-in{width:auto!important;min-width:62px;max-width:118px}   /* 陣形の名前が長いもの(4-2-3-1ロー など)も読めるように */
