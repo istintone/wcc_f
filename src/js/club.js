@@ -141,12 +141,15 @@ function setLeagueName(S){ if(COMPS.LG){ COMPS.LG.name="レギュラーリーグ
  * リーグ戦 第N試合 → GROUP MATCH N / 第N試合 → 2試合制は 1ST LEG・2ND LEG、総当たりは MATCH N
  */
 function compEn(fx){
-  const comp=COMPS[fx.comp]||{}, lb=fx.label||"", leg=fx.type==="leg1"||fx.type==="leg2";
+  const comp=COMPS[fx.comp]||{}, lb=fx.label||"";
+  const ty=fx.type||((comp.stages||[]).find(x=>x[1]===lb)||[])[0], leg=ty==="leg1"||ty==="leg2";   // 日程の行には type が無いので、大会の段から探す
   const md=lb.match(/^第(\d+)節$/);
   const round=md?"MATCHDAY "+md[1]:lb.replace("リーグ戦","GROUP").replace("1回戦","ROUND 1").replace("準決勝","SEMI-FINAL").replace("決勝","FINAL")
     .replace(/\s*第(\d+)試合/,(m,n)=>leg?" · "+(n==="1"?"1ST":"2ND")+" LEG":(/^リーグ戦/.test(lb)?" MATCH ":" · MATCH ")+n);
   return { name:comp.en||comp.name||"", round };
 }
+/** 大会名(英字。→docs/14 §14.164) */
+const compNm=id=>COMPS[id]?COMPS[id].en||COMPS[id].name:id;
 /** 相手の定義。Premier Div のリーグ戦では、相手は育成レベル最大(全軸が高く、KP の軸は金色) */
 function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
@@ -1066,9 +1069,9 @@ function upcoming(S,n){
     }
     if(cup.st==="wait"&&(ix===0?entryOk(S,cid):enter.has(cid))){ enter.add(cid);   // 出られる大会は、2戦目からも「勝ち進めば」で見せる
       out.push({ no, comp:cid, label, kind:"cup", opp:null, home:type!=="leg2", note:ix===0?"出場できる(相手は抽選)":"相手は抽選", ifWin:ix>0&&type!=="grp"&&type!=="leg2" }); continue; }
-    if(cup.st==="wait"&&ix===0&&!wrap){ out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true, note:comp.name+"の出場条件を満たせば、そちらに出る" }); continue; }
+    if(cup.st==="wait"&&ix===0&&!wrap){ out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true, note:compNm(cid)+"の出場条件を満たせば、そちらに出る" }); continue; }
     out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true,
-      note:cup.st==="wait"?comp.name+"は条件待ち":cup.st==="in"?"":comp.name+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
+      note:cup.st==="wait"?compNm(cid)+"は条件待ち":cup.st==="in"?"":compNm(cid)+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
   }
   // 試合番号は、リーグと出場するカップにだけ振る(飛ばせる枠は試合を使わないかもしれない。→docs/22)。任期の終わりを越える分は出さない
   let c=S.played; const res=[];

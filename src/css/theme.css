@@ -3044,3 +3044,5 @@ body[class] #hud .mu{overflow:hidden}
 body[class] #hudComp b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:10.5px;font-weight:900;white-space:normal;overflow:hidden}
 body[class] #hudComp i{display:block;font-style:italic;font-size:9.5px;font-weight:900;color:#111;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cap small.en{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.1em}
+/* グラフの凡例のチームの色(白いチームでも見えるように縁。→docs/14 §14.164) */
+#scene .vs-radar p i{box-shadow:0 0 0 1px rgba(0,0,0,.45)}

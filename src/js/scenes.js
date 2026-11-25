@@ -93,7 +93,7 @@ function sceneMatchup(fx,go){
   const comp=COMPS[fx.comp], S=CL.S, me=Object.assign(myTeam(S),{ xi:(S.sq||startSquad()).slice(0,11) });
   const opp=TEAMS[fx.opp];
   sceneShow("sc-vs",
-    '<div class="vs-band"><i>第'+fx.no+'試合</i><b>'+comp.name+'</b><em>'+(fx.label||"")+'</em></div>'+
+    '<div class="vs-band"><i>GAME '+fx.no+'</i><b>'+compNm(fx.comp)+'</b><em>'+compEn(fx).round+'</em></div>'+   // 英字(→docs/14 §14.164)
     sideHtml(me,"home",S.kp||TEAMS.azr.kp)+
     // 両チームの戦力グラフ(六角形のレーダー)を VS の横に重ねる(→docs/14 §14.14)
     // VS を挟んで、左に自チーム・右に相手のレーダー

@@ -332,7 +332,7 @@ function prepHtml(){
   let h='<header class="prep-top"><button class="x" data-act="home">×</button>'+
     '<div class="steps s4">'+["チーム練習","個別指導","視察","戦略方針"].map((t,i)=>
       '<span class="'+(i+1<no?'done':i+1===no?'now':'')+'"><i>'+(i+1)+'</i>'+t+'</span>').join("")+'</div></header>'+
-    '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b> '+(fx.label||"")+
+    '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+compNm(fx.comp)+'</b> '+compEn(fx).round+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
     '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():CL.scout?scoutStepHtml():commStepHtml())+'</div>'+
     '<footer class="prep-bot">'+
@@ -912,7 +912,7 @@ function collectionHtml(){
 /** 任期終了の画面。称号・年俸・監督ランク・ついてくる選手(→term.js) */
 function termEndHtml(){
   const S=CL.S, e=S.tend, x=e.facts, t=titleOf(e.title);
-  const ttl=S.titles.filter(z=>z.term===S.term).map(z=>COMPS[z.comp].name);
+  const ttl=S.titles.filter(z=>z.term===S.term).map(z=>compNm(z.comp));
   let h='<section class="card next tend"><h3>任期終了 <small>第'+e.term+'任期</small></h3>'+
     '<div class="ttl"><small>監督称号</small><b>'+t.name+'</b><i>'+t.need+'</i></div>'+
     '<div class="sc2"><b>'+x.w+'勝 '+x.d+'分 '+x.l+'敗</b></div>'+
@@ -1004,7 +1004,7 @@ function nextTileHtml(){
   if(fx.ask&&S.g.step==="train")return entryTileHtml();
   const fr=fx.kind==="friendly"&&fx.missed&&S.g.step==="train";   // フレンドリー: 節を飛ばせる(→docs/22)
   return '<section class="tile next'+(fr?' two':'')+'"'+(fr?'':' data-act="go"')+'>'+
-    '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b><em>'+(fx.label||"")+'</em><i>第'+fx.no+'試合</i></div>'+
+    '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+compNm(fx.comp)+'</b><em>'+compEn(fx).round+'</em><i>GAME '+fx.no+'</i></div>'+
     '<p class="nx-hype">'+hypeOf(S,fx)+'</p>'+
     '<div class="nx-vs"><div class="me">'+emblemSvg(myTeam(CL.S),46)+'<b>'+myTeam(CL.S).short+'</b></div>'+
       '<span class="vs">VS</span>'+
@@ -1012,7 +1012,7 @@ function nextTileHtml(){
     '<p class="nx-opp">'+teamNameOf(t)+' <span>'+"★".repeat(tierOf(fx.opp))+'</span></p>'+
     '<p class="nx-meta">KP '+nameOf(kp)+(st?' ・ '+st.name:'')+' ・ '+t.form+
       (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ KNOCK OUT':'')+'</p>'+
-    (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
+    (fx.missed?'<p class="nx-meta dim">'+compNm(fx.missed)+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
     (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">節をスキップ<small>試合なし ・ 任期は減らない</small></button></div>'
       :'<div class="nx-go"><span>'+go+'</span></div>')+'</section>';
@@ -1020,11 +1020,11 @@ function nextTileHtml(){
 /** カップのエントリー受付(1戦目の前。→docs/20 §20.4)。エントリーすると対戦の札、棄権するとフレンドリーの札に変わる */
 function entryTileHtml(){
   const S=CL.S, fx=CL.fx, comp=COMPS[fx.comp], st=comp.stages;
-  const flow=st.map(x=>x[1].replace(/ 第\d試合$/,"")).filter((x,i,a)=>a.indexOf(x)===i).join(" → ");
+  const flow=st.map(x=>compEn({ comp:fx.comp, label:x[1].replace(/ 第\d試合$/,"") }).round).filter((x,i,a)=>a.indexOf(x)===i).join(" → ");
   return '<section class="tile next two entry">'+
-    '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+comp.name+'</b><em>エントリー受付</em><i>第'+fx.no+'試合</i></div>'+
+    '<div class="nx-band">'+gradeTag(comp.grade)+'<b>'+compNm(fx.comp)+'</b><em>ENTRY</em><i>GAME '+fx.no+'</i></div>'+
     '<p class="nx-hype">出場の権利を得た。出るか、見送るか。</p>'+
-    '<div class="en-cup">'+trophyIconSvg(fx.comp,false)+'<div><b>'+comp.name+'</b><small>'+flow+'(全'+st.length+'試合)</small>'+
+    '<div class="en-cup">'+trophyIconSvg(fx.comp,false)+'<div><b>'+compNm(fx.comp)+'</b><small>'+flow+'(全'+st.length+'試合)</small>'+
       '<small>組み合わせはエントリーで発表</small></div></div>'+
     formHtml(S)+
     '<div class="nx-go2"><button class="go" data-act="cupenter">エントリー</button><button class="sk" data-act="decline">棄権<small>大会の枠はフレンドリーに</small></button></div></section>';
@@ -1491,11 +1491,11 @@ function paperHtml(i){
     '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
     '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
     '<div class="pp-hero">'+
-      '<p class="pp-kick">'+(isM?COMPS[a.comp].name+(a.label?' ・ '+a.label:''):a.tag)+'</p>'+
+      '<p class="pp-kick">'+(isM?compNm(a.comp)+(a.label?' ・ '+compEn(a).round:''):a.tag)+'</p>'+
       heroArt+voto+(isM?score:'')+
       (ph?'<p class="pp-cap">'+nameOf(ph)+'</p>':'')+
     '</div>'+
-    (isM?'':'<div class="pp-res"><b>RISULTATO</b><span>'+COMPS[a.comp].name+(a.label?' '+a.label:'')+'</span>'+score.replace('pp-score','pp-score sm')+'</div>')+
+    (isM?'':'<div class="pp-res"><b>RISULTATO</b><span>'+compNm(a.comp)+(a.label?' '+compEn(a).round:'')+'</span>'+score.replace('pp-score','pp-score sm')+'</div>')+
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
     (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
@@ -1523,7 +1523,7 @@ const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングス�
   CSC:"この周にコンチネンタルカップで優勝", CT:"前の周のリーグ優勝、または前の周にコンチネンタルカップかW4で優勝",
   JT:"この周にチャンピオンズトロフィーで優勝", ICC:"この周にチャンピオンズトロフィーかコンチネンタルカップで優勝、または前の周にチャンピオンズトロフィーで優勝" };
 /** SEASON の日程: 過去5試合と、次の試合から10試合(→docs/07 §7.16) */
-const schedComp=c=>c==="FR"?"フレンドリー":c==="LG"?"リーグ":TROPHY_SHORT[c]||COMPS[c].name;
+const schedComp=c=>c==="FR"?"FRIENDLY":TROPHY_SHORT[c]||compNm(c);
 function schedRowHtml(r){
   // 進行表: 番号 | 大会と段 | H/A | 相手 | 結果(勝敗の印 + スコア)。行の高さはそろえる(注記は1行で切る)
   const T=r.opp&&TEAMS[r.opp], g=r.comp==="FR"?"":COMPS[r.comp].grade;
@@ -1532,7 +1532,7 @@ function schedRowHtml(r){
   const res=r.res?'<b class="sd-res '+r.res+'">'+r.res+'</b><span class="sd-sc">'+r.sc+'</span>'+(r.pk?'<small class="sd-pk">'+r.pk+'</small>':'')
     :r.next?'<b class="sd-res nx">NEXT</b>':(r.ifWin?'<i class="sd-if">勝ち進めば</i>':'<i class="sd-if">—</i>');
   return '<li class="sd-row'+(r.res?' past':'')+(r.next?' next':'')+(r.comp==="FR"?' fr':'')+'"><i class="sd-no">'+r.no+'</i>'+
-    '<span class="sd-comp"><b>'+(g&&g!=="-"?gradeTag(g):'')+schedComp(r.comp)+(r.n>1?' <em class="sd-n">×'+r.n+'</em>':'')+'</b><small>'+(r.label||(r.comp==="FR"?"親善試合":""))+'</small></span>'+
+    '<span class="sd-comp"><b>'+(g&&g!=="-"?gradeTag(g):'')+schedComp(r.comp)+(r.n>1?' <em class="sd-n">×'+r.n+'</em>':'')+'</b><small>'+(r.label?compEn(r).round:"")+'</small></span>'+
     '<i class="sd-ha'+(T?(r.home?' h':' a'):'')+'">'+(T?(r.home?'H':'A'):'')+'</i>'+
     opp+'<span class="sd-r">'+res+'</span></li>';
 }
@@ -1555,7 +1555,7 @@ function seasonHtml(){
   // 順位表は首位・自分の前後・最下位に畳む(「全部見る」で広げる →docs/14 第2弾)
   const mi=order.indexOf("me"), keep=i=>CL.fullTable||i===0||i===order.length-1||Math.abs(i-mi)<=2;
   let gap=false;
-  let h=scheduleHtml()+'<section class="card"><h3>'+COMPS.LG.name+' <small>'+L.done+'/14 節 ・ '+(mi+1)+'位 ・ 上位 '+TUNING.club.promoteRank+' が昇格'+(S.grade>1?'・ '+TUNING.club.relegateRank+' 位以下が降格':'')+'</small></h3><table class="tbl lgdiv">'+
+  let h=scheduleHtml()+'<section class="card"><h3>'+compNm("LG")+' <small>'+L.done+'/14 節 ・ '+(mi+1)+'位 ・ 上位 '+TUNING.club.promoteRank+' が昇格'+(S.grade>1?'・ '+TUNING.club.relegateRank+' 位以下が降格':'')+'</small></h3><table class="tbl lgdiv">'+
     '<tr><th></th><th></th><th>試</th><th>勝</th><th>分</th><th>敗</th><th>得失</th><th>点</th></tr>'+
     order.map((id,i)=>{ const r=L.table[id];
       if(!keep(i)){ if(gap)return ""; gap=true; return '<tr class="gap"><td colspan="8">…</td></tr>'; }
@@ -1572,7 +1572,7 @@ function seasonHtml(){
     CUP_IDS.slice().sort((a,b)=>firstSlot(a)-firstSlot(b)).map(id=>{ const c=S.cups[id], past=SCHED.findIndex(x=>x[0]===id)<S.slot, ok=entryOk(S,id);
       const txt=c.st==="wait"?(past?"出場なし":ok?"出場できる":"条件待ち"):stTxt[c.st];
       const cond=c.st==="wait"&&!past&&!ok&&ENTRY_NEED[id]?'<small class="cond">'+ENTRY_NEED[id]+'</small>':'';
-      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap&&c.st!=="quit"?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+COMPS[id].name+'</button>':COMPS[id].name)+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
+      return '<tr class="st-'+c.st+(c.st==="wait"&&!past&&ok?' ok':'')+'"><td>'+gradeTag(COMPS[id].grade)+'</td><td class="nm2">'+(id===nextComp?'▶ ':'')+(c.rmap&&c.st!=="quit"?'<button class="lnk oppv" data-act="bracket" data-v="'+id+'">'+compNm(id)+'</button>':compNm(id))+cond+'</td><td>'+txt+'</td></tr>'; }).join("")+
     '</table></section>';
   return h;
 }
@@ -1585,7 +1585,7 @@ function bracketModalHtml(){
     em(c)+'<b>'+sh(c)+'</b><i>'+(sc!=null?sc:'')+'</i></div>';
   const nr=Math.max(...cup.rmap)+1, rounds=[];
   for(let r=0;r<nr;r++){
-    const lab=(comp.stages[cup.rmap.indexOf(r)]||["",""])[1].replace(/ 第\d試合$/,"");
+    const lab=compEn({ comp:id, label:(comp.stages[cup.rmap.indexOf(r)]||["",""])[1].replace(/ 第\d試合$/,"") }).round;
     let P=cup.br.rounds[r];
     if(!P){ const prev=rounds.length?rounds[rounds.length-1].P.length:(comp.adv===2?4:2); P=new Array(Math.max(1,prev/2)).fill(0).map(()=>({ a:null, b:null })); }
     rounds.push({ lab, P });
@@ -1594,9 +1594,9 @@ function bracketModalHtml(){
     return '<div class="bg"><h5>'+lab+'</h5>'+o.map((c,i)=>'<div class="bt'+(c==="me"?' me':'')+(i<(comp.adv||1)?' win':'')+'"'+(c!=="me"?' data-act="oppview" data-id="'+c+'"':'')+'>'+
       '<i class="rk">'+(i+1)+'</i>'+em(c)+'<b>'+sh(c)+'</b><i>'+g.table[c].pts+'点</i></div>').join("")+'</div>'; };
   return '<div class="kmodal" data-act="brclose"><div class="kmod-box br-box" data-act="none">'+
-    '<header class="km-head"><span></span><b>'+comp.name+'</b><small>'+gradeTag(comp.grade)+'</small><span></span><button class="km-x" data-act="brclose" aria-label="閉じる">×</button></header>'+
+    '<header class="km-head"><span></span><b>'+compNm(id)+'</b><small>'+gradeTag(comp.grade)+'</small><span></span><button class="km-x" data-act="brclose" aria-label="閉じる">×</button></header>'+
     '<div class="br-body">'+
-      (cup.grp?'<div class="br-grps">'+grpT(cup.grp,"グループ A")+grpT(cup.grp2,"グループ B")+'</div>':'')+
+      (cup.grp?'<div class="br-grps">'+grpT(cup.grp,"GROUP A")+grpT(cup.grp2,"GROUP B")+'</div>':'')+
       '<div class="br-cols">'+rounds.map(R=>'<div class="br-col"><h5>'+R.lab+'</h5><div class="br-ps">'+R.P.map(p=>
         '<div class="bp'+(p.a==="me"||p.b==="me"?' mine':'')+'">'+row(p.a,p.sc?p.sc[0]:null,p.w,!!p.w)+row(p.b,p.sc?p.sc[1]:null,p.w,!!p.w)+(p.pk?'<small class="pk">PK</small>':'')+'</div>').join("")+'</div></div>').join("")+'</div>'+
       '<p class="dim br-note">クラブを押すと、その SQUAD を見られる</p></div></div></div>';
@@ -1605,9 +1605,9 @@ function bracketModalHtml(){
 const TROPHY_ORDER=["ICC","CT","JT","LGP","CONTI","CSC","LG1","W4","KINGS","NSC","LG2","ENT","PRE"];      // 格の高い順。リーグは Div ごと(→docs/19)
 const LG_KEY=["LG2","LG2","LG1","LGP"];                 // div(1〜3)→ 棚の id(div の無い前の記録は 2nd Div)
 const trophyKey=t=>t.comp==="LG"?LG_KEY[t.div||1]:t.comp;
-const trophyName=id=>/^LG/.test(id)?"レギュラーリーグ "+({ LGP:"Premier Div", LG1:"1st Div", LG2:"2nd Div" })[id]:COMPS[id].name;
-const TROPHY_SHORT={ ICC:"インターナショナル", CT:"チャンピオンズ", JT:"ジャパン", LG:"リーグ", CONTI:"コンチネンタル", CSC:"コンチネンタルSC",
-  W4:"W4", KINGS:"キングス", NSC:"ナショナルSC", ENT:"エンタープライズ", PRE:"プレシーズン", LGP:"プレミア", LG1:"1st Div", LG2:"2nd Div" };
+const trophyName=id=>/^LG/.test(id)?"REGULAR LEAGUE "+({ LGP:"PREMIER DIV", LG1:"1ST DIV", LG2:"2ND DIV" })[id]:compNm(id);
+const TROPHY_SHORT={ ICC:"INT'L CC", CT:"CHAMPIONS", JT:"JAPAN", LG:"LEAGUE", CONTI:"CONTINENTAL", CSC:"CONTI SC",
+  W4:"W4", KINGS:"KING'S", NSC:"NATIONAL SC", ENT:"ENTERPRISE", PRE:"PRE-SEASON", LGP:"PREMIER", LG1:"1ST DIV", LG2:"2ND DIV" };   // 英字(→docs/14 §14.164)
 /** 格ごとの形(S = 取っ手の大杯 / リーグ = 盾の皿 / A = 脚の長い杯 / B = 星 / C = 小杯 / D・E = メダル)と金属の色 */
 function trophyIconSvg(id,won){
   const g=/^LG/.test(id)?"L":COMPS[id].grade, metal=!won?"":g==="S"||g==="L"||g==="A"?"g":g==="B"||g==="C"?"s":"b";
