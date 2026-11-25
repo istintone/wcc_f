@@ -45,6 +45,13 @@ function drawStands(c,W,H){
   const yFar=H*V.farY, top=Math.max(2,yFar-H*V.standH[lv-1]);
   const sky=c.createLinearGradient(0,0,0,yFar); sky.addColorStop(0,"#16233d"); sky.addColorStop(1,"#2c3f63");
   c.fillStyle=sky; c.fillRect(0,0,W,yFar);
+  // スタジアムの絵(5段)があれば、芝より上(空・照明・スタンド)を奥に描く(→docs/14 §14.151)。看板はその上に重ねる
+  const im=stadImg(lv);
+  if(im){ const sc=W/STAD_W, sy1=STAD_TOP[lv-1], sh=Math.min(sy1,yFar/sc), sy0=sy1-sh;
+    c.imageSmoothingEnabled=false;
+    c.drawImage(im,0,sy0,STAD_W,sh,0,yFar-sh*sc,W,sh*sc);
+    c.imageSmoothingEnabled=true;
+    drawBoards(c,W,H,yFar); return; }
   c.fillStyle="#3a2430"; c.fillRect(0,top,W,yFar-top);
   // 観客の点(毎回同じ並び)
   if(!RV.crowd||RV.crowd.lv!==lv){
@@ -56,7 +63,10 @@ function drawStands(c,W,H){
   // 段の境目と屋根
   c.fillStyle="rgba(0,0,0,.35)"; for(let y=top+6;y<yFar;y+=7)c.fillRect(0,y,W,1);
   if(lv>=5){ c.fillStyle="#9aa4b2"; c.fillRect(0,top-4,W,4); }
-  // 広告の看板
+  drawBoards(c,W,H,yFar);
+}
+/** 奥の広告の看板(スポンサーとロゴのマーク) */
+function drawBoards(c,W,H,yFar){
   c.fillStyle="#0b0f1a"; c.fillRect(0,yFar-5,W,5);
   c.fillStyle="#ffe28a"; c.font="700 "+Math.max(6,H*0.03)+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
@@ -65,6 +75,13 @@ function drawStands(c,W,H){
   for(let i=0;i<4;i++){ const x=W*(0.125+i*0.25);
     if(i%2&&lg){ c.drawImage(lg,x-ls*1.9,yFar-2.5-ls/2,ls,ls); c.fillText("WCC F",x+ls*0.4,yFar-2.5); }
     else c.fillText(sp,x,yFar-2.5); }
+}
+/** スタジアムの絵(Lv ごと)。読み込みが済むまでは null */
+const RV_STAD={};
+function stadImg(lv){
+  if(typeof STAD_ART==="undefined"||!STAD_ART[lv-1])return null;
+  if(!RV_STAD[lv]){ RV_STAD[lv]=new Image(); RV_STAD[lv].src=STAD_ART[lv-1]; }
+  const im=RV_STAD[lv]; return im.complete&&im.naturalWidth?im:null;
 }
 /** ロゴのマーク(看板に描く)。読み込みが済むまでは null */
 let RV_LOGO=null;
@@ -78,7 +95,7 @@ function logoImg(){
 function drawPitch(){
   const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
   const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg();
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg()+":"+!!stadImg(lv);   // 絵の読み込みが済んだら描き直す
   if(RV.bgKey!==key){
     const off=RV.bg||(RV.bg=document.createElement("canvas"));
     off.width=RV.cv.width; off.height=RV.cv.height;
