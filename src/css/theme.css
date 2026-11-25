@@ -3027,3 +3027,14 @@ body[class] #cap.ht .cap-bar u{background:#c8102e}
 #scene .vs-note{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.16em}
 /* 字幕の残り時間のゲージは、両端から中央へ減る(→docs/14 §14.159) */
 body[class] #cap .cap-bar u{margin:0 auto}
+/* 字幕が閉じる動き(→docs/14 §14.160): 上下の赤い線が中央へ寄って光の線になり、横に縮んで消える。長さは TUNING.play.capOff と合わせる */
+body[class] #cap.off{display:flex;pointer-events:none;animation:capOff .3s cubic-bezier(.6,0,.4,1) forwards}
+body[class] #cap.ht.off{display:flex;animation:capOffHt .3s cubic-bezier(.6,0,.4,1) forwards}
+@keyframes capOff{0%{transform:translateY(-50%);filter:none;opacity:1}
+  50%{transform:translateY(-50%) scale(1,.03);filter:brightness(2.6);opacity:1}
+  100%{transform:translateY(-50%) scale(0,.03);filter:brightness(3);opacity:.3}}
+@keyframes capOffHt{0%{transform:none;filter:none;opacity:1}
+  50%{transform:scale(1,.02);filter:brightness(2.6);opacity:1}
+  100%{transform:scale(0,.02);filter:brightness(3);opacity:.3}}
+body[class] #cap.off::after{content:"";position:absolute;inset:0;z-index:9;background:#fff;box-shadow:0 0 12px #fff;pointer-events:none;animation:capFlash .3s forwards}
+@keyframes capFlash{0%{opacity:0}35%{opacity:.85}100%{opacity:1}}

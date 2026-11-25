@@ -146,7 +146,7 @@ function wakeLock(on){
  * 出ているあいだ試合は止まる。盤面のカードは触れる
  */
 function overlay(title,body,ms,fn){
-  const c=$("cap");
+  const c=$("cap"); clearTimeout(G.capOffT);
   // ms>0 の字幕には残り時間のバー(ハーフタイムの指示を読んでいる間に時間が切れても分かるように →docs/14)
   c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'')+(ms>0?'<i class="cap-bar"><u></u></i>':'');
   c.className="on"; G.onOv=fn; G.capT=ms; G.capT0=ms;
@@ -166,7 +166,12 @@ function htAxHtml(h){
     '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':'下がる能力なし')+'</span></span>';
 }
 function closeOverlay(){
-  $("cap").className=""; G.capT=0;
+  // 閉じるときは、上下の赤い線が中央へ寄って1本の光の線になり、横に縮んで消える(テレビが切れるように。→docs/14 §14.160)。
+  // 試合は裏ですぐ再開する(待ち時間は増えない)
+  const c=$("cap"); G.capT=0; clearTimeout(G.capOffT);
+  if(c.classList.contains("on")){ c.classList.remove("on"); c.classList.add("off");
+    G.capOffT=setTimeout(()=>{ if(c.classList.contains("off"))c.className=""; },TUNING.play.capOff); }
+  else c.className="";
   const fn=G.onOv; G.onOv=null;
   if(fn)fn();
 }

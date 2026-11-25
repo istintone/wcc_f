@@ -3627,6 +3627,17 @@ body[class] #cap.ht .cap-bar u{background:#c8102e}
 #scene .vs-note{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.16em}
 /* 字幕の残り時間のゲージは、両端から中央へ減る(→docs/14 §14.159) */
 body[class] #cap .cap-bar u{margin:0 auto}
+/* 字幕が閉じる動き(→docs/14 §14.160): 上下の赤い線が中央へ寄って光の線になり、横に縮んで消える。長さは TUNING.play.capOff と合わせる */
+body[class] #cap.off{display:flex;pointer-events:none;animation:capOff .3s cubic-bezier(.6,0,.4,1) forwards}
+body[class] #cap.ht.off{display:flex;animation:capOffHt .3s cubic-bezier(.6,0,.4,1) forwards}
+@keyframes capOff{0%{transform:translateY(-50%);filter:none;opacity:1}
+  50%{transform:translateY(-50%) scale(1,.03);filter:brightness(2.6);opacity:1}
+  100%{transform:translateY(-50%) scale(0,.03);filter:brightness(3);opacity:.3}}
+@keyframes capOffHt{0%{transform:none;filter:none;opacity:1}
+  50%{transform:scale(1,.02);filter:brightness(2.6);opacity:1}
+  100%{transform:scale(0,.02);filter:brightness(3);opacity:.3}}
+body[class] #cap.off::after{content:"";position:absolute;inset:0;z-index:9;background:#fff;box-shadow:0 0 12px #fff;pointer-events:none;animation:capFlash .3s forwards}
+@keyframes capFlash{0%{opacity:0}35%{opacity:.85}100%{opacity:1}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4632,7 +4643,7 @@ const TUNING={
     // 盤面のカードの大きさ(→docs/07 §7.11): 盤面の高さ ÷ cardRef の倍率を cardMin〜cardMax に収める(小さい画面で重ならないように)
     cardRef:400, cardMin:0.7, cardMax:1.12, boardAspect:0.7,   // boardAspect … 盤面のピッチの 幅 ÷ 高さ の上限(縦長を保つ)
     // 試合の区切りの字幕(→docs/07 §7.11)。本家と同じく、数秒で自動で進む(ミリ秒)
-    capKick:3200, capHalf:4200, capEnd:2400 }
+    capKick:3200, capHalf:4200, capEnd:2400, capOff:300 }   // capOff … 字幕が閉じる動きの長さ(ms。CSS の capOff と合わせる)
 };
 
 const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW",
@@ -14445,7 +14456,7 @@ function wakeLock(on){
  * 出ているあいだ試合は止まる。盤面のカードは触れる
  */
 function overlay(title,body,ms,fn){
-  const c=$("cap");
+  const c=$("cap"); clearTimeout(G.capOffT);
   // ms>0 の字幕には残り時間のバー(ハーフタイムの指示を読んでいる間に時間が切れても分かるように →docs/14)
   c.innerHTML='<b>'+title+'</b>'+(body?'<div>'+body+'</div>':'')+(ms>0?'<i class="cap-bar"><u></u></i>':'');
   c.className="on"; G.onOv=fn; G.capT=ms; G.capT0=ms;
@@ -14465,7 +14476,12 @@ function htAxHtml(h){
     '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':'下がる能力なし')+'</span></span>';
 }
 function closeOverlay(){
-  $("cap").className=""; G.capT=0;
+  // 閉じるときは、上下の赤い線が中央へ寄って1本の光の線になり、横に縮んで消える(テレビが切れるように。→docs/14 §14.160)。
+  // 試合は裏ですぐ再開する(待ち時間は増えない)
+  const c=$("cap"); G.capT=0; clearTimeout(G.capOffT);
+  if(c.classList.contains("on")){ c.classList.remove("on"); c.classList.add("off");
+    G.capOffT=setTimeout(()=>{ if(c.classList.contains("off"))c.className=""; },TUNING.play.capOff); }
+  else c.className="";
   const fn=G.onOv; G.onOv=null;
   if(fn)fn();
 }

@@ -324,7 +324,7 @@ const TUNING={
     // 盤面のカードの大きさ(→docs/07 §7.11): 盤面の高さ ÷ cardRef の倍率を cardMin〜cardMax に収める(小さい画面で重ならないように)
     cardRef:400, cardMin:0.7, cardMax:1.12, boardAspect:0.7,   // boardAspect … 盤面のピッチの 幅 ÷ 高さ の上限(縦長を保つ)
     // 試合の区切りの字幕(→docs/07 §7.11)。本家と同じく、数秒で自動で進む(ミリ秒)
-    capKick:3200, capHalf:4200, capEnd:2400 }
+    capKick:3200, capHalf:4200, capEnd:2400, capOff:300 }   // capOff … 字幕が閉じる動きの長さ(ms。CSS の capOff と合わせる)
 };
 
 const GROUP_OF={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", SMF:"MF", OMF:"MF", WG:"FW", CF:"FW",
