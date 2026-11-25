@@ -87,7 +87,7 @@ python build.py --dist   →  dist/
     index.html             本体(単一ファイル。実名は入らない)
     manifest.webmanifest   ホーム画面に追加したときの名前・向き・アイコン
     sw.js                  Service Worker。版ごとにキャッシュを替える(先にネット、だめならキャッシュ)
-    icon-192.png / icon-512.png / apple-touch-icon.png   仮のアイコン(build.py が描く)
+    icon-192.png / icon-512.png / apple-touch-icon.png   アイコン(TOP のロゴのボール。tools/gen_logo.py → assets/)
 ```
 
 - **公開先は GitHub Pages**(https://istintone.github.io/wcc_f/)。`python tools/publish.py` が検証 → `dist/` の書き出し →

@@ -108,10 +108,11 @@ function stadImg(lv){
   if(!RV_STAD[lv]){ RV_STAD[lv]=new Image(); RV_STAD[lv].src=STAD_ART[lv-1]; }
   const im=RV_STAD[lv]; return im.complete&&im.naturalWidth?im:null;
 }
-/** ロゴのマーク(看板に描く)。読み込みが済むまでは null */
+/** ロゴのマーク(看板に描く)。TOP のロゴと同じボール(LOGO_IMG.ball。→docs/14 §14.153)。読み込みが済むまでは null */
 let RV_LOGO=null;
 function logoImg(){
-  if(typeof ballMarkSvg!=="function")return null;
+  if(!RV_LOGO&&typeof LOGO_IMG!=="undefined"&&LOGO_IMG.ball){ RV_LOGO=new Image(); RV_LOGO.src=LOGO_IMG.ball; }
+  if(typeof ballMarkSvg!=="function"&&!RV_LOGO)return null;
   if(!RV_LOGO){ RV_LOGO=new Image();
     RV_LOGO.src="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+ballMarkSvg(50,50,46,"rvm")+'</svg>'); }
   return RV_LOGO.complete&&RV_LOGO.naturalWidth?RV_LOGO:null;

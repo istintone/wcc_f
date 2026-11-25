@@ -149,7 +149,7 @@ def build_dist(html):
     dist.mkdir(exist_ok=True)
     ver = hashlib.sha1(html.encode("utf-8")).hexdigest()[:10]
     (dist / "index.html").write_text(html, encoding="utf-8", newline="\n")
-    files = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"]
+    files = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon.png"]
     manifest = {"name": "wcc_f", "short_name": "wcc_f", "start_url": "./", "scope": "./", "display": "standalone",
                 "orientation": "portrait", "background_color": "#0e1320", "theme_color": "#0e1320",
                 "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
@@ -169,7 +169,10 @@ self.addEventListener("fetch",e=>{
 """ % (ver, ver, json.dumps(files))
     (dist / "sw.js").write_text(sw, encoding="utf-8", newline="\n")
     for name, size in (("icon-192.png", 192), ("icon-512.png", 512), ("apple-touch-icon.png", 180)):
-        (dist / name).write_bytes(_png(size))
+        a = ROOT / "assets" / name                    # TOP のロゴのボール(tools/gen_logo.py。→docs/14 §14.153)。無ければ仮の絵
+        (dist / name).write_bytes(a.read_bytes() if a.exists() else _png(size))
+    if (ROOT / "assets" / "favicon.png").exists():
+        (dist / "favicon.png").write_bytes((ROOT / "assets" / "favicon.png").read_bytes())
     print("公開用 -> dist/ (版 %s。index.html / manifest / sw.js / アイコン3つ)" % ver)
 
 
