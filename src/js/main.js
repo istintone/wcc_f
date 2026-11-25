@@ -33,7 +33,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   buildBoard(M);
   updateCtl();
   overlay("KICK OFF",'<small>'+G.meta.title+'</small>'+
-    (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small>同点なら PK 戦</small>':''),
+    (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small class="ko">KNOCK OUT MATCH</small>':''),   // 勝ち抜き戦(→docs/14 §14.158)
     TUNING.play.capKick,()=>setPlaying(true));
 }
 

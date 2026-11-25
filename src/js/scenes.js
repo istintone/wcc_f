@@ -101,7 +101,7 @@ function sceneMatchup(fx,go){
       '<div class="vs-mark">VS</div>'+
       '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:teamColor(opp) }],{ short:true })+'<p><i style="background:'+teamColor(opp)+'"></i>'+opp.short+'<b class="vs-ovr">OVR '+vsOvr(opp,false,(oppDefOf(S,fx)||{}).graph).toFixed(1)+'</b></p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
-    (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
+    (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">KNOCK OUT MATCH</div>':'')+
     '<div class="touch sm">TOUCH</div>',
     { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);

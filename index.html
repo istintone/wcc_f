@@ -3622,6 +3622,9 @@ body[class] #cap.ht.picked .htb.sel{animation:htSel .3s ease-out both;box-shadow
 @keyframes htSel{50%{transform:scale(1.06)}to{transform:none}}
 body[class] #cap.ht .cap-bar{position:absolute;left:0;right:0;bottom:0;width:100%;height:3px;margin:0;border-radius:0;background:rgba(255,255,255,.15)}
 body[class] #cap.ht .cap-bar u{background:#c8102e}
+/* 勝ち抜き戦の印(→docs/14 §14.158): キックオフの字幕と対戦カードの画面に KNOCK OUT MATCH */
+#cap small.ko{display:block;margin-top:2px;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;font-size:12px;letter-spacing:.2em;color:#ffe28a}
+#scene .vs-note{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.16em}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12563,7 +12566,7 @@ function nextTileHtml(){
       '<div class="op">'+emblemSvg(t,46)+'<b>'+t.short+'</b></div></div>'+
     '<p class="nx-opp">'+teamNameOf(t)+' <span>'+"★".repeat(tierOf(fx.opp))+'</span></p>'+
     '<p class="nx-meta">KP '+nameOf(kp)+(st?' ・ '+st.name:'')+' ・ '+t.form+
-      (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ 同点なら PK':'')+'</p>'+
+      (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ KNOCK OUT':'')+'</p>'+
     (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
     (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">節をスキップ<small>試合なし ・ 任期は減らない</small></button></div>'
@@ -14001,7 +14004,7 @@ function sceneMatchup(fx,go){
       '<div class="vs-mark">VS</div>'+
       '<div class="vs-radar">'+radarSvg([{ v:vsAxes(opp,false), color:teamColor(opp) }],{ short:true })+'<p><i style="background:'+teamColor(opp)+'"></i>'+opp.short+'<b class="vs-ovr">OVR '+vsOvr(opp,false,(oppDefOf(S,fx)||{}).graph).toFixed(1)+'</b></p></div></div>'+
     sideHtml(opp,"away",opp.kp)+
-    (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">同点なら PK 戦</div>':'')+
+    (fx.agg?'<div class="vs-note">第1試合 '+fx.agg[0]+' - '+fx.agg[1]+'</div>':fx.ko?'<div class="vs-note">KNOCK OUT MATCH</div>':'')+
     '<div class="touch sm">TOUCH</div>',
     { next:go, lock:700 });   // 自動では進まない(相手監督の型やグラフを読めるように →docs/14)
   sndUi("ok"); setTimeout(()=>sndCrowdBurst(),350);
@@ -14327,7 +14330,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   buildBoard(M);
   updateCtl();
   overlay("KICK OFF",'<small>'+G.meta.title+'</small>'+
-    (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small>同点なら PK 戦</small>':''),
+    (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small class="ko">KNOCK OUT MATCH</small>':''),   // 勝ち抜き戦(→docs/14 §14.158)
     TUNING.play.capKick,()=>setPlaying(true));
 }
 

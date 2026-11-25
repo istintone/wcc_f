@@ -1011,7 +1011,7 @@ function nextTileHtml(){
       '<div class="op">'+emblemSvg(t,46)+'<b>'+t.short+'</b></div></div>'+
     '<p class="nx-opp">'+teamNameOf(t)+' <span>'+"★".repeat(tierOf(fx.opp))+'</span></p>'+
     '<p class="nx-meta">KP '+nameOf(kp)+(st?' ・ '+st.name:'')+' ・ '+t.form+
-      (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ 同点なら PK':'')+'</p>'+
+      (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ KNOCK OUT':'')+'</p>'+
     (fx.missed?'<p class="nx-meta dim">'+COMPS[fx.missed].name+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
     (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">節をスキップ<small>試合なし ・ 任期は減らない</small></button></div>'

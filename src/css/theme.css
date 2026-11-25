@@ -3022,3 +3022,6 @@ body[class] #cap.ht.picked .htb.sel{animation:htSel .3s ease-out both;box-shadow
 @keyframes htSel{50%{transform:scale(1.06)}to{transform:none}}
 body[class] #cap.ht .cap-bar{position:absolute;left:0;right:0;bottom:0;width:100%;height:3px;margin:0;border-radius:0;background:rgba(255,255,255,.15)}
 body[class] #cap.ht .cap-bar u{background:#c8102e}
+/* 勝ち抜き戦の印(→docs/14 §14.158): キックオフの字幕と対戦カードの画面に KNOCK OUT MATCH */
+#cap small.ko{display:block;margin-top:2px;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;font-size:12px;letter-spacing:.2em;color:#ffe28a}
+#scene .vs-note{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.16em}
