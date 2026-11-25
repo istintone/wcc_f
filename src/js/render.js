@@ -81,8 +81,10 @@ function drawStands(c,W,H){
 }
 /** 広告の枠に出すもの(順に繰り返す)。スポンサーが増えたらここに足す */
 function boardAds(){
-  const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
-  return [{ text:sp, bg:"#c8102e", fg:"#fff" }, { text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" }];   // logo … ボール + ロゴの2行の文字(→docs/14 §14.154)
+  const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
+  // 赤い枠はスポンサー。スポンサーがいなければ白いロゴ(ボール + 2行の文字。→docs/14 §14.155)
+  return [sp?{ text:sp, bg:"#c8102e", fg:"#fff" }:{ text:"WCC F", logo:true, white:true, bg:"#c8102e", fg:"#fff" },
+    { text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" }];   // logo … ボール + ロゴの2行の文字(→docs/14 §14.154)
 }
 /** B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす */
 function drawBoards(c,W,H,y0,y1){
@@ -95,7 +97,7 @@ function drawBoards(c,W,H,y0,y1){
     c.fillStyle=a.bg; c.fillRect(x,p0,w,ph);
     c.fillStyle="rgba(255,255,255,.14)"; c.fillRect(x,p0,w,ph*0.4);                 // LED の光り(上半分を少し明るく)
     c.fillStyle=a.fg;
-    const wd=a.logo&&lg?wordsImg():null;
+    const wd=a.logo&&lg?wordsImg(a.white):null;
     if(wd){ let ls=ph*0.82, wh=ph*0.66, ww=wd.naturalWidth*wh/wd.naturalHeight; const k=Math.min(1,(w-8)/(ls+4+ww)); ls*=k; wh*=k; ww*=k;
       const sx=cx-(ls+4+ww)/2; c.drawImage(lg,sx,cy-ls/2,ls,ls); c.drawImage(wd,sx+ls+4,cy-wh/2,ww,wh); }
     else if(a.logo&&lg){ const ls=ph*0.78, tw=c.measureText(a.text).width, sx=cx-(ls+3+tw)/2;
@@ -112,11 +114,12 @@ function stadImg(lv){
   const im=RV_STAD[lv]; return im.complete&&im.naturalWidth?im:null;
 }
 /** ロゴの2行の文字 WORLD CHAMPION / CLUBS FOOTBALLERS(LOGO_IMG.words)。読み込みが済むまでは null */
-let RV_WORDS=null;
-function wordsImg(){
-  if(typeof LOGO_IMG==="undefined"||!LOGO_IMG.words)return null;
-  if(!RV_WORDS){ RV_WORDS=new Image(); RV_WORDS.src=LOGO_IMG.words; }
-  return RV_WORDS.complete&&RV_WORDS.naturalWidth?RV_WORDS:null;
+const RV_WORDS={};
+function wordsImg(white){
+  const k=white?"wordsW":"words";
+  if(typeof LOGO_IMG==="undefined"||!LOGO_IMG[k])return null;
+  if(!RV_WORDS[k]){ RV_WORDS[k]=new Image(); RV_WORDS[k].src=LOGO_IMG[k]; }
+  const im=RV_WORDS[k]; return im.complete&&im.naturalWidth?im:null;
 }
 /** ロゴのマーク(看板に描く)。TOP のロゴと同じボール(LOGO_IMG.ball。→docs/14 §14.153)。読み込みが済むまでは null */
 let RV_LOGO=null;
@@ -131,7 +134,7 @@ function logoImg(){
 function drawPitch(){
   const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
   const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg()+":"+!!wordsImg()+":"+!!stadImg(lv);   // 絵の読み込みが済んだら描き直す
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg()+":"+!!wordsImg()+!!wordsImg(true)+":"+!!stadImg(lv);   // 絵の読み込みが済んだら描き直す
   if(RV.bgKey!==key){
     const off=RV.bg||(RV.bg=document.createElement("canvas"));
     off.width=RV.cv.width; off.height=RV.cv.height;
