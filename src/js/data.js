@@ -307,7 +307,7 @@ const TUNING={
   //   wallV … 奥の壁(広告の帯の下の端)の奥行き(0 = 奥のタッチライン。負は外側)/ boardH … 広告の帯の高さ / boardN … 帯の枠の数
   //   standBlur … 奥のスタンドのぼかし(何分の1に縮めてから引き伸ばすか)/ standDesat・standDim … 色を抜く量・暗くする量(→docs/14 §14.152)
   view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22],
-    kpRing:{ gap:2.6, w:1.6 },   // KP の金の輪(足元の輪との間 px・線の太さ px。→docs/14 §14.161)
+    kpRing:{ gap:1.5, w:1.6, spread:9, ms:1400, blur:6 },   // KP の金の光(足元の輪との間・線の太さ・広がる幅 px・1回の長さ ms・光のぼかし。→docs/14 §14.162)
     wallV:-0.07, boardH:0.085, boardN:4, standBlur:2.2, standDesat:0.35, standDim:0.3,
     // ボールを持たない選手の動き(見た目だけ。→docs/07 §7.15)。1人ずつ独立して動く
     //   driftH/driftX … その場のゆらぎ(高さ・左右)/ runRate … 攻めているとき、1秒あたりに走り込みを始める率(スキルの向きで増減)

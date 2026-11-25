@@ -347,13 +347,18 @@ function drawMan(c,o,unit,holderId){
   if(p.stam<TUNING.stam.tiredAt){ c.fillStyle="#ff7a6b"; c.fillRect(x-w/2,y+2,w*p.stam/TUNING.stam.tiredAt,2); }
   if(p.inj){ c.fillStyle="#c8102e"; c.fillRect(x+w/2-w*0.3,top-w*0.3,w*0.3,w*0.3); }
 }
-/** KP の金の輪(足元の輪 rx・ry の外側。KP の札と同じ金。→docs/14 §14.161) */
+/**
+ * KP の金の光(足元の輪 rx・ry の外側。KP の札と同じ金。→docs/14 §14.161・§14.162)。
+ * 足元にぼんやり光る金の輪を置き、そこから光の輪が外へ広がりながら消える(2つの波を交互に。毎フレーム描く)
+ */
 function kpRing(c,x,y,rx,ry){
-  const k=TUNING.view.kpRing;
-  c.lineWidth=k.w+1.4; c.strokeStyle="rgba(60,40,0,.55)";
-  c.beginPath(); c.ellipse(x,y,rx+k.gap,ry+k.gap*0.45,0,0,Math.PI*2); c.stroke();
-  c.lineWidth=k.w; c.strokeStyle="#e9c76b";
-  c.beginPath(); c.ellipse(x,y,rx+k.gap,ry+k.gap*0.45,0,0,Math.PI*2); c.stroke();
+  const k=TUNING.view.kpRing, t=(performance.now()%k.ms)/k.ms;
+  const ring=(e,lw,col)=>{ c.lineWidth=lw; c.strokeStyle=col; c.beginPath(); c.ellipse(x,y,rx+k.gap+e,ry+(k.gap+e)*0.45,0,0,Math.PI*2); c.stroke(); };
+  c.save(); c.shadowColor="rgba(255,214,110,.95)"; c.shadowBlur=k.blur;
+  ring(0,k.w,"rgba(240,206,120,.85)");                                   // 足元の光る輪
+  for(const off of [0,0.5]){ const u=(t+off)%1;                          // 外へ広がる光の輪
+    c.globalAlpha=(1-u)*(1-u)*0.95; ring(u*k.spread,k.w*(1.3-u*0.8),"#ffe08a"); }
+  c.restore();
 }
 /** 背番号。警告(イエロー)を受けた選手は黄色の字(読めるように濃い縁取り。→docs/14 §14.161) */
 function noText(c,p,x,y){
