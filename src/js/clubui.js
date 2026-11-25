@@ -1086,6 +1086,11 @@ function secClubHtml(){
 /* ---- スタジアムと施設(→docs/05 §5.13) ---- */
 /** スタジアムの絵(夜)。段が上がるほどスタンドが高く広く、照明塔と屋根が付く(独自の意匠 →docs/14 第3弾) */
 function stadiumSvg(lv){
+  // オーナーが用意した5段の絵があれば、それを使う(→docs/14 §14.150)。無ければ下の手描きの SVG
+  if(typeof STAD_ART!=="undefined"&&STAD_ART[(lv||1)-1])return '<img class="stad-img" src="'+STAD_ART[Math.max(1,Math.min(5,lv||1))-1]+'" alt="スタジアム Lv'+lv+'">';
+  return stadiumSvgOld(lv);
+}
+function stadiumSvgOld(lv){
   const H=[0,16,26,38,50,58][lv]||16, top=92-H, wide=lv>=4;
   let g='<defs><linearGradient id="stSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a14"/><stop offset="1" stop-color="#1c2540"/></linearGradient>'+
     '<linearGradient id="stBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8" stop-opacity=".55"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></linearGradient>'+

@@ -2982,3 +2982,5 @@ body[class] #club .chd{gap:5px!important;padding-left:10px!important;padding-rig
 #club .chd small.chd-mgr .tg.mgr.mgr{height:auto!important;padding:3px 9px 3px 8px!important;font-size:inherit!important;letter-spacing:normal!important;line-height:normal!important}
 #club .chd small.chd-mgr .tg.mgr.mgr{font-size:13px!important;line-height:20.15px!important} #club .chd small.chd-mgr .tg.mgr.mgr b{line-height:17.825px!important}
 #club .step-h.sc-h .bk{flex:0 0 auto;margin:0 0 0 auto;align-self:center}
+/* スタジアムの絵(5段。→docs/14 §14.150) */
+.stad-img{display:block;width:100%;aspect-ratio:668/306;object-fit:cover;image-rendering:pixelated;border-radius:2px}
