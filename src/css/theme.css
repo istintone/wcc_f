@@ -2984,3 +2984,20 @@ body[class] #club .chd{gap:5px!important;padding-left:10px!important;padding-rig
 #club .step-h.sc-h .bk{flex:0 0 auto;margin:0 0 0 auto;align-self:center}
 /* スタジアムの絵(5段。→docs/14 §14.150) */
 .stad-img{display:block;width:100%;aspect-ratio:668/306;object-fit:cover;image-rendering:pixelated;border-radius:2px}
+/* 試合の KP の帯(映像の下の白い帯。→docs/14 §14.156): 左 = 自チーム、右 = 相手。同じ黒い帯に金の KP、切れ目は平行なスラッシュで向かい合う */
+body[class] #stylebar{flex:0 0 26px!important;display:flex;justify-content:space-between;align-items:center;gap:0;padding:0!important;overflow:hidden;
+  background:radial-gradient(rgba(0,0,0,.09) 1px,transparent 1.3px) 0 0/6px 6px,linear-gradient(180deg,#faf8f4,#ece7df)!important;border-bottom:1px solid rgba(0,0,0,.15)!important}
+#stylebar #styH{visibility:visible!important}
+#stylebar .kpl{flex:0 0 calc(50% + 2px);min-width:0;height:20px;display:flex;align-items:center;gap:5px;overflow:hidden;
+  font-style:italic;font-family:var(--f-num),sans-serif;font-size:11px;font-weight:900;letter-spacing:.04em;color:#fff!important;white-space:nowrap}
+#stylebar #styH{padding:0 17px 0 8px;background:linear-gradient(90deg,#0b0b0d,#2a2b31);clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+#stylebar #styA{padding:0 8px 0 17px;flex-direction:row-reverse;background:linear-gradient(270deg,#0b0b0d,#2a2b31);clip-path:polygon(12px 0,100% 0,100% 100%,0 100%)}
+#stylebar .kpl .kbg{flex:0 0 auto;padding:0 4px;font-style:italic;color:#2a1d00;background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c);border-radius:2px;line-height:15px}
+#stylebar .kpl .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#stylebar .kpl .nm.none{opacity:.6}
+#stylebar .kpl small{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:9.5px;color:#e9c76b}
+#stylebar .kpl .rk{flex:0 0 auto;font-style:normal}
+#stylebar .kpl.inL{animation:kpInL .3s ease-out}
+#stylebar .kpl.inR{animation:kpInR .3s ease-out}
+@keyframes kpInL{from{transform:translateX(-105%)}to{transform:none}}
+@keyframes kpInR{from{transform:translateX(105%)}to{transform:none}}

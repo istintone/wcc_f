@@ -3584,6 +3584,23 @@ body[class] #club .chd{gap:5px!important;padding-left:10px!important;padding-rig
 #club .step-h.sc-h .bk{flex:0 0 auto;margin:0 0 0 auto;align-self:center}
 /* スタジアムの絵(5段。→docs/14 §14.150) */
 .stad-img{display:block;width:100%;aspect-ratio:668/306;object-fit:cover;image-rendering:pixelated;border-radius:2px}
+/* 試合の KP の帯(映像の下の白い帯。→docs/14 §14.156): 左 = 自チーム、右 = 相手。同じ黒い帯に金の KP、切れ目は平行なスラッシュで向かい合う */
+body[class] #stylebar{flex:0 0 26px!important;display:flex;justify-content:space-between;align-items:center;gap:0;padding:0!important;overflow:hidden;
+  background:radial-gradient(rgba(0,0,0,.09) 1px,transparent 1.3px) 0 0/6px 6px,linear-gradient(180deg,#faf8f4,#ece7df)!important;border-bottom:1px solid rgba(0,0,0,.15)!important}
+#stylebar #styH{visibility:visible!important}
+#stylebar .kpl{flex:0 0 calc(50% + 2px);min-width:0;height:20px;display:flex;align-items:center;gap:5px;overflow:hidden;
+  font-style:italic;font-family:var(--f-num),sans-serif;font-size:11px;font-weight:900;letter-spacing:.04em;color:#fff!important;white-space:nowrap}
+#stylebar #styH{padding:0 17px 0 8px;background:linear-gradient(90deg,#0b0b0d,#2a2b31);clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+#stylebar #styA{padding:0 8px 0 17px;flex-direction:row-reverse;background:linear-gradient(270deg,#0b0b0d,#2a2b31);clip-path:polygon(12px 0,100% 0,100% 100%,0 100%)}
+#stylebar .kpl .kbg{flex:0 0 auto;padding:0 4px;font-style:italic;color:#2a1d00;background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c);border-radius:2px;line-height:15px}
+#stylebar .kpl .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#stylebar .kpl .nm.none{opacity:.6}
+#stylebar .kpl small{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:9.5px;color:#e9c76b}
+#stylebar .kpl .rk{flex:0 0 auto;font-style:normal}
+#stylebar .kpl.inL{animation:kpInL .3s ease-out}
+#stylebar .kpl.inR{animation:kpInR .3s ease-out}
+@keyframes kpInL{from{transform:translateX(-105%)}to{transform:none}}
+@keyframes kpInR{from{transform:translateX(105%)}to{transform:none}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4219,10 +4236,10 @@ body.th-wl #ovTitle{font-size:32px;letter-spacing:.1em}
   </header>
   <div id="viewWrap"><canvas id="view"></canvas><div id="flash"></div><div id="cap"></div><button id="replay" class="replay"><b>REPLAY</b><small>タッチでスキップ ▶▶</small></button>
   </div>
-  <div id="stylebar"><span id="styH"></span><span id="styA"></span></div>
+  <div id="stylebar"><span id="styH" class="kpl"></span><span id="styA" class="kpl"></span></div>
   <div id="ticker">&nbsp;</div>
   <div id="deck">
-    <div id="insTags"><i data-k="kp"></i><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i><i data-k="shoot">シュートを狙え！</i></div>
+    <div id="insTags"><i data-k="center">中央突破</i><i data-k="counter">カウンター</i><i data-k="side"></i><i data-k="press">プレッシング</i><i data-k="keeper">GKハイポジション</i><i data-k="shoot">シュートを狙え！</i></div>
     <div id="board"><div id="boardLines"></div><div id="paOwn" class="pa"></div><div id="paOpp" class="pa"></div><svg id="links"></svg><div id="cards"></div></div>
     <div id="bench"></div>
     <div id="info"><div id="infoBody"></div>
@@ -14348,10 +14365,7 @@ function bossSay(key,name,extra){
 function updateInsTags(){
   const box=$("insTags"); if(!box)return;
   const I=Object.assign({},G.ins||{},{ shoot:$("btnShoot").classList.contains("armed") }), side=I.left&&I.right?"両サイド攻撃":I.left?"左サイド攻撃":I.right?"右サイド攻撃":"";   // SHOOT はボタンの光り方に合わせる
-  // KP(最上段): 発動中の KP の選手とスタイル(→docs/14 §14.101)
-  const kc=G.M&&G.M.home.kp?CARDS[G.M.home.kp]:null, kst=kc?styleOfCard(kc):null;
-  I.kp=!!kc;
-  const kel=box.querySelector('[data-k="kp"]'); if(kel&&kc)kel.innerHTML='<b>KP</b>'+nameOf(kc)+(kst?'<small>'+kst.name+'</small>':'');
+  // KP は映像の下の白い帯に両チームぶん出す(→docs/14 §14.156)
   for(const el of box.children){ const k=el.dataset.k, on=k==="side"?!!side:!!I[k];
     if(k==="side"&&side)el.textContent=side;
     el.classList.toggle("on",on); }
@@ -14366,17 +14380,26 @@ function updateCtl(){
   updateInsTags();
   updateStyleBar();
 }
-/** いま有効なスタイルを両チームぶん出す(映像の下の帯) */
-function styleText(T,pendingKp){
+/**
+ * いま有効な KP を両チームぶん、映像の下の白い帯に出す(→docs/14 §14.156)。
+ * 左 = 自チーム、右 = 相手。同じ意匠(黒い帯に金の KP)で、切れ目は平行なスラッシュで向かい合う
+ */
+function kpLabel(T,pendingKp){
   const id=pendingKp||T.kp, c=id?CARDS[id]:null, st=c?styleOfCard(c):null;
-  if(!st)return "KP なし";
+  if(!st)return { key:"none", html:'<b class="kbg">KP</b><span class="nm none">なし</span>' };
   const rank=pendingKp?styleRank(T,st):T.rank||styleRank(T,st);
-  return "KP "+nameOf(c)+"｜"+st.name+" <b class=\"rk rk"+rank+"\">"+rank+"</b>";
+  return { key:id, html:'<b class="kbg">KP</b><span class="nm">'+nameOf(c)+'</span><small>'+st.name+'</small><b class="rk rk'+rank+'">'+rank+'</b>' };
+}
+/** KP が替わったときだけ、帯を滑り込ませる(自チームは左から、相手は右から) */
+function setKpLabel(el,o,dir){
+  if(el.dataset.key===o.key){ el.innerHTML=o.html; return; }
+  el.dataset.key=o.key; el.innerHTML=o.html;
+  el.classList.remove("in"+dir); void el.offsetWidth; el.classList.add("in"+dir);
 }
 function updateStyleBar(){
-  $("styH").innerHTML=styleText(G.M.home,BD.kp);
-  $("styA").innerHTML=styleText(G.M.away,null);
-  updateInsTags();   // 発動中の KP の札(→docs/14 §14.101)
+  setKpLabel($("styH"),kpLabel(G.M.home,BD.kp),"L");
+  setKpLabel($("styA"),kpLabel(G.M.away,null),"R");
+  updateInsTags();
 }
 function setPlaying(v){ G.playing=v; updateCtl(); if(v){ sndCrowd(true); wakeLock(true); } }
 /** 試合が始まってから終わるまで画面を消さない(止めて考えている間も)。対応していない端末では何もしない */
