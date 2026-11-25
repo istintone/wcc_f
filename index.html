@@ -3601,6 +3601,27 @@ body[class] #stylebar{flex:0 0 26px!important;display:flex;justify-content:space
 #stylebar .kpl.inR{animation:kpInR .3s ease-out}
 @keyframes kpInL{from{transform:translateX(-105%)}to{transform:none}}
 @keyframes kpInR{from{transform:translateX(105%)}to{transform:none}}
+/* ハーフタイム(→docs/14 §14.157): モニター(ピッチ)の中だけを暗くし、得点は出さない。監督は左下から入り、指示は3つの白い吹き出し。選ぶとほかは落ちる */
+body[class] #cap.ht{display:flex;flex-direction:column;align-items:center;gap:0;top:0;bottom:0;transform:none;padding:6px 0 0;overflow:hidden;border:0;background:rgba(8,11,20,.62);animation:htDim .25s both}
+@keyframes htDim{from{opacity:0}to{opacity:1}}
+body[class] #cap.ht>b{position:static;font-size:22px}
+body[class] #cap.ht>small{position:static;margin-top:1px;font-size:10px;color:#dfe6f2}
+#cap.ht .ht-mgr{position:absolute;left:-2px;bottom:0;width:74px;height:auto;image-rendering:pixelated;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:htMgrIn .45s .05s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes htMgrIn{from{transform:translateX(-120%)}to{transform:none}}
+#cap.ht .ht-opts{position:absolute;left:82px;right:10px;bottom:12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}
+body[class] #cap.ht .htb{position:relative;display:block;width:auto;min-width:140px;max-width:220px;margin:0;padding:4px 12px 4px 11px;text-align:left;cursor:pointer;
+  font-size:12px;font-weight:900;line-height:1.25;color:#141414;background:#fff;border:0;border-radius:12px;clip-path:none;
+  box-shadow:0 2px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.35);animation:htPop .32s calc(.3s + var(--i)*.09s) cubic-bezier(.2,1.4,.4,1) both}
+body[class] #cap.ht .htb::before{content:"";position:absolute;left:-8px;top:50%;margin-top:-6px;border:6px solid transparent;border-right:9px solid #fff;border-left:0}
+body[class] #cap.ht .htb i{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:#c8102e}
+@keyframes htPop{from{opacity:0;transform:translateX(-14px) scale(.85)}to{opacity:1;transform:none}}
+body[class] #cap.ht.picked .htb:not(.sel){animation:htDrop .5s cubic-bezier(.5,0,.9,.6) forwards}
+body[class] #cap.ht.picked .htb:nth-child(2):not(.sel){--r:-9deg}
+body[class] #cap.ht.picked .htb.sel{animation:htSel .3s ease-out both;box-shadow:0 0 0 2.5px #c8102e,0 6px 14px rgba(0,0,0,.35)}
+@keyframes htDrop{from{opacity:1;transform:none}to{opacity:0;transform:translateY(160px) rotate(var(--r,8deg))}}
+@keyframes htSel{50%{transform:scale(1.06)}to{transform:none}}
+body[class] #cap.ht .cap-bar{position:absolute;left:0;right:0;bottom:0;width:100%;height:3px;margin:0;border-radius:0;background:rgba(255,255,255,.15)}
+body[class] #cap.ht .cap-bar u{background:#c8102e}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4573,7 +4594,7 @@ const TUNING={
   // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
   //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
   //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 後半のあいだ成長グラフに足す量(ランクが上がることがある。金色は変わらない)
-  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
+  ht:{ unlock:2, max:3, timer:8000, pickMs:700, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
   // クラブ新聞(→docs/07 §7.13)。max … 残す記事の数 / recent … HOME に出す直近の試合の数
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
@@ -14607,12 +14628,12 @@ function startEvent(ev){
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
     // 「このまま維持しろ」は無くした(選ばずに時間が来れば、何も変えずに後半へ)
     const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
-    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
+    const btns=set.map((h,i)=>'<button class="htb" data-ht="'+h.id+'" style="--i:'+i+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
     const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
-    overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
-      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
-      '<div class="ht-boss">'+(bust?'<img class="ht-bust" src="'+bust+'" alt="">':'')+
-        '<div class="ht-bubble"><em>後半はこれでいく！</em><div class="ht-btns">'+btns+'</div><small>選ばなければ、このまま後半へ</small></div></div>',TUNING.ht.timer,()=>setPlaying(true));
+    // モニターの中だけに出す(得点はヘッダにあるので出さない)。監督は左下から入り、指示は3つの白い吹き出し(→docs/14 §14.157)
+    overlay("HALF TIME",'<small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
+      (bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
+    $("cap").classList.add("ht");
     return;
   }
   if(ev.type==="fulltime"){
@@ -14752,10 +14773,13 @@ function boot(){
   $("replay").addEventListener("click",skipReplay);
   // ハーフタイムの指示を選ぶ(字幕の中のボタン)
   $("cap").addEventListener("click",e=>{
-    const b=e.target.closest("[data-ht]"); if(!b)return;
+    const b=e.target.closest("[data-ht]"), cap=$("cap"); if(!b||cap.classList.contains("picked"))return;
     const h=htOf(b.dataset.ht);
     if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
-    sndUi("ok"); closeOverlay();
+    sndUi("ok");
+    // 選んだ吹き出しが残り、ほかは落ちて消える。少し見せてから後半へ(→docs/14 §14.157)
+    b.classList.add("sel"); cap.classList.add("picked"); G.capT=0;
+    setTimeout(()=>{ if(cap.classList.contains("picked"))closeOverlay(); },TUNING.ht.pickMs);
   });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
   document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);

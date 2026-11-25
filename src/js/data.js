@@ -291,7 +291,7 @@ const TUNING={
   // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
   //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
   //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 後半のあいだ成長グラフに足す量(ランクが上がることがある。金色は変わらない)
-  ht:{ unlock:2, max:3, timer:8000, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
+  ht:{ unlock:2, max:3, timer:8000, pickMs:700, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
   // クラブ新聞(→docs/07 §7.13)。max … 残す記事の数 / recent … HOME に出す直近の試合の数
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率

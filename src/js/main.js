@@ -334,12 +334,12 @@ function startEvent(ev){
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
     // 「このまま維持しろ」は無くした(選ばずに時間が来れば、何も変えずに後半へ)
     const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
-    const btns=set.map(h=>'<button class="htb" data-ht="'+h.id+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
+    const btns=set.map((h,i)=>'<button class="htb" data-ht="'+h.id+'" style="--i:'+i+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
     const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
-    overlay("HALF TIME",'<span class="sc">'+ev.hg+' - '+ev.ag+'</span><small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+
-      Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
-      '<div class="ht-boss">'+(bust?'<img class="ht-bust" src="'+bust+'" alt="">':'')+
-        '<div class="ht-bubble"><em>後半はこれでいく！</em><div class="ht-btns">'+btns+'</div><small>選ばなければ、このまま後半へ</small></div></div>',TUNING.ht.timer,()=>setPlaying(true));
+    // モニターの中だけに出す(得点はヘッダにあるので出さない)。監督は左下から入り、指示は3つの白い吹き出し(→docs/14 §14.157)
+    overlay("HALF TIME",'<small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
+      (bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
+    $("cap").classList.add("ht");
     return;
   }
   if(ev.type==="fulltime"){
@@ -479,10 +479,13 @@ function boot(){
   $("replay").addEventListener("click",skipReplay);
   // ハーフタイムの指示を選ぶ(字幕の中のボタン)
   $("cap").addEventListener("click",e=>{
-    const b=e.target.closest("[data-ht]"); if(!b)return;
+    const b=e.target.closest("[data-ht]"), cap=$("cap"); if(!b||cap.classList.contains("picked"))return;
     const h=htOf(b.dataset.ht);
     if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
-    sndUi("ok"); closeOverlay();
+    sndUi("ok");
+    // 選んだ吹き出しが残り、ほかは落ちて消える。少し見せてから後半へ(→docs/14 §14.157)
+    b.classList.add("sel"); cap.classList.add("picked"); G.capT=0;
+    setTimeout(()=>{ if(cap.classList.contains("picked"))closeOverlay(); },TUNING.ht.pickMs);
   });
   // 「TOUCH で再開」の字幕(時間で消えない)は、画面のどこを触っても再開する
   document.addEventListener("pointerdown",()=>{ if(capOn()&&G.capT<=0&&G.onOv)closeOverlay(); },true);
