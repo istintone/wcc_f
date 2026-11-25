@@ -43,6 +43,18 @@ def ball_of(g):
     return im
 
 
+def words_of(g, h=72):
+    """「WORLD CHAMPION / CLUBS FOOTBALLERS」の2行だけを切り出す(黒い線・透明な地。高さ h)。試合の看板(→docs/14 §14.154)"""
+    ink = Image.eval(g, lambda v: 255 - v)
+    y0 = int(g.height * 0.79)                                    # WCC/F の下線より下
+    part = ink.crop((0, y0, g.width, g.height))
+    box = Image.eval(part, lambda v: 255 if v > 60 else 0).getbbox()
+    part = part.crop(box)
+    part = part.resize((round(part.width * h / part.height), h), Image.LANCZOS)
+    im = Image.new("RGBA", part.size, (0, 0, 0, 0)); im.putalpha(part)
+    return im
+
+
 def icon_of(ball, size):
     """赤い地の真ん中に白いボール"""
     im = Image.new("RGBA", (size, size), ICON_BG + (255,))
@@ -79,14 +91,17 @@ def main():
         icon_of(ball, size).save(ROOT / "assets" / name, optimize=True)
     buf = io.BytesIO(); ball.resize((128, 128), Image.LANCZOS).save(buf, "PNG", optimize=True)
     data["ball"] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    buf = io.BytesIO(); words_of(Image.open(SRC).convert("L")).save(buf, "PNG", optimize=True)
+    data["words"] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
     js = ["/* 生成物。手で編集しない。 python tools/gen_logo.py が assets/logo_src.png(オーナーが作ったロゴ)から書き出す(→docs/14 §14.17)。",
-          "   white … 白い線・透明な地(暗い地の上に) / black … 黒い線・透明な地 / wm … ごく薄い白(暗い地の透かし) / wmk … ごく薄い黒(明るい地の透かし) / ball … ボールのマークだけ(試合の看板) */",
+          "   white … 白い線・透明な地(暗い地の上に) / black … 黒い線・透明な地 / wm … ごく薄い白(暗い地の透かし) / wmk … ごく薄い黒(明るい地の透かし) / ball … ボールのマークだけ(試合の看板) / words … WORLD CHAMPION CLUBS FOOTBALLERS の2行(試合の看板) */",
           "const LOGO_IMG={",
           '  white:"%s",' % data["white"],
           '  black:"%s",' % data["black"],
           '  wm:"%s",' % data["wm"],
           '  wmk:"%s",' % data["wmk"],
-          '  ball:"%s"' % data["ball"],
+          '  ball:"%s",' % data["ball"],
+          '  words:"%s"' % data["words"],
           "};"]
     OUT_JS.write_text("\n".join(js) + "\n", encoding="utf-8", newline="\n")
     print("logo-img.js %d KB(%dx%d)" % (OUT_JS.stat().st_size // 1024, W, h))

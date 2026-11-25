@@ -1146,3 +1146,10 @@
   - `LOGO_IMG.ball`(128px)… 試合の看板のロゴ(render.js `logoImg`)。前は描いたボール(`ballMarkSvg`)
   - assets/icon-192.png・icon-512.png・apple-touch-icon.png・favicon.png … 赤い地(テーマの赤)の真ん中に白いボール(直径は一辺の 72%。maskable の安全な円に収まる)
 - build.py --dist は assets のアイコンを dist/ に写す(無ければ前の仮の絵)。index.html に favicon(ブックマーク・タブ)を足した
+
+## 14.154 試合の看板の WCC F を、ロゴの2行の文字に(2026-11-25)
+
+- オーナーの希望: 看板の「WCC F」の文字を、TOP のロゴの「WORLD CHAMPION / CLUBS FOOTBALLERS」の切り抜きに置き換える
+- tools/gen_logo.py が、オーナーのロゴの WCC/F の下線より下(2行の文字)を切り出す(`LOGO_IMG.words`。黒い線・透明な地、高さ 72px)
+- 看板の白い枠は「ボール + 2行の文字」。枠の幅に収まらなければ両方を同じ割合で縮める(render.js `drawBoards` / `wordsImg`)
+- 赤い枠(スポンサー)はそのまま。クイック試合などスポンサーがいないときは仮の名前 wcc_f が出る
