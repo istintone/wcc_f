@@ -3025,3 +3025,5 @@ body[class] #cap.ht .cap-bar u{background:#c8102e}
 /* 勝ち抜き戦の印(→docs/14 §14.158): キックオフの字幕と対戦カードの画面に KNOCK OUT MATCH */
 #cap small.ko{display:block;margin-top:2px;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;font-size:12px;letter-spacing:.2em;color:#ffe28a}
 #scene .vs-note{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.16em}
+/* 字幕の残り時間のゲージは、両端から中央へ減る(→docs/14 §14.159) */
+body[class] #cap .cap-bar u{margin:0 auto}
