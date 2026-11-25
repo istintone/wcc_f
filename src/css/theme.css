@@ -3046,3 +3046,13 @@ body[class] #hudComp i{display:block;font-style:italic;font-size:9.5px;font-weig
 #cap small.en{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.1em}
 /* グラフの凡例のチームの色(白いチームでも見えるように縁。→docs/14 §14.164) */
 #scene .vs-radar p i{box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+/* 答えたあとの会話(→docs/14 §14.165): 監督の答え(右・赤)→ 少し間をおいて相手のリアクション(左・白) */
+#club .sec-ev.done>div{flex:1;min-width:0}
+#club .sec-ev.done .tk-me{display:flex;justify-content:flex-end;margin-top:7px}
+#club .sec-ev.done .tk-me span{max-width:85%;padding:5px 11px;font-size:12.5px;font-weight:800;line-height:1.45;color:#fff;background:#c8102e;border-radius:12px 12px 3px 12px}
+#club .sec-ev.done .tk-rx{margin-top:6px;max-width:92%}
+#club .sec-ev.done .tk-rx small{display:block;margin:0 0 2px 2px;font-size:10px;font-weight:800;color:var(--t-sub,#c8102e)}
+#club .sec-ev.done .tk-rx p{display:inline-block;padding:6px 11px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:3px 12px 12px 12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#club .sec-ev.done.anim .tk-me span{animation:tkIn .28s cubic-bezier(.2,1.3,.4,1) both}
+#club .sec-ev.done.anim .tk-rx{animation:tkIn .32s .75s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes tkIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}

@@ -1055,7 +1055,7 @@ function newsLineHtml(){
 }
 /** 秘書が HOME に出るのは、伝えることがあるときだけ(定型の一言は出さない) */
 function secNeeded(S){
-  if(CL.alert)return true;
+  if(CL.alert||CL.secDone)return true;
   if(S.sec&&S.sec.ev!=null)return true;
   const g=S.g, fx=CL.fx;
   if(S.sq.slice(0,11).some(id=>g.pl[id]&&g.pl[id].mot===0)&&g.step!=="ready")return true;   // ケガ
@@ -1071,7 +1071,18 @@ function secHtml(){
   const ev=S.sec&&S.sec.ev!=null?SEC_EVENTS[S.sec.ev]:null;
   if(ev&&!S.termOver)h+='<section class="sec sec-ev">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'<em class="sec-tag">TALK</em></b><p>「'+secEvQ(S,ev)+'」</p>'+
     '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="secev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+  else if(CL.secDone&&!S.termOver)h+=talkDoneHtml(CL.secDone,secAv(S),se.name,"TALK");
   return h;
+}
+/**
+ * 答えたあとの会話(→docs/14 §14.165)。問いはそのまま、下に監督の答え(右・赤)と相手のリアクション(左・白)。
+ * 次の試合に入るまで残す。動き(答え → 少し間をおいてリアクション)は最初の1回だけ
+ */
+function talkDoneHtml(d,av,nm,tag){
+  const an=d.seen?'':' anim'; d.seen=true;
+  return '<section class="sec sec-ev done'+an+'">'+av+'<div><b class="sec-nm">'+nm+'<em class="sec-tag">'+tag+'</em></b><p>'+d.q+'</p>'+
+    '<div class="tk-me"><span>'+d.a+'</span></div>'+
+    (d.rx?'<div class="tk-rx"><small>'+d.who+'</small><p>「'+d.rx+'」</p></div>':'')+'</div></section>';
 }
 /** CLUB の秘書の欄: いまの秘書と親密度。開くと選び直せる */
 function secClubHtml(){
@@ -1380,7 +1391,10 @@ function playerVoiceHtml(){
 }
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
-  const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
+  const S=CL.S, ev=tagEventOf(S);
+  if(!ev&&CL.tagDone&&!S.termOver){ const d=CL.tagDone, a=d.id?artSrc(CARDS[d.id],"stand"):null;
+    return talkDoneHtml(d,d.id?'<i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>':secAv(S),secOf(S).name,"EVENT"); }
+  if(!ev||S.termOver)return "";
   const id=S.g.tev.id;
   return '<section class="sec sec-ev tag-ev">'+(id?'<i class="sec-av pl-av">'+(artSrc(CARDS[id],"stand")?'<img src="'+artSrc(CARDS[id],"stand")+'" alt="">':'')+'</i>':secAv(S))+
     '<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">EVENT</em></b><p>'+tagEventText(S,ev)+'</p>'+
@@ -1695,6 +1709,7 @@ function clubHtml(){
 
 /** 試合を始める。配置は前の試合の最後のまま */
 function startFixture(){
+  CL.secDone=CL.tagDone=null;                  // 答えた会話は、次の試合に入ったら下げる(→docs/14 §14.165)
   skipComm(CL.S);                              // 残りのコミュニケーションは使わない
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
@@ -1786,8 +1801,13 @@ function onClubClick(e){
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k)){ CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"];  if(typeof paperNews==="function")paperNews(S,{ t:"fac", k, lv:S.biz.fac[k] }); } save(); showClub(true); return; }
-  if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
-  if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
+  if(act==="tagev"){ const ev=tagEventOf(S), i=+b.dataset.i;
+    if(ev&&ev.ch[i]){ const id=S.g.tev.id, rx=tagEvRx(S,ev.k,i);   // 答えとリアクションを残す(→docs/14 §14.165)
+      CL.tagDone={ id:rx&&rx.who==="pl"?id:null, q:tagEventText(S,ev), a:ev.ch[i][0], rx:rx?rx.text:"", who:rx&&rx.who==="pl"&&id?CARDS[id].no+" "+nameOf(CARDS[id]):secOf(S).name }; }
+    const ln=answerTagEvent(S,i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
+  if(act==="secev"){ const ei=S.sec.ev, ev=SEC_EVENTS[ei], i=+b.dataset.i;
+    if(ev&&ev.ch[i])CL.secDone={ q:"「"+secEvQ(S,ev)+"」", a:ev.ch[i][0], rx:secEvRx(S,ei,i), who:secOf(S).name };
+    const r=answerSecEvent(S,i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
   if(act==="tagtip"){ infoBar(["🏷 "+b.dataset.n+" ― "+b.dataset.d+(b.dataset.l?"(あと "+b.dataset.l+")":"")]); return; }
   if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }

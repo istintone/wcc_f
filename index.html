@@ -3646,6 +3646,16 @@ body[class] #hudComp i{display:block;font-style:italic;font-size:9.5px;font-weig
 #cap small.en{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.1em}
 /* グラフの凡例のチームの色(白いチームでも見えるように縁。→docs/14 §14.164) */
 #scene .vs-radar p i{box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+/* 答えたあとの会話(→docs/14 §14.165): 監督の答え(右・赤)→ 少し間をおいて相手のリアクション(左・白) */
+#club .sec-ev.done>div{flex:1;min-width:0}
+#club .sec-ev.done .tk-me{display:flex;justify-content:flex-end;margin-top:7px}
+#club .sec-ev.done .tk-me span{max-width:85%;padding:5px 11px;font-size:12.5px;font-weight:800;line-height:1.45;color:#fff;background:#c8102e;border-radius:12px 12px 3px 12px}
+#club .sec-ev.done .tk-rx{margin-top:6px;max-width:92%}
+#club .sec-ev.done .tk-rx small{display:block;margin:0 0 2px 2px;font-size:10px;font-weight:800;color:var(--t-sub,#c8102e)}
+#club .sec-ev.done .tk-rx p{display:inline-block;padding:6px 11px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:3px 12px 12px 12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#club .sec-ev.done.anim .tk-me span{animation:tkIn .28s cubic-bezier(.2,1.3,.4,1) both}
+#club .sec-ev.done.anim .tk-rx{animation:tkIn .32s .75s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes tkIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9506,6 +9516,50 @@ function tagEventRoll(S){
 }
 const tagEventOf=S=>S.g&&S.g.tev?TAG_EVENTS.find(e=>e.k===S.g.tev.k):null;
 const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"");
+/**
+ * 会話・出来事の答えへのリアクション(→docs/14 §14.165)。効果は通知で出すので、ここは純粋な会話の言葉だけ。
+ * SEC_EV_RX[秘書][会話の番号][答えの番号] / TAG_EV_RX[出来事] = 選手の言葉 [答えごと](sec:true は秘書が答える → [秘書][答え])
+ */
+const SEC_EV_RX={
+  s0:[["かしこまりました。少し濃いめに淹れてきますね。","紅茶ですね。いい茶葉があるんです、すぐにお持ちします。","承知しました。休憩のときは、いつでもお声がけください。"],
+      ["お任せください。対戦の傾向も添えておきますね。","さすがです。必要な資料があれば、いつでもおっしゃってください。"],
+      ["そんな……。でも、そう言っていただけると励みになります。","ええ、本当に。みんな、いい顔をしていました。","監督らしいですね。私も、もっとお役に立てるよう頑張ります。"],
+      ["お休みの日まで……。たまには息抜きもしてくださいね。","いいですね。今度、おすすめの喫茶店をお教えします。","まあ。……少し気になってしまいます。"],
+      ["はい。選手たちの一番いい表情を選んでおきます。","ありがとうございます。広報の方にもそうお伝えしますね。","承知しました。撮影は練習の邪魔にならない日にいたします。"]],
+  s1:[["了解です！とびきり美味しいの淹れてきますね！","紅茶派なんですね！私もです、えへへ。","わかりました！おなかが空いたら言ってくださいね！"],
+      ["はーい！見やすくまとめちゃいます！","さっすが監督！でも、困ったらいつでも呼んでくださいね！"],
+      ["わ、私ですか！？ えへへ……照れちゃいます！","ですよね！みんな、ほんとにかっこよかったです！","おおっ、燃えてますね！私も一緒に上を目指します！"],
+      ["えーっ、お休みの日もですか！？ 今度は息抜きしましょうよ！","いいなぁ！おすすめのパン屋さん、教えちゃいますね！","えー！ずるいです、いつか教えてくださいね！"],
+      ["任せてください！最高の一枚、撮ってきます！","やったぁ！張り切っちゃいますよ！","そうですよね！じゃあ、試合のない日にこっそり撮りますね！"]],
+  s2:[["了解です。カフェインは集中に有効です。","紅茶ですね。……実は、私も紅茶派です。","承知しました。水分補給だけは忘れないでください。"],
+      ["了解です。直近5試合の傾向まで整理しておきます。","合理的です。気になる点があれば、データはすぐ出せます。"],
+      ["……私の支えですか。数字には表れませんが、悪くない評価です。","同意します。今日の走りは見事でした。","ええ。改善の余地はまだ十分にあります。"],
+      ["……休養も成績に影響します。適度に休んでください。","散歩ですか。思考の整理には効果的ですね。","……そうですか。追及はしません。今のところは。"],
+      ["了解です。構図と光の条件まで確認しておきます。","承知しました。広報の意図に合うものを選びます。","賢明です。撮影は試合のない日に絞ります。"]],
+  s3:[["はいはい、コーヒーね。少し甘めにしておくわね。","あら、紅茶？ じゃあクッキーも付けちゃおうかしら。","そう？ 無理しないで、欲しくなったら言ってね。"],
+      ["ええ、任せて。ゆっくり読めるように整えておくわ。","ふふ、頼もしいわね。でも、たまには頼ってね。"],
+      ["まあ、嬉しいことを言ってくれるのね。","そうね。あの子たち、本当によく頑張ったわ。","ふふ、欲張りさんね。そういうところ、好きよ。"],
+      ["あらあら、お休みの日まで？ 少しは体を休めてね。","素敵ね。季節の花がきれいな道、今度教えてあげる。","ふふ、秘密なの？ 大人ね。"],
+      ["ええ、みんなのいい顔を撮っておくわ。","任せてちょうだい。いい写真、選んでおくわね。","そうね、あの子たちの集中が一番だものね。"]]
+};
+const TAG_EV_RX={
+  camp:{ sec:true, s0:["承知しました。先方にお返事しておきます。","かしこまりました。丁重にお断りしておきますね。"],
+    s1:["やったぁ！先方に連絡しちゃいますね！","了解です！ちゃんと上手にお断りしておきます！"],
+    s2:["了解です。日程を調整します。","承知しました。今の優先順位としては妥当です。"],
+    s3:["ええ、先方に伝えておくわ。楽しみね。","わかったわ。角が立たないように伝えておくわね。"] },
+  boom:["広告ですか！ちょっと照れますけど、頑張ります！","……正直、ほっとしました。サッカーに集中します。"],
+  rumor:["聞いてもらえて、少し楽になりました。ここでやりたい気持ちは本物です。","……そうですか。自分で何とかします。"],
+  press:["監督……ありがとうございます。迷惑をかけてすみません。","自分のことは、自分でけじめをつけます。"],
+  mood:["任せてください！みんなを笑わせますよ！","あ、ちょっと騒ぎすぎましたかね。へへ。"],
+  bday:["うわ、ケーキまで！ 最高の誕生日です！","いつもどおりが一番です。今日も練習、頑張ります。"],
+  extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"]
+};
+/** 秘書の会話のリアクション(言葉だけ) */
+function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
+/** 出来事のリアクション。{ who:"sec"|"pl", text } */
+function tagEvRx(S,k,i){ const X=TAG_EV_RX[k]; if(!X)return null;
+  if(X.sec)return { who:"sec", text:((X[secOf(S).id]||X.s0)[i])||"" };
+  return { who:"pl", text:X[i]||"" }; }
 /** 出来事に答える。結果の行を返す */
 function answerTagEvent(S,i){
   const ev=tagEventOf(S); if(!ev||!ev.ch[i])return [];
@@ -12671,7 +12725,7 @@ function newsLineHtml(){
 }
 /** 秘書が HOME に出るのは、伝えることがあるときだけ(定型の一言は出さない) */
 function secNeeded(S){
-  if(CL.alert)return true;
+  if(CL.alert||CL.secDone)return true;
   if(S.sec&&S.sec.ev!=null)return true;
   const g=S.g, fx=CL.fx;
   if(S.sq.slice(0,11).some(id=>g.pl[id]&&g.pl[id].mot===0)&&g.step!=="ready")return true;   // ケガ
@@ -12687,7 +12741,18 @@ function secHtml(){
   const ev=S.sec&&S.sec.ev!=null?SEC_EVENTS[S.sec.ev]:null;
   if(ev&&!S.termOver)h+='<section class="sec sec-ev">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'<em class="sec-tag">TALK</em></b><p>「'+secEvQ(S,ev)+'」</p>'+
     '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="secev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
+  else if(CL.secDone&&!S.termOver)h+=talkDoneHtml(CL.secDone,secAv(S),se.name,"TALK");
   return h;
+}
+/**
+ * 答えたあとの会話(→docs/14 §14.165)。問いはそのまま、下に監督の答え(右・赤)と相手のリアクション(左・白)。
+ * 次の試合に入るまで残す。動き(答え → 少し間をおいてリアクション)は最初の1回だけ
+ */
+function talkDoneHtml(d,av,nm,tag){
+  const an=d.seen?'':' anim'; d.seen=true;
+  return '<section class="sec sec-ev done'+an+'">'+av+'<div><b class="sec-nm">'+nm+'<em class="sec-tag">'+tag+'</em></b><p>'+d.q+'</p>'+
+    '<div class="tk-me"><span>'+d.a+'</span></div>'+
+    (d.rx?'<div class="tk-rx"><small>'+d.who+'</small><p>「'+d.rx+'」</p></div>':'')+'</div></section>';
 }
 /** CLUB の秘書の欄: いまの秘書と親密度。開くと選び直せる */
 function secClubHtml(){
@@ -12996,7 +13061,10 @@ function playerVoiceHtml(){
 }
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
-  const S=CL.S, ev=tagEventOf(S); if(!ev||S.termOver)return "";
+  const S=CL.S, ev=tagEventOf(S);
+  if(!ev&&CL.tagDone&&!S.termOver){ const d=CL.tagDone, a=d.id?artSrc(CARDS[d.id],"stand"):null;
+    return talkDoneHtml(d,d.id?'<i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>':secAv(S),secOf(S).name,"EVENT"); }
+  if(!ev||S.termOver)return "";
   const id=S.g.tev.id;
   return '<section class="sec sec-ev tag-ev">'+(id?'<i class="sec-av pl-av">'+(artSrc(CARDS[id],"stand")?'<img src="'+artSrc(CARDS[id],"stand")+'" alt="">':'')+'</i>':secAv(S))+
     '<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">EVENT</em></b><p>'+tagEventText(S,ev)+'</p>'+
@@ -13311,6 +13379,7 @@ function clubHtml(){
 
 /** 試合を始める。配置は前の試合の最後のまま */
 function startFixture(){
+  CL.secDone=CL.tagDone=null;                  // 答えた会話は、次の試合に入ったら下げる(→docs/14 §14.165)
   skipComm(CL.S);                              // 残りのコミュニケーションは使わない
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
@@ -13402,8 +13471,13 @@ function onClubClick(e){
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
   if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k)){ CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"];  if(typeof paperNews==="function")paperNews(S,{ t:"fac", k, lv:S.biz.fac[k] }); } save(); showClub(true); return; }
-  if(act==="tagev"){ const ln=answerTagEvent(S,+b.dataset.i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
-  if(act==="secev"){ const r=answerSecEvent(S,+b.dataset.i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
+  if(act==="tagev"){ const ev=tagEventOf(S), i=+b.dataset.i;
+    if(ev&&ev.ch[i]){ const id=S.g.tev.id, rx=tagEvRx(S,ev.k,i);   // 答えとリアクションを残す(→docs/14 §14.165)
+      CL.tagDone={ id:rx&&rx.who==="pl"?id:null, q:tagEventText(S,ev), a:ev.ch[i][0], rx:rx?rx.text:"", who:rx&&rx.who==="pl"&&id?CARDS[id].no+" "+nameOf(CARDS[id]):secOf(S).name }; }
+    const ln=answerTagEvent(S,i); CL.msg=ln; save(); showClub(true); setTimeout(()=>infoBar(ln),0); return; }
+  if(act==="secev"){ const ei=S.sec.ev, ev=SEC_EVENTS[ei], i=+b.dataset.i;
+    if(ev&&ev.ch[i])CL.secDone={ q:"「"+secEvQ(S,ev)+"」", a:ev.ch[i][0], rx:secEvRx(S,ei,i), who:secOf(S).name };
+    const r=answerSecEvent(S,i); if(r){ CL.msg=[r.line].concat(r.up?[r.up]:[]); save(); } showClub(true); return; }
   if(act==="cupenter"){ enterCup(S,CL.fx.comp); save(); showClub(true); infoBar(["🏆 "+COMPS[CL.fx.comp].name+" にエントリーした。組み合わせが決まった"]); return; }
   if(act==="tagtip"){ infoBar(["🏷 "+b.dataset.n+" ― "+b.dataset.d+(b.dataset.l?"(あと "+b.dataset.l+")":"")]); return; }
   if(act==="taginfo"){ const t=teamTagsView(S).find(x=>x.id===b.dataset.v); if(t)infoBar(["🏷 "+t.name+" ― "+t.desc+(t.left?"(あと "+t.left+")":"")]); return; }
