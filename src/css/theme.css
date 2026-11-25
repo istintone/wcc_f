@@ -3038,3 +3038,9 @@ body[class] #cap.ht.off{display:flex;animation:capOffHt .3s cubic-bezier(.6,0,.4
   100%{transform:scale(0,.02);filter:brightness(3);opacity:.3}}
 body[class] #cap.off::after{content:"";position:absolute;inset:0;z-index:9;background:#fff;box-shadow:0 0 12px #fff;pointer-events:none;animation:capFlash .3s forwards}
 @keyframes capFlash{0%{opacity:0}35%{opacity:.85}100%{opacity:1}}
+/* ヘッダの大会名と回戦(英字・太字で2行。→docs/14 §14.163) */
+body[class] #hudComp{display:flex;flex-direction:column;-webkit-line-clamp:unset;font-weight:900;line-height:1.1;letter-spacing:.04em}
+body[class] #hud .mu{overflow:hidden}
+body[class] #hudComp b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:10.5px;font-weight:900;white-space:normal;overflow:hidden}
+body[class] #hudComp i{display:block;font-style:italic;font-size:9.5px;font-weight:900;color:#111;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cap small.en{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:800;letter-spacing:.1em}

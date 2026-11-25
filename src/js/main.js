@@ -25,14 +25,16 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   const M=G.M;
   $("hudH").textContent=M.home.short; $("hudA").textContent=M.away.short;
   $("hudHc").innerHTML=emblemSvg(M.home,22); $("hudAc").innerHTML=emblemSvg(M.away,22);
-  $("hudComp").textContent=G.meta.career?G.meta.title:"FRIENDLY";
+  // 大会名と回戦は英字で2行(→docs/14 §14.163)
+  const en=G.meta.career&&G.meta.en?G.meta.en:{ name:"FRIENDLY", round:"" };
+  $("hudComp").innerHTML='<b>'+en.name+'</b>'+(en.round?'<i>'+en.round+'</i>':'');
   setHud(0,0,"0'");
   G.tk=[];
   say(teamNameOf(M.home)+" vs "+teamNameOf(M.away));
   hideInfo();
   buildBoard(M);
   updateCtl();
-  overlay("KICK OFF",'<small>'+G.meta.title+'</small>'+
+  overlay("KICK OFF",'<small class="en">'+(G.meta.en?G.meta.en.name+(G.meta.en.round?" ・ "+G.meta.en.round:""):G.meta.title)+'</small>'+
     (G.M.opts.agg?'<small>第1試合 '+G.M.opts.agg[0]+' - '+G.M.opts.agg[1]+'</small>':'')+(G.M.opts.ko?'<small class="ko">KNOCK OUT MATCH</small>':''),   // 勝ち抜き戦(→docs/14 §14.158)
     TUNING.play.capKick,()=>setPlaying(true));
 }

@@ -1701,7 +1701,7 @@ function startFixture(){
   CL.msg=[]; CL.comm=null; CL.pick=[]; CL.chat=null;
   sceneMatchup(fx,()=>{
     sceneHide(); hideClub();
-    newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), career:true,
+    newMatch(m.home,m.away,m.seed,m.opts,{ title:comp.name+(fx.label?" "+fx.label:""), en:compEn(fx), career:true,
       starters:m.home.xi.map(x=>x.card.id) });
   });
 }

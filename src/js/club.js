@@ -16,28 +16,28 @@
  * tiers … 出てくる相手の強さ(1=弱い 〜 5=強い)
  */
 const COMPS={
-  LG:   { name:"レギュラーリーグ", grade:"-" },
-  FR:   { name:"フレンドリーマッチ", grade:"-" },
-  PRE:  { name:"プレシーズンカップ", grade:"E", tiers:[1,2],
+  LG:   { name:"レギュラーリーグ", en:"REGULAR LEAGUE", grade:"-" },
+  FR:   { name:"フレンドリーマッチ", en:"FRIENDLY MATCH", grade:"-" },
+  PRE:  { name:"プレシーズンカップ", en:"PRE-SEASON CUP", grade:"E", tiers:[1,2],
           stages:[["ko","1回戦"],["ko","準決勝"],["ko","決勝"]] },
-  ENT:  { name:"エンタープライズカップ", grade:"D", tiers:[2,3],
+  ENT:  { name:"エンタープライズカップ", en:"ENTERPRISE CUP", grade:"D", tiers:[2,3],
           stages:[["ko","1回戦"],["ko","準決勝"],["ko","決勝"]] },
-  KINGS:{ name:"キングスクラブカップ", grade:"C", tiers:[2,3,4],
+  KINGS:{ name:"キングスクラブカップ", en:"KING'S CLUB CUP", grade:"C", tiers:[2,3,4],
           stages:[["ko","1回戦"],["ko","準決勝"],["ko","決勝"]] },
-  NSC:  { name:"ナショナルスーパーカップ", grade:"C", tiers:[3,4],
+  NSC:  { name:"ナショナルスーパーカップ", en:"NATIONAL SUPER CUP", grade:"C", tiers:[3,4],
           stages:[["ko","決勝"]] },
-  W4:   { name:"W4タイトルホルダーズカップ", grade:"B", tiers:[3,4], adv:1,
+  W4:   { name:"W4タイトルホルダーズカップ", en:"W4 TITLE HOLDERS CUP", grade:"B", tiers:[3,4], adv:1,
           stages:[["grp","リーグ戦 第1試合"],["grp","リーグ戦 第2試合"],["grp","リーグ戦 第3試合"],["ko","決勝"]] },
-  CONTI:{ name:"コンチネンタルカップ", grade:"A", tiers:[4,5],
+  CONTI:{ name:"コンチネンタルカップ", en:"CONTINENTAL CUP", grade:"A", tiers:[4,5],
           stages:[["leg1","1回戦 第1試合"],["leg2","1回戦 第2試合"],["ko","決勝"]] },
-  CSC:  { name:"コンチネンタルスーパーカップ", grade:"A", tiers:[4,5],
+  CSC:  { name:"コンチネンタルスーパーカップ", en:"CONTINENTAL SUPER CUP", grade:"A", tiers:[4,5],
           stages:[["ko","決勝"]] },
-  CT:   { name:"チャンピオンズトロフィー", grade:"S", tiers:[4,5],
+  CT:   { name:"チャンピオンズトロフィー", en:"CHAMPIONS TROPHY", grade:"S", tiers:[4,5],
           stages:[["leg1","1回戦 第1試合"],["leg2","1回戦 第2試合"],
                   ["leg1","準決勝 第1試合"],["leg2","準決勝 第2試合"],["ko","決勝"]] },
-  JT:   { name:"ジャパントロフィー", grade:"S", tiers:[5],
+  JT:   { name:"ジャパントロフィー", en:"JAPAN TROPHY", grade:"S", tiers:[5],
           stages:[["ko","決勝"]] },
-  ICC:  { name:"インターナショナルクラブチャンピオンシップ", grade:"S", tiers:[5], adv:2,
+  ICC:  { name:"インターナショナルクラブチャンピオンシップ", en:"INT'L CLUB CHAMPIONSHIP", grade:"S", tiers:[5], adv:2,
           stages:[["grp","1回戦 第1試合"],["grp","1回戦 第2試合"],["grp","1回戦 第3試合"],
                   ["ko","準決勝"],["ko","決勝"]] }
 };
@@ -134,7 +134,19 @@ const tierOf=id=>TEAMS[id].tier||3;
 const DIV_NAME=["","2nd Div","1st Div","Premier Div"];
 const divName=g=>DIV_NAME[g]||DIV_NAME[1];
 /** リーグの表示名を今の Div に合わせる(画面のあちこちが COMPS.LG.name を使う) */
-function setLeagueName(S){ if(COMPS.LG)COMPS.LG.name="レギュラーリーグ "+divName(S.grade); }
+function setLeagueName(S){ if(COMPS.LG){ COMPS.LG.name="レギュラーリーグ "+divName(S.grade); COMPS.LG.en="REGULAR LEAGUE "+divName(S.grade).toUpperCase(); } }
+/**
+ * 試合の画面に出す大会名と回戦を英字で(→docs/14 §14.163)。{ name:"KING'S CLUB CUP", round:"FINAL" }
+ * 回戦は日程の label(日本語)から: 第N節 → MATCHDAY N / 1回戦 → ROUND 1 / 準決勝 → SEMI-FINAL / 決勝 → FINAL /
+ * リーグ戦 第N試合 → GROUP MATCH N / 第N試合 → 2試合制は 1ST LEG・2ND LEG、総当たりは MATCH N
+ */
+function compEn(fx){
+  const comp=COMPS[fx.comp]||{}, lb=fx.label||"", leg=fx.type==="leg1"||fx.type==="leg2";
+  const md=lb.match(/^第(\d+)節$/);
+  const round=md?"MATCHDAY "+md[1]:lb.replace("リーグ戦","GROUP").replace("1回戦","ROUND 1").replace("準決勝","SEMI-FINAL").replace("決勝","FINAL")
+    .replace(/\s*第(\d+)試合/,(m,n)=>leg?" · "+(n==="1"?"1ST":"2ND")+" LEG":(/^リーグ戦/.test(lb)?" MATCH ":" · MATCH ")+n);
+  return { name:comp.en||comp.name||"", round };
+}
 /** 相手の定義。Premier Div のリーグ戦では、相手は育成レベル最大(全軸が高く、KP の軸は金色) */
 function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
