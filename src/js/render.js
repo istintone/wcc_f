@@ -322,14 +322,13 @@ function drawMan(c,o,unit,holderId){
     c.fillStyle="rgba(0,0,0,.3)"; c.beginPath(); c.ellipse(x,y,w*0.7,h*0.14,0,0,Math.PI*2); c.fill();
     c.lineWidth=p.id===holderId?2.6:1.8; c.strokeStyle=p.id===holderId?"#f2c14e":col;
     c.beginPath(); c.ellipse(x,y,w*0.72,h*0.16,0,0,Math.PI*2); c.stroke();
+    if(p.kp)kpRing(c,x,y,w*0.72,h*0.16);   // KP は足元の輪の外側に金の輪(2重の輪。→docs/14 §14.161)
     if(T.side==="A"){ c.save(); c.translate(x,0); c.scale(-1,1); c.drawImage(im,-iw/2,y-ih*0.97,iw,ih); c.restore(); }   // 相手は左右反転
     else c.drawImage(im,x-iw/2,y-ih*0.97,iw,ih);
     const tw=Math.max(10,h*0.5), th=Math.max(7,h*0.32);
     c.fillStyle=col; c.fillRect(x-tw/2,y+2,tw,th);
-    c.fillStyle="#fff"; c.font="800 "+Math.max(6,Math.round(th*0.85))+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
-    c.fillText(p.c.no,x,y+2+th/2+0.5);
-    if(p.kp){ c.fillStyle="#f2c14e"; c.font="900 "+Math.round(h*0.45)+"px system-ui,sans-serif"; c.fillText("★",x+iw*0.42,y-ih*0.85); }
-    if(p.yc){ c.fillStyle="#ffd84a"; c.fillRect(x-iw*0.5,y-ih*0.85,w*0.28,h*0.36); }
+    c.font="800 "+Math.max(6,Math.round(th*0.85))+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
+    noText(c,p,x,y+2+th/2+0.5);
     if(p.inj){ c.fillStyle="#c8102e"; c.fillRect(x+iw*0.3,y-ih*0.95,w*0.3,w*0.3); }
     if(p.stam<TUNING.stam.tiredAt){ c.fillStyle="#ff7a6b"; c.fillRect(x-tw/2,y+2+th+1,tw*p.stam/TUNING.stam.tiredAt,2); }
     return;
@@ -342,12 +341,25 @@ function drawMan(c,o,unit,holderId){
   c.fillStyle="rgba(255,255,255,.18)"; c.fillRect(x-w/2,top,w,h*0.22);  // 肩の光
   c.lineWidth=p.id===holderId?2.2:1;
   c.strokeStyle=p.id===holderId?"#f2c14e":"rgba(255,255,255,.9)"; c.strokeRect(x-w/2,top,w,h);
-  c.fillStyle="#fff"; c.font="800 "+Math.max(7,Math.round(h*0.5))+"px system-ui,sans-serif";
-  c.textAlign="center"; c.textBaseline="middle"; c.fillText(p.c.no,x,top+h*0.55);
-  if(p.kp){ c.fillStyle="#f2c14e"; c.font="900 "+Math.round(h*0.45)+"px system-ui,sans-serif"; c.fillText("★",x+w*0.55,top-h*0.05); }
+  c.font="800 "+Math.max(7,Math.round(h*0.5))+"px system-ui,sans-serif";
+  c.textAlign="center"; c.textBaseline="middle"; noText(c,p,x,top+h*0.55);
+  if(p.kp)kpRing(c,x,y,w*0.62,h*0.12);
   if(p.stam<TUNING.stam.tiredAt){ c.fillStyle="#ff7a6b"; c.fillRect(x-w/2,y+2,w*p.stam/TUNING.stam.tiredAt,2); }
-  if(p.yc){ c.fillStyle="#ffd84a"; c.fillRect(x-w/2-w*0.35,top,w*0.28,h*0.36); }
   if(p.inj){ c.fillStyle="#c8102e"; c.fillRect(x+w/2-w*0.3,top-w*0.3,w*0.3,w*0.3); }
+}
+/** KP の金の輪(足元の輪 rx・ry の外側。KP の札と同じ金。→docs/14 §14.161) */
+function kpRing(c,x,y,rx,ry){
+  const k=TUNING.view.kpRing;
+  c.lineWidth=k.w+1.4; c.strokeStyle="rgba(60,40,0,.55)";
+  c.beginPath(); c.ellipse(x,y,rx+k.gap,ry+k.gap*0.45,0,0,Math.PI*2); c.stroke();
+  c.lineWidth=k.w; c.strokeStyle="#e9c76b";
+  c.beginPath(); c.ellipse(x,y,rx+k.gap,ry+k.gap*0.45,0,0,Math.PI*2); c.stroke();
+}
+/** 背番号。警告(イエロー)を受けた選手は黄色の字(読めるように濃い縁取り。→docs/14 §14.161) */
+function noText(c,p,x,y){
+  if(p.yc){ c.lineWidth=2; c.strokeStyle="rgba(0,0,0,.75)"; c.strokeText(p.c.no,x,y); c.fillStyle="#ffd84a"; }
+  else c.fillStyle="#fff";
+  c.fillText(p.c.no,x,y);
 }
 /** ボール。影は地面に、球は浮いた高さに */
 function drawBall(c,unit,lift){
