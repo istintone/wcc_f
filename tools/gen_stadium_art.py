@@ -26,7 +26,7 @@ for y in range(H):
 panels = [(bands[i][1] + 1, bands[i + 1][0]) for i in range(len(bands) - 1)]
 assert len(panels) == 5, panels
 PW, PH = W - 4, 306   # 左右の黒い縁を落とし、高さは一番低い段に合わせる
-out = []; tops = []
+out = []; tops = []; grass = []
 for y0, y1 in panels:
     h = y1 - y0; top = y0 + max(0, (h - PH) // 2)
     p = im.crop((2, top, 2 + PW, top + PH))
@@ -34,11 +34,15 @@ for y0, y1 in panels:
     q = p.load()
     def green(y): return sum(1 for x in range(PW // 2 - 60, PW // 2 + 60, 4) if q[x, y][1] > q[x, y][0] + 40 and q[x, y][1] > q[x, y][2] + 20)
     tops.append(next(y for y in range(PH) if green(y) >= 25))
+    # 芝の色(芝の線の少し下の、緑の画素の平均)。試合のモニターの芝をこの色に寄せる(→docs/14 §14.152)
+    gs = [q[x, y] for y in range(tops[-1] + 8, min(PH, tops[-1] + 60)) for x in range(40, PW - 40, 3)
+          if q[x, y][1] > q[x, y][0] + 40 and q[x, y][1] > q[x, y][2] + 20]
+    grass.append([round(sum(c[i] for c in gs) / len(gs)) for i in range(3)])
     buf = io.BytesIO(); p.save(buf, "WEBP", quality=82, method=6)
     out.append("data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode())
     print(len(out), (y0, y1), len(buf.getvalue()) // 1024, "KB")
 head = "/* 生成物(tools/gen_stadium_art.py)。手で編集しない。スタジアムの絵 Lv1〜Lv5(→docs/14 §14.150) */\n"
 body = "const STAD_ART=[\n" + ",\n".join('"' + d + '"' for d in out) + "\n];\n"
-tail = "const STAD_W=" + str(PW) + ", STAD_TOP=" + str(tops) + ";   // 芝が始まる高さ(px)。試合のモニターはここより上を奥のスタンドに描く\n"
+tail = "const STAD_W=" + str(PW) + ", STAD_TOP=" + str(tops) + ";   // 芝が始まる高さ(px)。試合のモニターはここより上を奥のスタンドに描く\n" + "const STAD_GRASS=" + str(grass) + ";   // 絵の芝の色(RGB)。モニターの芝をこの色に寄せる\n"
 OUT.write_text(head + body + tail, encoding="utf-8")
 print("->", OUT)

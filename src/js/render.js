@@ -39,42 +39,67 @@ function quad(c,pts){ c.beginPath(); pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.
 function gline(c,a,b){ const p=proj(a[0],a[1]), q=proj(b[0],b[1]); c.beginPath(); c.moveTo(p[0],p[1]); c.lineTo(q[0],q[1]); c.stroke(); }
 function grect(c,u0,v0,u1,v1){ quad(c,[proj(u0,v0),proj(u1,v0),proj(u1,v1),proj(u0,v1)]); c.stroke(); }
 
-/** 奥のスタンドと観客。段が上がるほど高く、屋根が付く */
+/** スタジアムの段(クラブの S.biz.stad。クイック試合は 1) */
+const stadLv=()=>(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.stad)||1;
+/** 奥の壁の下の端(= 広告の帯の下の端 = 芝の始まり)の高さ */
+const wallY=()=>proj(0.5,TUNING.view.wallV)[1];
+/**
+ * 奥のスタンドと広告の帯(→docs/14 §14.152)。上から「スタンドの絵(ぼかし・暗く・もや)→ 広告の帯 → 芝」。
+ * 芝より後に描き、壁より上を塗りつぶす(芝が壁より上にはみ出さないように)
+ */
 function drawStands(c,W,H){
-  const V=TUNING.view, lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1;
-  const yFar=H*V.farY, top=Math.max(2,yFar-H*V.standH[lv-1]);
-  const sky=c.createLinearGradient(0,0,0,yFar); sky.addColorStop(0,"#16233d"); sky.addColorStop(1,"#2c3f63");
-  c.fillStyle=sky; c.fillRect(0,0,W,yFar);
-  // スタジアムの絵(5段)があれば、芝より上(空・照明・スタンド)を奥に描く(→docs/14 §14.151)。看板はその上に重ねる
+  const V=TUNING.view, lv=stadLv(), yW=wallY(), yB=yW-H*V.boardH;
+  const sky=c.createLinearGradient(0,0,0,yW); sky.addColorStop(0,"#16233d"); sky.addColorStop(1,"#2c3f63");
+  c.fillStyle=sky; c.fillRect(0,0,W,yW);
   const im=stadImg(lv);
-  if(im){ const sc=W/STAD_W, sy1=STAD_TOP[lv-1], sh=Math.min(sy1,yFar/sc), sy0=sy1-sh;
-    c.imageSmoothingEnabled=false;
-    c.drawImage(im,0,sy0,STAD_W,sh,0,yFar-sh*sc,W,sh*sc);
-    c.imageSmoothingEnabled=true;
-    drawBoards(c,W,H,yFar); return; }
-  c.fillStyle="#3a2430"; c.fillRect(0,top,W,yFar-top);
-  // 観客の点(毎回同じ並び)
-  if(!RV.crowd||RV.crowd.lv!==lv){
-    const r=mulberry32(77+lv), pts=[];
-    for(let i=0;i<Math.floor(W*(yFar-top)/14);i++)pts.push([r()*W,top+r()*(yFar-top-3),r()]);
-    RV.crowd={ lv, pts };
+  if(im){ const sc=W/STAD_W, sy1=STAD_TOP[lv-1], sh=Math.min(sy1,yW/sc), sy0=sy1-sh;   // 絵の芝の線を、帯の下の端(帯の裏)に合わせる
+    // A: ぼかす … 小さく縮めてから引き伸ばす(ctx.filter はブラウザでばらつくので使わない)
+    const k=V.standBlur, tw=Math.max(1,Math.round(W/k)), th=Math.max(1,Math.round(sh*sc/k));
+    const t=document.createElement("canvas"); t.width=tw; t.height=th;
+    const tc=t.getContext("2d"); tc.imageSmoothingEnabled=true; tc.drawImage(im,0,sy0,STAD_W,sh,0,0,tw,th);
+    c.imageSmoothingEnabled=true; c.drawImage(t,0,0,tw,th,0,yW-sh*sc,W,sh*sc);
+    // 色を抑えて暗くする(奥を遠くに見せ、選手を前に出す)
+    c.globalCompositeOperation="saturation"; c.fillStyle="rgba(128,128,128,"+V.standDesat+")"; c.fillRect(0,0,W,yB);
+    c.globalCompositeOperation="source-over"; c.fillStyle="rgba(10,14,26,"+V.standDim+")"; c.fillRect(0,0,W,yB);
+    // もや(帯のすぐ上を霞ませる)
+    const mh=H*0.05, g=c.createLinearGradient(0,yB-mh,0,yB); g.addColorStop(0,"rgba(180,192,210,0)"); g.addColorStop(1,"rgba(180,192,210,.2)");
+    c.fillStyle=g; c.fillRect(0,yB-mh,W,mh);
+  } else {
+    // 絵が読めないときの描き方(観客の点)
+    const top=Math.max(2,yB-H*V.standH[lv-1]);
+    c.fillStyle="#3a2430"; c.fillRect(0,top,W,yB-top);
+    if(!RV.crowd||RV.crowd.lv!==lv){
+      const r=mulberry32(77+lv), pts=[];
+      for(let i=0;i<Math.floor(W*(yB-top)/14);i++)pts.push([r()*W,top+r()*(yB-top-3),r()]);
+      RV.crowd={ lv, pts };
+    }
+    for(const [x,y,k] of RV.crowd.pts){ c.fillStyle=k<0.33?"#c8102e":k<0.66?"#e9e2d0":"#5a6a8a"; c.fillRect(x,y,1.6,1.6); }
+    c.fillStyle="rgba(0,0,0,.35)"; for(let y=top+6;y<yB;y+=7)c.fillRect(0,y,W,1);
+    if(lv>=5){ c.fillStyle="#9aa4b2"; c.fillRect(0,top-4,W,4); }
   }
-  for(const [x,y,k] of RV.crowd.pts){ c.fillStyle=k<0.33?"#c8102e":k<0.66?"#e9e2d0":"#5a6a8a"; c.fillRect(x,y,1.6,1.6); }
-  // 段の境目と屋根
-  c.fillStyle="rgba(0,0,0,.35)"; for(let y=top+6;y<yFar;y+=7)c.fillRect(0,y,W,1);
-  if(lv>=5){ c.fillStyle="#9aa4b2"; c.fillRect(0,top-4,W,4); }
-  drawBoards(c,W,H,yFar);
+  drawBoards(c,W,H,yB,yW);
 }
-/** 奥の広告の看板(スポンサーとロゴのマーク) */
-function drawBoards(c,W,H,yFar){
-  c.fillStyle="#0b0f1a"; c.fillRect(0,yFar-5,W,5);
-  c.fillStyle="#ffe28a"; c.font="700 "+Math.max(6,H*0.03)+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
+/** 広告の枠に出すもの(順に繰り返す)。スポンサーが増えたらここに足す */
+function boardAds(){
   const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"wcc_f";
-  // 看板: スポンサーとロゴのマークを交互に(→docs/14 第3弾)
-  const lg=logoImg(), ls=Math.max(6,H*0.034);
-  for(let i=0;i<4;i++){ const x=W*(0.125+i*0.25);
-    if(i%2&&lg){ c.drawImage(lg,x-ls*1.9,yFar-2.5-ls/2,ls,ls); c.fillText("WCC F",x+ls*0.4,yFar-2.5); }
-    else c.fillText(sp,x,yFar-2.5); }
+  return [{ text:sp, bg:"#c8102e", fg:"#fff" }, { text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" }];
+}
+/** B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす */
+function drawBoards(c,W,H,y0,y1){
+  const bh=y1-y0, ads=boardAds(), n=TUNING.view.boardN, cw=W/n, lg=logoImg();
+  c.fillStyle="#0b0d12"; c.fillRect(0,y0,W,bh);
+  c.fillStyle="#c8102e"; c.fillRect(0,y0,W,Math.max(1.5,bh*0.1));                 // 上の縁(赤)
+  const p0=y0+bh*0.18, ph=bh*0.7;
+  c.textAlign="center"; c.textBaseline="middle"; c.font="italic 900 "+Math.max(7,ph*0.74)+"px system-ui,sans-serif";
+  for(let i=0;i<n;i++){ const a=ads[i%ads.length], x=i*cw+1, w=cw-2, cx=x+w/2, cy=p0+ph/2;
+    c.fillStyle=a.bg; c.fillRect(x,p0,w,ph);
+    c.fillStyle="rgba(255,255,255,.14)"; c.fillRect(x,p0,w,ph*0.4);                 // LED の光り(上半分を少し明るく)
+    c.fillStyle=a.fg;
+    if(a.logo&&lg){ const ls=ph*0.78, tw=c.measureText(a.text).width, sx=cx-(ls+3+tw)/2;
+      c.drawImage(lg,sx,cy-ls/2,ls,ls); c.textAlign="left"; c.fillText(a.text,sx+ls+3,cy+0.5); c.textAlign="center"; }
+    else c.fillText(a.text,cx,cy+0.5); }
+  const g=c.createLinearGradient(0,y1,0,y1+bh*0.6); g.addColorStop(0,"rgba(0,0,0,.38)"); g.addColorStop(1,"rgba(0,0,0,0)");
+  c.fillStyle=g; c.fillRect(0,y1,W,bh*0.6);                                           // 芝に落ちる影
 }
 /** スタジアムの絵(Lv ごと)。読み込みが済むまでは null */
 const RV_STAD={};
@@ -106,15 +131,17 @@ function drawPitch(){
 }
 function drawPitchTo(c,W,H){
   // 毎回、画面全体を塗り直す(遠近で芝が届かない左右の外側に、前の場面のボールや選手が残らないように)
-  c.fillStyle="#17603a"; c.fillRect(0,0,W,H);
-  drawStands(c,W,H);
-  // 芝(縦の縞を遠近つきで)
-  const ext=0.03;
-  for(let i=0;i<10;i++){
-    const u0=-ext+i*(1+2*ext)/10, u1=u0+(1+2*ext)/10;
-    c.fillStyle=i%2?"#1b6e3c":"#1f7a43";
-    quad(c,[proj(u0,-0.04),proj(u1,-0.04),proj(u1,1.06),proj(u0,1.06)]); c.fill();
+  // C: 芝の色はスタジアムの絵の芝に寄せる(→docs/14 §14.152)
+  const gc=(typeof STAD_GRASS!=="undefined"&&STAD_GRASS[stadLv()-1])||[31,122,67], tone=k=>"rgb("+gc.map(v=>Math.round(v*k)).join(",")+")";
+  c.fillStyle=tone(0.86); c.fillRect(0,0,W,H);
+  // 芝(縦の縞を遠近つきで)。左右の外側まで縞を続け、奥は壁の下の端から
+  const sw=(1+2*0.03)/10, wv=TUNING.view.wallV;
+  for(let i=-6;i<16;i++){
+    const u0=-0.03+i*sw, u1=u0+sw;
+    c.fillStyle=i%2?tone(0.9):tone(1);
+    quad(c,[proj(u0,wv),proj(u1,wv),proj(u1,1.06),proj(u0,1.06)]); c.fill();
   }
+  drawStands(c,W,H);
   c.strokeStyle="rgba(255,255,255,.7)"; c.lineWidth=1.4;
   grect(c,0,0,1,1);
   gline(c,[0.5,0],[0.5,1]);

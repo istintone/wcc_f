@@ -304,7 +304,10 @@ const TUNING={
   // 試合映像の見え方(→docs/07 §7.11)。斜め上の横から見た立体
   //   far … 奥のタッチラインの縮み(手前 = 1)/ farY・nearY … 奥と手前のタッチラインの高さ(モニターの高さに対する割合)/ nearW … 手前の幅
   //   manH … 手前での選手の高さ / goalH … ゴールの高さ / standH … スタジアムの段ごとの奥のスタンドの高さ
+  //   wallV … 奥の壁(広告の帯の下の端)の奥行き(0 = 奥のタッチライン。負は外側)/ boardH … 広告の帯の高さ / boardN … 帯の枠の数
+  //   standBlur … 奥のスタンドのぼかし(何分の1に縮めてから引き伸ばすか)/ standDesat・standDim … 色を抜く量・暗くする量(→docs/14 §14.152)
   view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22],
+    wallV:-0.07, boardH:0.085, boardN:4, standBlur:2.2, standDesat:0.35, standDim:0.3,
     // ボールを持たない選手の動き(見た目だけ。→docs/07 §7.15)。1人ずつ独立して動く
     //   driftH/driftX … その場のゆらぎ(高さ・左右)/ runRate … 攻めているとき、1秒あたりに走り込みを始める率(スキルの向きで増減)
     //   runH/runX … 走り込みの深さ・横の幅 / runMs … 走り込みの長さ / press/pressN … 守るときボールへ寄せる割合と人数
