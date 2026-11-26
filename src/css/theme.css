@@ -3200,3 +3200,7 @@ body[class] #cap.ht .htb{min-width:0;max-width:100%}
 /* ハーフタイムの監督の手が吹き出しに隠れないように(監督を少し左、吹き出しを少し右へ。→docs/14 §14.180) */
 #cap.ht .ht-mgr{left:0;width:68px}
 #cap.ht .ht-opts{left:84px}
+/* ハーフタイム: 監督の絵(手まで入る幅。監督ごとに違う)の右に吹き出しを並べる(→docs/14 §14.181) */
+#cap.ht .ht-row{position:absolute;left:0;bottom:0;right:calc(100% - max(50%,244px) + 4px);display:flex;align-items:flex-end;pointer-events:none}
+#cap.ht .ht-row .ht-mgr{position:static!important;flex:0 0 auto;width:auto!important;height:78px;margin:0}
+#cap.ht .ht-row .ht-opts{position:static!important;flex:1;min-width:0;margin:0 0 12px 10px;pointer-events:auto}

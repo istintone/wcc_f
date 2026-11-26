@@ -8,7 +8,7 @@
   出力  src/js/art-mgr.js   MGR_ART = [ { full, bust, face }, … ]
 
   full … 立ち絵(幅150)。MANAGER の監督の欄・アバターを選ぶ画面
-  bust … バストアップ(頭から胸まで。幅220)。ハーフタイムの指示の演出
+  bust … バストアップ(頭から胸まで。高さ 249。幅は手が入るように監督ごとに変わる)。ハーフタイムの指示の演出
   face … 顔(96×96)。チャットの監督の発言
 
 いまは**仮置き**で mg01・mg02 の16人(実在の監督の似顔絵。オーナーの指示 2026-11-22)。公開版にも入るので、正式な絵ができたら差し替える。
@@ -47,9 +47,14 @@ def main():
         # 顔: 頭の上から 100px 四方
         n = 74
         face = im.crop((cx - n // 2, top - 3, cx + n // 2, top - 3 + n)).resize((96, 96), Image.LANCZOS)
-        # バストアップ: 頭の上から 170px、幅 150px
+        # バストアップ: 頭の上から 170px。幅は頭を中心に 150px を基本に、上げた手などがはみ出すなら絵のある範囲まで広げる
+        # (→docs/14 §14.181。前は 150px で切っていて手が見切れた)。拡大率は 220/150 で一定(頭の大きさはどの監督も同じ)
         bw, bh = 150, 170
-        bust = im.crop((cx - bw // 2, top - 6, cx + bw // 2, top - 6 + bh)).resize((220, round(220 * bh / bw)), Image.LANCZOS)
+        y0 = top - 6
+        ab = a.crop((0, max(0, y0), im.width, y0 + bh)).getbbox()
+        x0 = min(cx - bw // 2, ab[0] - 3); x1 = max(cx + bw // 2, ab[2] + 3)
+        k = 220 / bw
+        bust = im.crop((x0, y0, x1, y0 + bh)).resize((round((x1 - x0) * k), round(bh * k)), Image.LANCZOS)
         full = im.resize((150, round(im.height * 150 / im.width)), Image.LANCZOS)
         f1, f2, f3 = enc(full), enc(bust), enc(face)
         total += len(f1) + len(f2) + len(f3)

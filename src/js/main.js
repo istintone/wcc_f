@@ -344,7 +344,7 @@ function startEvent(ev){
     const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
     // モニターの中だけに出す(得点はヘッダにあるので出さない)。監督は左下から入り、指示は3つの白い吹き出し(→docs/14 §14.157)
     overlay("HALF TIME",'<div class="ht-st"><div class="ht-stbox"><h5>STATS</h5>'+resStatsHtml(G.M)+'</div></div>'+   // 前半の数字は右に棒で(結果の画面と同じ。→docs/14 §14.178)
-      (bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
+      '<div class="ht-row">'+(bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div></div>',TUNING.ht.timer,()=>setPlaying(true));   // 監督の絵の幅は監督ごとに違うので、吹き出しは絵の右に並べる(→docs/14 §14.181)
     $("cap").classList.add("ht");
     return;
   }
