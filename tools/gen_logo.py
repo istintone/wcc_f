@@ -8,7 +8,7 @@
         assets/logo_white.png … 白黒を反転した版。白い線・透明な地(暗い地の上に。タイトルはこちら)
         (透かし wm / wmk) … ボールのマークをごく薄くした白 / 黒の版(監督室の地の透かし。→docs/14 §14.19・§14.21)。ファイルには書き出さない
         (ball) … ボールのマークだけ(白い地に黒い線、円の外は透明)。試合の看板のロゴ(→docs/14 §14.153)
-        assets/icon-192.png・icon-512.png・apple-touch-icon.png・favicon.png … ホーム画面・ブックマークのアイコン(赤い地に白いボール)
+        assets/icon-192.png・icon-512.png・apple-touch-icon.png・favicon.png … ホーム画面・ブックマークのアイコン(赤い地に白いロゴ)
         src/js/logo-img.js   LOGO_IMG = { white:"data:image/png;base64,...", black:"...", wm:"...", ball:"..." }
 線の濃さをそのまま不透明さにする(縁のなめらかさを残す)。周りの余白は切り、幅 W に縮める。
 """
@@ -55,11 +55,12 @@ def words_of(g, h=72, rgb=(0, 0, 0)):
     return im
 
 
-def icon_of(ball, size):
-    """赤い地の真ん中に白いボール"""
+def icon_of(logo, size):
+    """赤い地の真ん中に白いロゴ(ボールと WCC/F の文字。TOP と同じ白の版。→docs/14 §14.196)。一辺の ICON_D に収める"""
     im = Image.new("RGBA", (size, size), ICON_BG + (255,))
-    d = round(size * ICON_D); b = ball.resize((d, d), Image.LANCZOS)
-    im.alpha_composite(b, ((size - d) // 2, (size - d) // 2))
+    box = round(size * ICON_D); k = box / max(logo.size)
+    w, h = round(logo.width * k), round(logo.height * k); g = logo.resize((w, h), Image.LANCZOS)
+    im.alpha_composite(g, ((size - w) // 2, (size - h) // 2))
     return im.convert("RGB")
 
 
@@ -88,7 +89,7 @@ def main():
         data[name] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
     ball = ball_of(Image.open(SRC).convert("L"))
     for name, size in (("icon-192.png", 192), ("icon-512.png", 512), ("apple-touch-icon.png", 180), ("favicon.png", 64)):
-        icon_of(ball, size).save(ROOT / "assets" / name, optimize=True)
+        icon_of(Image.open(ROOT / "assets" / "logo_white.png").convert("RGBA"), size).save(ROOT / "assets" / name, optimize=True)
     buf = io.BytesIO(); ball.resize((128, 128), Image.LANCZOS).save(buf, "PNG", optimize=True)
     data["ball"] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
     buf = io.BytesIO(); words_of(Image.open(SRC).convert("L")).save(buf, "PNG", optimize=True)
