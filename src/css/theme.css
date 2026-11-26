@@ -3294,3 +3294,6 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 /* 任期の評価の内訳(→docs/28 §28.5) */
 #club .tend .tev li{display:flex;justify-content:space-between}
 #club .tend .sal i.dn{color:#1d5fbf}
+/* カードの排出の画面のカードの裏は、拡大されないので下の段の字を大きく(→docs/14 §14.195) */
+.pk-cardin .kb-txt{font-size:8.2px!important;line-height:1.32!important;gap:2px!important}
+.pk-cardin .kb-txt small{font-size:7.2px!important}
