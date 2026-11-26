@@ -4908,7 +4908,10 @@ const TUNING={
          shapeTau:900, delay0:90, delayRnd:260, delaySpd:14, amp:{ GK:0.5, CB:0.75, SB:0.9, DMF:0.9, CMF:1.05, SMF:1.05, OMF:1.15, WG:1.2, CF:1.2 } },
     // 走る・止まる(→docs/29 §29.2)。ピッチ 105×68m の画面上の m/ms。v0 + spd × vSpd が最高速、acc・dec が加速・減速(m/ms²)、ball … ボールに絡む人の倍率
     //   bob・lean … 走るときの上下の揺れ(選手の高さに対する割合)と前傾(度)/ stride … 1歩の長さ(m)
-    kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.06, lean:7, stride:2.6, face:0.004 } },
+    kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.045, lean:7, stride:8, face:0.004,
+      // 段階2(→docs/29 §29.4): wind … 蹴る前の溜め(プレーの時間の割合)/ arrive … ボールが届く時点(残りはファーストタッチで止まる)
+      //   line … 守備のラインをそろえる強さ / pressGap … 寄せる人が保持者の手前で止まる距離(u)/ sup … 攻撃の三角形に寄る強さ / celebMs … ゴールのあと集まる長さ
+      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
@@ -11852,8 +11855,11 @@ function ballKind(ev){
   return k;
 }
 /** t(0〜1)でのボールの位置と高さ。a・b は画面の [u, v] */
-function ballPath(ev,t,a,b){
-  const k=ballKind(ev), far=Math.hypot(b[0]-a[0],b[1]-a[1]);
+function ballPath(ev,t0,a,b){
+  const k=ballKind(ev), far=Math.hypot(b[0]-a[0],b[1]-a[1]), K=TUNING.view.kin;
+  // プレーの「間」(→docs/29 §29.4): 蹴る前に溜め(ボールは足元)、届いたらファーストタッチで一瞬止まる
+  const w=k==="carry"?0:k==="shot"?K.windShot:K.wind, e=k==="carry"||k==="shot"?1:K.arrive;
+  const t=clamp((t0-w)/(e-w),0,1);
   const at=q=>[lerp(a[0],b[0],q),lerp(a[1],b[1],q)];
   switch(k){
     case "ground":  { const q=1-Math.pow(1-t,2.2); return { pos:at(q), lift:0, k }; }               // 転がって減速
@@ -11919,7 +11925,7 @@ function drawFrame(G,dt){
     RV.ball=target;
     if(B.k!=="carry"){
       pin.set(ev.by,a);
-      if(t<0.22)RV.kick={ id:ev.by, dir:Math.sign(b[0]-a[0])||1 };   // 蹴る瞬間の踏み込み
+      if(t<TUNING.view.kin.wind+0.1)RV.kick={ id:ev.by, dir:Math.sign(b[0]-a[0])||1 };   // 溜めて蹴る瞬間の踏み込み
       if(ev.to&&ev.ok){
         // スルーパスは受け手が後ろから走り込んで追いつく
         if(B.k==="through"){ const back=[b[0]-(b[0]-a[0])*0.28,b[1]+(b[1]>0.5?-0.06:0.06)]; pin.set(ev.to,[lerp(back[0],b[0],Math.min(1,t*1.1)),lerp(back[1],b[1],Math.min(1,t*1.1))]); }
@@ -11951,6 +11957,7 @@ else{
   // パスが通ったら、味方の誰か(FW・MF)が走り出す(イベントで動きを起こす)
   if(ev&&ev!==RV.lastEv){
     RV.lastEv=ev;
+    if(ev.type==="shot"&&ev.res==="goal")RV.celeb={ side:ev.side, id:ev.by, until:now+ev.dur+TUNING.view.kin.celebMs };   // ゴールのあと集まる(→docs/29 §29.4)
     if(ev.type==="pass"&&ev.ok&&Math.random()<VM.evRun){
       const T=teamOf(M,ev.side), c=T.players.filter(p=>!p.gk&&p.id!==ev.by&&p.id!==ev.to&&GROUP_OF[p.role]!=="DF");
       const q=c[Math.floor(Math.random()*c.length)]; if(q)startRun(mvOf(q),now,VM,1.2);
@@ -11969,11 +11976,18 @@ else{
     // 守っているときにボールへ寄せる人(ボールに近い順に pressN 人。GK は除く)
     const pr=att?new Set():new Set(T.players.filter(p=>!p.gk&&!pin.has(p.id))
       .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));
+    // まず全員の目標を出し、役割の動きで直してから走らせる(→docs/29 §29.4)
+    const goals=new Map();
     for(const p of T.players){
-      seen.add(p.id);
       let goal=pin.get(p.id);
       if(!goal){ const bd=ballAt(mvOf(p).delay), dh=T.side==="H"?bd[1]:1-bd[1], dx=(T.side==="H"?bd[2]:1-bd[2])*100;
         const q=offBallGoal(p,dh,dx,att,pr.has(p.id)?[bh,bx]:null,now,dt); goal=scrOf(T.side,q[0],q[1]); }
+      goals.set(p.id,goal.slice());
+    }
+    roleMoves(T,goals,pin,att,pr,ev,holderId,now);
+    for(const p of T.players){
+      seen.add(p.id);
+      const goal=goals.get(p.id);
       let st=RV.vis.get(p.id);
       if(!st||Array.isArray(st)){ st={ x:goal[0], y:goal[1], vx:0, vy:0, ph:Math.random()*6, face:T.side==="H"?1:-1 }; RV.vis.set(p.id,st); }
       // 走る・止まる: 速度と加速度で目標へ(スピードが高いほど速い)。ボールに絡む人(pin)は速く、ドリブルする人はボールに合わせる(→docs/29 §29.2)
@@ -11990,6 +12004,42 @@ else{
   items.push({ v:RV.ball[1]+0.001, draw:()=>{ drawTrail(c,unit); drawBall(c,unit,lift); } });
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
   items.sort((a,b)=>a.v-b.v).forEach(o=>o.draw());
+}
+/**
+ * 役割の動き(→docs/29 §29.4)。goals(画面の [u, v])を直す。ボールに絡む人(pin)は動かさない。
+ *   守備: ディフェンスラインをそろえて上げ下げ / いちばん近い人は保持者のすぐ手前まで寄せる
+ *   攻撃: 保持者の近くの2人が斜め後ろ・斜め前に動いて三角形 / セットプレー: 両チームがゴール前に集まる / ゴールのあと: 決めたチームは得点者のまわりに集まり、相手は自陣へ
+ */
+function roleMoves(T,goals,pin,att,pr,ev,holderId,now){
+  const K=TUNING.view.kin, dir=T.side==="H"?1:-1, B=RV.ball, free=p=>!pin.has(p.id)&&!p.gk;
+  const C=RV.celeb&&now<RV.celeb.until?RV.celeb:null;
+  if(C){
+    const sc=RV.vis.get(C.id);
+    for(const p of T.players){ if(!free(p)||p.id===C.id)continue; const g=goals.get(p.id);
+      if(T.side===C.side&&sc){ const h=hashStr("cb:"+p.id), a=(h%628)/100; g[0]=sc.x+Math.cos(a)*0.035; g[1]=sc.y+Math.sin(a)*0.06; }
+      else g[0]=lerp(g[0],T.side==="H"?0.3:0.7,0.6); }
+    return;
+  }
+  // セットプレー(コーナー・フリーキックのクロス): ゴール前に集まる
+  if(ev&&ev.type==="cross"&&ev.sp){
+    const gu=ev.side==="H"?0.93:0.07, d=ev.side==="H"?-1:1;
+    for(const p of T.players){ if(!free(p)||p.id===ev.by)continue; const h=hashStr("sp:"+p.id), g=goals.get(p.id);
+      g[0]=gu+d*(0.02+(h%5)*0.013); g[1]=0.34+((h>>3)%8)*0.045; }
+    return;
+  }
+  if(!att){
+    // ディフェンスラインをそろえる
+    const df=T.players.filter(p=>free(p)&&GROUP_OF[p.role]==="DF");
+    if(df.length>1){ const m=df.reduce((a,p)=>a+goals.get(p.id)[0],0)/df.length; for(const p of df){ const g=goals.get(p.id); g[0]=lerp(g[0],m,K.line); } }
+    // いちばん近い人は保持者のすぐ手前(自陣側)まで寄せて止まる
+    const first=[...pr][0], pp=first&&T.players.find(p=>p.id===first);
+    if(pp&&free(pp)){ const g=goals.get(pp.id); g[0]=B[0]-dir*K.pressGap; g[1]=B[1]; }
+  }else if(holderId){
+    // 保持者の近くの2人が三角形を作る(斜め後ろ・斜め前)
+    const near=T.players.filter(p=>free(p)&&p.id!==holderId).map(p=>({ p, d:Math.hypot(goals.get(p.id)[0]-B[0],goals.get(p.id)[1]-B[1]) })).sort((a,b)=>a.d-b.d).slice(0,2);
+    const side=B[1]<0.5?1:-1, sup=[[B[0]-0.07*dir,B[1]+0.12*side],[B[0]+0.06*dir,B[1]-0.1*side]];
+    near.forEach((o,i)=>{ const g=goals.get(o.p.id), s=sup[i]; g[0]=lerp(g[0],clamp(s[0],0.03,0.97),K.sup); g[1]=lerp(g[1],clamp(s[1],0.04,0.96),K.sup); });
+  }
 }
 /** 【仮】選手の立ち姿の絵(pftb の汎用選手。→docs/10 §10.9)。読み込んだ Image を使い回す */
 const RV_IMG={};

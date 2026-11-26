@@ -330,7 +330,10 @@ const TUNING={
          shapeTau:900, delay0:90, delayRnd:260, delaySpd:14, amp:{ GK:0.5, CB:0.75, SB:0.9, DMF:0.9, CMF:1.05, SMF:1.05, OMF:1.15, WG:1.2, CF:1.2 } },
     // 走る・止まる(→docs/29 §29.2)。ピッチ 105×68m の画面上の m/ms。v0 + spd × vSpd が最高速、acc・dec が加速・減速(m/ms²)、ball … ボールに絡む人の倍率
     //   bob・lean … 走るときの上下の揺れ(選手の高さに対する割合)と前傾(度)/ stride … 1歩の長さ(m)
-    kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.06, lean:7, stride:2.6, face:0.004 } },
+    kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.045, lean:7, stride:8, face:0.004,
+      // 段階2(→docs/29 §29.4): wind … 蹴る前の溜め(プレーの時間の割合)/ arrive … ボールが届く時点(残りはファーストタッチで止まる)
+      //   line … 守備のラインをそろえる強さ / pressGap … 寄せる人が保持者の手前で止まる距離(u)/ sup … 攻撃の三角形に寄る強さ / celebMs … ゴールのあと集まる長さ
+      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
