@@ -227,10 +227,11 @@ const TUNING={
   //   follow/bondMin … 次の任期についてくる選手の数の上限 / 要る絆
   // 監督の年俸(→docs/28): 今の年俸 pay を任期の評価 P で上げ下げする。pay0 … 新しい監督の年俸(億)/ payMin … 下限
   //   req … 求められる評価 R = a + b × log10(1 + pay / c) / up … 上がる係数 = k ÷ (1 + (pay / s)^e) / dn … 下がる係数 = k × (1 + (pay / s)^e) / bump … 安い年俸の底上げ(最大)
-  //   w … 評価の重み(exp クラブの目標の達成率 × 上限 expCap / title 称号の格 / win 勝率 ÷ winRef / mis 指令1つ)/ cup … 大会の格ごとの優勝 / lg … Div ごとのリーグ優勝 / cupMax … 優勝の合計の上限
+  //   w … 評価の重み(title 称号の格 / win 勝率 ÷ winRef)/ cup … 大会の格ごとの優勝 / lg … Div ごとのリーグ優勝 / cupMax … 優勝の合計の上限
+  //   mis … クラブの目標(CLUB MISSION)は評価ではなく年俸に直接: 達成で × (1 + up0 ÷ (1 + (pay / upS)^e))、未達で × (1 − dn0 × (1 + (pay / dnS)^e))。own … オーナーの指令1つはその割合の何倍か(→docs/28 §28.10)
   //   rankAt … 監督ランク(1〜5)に要る今の年俸(億)
-  term:{ follow:3, bondMin:6, pay0:0.3, payMin:0.3, req:[0.40,0.30,8], up:[1.1,14,1.15], dn:[0.35,90,2.2], bump:1.0,
-    w:{ exp:0.40, expCap:1.25, title:0.25, win:0.12, winRef:0.65, mis:0.05 }, cup:{ E:0.02, D:0.03, C:0.05, B:0.07, A:0.10, S:0.14 }, lg:[0,0.04,0.07,0.12], cupMax:0.35,
+  term:{ follow:3, bondMin:6, pay0:0.3, payMin:0.3, req:[0.12,0.28,8], up:[1.1,14,1.15], dn:[0.35,90,2.2], bump:1.0,
+    w:{ title:0.25, win:0.12, winRef:0.65 }, mis:{ up0:0.12, upS:25, dn0:0.10, dnS:90, e:1.5, own:0.4 }, cup:{ E:0.02, D:0.03, C:0.05, B:0.07, A:0.10, S:0.14 }, lg:[0,0.04,0.07,0.12], cupMax:0.35,
     rankAt:[5,15,35,70] },
   // クラブオファー(→docs/16)。size … 規模ごとの1部での幅(fans・money は部で divK 倍)・成長グラフの初めの幅・スタジアムの段・施設の段
   //   lean … 地域の得意な軸に足す / spread … 監督の格からの差が 0・±1 になる率(残りが ±2)

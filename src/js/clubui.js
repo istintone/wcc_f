@@ -989,7 +989,7 @@ function termEndHtml(){
     '<div class="sal"><div><small>年俸</small><b>'+payTxt(e.salary)+'<i>億</i></b>'+(e.pay0!=null?'<i class="'+(e.salary>=e.pay0?'up':'dn')+'">'+payTxt(e.pay0)+' → '+(e.salary>=e.pay0?'+':'')+Math.round((e.salary/e.pay0-1)*100)+'%</i>':'')+'</div>'+
       (e.ev!=null?'<div><small>評価</small><b>'+Math.round(e.ev*100)+'<i>pt</i></b><i>求め '+Math.round(e.req*100)+'</i></div>':'')+
       '<div><small>監督ランク</small><b>'+e.fac+'</b>'+(e.facUp?'<i class="up">UP</i>':'')+'</div></div>'+
-    (e.parts?'<ul class="texp tev">'+[["exp","クラブの目標"],["title","監督称号"],["win","勝率"],["cup","優勝"],["mis","オーナーの指令"]].map(([k,l])=>'<li><span>'+l+'</span><b>'+(e.parts[k]>=0?'+':'')+Math.round(e.parts[k]*100)+'pt</b></li>').join("")+'</ul>':'')+
+    (e.parts?'<ul class="texp tev">'+[["title","監督称号"],["win","勝率"],["cup","優勝"]].map(([k,l])=>'<li><span>'+l+'</span><b>'+(e.parts[k]>=0?'+':'')+Math.round(e.parts[k]*100)+'pt</b></li>').join("")+'</ul>':'')+
     termExpHtml(e);
   h+='<h4>次の任期についてくる選手</h4>'+(e.follow.length?'<ul class="fol">'+e.follow.map(id=>{
       const g=S.g.pl[id], c=CARDS[id];
@@ -1515,20 +1515,20 @@ function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
   // クラブからの目標(→docs/14 §14.193): 見出しに目標そのもの、進み具合・残り試合、達成したときの年俸の上乗せ。オーナーの指令も達成・失敗の増減を添える
   const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100), O=TUNING.offer, lv=cp.expLv||1, ok=got>=cp.target;
-  const left=Math.max(0,TUNING.club.termLen-S.played);
+  const left=Math.max(0,TUNING.club.termLen-S.played), pay=S.pay!=null?S.pay:TUNING.term.pay0, pu=Math.round(misUp(pay)*100), pd=Math.round(misDn(pay)*100);
   return '<section class="exp-tile'+(ok?' done':'')+'"><div class="et-top"><i class="et-tag">CLUB MISSION</i><small>'+cp.name+'</small></div>'+
     '<b class="et-goal">任期中に賞金 '+cp.target+'億を獲得</b>'+
     '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(ok?' class="ok"':'')+'></u></i>'+
     '<div class="et-nums"><span><b>'+Math.round(got)+'</b> / '+cp.target+'億'+(ok?' ・ 達成':' ・ あと '+Math.max(0,Math.ceil(cp.target-got))+'億')+' ・ 残り '+left+'試合</span>'+
-      '<em class="et-rw">'+(ok?'達成 ・ ':'達成で ')+'評価 +'+Math.round(TUNING.term.w.exp*100)+'pt</em></div>'+   // 年俸は任期の評価で決まる(→docs/28)
-    (S.mis?'<p class="et-mis"><i class="et-tag own">OWNER</i><b>'+S.mis.text+'</b><em>達成 +'+Math.round(TUNING.term.w.mis*100)+'pt / 失敗 −'+Math.round(TUNING.term.w.mis*100)+'pt</em></p>':'')+'</section>';
+      '<em class="et-rw">'+(ok?'達成 ・ 年俸 +'+pu+'%':'達成で 年俸 +'+pu+'% / 未達で −'+pd+'%')+'</em></div>'+   // 目標は年俸に直接(→docs/28 §28.10)
+    (S.mis?'<p class="et-mis"><i class="et-tag own">OWNER</i><b>'+S.mis.text+'</b><em>達成 +'+Math.round(TUNING.term.mis.own*misUp(pay)*100)+'% / 失敗 −'+Math.round(TUNING.term.mis.own*misDn(pay)*100)+'%</em></p>':'')+'</section>';
 }
 /** 任期終了: クラブの期待と指令の結果(年俸の内訳) */
 function termExpHtml(e){
   if(!e.exp&&!(e.mis&&e.mis.length))return "";
   return '<h4>クラブの期待 <small>'+(e.club||"")+'</small></h4><ul class="texp">'+
-    (e.exp?'<li class="'+(e.exp.ok?'ok':'ng')+'">獲得賞金 '+e.exp.prize+' / 目標 '+e.exp.target+'億 → '+(e.exp.ok?'達成':'届かず')+'</li>':'')+
-    (e.mis||[]).map(m=>'<li class="'+(m.ok===null?'':m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok===null?'任期の終わりで打ち切り':(m.ok?'達成 ':'失敗 ')+(m.v>=0?'+':'')+m.v+'pt')+'</li>').join("")+'</ul>';
+    (e.exp?'<li class="'+(e.exp.ok?'ok':'ng')+'">獲得賞金 '+e.exp.prize+' / 目標 '+e.exp.target+'億 → '+(e.exp.ok?'達成':'届かず')+(e.misK?' 年俸 '+(e.misK>0?'+':'')+Math.round(e.misK*100)+'%':'')+'</li>':'')+
+    (e.mis||[]).map(m=>'<li class="'+(m.ok===null?'':m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok===null?'任期の終わりで打ち切り':(m.ok?'達成 ':'失敗 ')+'年俸 '+(m.v>=0?'+':'')+m.v+'%')+'</li>').join("")+'</ul>';
 }
 /* ---- エンブレムエディター(→docs/27 §27.8)。盾の上にパーツ(紋章・文字・リボン・外装)を最大6つ重ねる ----
  * 大きなプレビューで、選んだパーツを指でドラッグして動かす(矢印・大きさの − + で微調整)。タブは パーツ / 盾 / 色。

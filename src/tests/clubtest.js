@@ -223,8 +223,8 @@ function playOne(S,W,decline,opt){
   S.club=E.defaultClub();
   while(!S.termOver)playOne(S,W);
   const e=S.tend;
-  check("任期の終わりに、獲得賞金と目標・指令の結果が評価に入り、年俸が評価で上げ下げされる(→docs/28)",e.exp&&e.exp.target===mega.target&&Math.abs(e.exp.prize-S.ts.prize)<1&&
-    e.mis.length>0&&Math.abs(e.parts.mis-e.mis.reduce((s,m)=>s+m.v,0)/100)<1e-9&&e.salary===E.nextPay(e.pay0,e.ev),
+  check("任期の終わりに、年俸を評価で上げ下げし、クラブの目標・指令の結果を年俸に直接掛ける(→docs/28)",e.exp&&e.exp.target===mega.target&&Math.abs(e.exp.prize-S.ts.prize)<1&&
+    e.mis.length>0&&e.payEv===E.nextPay(e.pay0,e.ev)&&e.salary===E.missionPay(e.pay0,e.payEv,e.exp.ok,e.mis.map(m=>m.ok)),
     "獲得 "+e.exp.prize+" / 期待 "+e.exp.target+" ・ 指令 "+e.mis.map(m=>(m.ok?"○":"×")+m.v).join(" ")+" ・ 年俸 "+e.salary+"億");
   E.startNextTerm(S,W);
   check("次の任期はクラブを選び直す(オファーが届く)",!S.cprof&&!S.club&&E.offersOf(S).length===3);
@@ -688,8 +688,10 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   check("監督ランクは今の年俸で上がる(0.3億 → 1 / 15億 → 3 / 70億 → 5)",E.facLevel(0.3)===1&&E.facLevel(15)===3&&E.facLevel(70)===5);
   { // 年俸の伸び方(→docs/28): 毎任期「とても良い」(0.80)で 20任期 40〜60億、「並」(0.50)では 10億に届かない。100億では「良」(0.65)で下がる
     const run=(P,n)=>{ let p=0.3; for(let i=0;i<n;i++)p=E.nextPay(p,P); return p; };
-    check("年俸は 10〜20任期で 50億を目指せ、20億から緩やか・100億から下がりやすい",run(0.8,20)>=40&&run(0.8,20)<=60&&run(0.5,20)<10&&E.nextPay(100,0.65)<100&&E.nextPay(20,0.8)/20<E.nextPay(5,0.8)/5,
-      "0.80×20 "+run(0.8,20)+" / 0.50×20 "+run(0.5,20)+" / 100億で0.65 → "+E.nextPay(100,0.65)); }
+    // 評価は 称号・勝率・優勝だけ(目標は年俸に直接)。毎任期「とても良い」(0.42)で目標も達成し続けると 20任期 35〜60億
+    const run2=(P,n)=>{ let p=0.3; for(let i=0;i<n;i++)p=E.missionPay(p,E.nextPay(p,P),true,[]); return p; };
+    check("年俸は 10〜20任期で 50億を目指せ、20億から緩やか・100億から下がりやすい",run2(0.42,20)>=35&&run2(0.42,20)<=65&&run(0.22,20)<10&&E.missionPay(100,E.nextPay(100,0.33),false,[])<80&&E.nextPay(20,0.42)/20<E.nextPay(5,0.42)/5,
+      "0.42×20 "+run2(0.42,20)+" / 0.22×20 "+run(0.22,20)+" / 100億で0.33・未達 → "+E.missionPay(100,E.nextPay(100,0.33),false,[])); }
 }
 
 // ---------- ⑦ カード ----------

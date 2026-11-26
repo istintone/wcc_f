@@ -1028,9 +1028,10 @@ function pickOffer(S,W,i){
  * S.mis = { kind:"cup"|"lg", comp, n, cyc, st:"on", text }。達成・失敗は任期の評価に入る(pt。S.ts.misLog に残す。→docs/28) */
 function misText(m){ return m.kind==="lg"?"リーグで "+m.n+"位以内に入れ":COMPS[m.comp].name+"で優勝しろ"; }
 function misEnd(S,ok,out){
-  const m=S.mis, v=Math.round((ok?1:-1)*TUNING.term.w.mis*100);   // 指令は任期の評価に入る(pt。→docs/28)
+  // 指令は任期の終わりに年俸に直接効く(年俸に対する割合。→docs/28 §28.10)
+  const m=S.mis, pay=S.pay!=null?S.pay:TUNING.term.pay0, M=TUNING.term.mis, v=Math.round((ok?M.own*misUp(pay):-M.own*misDn(pay))*100);
   (S.ts.misLog||(S.ts.misLog=[])).push({ text:m.text, ok, v });
-  out.push(ok?"👔 オーナーの指令「"+m.text+"」を達成！ 評価 +"+v+"pt":"👔 オーナーの指令「"+m.text+"」は失敗… 評価 "+v+"pt");
+  out.push(ok?"👔 オーナーの指令「"+m.text+"」を達成！ 年俸 +"+v+"%":"👔 オーナーの指令「"+m.text+"」は失敗… 年俸 "+v+"%");
   S.mis=null;
 }
 function misAfterMatch(S,fx,out){

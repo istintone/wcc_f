@@ -86,14 +86,22 @@ function facLevel(pay){
 const payReq=pay=>{ const q=TUNING.term.req; return q[0]+q[1]*Math.log10(1+pay/q[2]); };
 /** 任期の評価 P と内訳(0〜1.3 くらい。画面では ×100 の pt) */
 function termEval(S,x,title){
-  const W=TUNING.term.w, T=TUNING.term, cp=S.cprof&&!S.cprof.legacy?S.cprof:null;
-  const ratio=cp?(S.ts.prize||0)/cp.target:Math.min(1,x.wr/0.6);
+  // クラブの目標とオーナーの指令は評価に入れず、年俸に直接効く(misUp・misDn。→docs/28 §28.10)
+  const W=TUNING.term.w, T=TUNING.term;
   const t=S.titles.filter(z=>z.term===S.term);
   const cup=Math.min(T.cupMax,t.reduce((a,z)=>a+(z.comp==="LG"?(T.lg[z.div||S.grade]||T.lg[1]):(T.cup[COMPS[z.comp]&&COMPS[z.comp].grade]||0)),0));
-  const mis=(S.ts.misLog||[]).reduce((a,m)=>a+(m.ok===true?W.mis:m.ok===false?-W.mis:0),0);
-  const parts={ exp:W.exp*Math.min(W.expCap,ratio), title:W.title*title.grade/3, win:W.win*Math.min(1,x.wr/W.winRef), cup, mis };
+  const parts={ title:W.title*title.grade/3, win:W.win*Math.min(1,x.wr/W.winRef), cup };
   const P=Object.values(parts).reduce((a,b)=>a+b,0);
   return { P, parts };
+}
+/** クラブの目標を達成したときの年俸の上がる割合 / 届かなかったときの下がる割合(年俸が高いほど上がりにくく、下がりやすい。→docs/28 §28.10) */
+const misUp=pay=>{ const M=TUNING.term.mis; return M.up0/(1+Math.pow(pay/M.upS,M.e)); };
+const misDn=pay=>{ const M=TUNING.term.mis; return M.dn0*(1+Math.pow(pay/M.dnS,M.e)); };
+/** 評価で決めた年俸に、クラブの目標(ok: true / false / null = 目標なし)とオーナーの指令(oks: [true|false|null])を掛ける */
+function missionPay(pay0,pay,ok,oks){
+  const M=TUNING.term.mis; let k=ok===true?1+misUp(pay0):ok===false?1-misDn(pay0):1;
+  for(const o of oks||[])k*=o===true?1+M.own*misUp(pay0):o===false?1-M.own*misDn(pay0):1;
+  return Math.max(TUNING.term.payMin,Math.round(pay*k*10)/10);
 }
 /** 年俸を評価で上げ下げする(→docs/28 §28.3)。上がるのは 20億前後から緩やか、100億あたりから下がりやすい */
 function nextPay(pay,P){
@@ -113,13 +121,15 @@ function endTerm(S){
   const cp=S.cprof&&!S.cprof.legacy?S.cprof:null;
   const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target }:null;
   const misSal=0, ev=termEval(S,x,title), pay0=S.pay!=null?S.pay:T.pay0, req=payReq(pay0);
-  const salary=nextPay(pay0,ev.P);
+  const payEv=nextPay(pay0,ev.P);
+  const salary=missionPay(pay0,payEv,exp?exp.ok:null,(S.ts.misLog||[]).map(m=>m.ok));
   const before=S.fac||facLevel(pay0);
   S.salary=Math.round(((S.salary||0)+pay0)*10)/10;   // 累計は、この任期に受け取った年俸
   S.pay=salary;
   S.fac=facLevel(S.pay);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
-    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal, pay0, ev:ev.P, req, parts:ev.parts };
+    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal, pay0, payEv, ev:ev.P, req, parts:ev.parts,
+    misK:exp?(exp.ok?misUp(pay0):-misDn(pay0)):0 };
   S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }
