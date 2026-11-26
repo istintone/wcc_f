@@ -10975,7 +10975,8 @@ function embSvg(clubId,name,size,opts){
   const gold="oklch(0.82 0.14 88)", dark="oklch(0.34 0.08 78)", light="oklch(0.93 0.09 92)";
   const col=c=>c==="home"?a:c==="away"?b:c==="third"?(pt?pt.hex:auto):c==="gold"?gold:c==="white"?"#FFFFFF":c==="black"?"#1A1A1E":c==="ink"||!c?ink:(/^#[0-9a-fA-F]{6}$/.test(c)?c:ink);
   // 盾の縁。地と同じ明るさに沈まないよう、地より一段明るい / 暗い色(二重の縁は内側に白か黒の細い線)
-  const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
+  const prc=embHueById(d.rimc);                       // 縁の色を指定(→docs/27 §27.13)
+  const rim=prc?prc.hex:ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
   const uid=++EMB_UID;
   const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"")+"_"+uid;
@@ -10986,7 +10987,7 @@ function embSvg(clubId,name,size,opts){
   const rTop=P.some(x=>x.t==="ribbon"&&x.pos==="top");
   const rimW=d.rim==="thin"?2.5:d.rim==="thick"?6:4;
   const rimSvg='<path d="'+path+'" fill="none" stroke="'+rim+'" stroke-width="'+(d.rim==="double"?6:rimW)+'"/>'
-    +(d.rim==="double"?'<path d="'+path+'" fill="none" stroke="'+(la>=0.62?"#1A1A1E":"#FFFFFF")+'" stroke-width="1.4"/>':"");
+    +(d.rim==="double"?'<path d="'+path+'" fill="none" stroke="'+(embLumAny(rim)>=0.55?"#1A1A1E":"#FFFFFF")+'" stroke-width="1.4"/>':"");
   let back="", front="";
   P.forEach((p,k)=>{
     if(p.t==="orn"&&p.k==="laurel")back+=embLaurel2(gold,dark,light);   // 月桂樹は盾の後ろ
@@ -14222,7 +14223,10 @@ function applyPack(d){
   if(!d)return 0;
   let n=0;
   for(const id in d.names)if(CARDS[id]&&typeof d.names[id]==="string"){ PACK.names[id]=d.names[id]; n++; }
-  for(const id in d.teams)if(TEAMS[id]&&d.teams[id]&&typeof d.teams[id].name==="string")PACK.teams[id]={ name:d.teams[id].name };
+  for(const id in d.teams)if(TEAMS[id]&&d.teams[id]&&typeof d.teams[id].name==="string"){
+    PACK.teams[id]={ name:d.teams[id].name };
+    const e=d.teams[id].emblem; if(e&&typeof e==="object"&&Array.isArray(e.parts))PACK.teams[id].emblem=e;   // エンブレム(→docs/27 §27.13)
+  }
   return n;
 }
 /** 起動時: 端末に保存したパックがあれば流し込む */
@@ -14667,14 +14671,16 @@ function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; 
 /** チームのエンブレムの主色(emblemSvg と同じ引数で)。チャートや線の色に使う */
 function teamColor(team){
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club, c=own?CL.S.club:null;
-  return embMainColor(team.id,c?c.name:(team.name||team.short||""),{ color:c?c.color:team.color, design:c?c.emblem:null });
+  return embMainColor(team.id,c?c.name:(team.name||team.short||""),{ color:c?c.color:team.color, design:c?c.emblem:packEmblem(team) });
 }
+/** 実名パックのエンブレム(パックで遊ぶときだけ。公開する版のデータには入れない。→docs/27 §27.13) */
+const packEmblem=team=>team&&typeof PACK!=="undefined"&&PACK.teams[team.id]&&PACK.teams[team.id].emblem||null;
 /* ---- エンブレム(クラブの色と略称から描く盾。独自の意匠) ---- */
 function emblemSvg(team,size){
   // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
   const c=own?CL.S.club:null;
-  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null, text:c?c.short:null });
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:packEmblem(team), text:c?c.short:null });
 }
 
 /* ---- タイトル ---- */

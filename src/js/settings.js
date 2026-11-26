@@ -38,7 +38,10 @@ function applyPack(d){
   if(!d)return 0;
   let n=0;
   for(const id in d.names)if(CARDS[id]&&typeof d.names[id]==="string"){ PACK.names[id]=d.names[id]; n++; }
-  for(const id in d.teams)if(TEAMS[id]&&d.teams[id]&&typeof d.teams[id].name==="string")PACK.teams[id]={ name:d.teams[id].name };
+  for(const id in d.teams)if(TEAMS[id]&&d.teams[id]&&typeof d.teams[id].name==="string"){
+    PACK.teams[id]={ name:d.teams[id].name };
+    const e=d.teams[id].emblem; if(e&&typeof e==="object"&&Array.isArray(e.parts))PACK.teams[id].emblem=e;   // エンブレム(→docs/27 §27.13)
+  }
   return n;
 }
 /** 起動時: 端末に保存したパックがあれば流し込む */

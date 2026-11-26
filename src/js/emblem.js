@@ -670,7 +670,8 @@ function embSvg(clubId,name,size,opts){
   const gold="oklch(0.82 0.14 88)", dark="oklch(0.34 0.08 78)", light="oklch(0.93 0.09 92)";
   const col=c=>c==="home"?a:c==="away"?b:c==="third"?(pt?pt.hex:auto):c==="gold"?gold:c==="white"?"#FFFFFF":c==="black"?"#1A1A1E":c==="ink"||!c?ink:(/^#[0-9a-fA-F]{6}$/.test(c)?c:ink);
   // 盾の縁。地と同じ明るさに沈まないよう、地より一段明るい / 暗い色(二重の縁は内側に白か黒の細い線)
-  const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
+  const prc=embHueById(d.rimc);                       // 縁の色を指定(→docs/27 §27.13)
+  const rim=prc?prc.hex:ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
   const uid=++EMB_UID;
   const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"")+"_"+uid;
@@ -681,7 +682,7 @@ function embSvg(clubId,name,size,opts){
   const rTop=P.some(x=>x.t==="ribbon"&&x.pos==="top");
   const rimW=d.rim==="thin"?2.5:d.rim==="thick"?6:4;
   const rimSvg='<path d="'+path+'" fill="none" stroke="'+rim+'" stroke-width="'+(d.rim==="double"?6:rimW)+'"/>'
-    +(d.rim==="double"?'<path d="'+path+'" fill="none" stroke="'+(la>=0.62?"#1A1A1E":"#FFFFFF")+'" stroke-width="1.4"/>':"");
+    +(d.rim==="double"?'<path d="'+path+'" fill="none" stroke="'+(embLumAny(rim)>=0.55?"#1A1A1E":"#FFFFFF")+'" stroke-width="1.4"/>':"");
   let back="", front="";
   P.forEach((p,k)=>{
     if(p.t==="orn"&&p.k==="laurel")back+=embLaurel2(gold,dark,light);   // 月桂樹は盾の後ろ

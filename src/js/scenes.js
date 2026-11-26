@@ -31,14 +31,16 @@ function sceneHide(){ clearTimeout(SC.timer); SC.next=null; SC.el.className=""; 
 /** チームのエンブレムの主色(emblemSvg と同じ引数で)。チャートや線の色に使う */
 function teamColor(team){
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club, c=own?CL.S.club:null;
-  return embMainColor(team.id,c?c.name:(team.name||team.short||""),{ color:c?c.color:team.color, design:c?c.emblem:null });
+  return embMainColor(team.id,c?c.name:(team.name||team.short||""),{ color:c?c.color:team.color, design:c?c.emblem:packEmblem(team) });
 }
+/** 実名パックのエンブレム(パックで遊ぶときだけ。公開する版のデータには入れない。→docs/27 §27.13) */
+const packEmblem=team=>team&&typeof PACK!=="undefined"&&PACK.teams[team.id]&&PACK.teams[team.id].emblem||null;
 /* ---- エンブレム(クラブの色と略称から描く盾。独自の意匠) ---- */
 function emblemSvg(team,size){
   // pftb のエンブレムメーカーで描く(→docs/10 §10.2 A)。自分のクラブは監督契約で組んだ形と色、ほかは id と名前から決まる
   const own=team&&team.id==="azr"&&typeof CL!=="undefined"&&CL.S&&CL.S.club;
   const c=own?CL.S.club:null;
-  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:null, text:c?c.short:null });
+  return embSvg(team.id,c?c.name:(team.name||team.short||""),Math.round((size||40)*1.1),{ color:c?c.color:team.color, design:c?c.emblem:packEmblem(team), text:c?c.short:null });
 }
 
 /* ---- タイトル ---- */
