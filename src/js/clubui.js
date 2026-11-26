@@ -464,10 +464,10 @@ function htSetHtml(){
   // 監督能力と同じ形(→docs/14 §14.32): 閉じているときは登録中の指示をタイルで。「選ぶ」で使える指示を全部出す
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
-    (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
+    (h.train?'<small>'+h.train+'</small>':'')+'</button>'; };
   return '<section class="card htset"><h3>ハーフタイムの指示</h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
-      :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
+      :'<div class="ht-set">'+set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join("")+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
 }
 /**
@@ -1353,7 +1353,7 @@ function mabHtml(){
       '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
   return '<section class="card mabs"><h3>チームスタイル</h3>'+   // 名称は「チームスタイル」、見出しの説明は外した(→docs/14 §14.176)
     (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div>'+foldBtn("mabopen",true)
-      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
+      :'<div class="mab-set">'+set.map(chip).join("")+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
 }
 /* ---- 称号のセット(→docs/10 §10.2 B) ---- */
 function titleSetHtml(){

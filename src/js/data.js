@@ -679,6 +679,8 @@ const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"ア
 /** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
 const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
 
+/** チームスタイルの初期セット(→docs/14 §14.177) */
+const MAB_DEFAULT=["leader","half","morale"];
 /** 監督能力(→docs/10 §10.2 C)。名前は FOOTISTA 2021 にあったもの(調べて分かった10種 + 士気向上)と、wcc_f で足した3種 */
 const MAB=[
   { id:"center",   name:"センターアタック強化", desc:"中央の選手(前線・中盤)の力が少し上がる" },

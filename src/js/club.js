@@ -189,7 +189,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, paper:[],
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, paper:[],
     roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
@@ -639,6 +639,7 @@ function migrate(S){
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
+  if(!S.mabDef){ if(!S.mab.set.length)S.mab.set=MAB_DEFAULT.slice(); S.mabDef=true; }   // チームスタイルの初期セット(空なら一度だけ。→docs/14 §14.177)
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
   // ハーフタイムの指示は任期の中だけになった(→docs/26 §26.5)。前に覚えた指示はリセットし、一度だけ知らせる
   if(!S.htV2){ if(Object.keys(S.ht.cnt||{}).length)S.htNotice=true; S.ht.cnt={}; S.ht.set=S.ht.set.filter(x=>/^b/.test(x)); S.htV2=true; }

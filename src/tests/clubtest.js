@@ -454,6 +454,8 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   }
   { // 監督能力(→docs/10 §10.2 C)
     const T=E.newCareer(99), TW=E.worldOf(T), on=T.sq.slice(0,11);
+    check("チームスタイルの初期セットはリーダーシップ・ハーフタイムケア・士気向上",T.mab.set.join()==="leader,half,morale",T.mab.set.join());
+    T.mab.set=[];
     check("監督能力は3つまでセットでき、もう一度押すと外れる",E.toggleMab(T,"center")&&E.toggleMab(T,"half")&&E.toggleMab(T,"dfc")&&!E.toggleMab(T,"duel")&&E.toggleMab(T,"half")&&T.mab.set.join()==="center,dfc");
     for(let i=0;i<10;i++)E.applyResult(T,TW,E.nextFixture(T,TW),{ hg:1, ag:0, played:on, onPitch:on, starters:on });
     check("セットして10試合でランク II、試合に効き目が渡る",E.mabRank(T,"center")===1&&E.playerDef(T).mab.center>E.TUNING.mab.base.center,JSON.stringify(E.playerDef(T).mab));

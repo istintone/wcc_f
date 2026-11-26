@@ -5141,6 +5141,8 @@ const NAT_NAME={ ENG:"イングランド", SCO:"スコットランド", IRL:"ア
 /** 架空の選手(アズーロFC・ロッソ)の国籍。id から決まる */
 const NAT_POOL=["ITA","ITA","ESP","FRA","GER","NED","POR","BRA","ARG","ENG","BEL","CRO","URU","JPN"];
 
+/** チームスタイルの初期セット(→docs/14 §14.177) */
+const MAB_DEFAULT=["leader","half","morale"];
 /** 監督能力(→docs/10 §10.2 C)。名前は FOOTISTA 2021 にあったもの(調べて分かった10種 + 士気向上)と、wcc_f で足した3種 */
 const MAB=[
   { id:"center",   name:"センターアタック強化", desc:"中央の選手(前線・中盤)の力が少し上がる" },
@@ -7280,7 +7282,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, paper:[],
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, paper:[],
     roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
@@ -7730,6 +7732,7 @@ function migrate(S){
   if(!S.sec){ S.sec=newSec(); S.sec.chosen=S.played>0; }   // 途中のセーブは今の秘書のまま
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
+  if(!S.mabDef){ if(!S.mab.set.length)S.mab.set=MAB_DEFAULT.slice(); S.mabDef=true; }   // チームスタイルの初期セット(空なら一度だけ。→docs/14 §14.177)
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
   // ハーフタイムの指示は任期の中だけになった(→docs/26 §26.5)。前に覚えた指示はリセットし、一度だけ知らせる
   if(!S.htV2){ if(Object.keys(S.ht.cnt||{}).length)S.htNotice=true; S.ht.cnt={}; S.ht.set=S.ht.set.filter(x=>/^b/.test(x)); S.htV2=true; }
@@ -12407,10 +12410,10 @@ function htSetHtml(){
   // 監督能力と同じ形(→docs/14 §14.32): 閉じているときは登録中の指示をタイルで。「選ぶ」で使える指示を全部出す
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
-    (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
+    (h.train?'<small>'+h.train+'</small>':'')+'</button>'; };
   return '<section class="card htset"><h3>ハーフタイムの指示</h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
-      :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
+      :'<div class="ht-set">'+set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join("")+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
 }
 /**
@@ -13296,7 +13299,7 @@ function mabHtml(){
       '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
   return '<section class="card mabs"><h3>チームスタイル</h3>'+   // 名称は「チームスタイル」、見出しの説明は外した(→docs/14 §14.176)
     (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div>'+foldBtn("mabopen",true)
-      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
+      :'<div class="mab-set">'+set.map(chip).join("")+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
 }
 /* ---- 称号のセット(→docs/10 §10.2 B) ---- */
 function titleSetHtml(){
