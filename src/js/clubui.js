@@ -437,11 +437,53 @@ function sqModalHtml(){
   const S=CL.S, id=CL.sqSel; if(!id||!CARDS[id])return "";
   const i=S.sq.indexOf(id), c=CARDS[id];
   const nav=(d,t)=>{ const j=S.sq[i+d]; return '<button class="km-nav" data-act="sqnav" data-id="'+(j||"")+'"'+(j?'':' disabled')+'>'+t+'</button>'; };
-  return '<div class="kmodal" data-act="sqclose"><div class="kmod-box sq-mbox" data-act="none">'+
+  return '<div class="kmodal" data-act="sqclose"><div class="kmod-box sq-mbox srep-box pr-box" data-act="none">'+
     '<header class="km-head">'+nav(-1,"‹")+'<b>'+c.no+' '+nameOf(c)+'</b><small>'+(i+1)+' / '+S.sq.length+'</small>'+nav(1,"›")+
       '<button class="km-x" data-act="sqclose" aria-label="閉じる">×</button></header>'+sqDetailHtml()+'</div></div>';
 }
+/**
+ * 選手の詳細を報告書の書式で(→docs/14 §14.186。視察レポートと同じ紙)。
+ * 01 カードの基本データ = 元のカードのまま(絵・適性・能力・スキル・KP・キッカー)/ 02 チームでの所見 = 自分のチームにして分かったこと・育ったこと
+ * (★・覚醒の兆し・信頼度・調子・疲労・判明した性格と動物・タグ・重なり)。能力の育った分は 01 の数字の横に赤い + で
+ */
 function sqDetailHtml(){
+  const S=CL.S, id=CL.sqSel;
+  if(!id)return '';
+  const c=CARDS[id], g=S.g.pl[id], i=S.sq.indexOf(id), on=i<11, cc=growCard(S,c);
+  const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c), RK=rareOfCard(c), kg=kickGrades(c), se=secOf(S);
+  const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
+  const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
+  const stRow=k=>{ const b=c[k], v=cc[k], d=v-b;
+    return '<tr><th>'+STAT_LABEL[k]+'</th><td class="bar"><u style="width:'+(b/STAT_MAX*100).toFixed(0)+'%"></u>'+(d>0.05?'<u class="gr" style="left:'+(b/STAT_MAX*100).toFixed(1)+'%;width:'+(d/STAT_MAX*100).toFixed(1)+'%"></u>':'')+'</td>'+
+      '<td class="v">'+b.toFixed(1)+(d>0.05?'<em>+'+d.toFixed(1)+'</em>':'')+'</td></tr>'; };
+  const ps=S.persSeen&&S.persSeen[id], an=S.aniSeen&&S.aniSeen[id]&&aniTxt(c);
+  return '<article class="srep pr">'+
+    '<header class="sr-top"><small>WCC F ・ SQUAD REPORT</small><h2>PLAYER REPORT</h2>'+
+      (on?'<i class="sr-stamp pr-role '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</i>':'<i class="sr-stamp pr-role">SUB</i>')+'</header>'+
+    '<dl class="sr-meta"><dt>選手</dt><dd><b class="pr-no">'+c.no+'</b><b>'+nameOf(c)+'</b></dd>'+
+      '<dt>所属・年齢</dt><dd>'+clubOfCard(c)+' ・ '+c.age+'歳 ・ '+natTxt(c)+'</dd>'+
+      '<dt>カード</dt><dd>'+RAR_TAG[c.rar||"B"]+' '+CARD_SEASON+' ・ '+cardNoOf(c)+' ・ 持っている枚数 '+(S.coll[id]||0)+'</dd></dl>'+
+    no(["01","カードの基本データ"])+
+    '<div class="pr-card"><div class="pr-front">'+cardHtml(id,"s")+'</div><div class="pr-map">'+aptMapSvg(cc)+'<small>'+c.roles.join(" / ")+'</small></div>'+
+    '<table class="pr-st">'+STATS.map(stRow).join("")+'<tr class="tot"><th>合計</th><td></td><td class="v">'+Math.round(STATS.reduce((a,k)=>a+c[k],0))+
+      (STATS.reduce((a,k)=>a+cc[k]-c[k],0)>0.05?'<em>+'+STATS.reduce((a,k)=>a+cc[k]-c[k],0).toFixed(1)+'</em>':'')+'</td></tr></table></div>'+
+    '<ul class="sr-key pr-key">'+(sk?'<li><i>技</i><b>'+sk.label+'</b><span>'+sk.desc+'</span></li>':'')+
+      (st?'<li><i class="kp">KP</i><b>'+st.name+'</b><span>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+' '+rankChip(myStyleRank(S,st,id))+'</span></li>':'')+
+      (RK?'<li><i class="rk2">R</i><b>'+(g.ss>=5?RK.name:'？？？')+'</b><span>レア KP</span></li>':'')+
+      '<li><i>役</i><b>CAP '+CAP_MARK[capApt(c)]+' ・ PK '+kg.pk+' ・ FK '+kg.fk+' ・ CK '+kg.ck+'</b><span>キャプテン・キッカー</span></li></ul>'+
+    no(["02","チームでの所見"])+
+    '<dl class="sr-meta pr-team"><dt>個人</dt><dd><b class="st5">'+stars(g.is)+'</b></dd>'+
+      '<dt>特殊</dt><dd><b class="st5">'+stars(g.ss)+'</b>'+(g.q||g.sq?' <span class="sgn">覚醒の兆し</span>':'')+'</dd>'+
+      '<dt>信頼度</dt><dd>'+TRUST_LABEL[trustLv(g)]+'</dd>'+
+      '<dt>調子・疲労</dt><dd><span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span> <span class="fat">'+batteryHtml(g)+'</span></dd>'+
+      (ps?'<dt>性格</dt><dd>'+PERS_LABEL[persOf(id)]+'</dd>':'')+(an?'<dt>動物</dt><dd>'+an+'</dd>':'')+
+      (dupOf(S,id)?'<dt>重なり</dt><dd>×'+dupOf(S,id)+' ・ 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%</dd>':'')+'</dl>'+
+    playerTagsHtml(id)+
+    '<footer class="sr-sign"><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
+    '<div class="sd-act pr-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st,id))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+'</div>'+
+    '</article>';
+}
+function sqDetailHtmlOld(){
   const S=CL.S, id=CL.sqSel;
   if(!id)return '';
   const c=CARDS[id], g=S.g.pl[id], i=S.sq.indexOf(id), on=i<11, G0=TUNING.grow;

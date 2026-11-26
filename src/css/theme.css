@@ -3234,3 +3234,36 @@ body[class] #cap.ht .htb{min-width:0;max-width:100%}
 :is(#club,#scene) .kb-txt .kb-ani.first{margin-left:0}
 /* KP のランク C(特殊能力の★が無い。→docs/14 §14.184) */
 .rkC,.th-wr .rkC{background:#8a8f98!important;color:#fff}
+/* 選手の詳細(報告書の書式。→docs/14 §14.186)。紙・見出し・判子は視察レポート(.srep)と同じ */
+body[class] #club .pr-box{overflow-y:auto}
+body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!important}
+#club .srep.pr .pr-role{font-size:12px;letter-spacing:.08em;right:6px}
+#club .srep.pr .pr-no{font-family:var(--f-num),sans-serif;font-style:italic;font-size:15px;color:#c8102e;margin-right:2px}
+#club .srep.pr .pr-card{display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;margin-bottom:6px}
+#club .srep.pr .pr-front .kc{width:76px}
+#club .srep.pr .pr-map{display:flex;flex-direction:column;align-items:center;gap:2px}
+#club .srep.pr .pr-map svg{width:100%;max-width:170px;height:auto}
+#club .srep.pr .pr-map small{font-size:10px;color:#555}
+#club .srep.pr .pr-st{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px}
+#club .srep.pr .pr-st th{width:34px;text-align:left;font-family:var(--f-num),sans-serif;font-weight:800;font-size:10.5px}
+#club .srep.pr .pr-st td{padding:2px 0;border-bottom:1px dotted rgba(0,0,0,.2)}
+#club .srep.pr .pr-st td.bar{position:relative;height:16px}
+#club .srep.pr .pr-st td.bar u{position:absolute;left:0;top:5px;height:7px;background:#1a1a1a;text-decoration:none}
+#club .srep.pr .pr-st td.bar u.gr{background:#c8102e}
+#club .srep.pr .pr-st td.v{width:70px;text-align:right;font-family:var(--f-num),sans-serif;font-weight:800;font-size:12px}
+#club .srep.pr .pr-st td.v em{font-style:normal;margin-left:4px;font-size:10.5px;color:#c8102e}
+#club .srep.pr .pr-st tr.tot th,#club .srep.pr .pr-st tr.tot td{border-bottom:0;padding-top:4px}
+#club .srep.pr .pr-key li span{font-size:10px;max-width:55%;text-align:right}
+#club .srep.pr .pr-key li i.rk2{background:#8a5cd6}
+#club .srep.pr .pr-team .st5{color:#b8892c;letter-spacing:.04em}
+#club .srep.pr .pr-team .sgn{font-size:10px;font-weight:900;color:#c8102e}
+#club .srep.pr .pr-act{display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:10px}
+#club .srep.pr .pr-card{grid-template-columns:64px 70px 1fr!important;gap:8px!important}
+#club .srep.pr .pr-front .kc{width:64px}
+#club .srep.pr .pr-map svg{max-width:70px}
+#club .srep.pr .pr-map small{font-size:9px;text-align:center}
+#club .srep.pr .pr-st{margin:0;font-size:10px}
+#club .srep.pr .pr-st th{width:28px;font-size:9.5px}
+#club .srep.pr .pr-st td.v{width:52px;font-size:11px}
+#club .srep.pr .pr-st td.bar{height:14px}
+#club .srep.pr .pr-st td.bar u{top:4px;height:6px}
