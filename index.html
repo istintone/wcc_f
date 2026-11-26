@@ -3879,6 +3879,18 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 /* 盤面の札の選手名は中央寄せ(→docs/14 §14.190) */
 #club .sqc .bd .nm,#club .sqc .bd .no{text-align:center;align-self:center;width:100%}
 .cd .nm,.cd .no{text-align:center!important;justify-self:center}
+/* クラブからの目標(→docs/14 §14.193) */
+#club .exp-tile .et-top{display:flex;align-items:center;gap:8px;min-width:0}
+#club .exp-tile .et-tag{flex:0 0 auto;font-style:italic;font-family:var(--f-num),sans-serif;font-weight:900;font-size:10px;letter-spacing:.12em;padding:1px 6px;color:#fff;background:#1a1a1a}
+#club .exp-tile .et-tag.own{background:#c8102e;margin-right:6px}
+#club .exp-tile .et-top small{font-size:10.5px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .exp-tile .et-goal{display:block;margin-top:5px;font-size:15px;font-weight:900}
+#club .exp-tile .et-nums{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:4px;font-size:11px}
+#club .exp-tile .et-nums b{font-family:var(--f-num),sans-serif;font-size:14px;font-style:italic}
+#club .exp-tile .et-rw{flex:0 0 auto;font-style:normal;font-weight:900;color:#b8892c}
+#club .exp-tile.done .et-rw{color:#1f8a4c}
+#club .exp-tile .et-mis{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;margin-top:8px;padding-top:6px;border-top:1px dotted rgba(0,0,0,.2)}
+#club .exp-tile .et-mis em{margin-left:auto;font-style:normal;font-size:10.5px;font-weight:800;color:#666}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -13698,10 +13710,15 @@ function playerTagsHtml(id){
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
-  const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100);
-  return '<section class="exp-tile"><div class="et-h"><small>'+cp.name+'</small><b>獲得賞金 '+Math.round(got)+' / '+cp.target+'億</b></div>'+
-    '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(got>=cp.target?' class="ok"':'')+'></u></i>'+
-    (S.mis?'<p class="et-mis">👔 オーナーの指令 <b>'+S.mis.text+'</b></p>':'')+'</section>';
+  // クラブからの目標(→docs/14 §14.193): 見出しに目標そのもの、進み具合・残り試合、達成したときの年俸の上乗せ。オーナーの指令も達成・失敗の増減を添える
+  const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100), O=TUNING.offer, lv=cp.expLv||1, ok=got>=cp.target;
+  const left=Math.max(0,TUNING.club.termLen-S.played);
+  return '<section class="exp-tile'+(ok?' done':'')+'"><div class="et-top"><i class="et-tag">CLUB MISSION</i><small>'+cp.name+'</small></div>'+
+    '<b class="et-goal">任期中に賞金 '+cp.target+'億を獲得</b>'+
+    '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(ok?' class="ok"':'')+'></u></i>'+
+    '<div class="et-nums"><span><b>'+Math.round(got)+'</b> / '+cp.target+'億'+(ok?' ・ 達成':' ・ あと '+Math.max(0,Math.ceil(cp.target-got))+'億')+' ・ 残り '+left+'試合</span>'+
+      '<em class="et-rw">'+(ok?'任期の終わりに ':'達成で ')+'年俸 +'+(O.targetSal*lv)+'億</em></div>'+
+    (S.mis?'<p class="et-mis"><i class="et-tag own">OWNER</i><b>'+S.mis.text+'</b><em>達成 +'+Math.round(O.misWin*lv)+'億 / 失敗 −'+Math.round(O.misLose*lv)+'億</em></p>':'')+'</section>';
 }
 /** 任期終了: クラブの期待と指令の結果(年俸の内訳) */
 function termExpHtml(e){

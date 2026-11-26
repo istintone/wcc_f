@@ -1508,10 +1508,15 @@ function playerTagsHtml(id){
 }
 function expTileHtml(){
   const S=CL.S, cp=S.cprof; if(!cp||cp.legacy||S.termOver)return "";
-  const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100);
-  return '<section class="exp-tile"><div class="et-h"><small>'+cp.name+'</small><b>獲得賞金 '+Math.round(got)+' / '+cp.target+'億</b></div>'+
-    '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(got>=cp.target?' class="ok"':'')+'></u></i>'+
-    (S.mis?'<p class="et-mis">👔 オーナーの指令 <b>'+S.mis.text+'</b></p>':'')+'</section>';
+  // クラブからの目標(→docs/14 §14.193): 見出しに目標そのもの、進み具合・残り試合、達成したときの年俸の上乗せ。オーナーの指令も達成・失敗の増減を添える
+  const got=S.ts.prize||0, pc=Math.min(100,got/cp.target*100), O=TUNING.offer, lv=cp.expLv||1, ok=got>=cp.target;
+  const left=Math.max(0,TUNING.club.termLen-S.played);
+  return '<section class="exp-tile'+(ok?' done':'')+'"><div class="et-top"><i class="et-tag">CLUB MISSION</i><small>'+cp.name+'</small></div>'+
+    '<b class="et-goal">任期中に賞金 '+cp.target+'億を獲得</b>'+
+    '<i class="et-bar"><u style="width:'+pc.toFixed(1)+'%"'+(ok?' class="ok"':'')+'></u></i>'+
+    '<div class="et-nums"><span><b>'+Math.round(got)+'</b> / '+cp.target+'億'+(ok?' ・ 達成':' ・ あと '+Math.max(0,Math.ceil(cp.target-got))+'億')+' ・ 残り '+left+'試合</span>'+
+      '<em class="et-rw">'+(ok?'任期の終わりに ':'達成で ')+'年俸 +'+(O.targetSal*lv)+'億</em></div>'+
+    (S.mis?'<p class="et-mis"><i class="et-tag own">OWNER</i><b>'+S.mis.text+'</b><em>達成 +'+Math.round(O.misWin*lv)+'億 / 失敗 −'+Math.round(O.misLose*lv)+'億</em></p>':'')+'</section>';
 }
 /** 任期終了: クラブの期待と指令の結果(年俸の内訳) */
 function termExpHtml(e){
