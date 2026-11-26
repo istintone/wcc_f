@@ -157,7 +157,7 @@ function rareOf(p,T){
   const R=p&&p.kp?rareOfCard(p.c):null, st=R?styleOfCard(p.c):null;
   // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。
   // 相手も同じ条件(対称。→docs/21 §21.5): 育成の無い相手は、強さの段5か Premier Div のリーグ戦(育成レベル最大)を「★5 相当」とみなす
-  return R&&((p.c.ss||0)>=5||T.rareOpp)&&st&&styleRank(T,st)==="G"?R:null;
+  return R&&((p.c.ss||0)>=5||T.rareOpp)&&st&&styleRank(T,st,ssOfP(p))==="G"?R:null;
 }
 /** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
 const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
@@ -203,13 +203,22 @@ function styleAxisVal(T,st){
  * スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**。
  * G = 必要な軸がすべて金色。成長グラフを持たないチームは TUNING.rank.none
  */
-function styleRank(T,st){
+/**
+ * KP のランク。グラフ(スタイルの軸)で決まるランクに、KP の選手の特殊能力の★(ss)で決まる上限をかける(→docs/14 §14.184)。
+ * ss を渡さない(育成の★を持たない CPU の相手など)ときは、グラフだけで決める
+ */
+const RANK_ORD=["C","B","A","S","G"];
+function styleRank(T,st,ss){
   const g=T.graph, R=TUNING.rank;
-  if(!g)return R.none;
-  if(styleAxes(st).every(a=>g.gold&&g.gold[a]))return "G";
-  const v=styleAxisVal(T,st);
-  return v>=R.th[1]?"S":v>=R.th[0]?"A":"B";
+  let r;
+  if(!g)r=R.none;
+  else if(styleAxes(st).every(a=>g.gold&&g.gold[a]))r="G";
+  else{ const v=styleAxisVal(T,st); r=v>=R.th[1]?"S":v>=R.th[0]?"A":"B"; }
+  if(ss!=null){ const cap=R.ssCap[Math.max(0,Math.min(5,ss|0))]; if(RANK_ORD.indexOf(cap)<RANK_ORD.indexOf(r))r=cap; }
+  return r;
 }
+/** 試合の中の選手の特殊能力の★(育成した自分の選手だけ。CPU は null = 上限なし) */
+const ssOfP=p=>p&&p.c&&p.c.ss!=null?p.c.ss:null;
 /** 全体スタイルの効果。**得るものにだけランクが掛かり、失うものは満額** */
 function teamFx(st,rk){
   const out={};
@@ -237,7 +246,7 @@ function refreshFx(M,min){
     T.style=st?SKILLS[kp.c.skill].style:null;
     T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
     T.axis=st?styleAxisVal(T,st)||0:0;
-    T.rank=st?styleRank(T,st):null;
+    T.rank=st?styleRank(T,st,ssOfP(kp)):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
   for(const T of teams){
@@ -598,7 +607,7 @@ function coachKp(M,T,mode,t){
   else for(const p of T.players){
     const st=styleOfCard(p.c);
     if(!st||(want&&st.kind!==want))continue;
-    const s=TUNING.rank.k[styleRank(T,st)]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
+    const s=TUNING.rank.k[styleRank(T,st,ssOfP(p))]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
     if(s>bs){ bs=s; best=p.id; }
   }
   if(best)changeKp(M,T,best,t);

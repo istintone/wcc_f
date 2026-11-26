@@ -116,7 +116,7 @@ function updateCtl(){
 function kpLabel(T,pendingKp){
   const id=pendingKp||T.kp, c=id?CARDS[id]:null, st=c?styleOfCard(c):null;
   if(!st)return { key:"none", html:'<b class="kbg">KP</b><span class="nm none">なし</span>' };
-  const rank=pendingKp?styleRank(T,st):T.rank||styleRank(T,st);
+  const rank=pendingKp?styleRank(T,st,ssOfP(playerOf(T,id))):T.rank||styleRank(T,st,ssOfP(playerOf(T,id)));
   return { key:id, html:'<b class="kbg">KP</b><span class="nm">'+nameOf(c)+'</span><small>'+st.name+'</small><b class="rk rk'+rank+'">'+rank+'</b>' };
 }
 /** KP が替わったときだけ、帯を滑り込ませる(自チームは左から、相手は右から) */
@@ -207,7 +207,7 @@ function showInfo(id){
   if(!c)return;
   const sk=c.skill?SKILLS[c.skill]:null;
   const kp=(BD.kp||M.home.kp)===id, st=styleOfCard(c);
-  const rank=st?styleRank(M.home,st):null;
+  const rank=st?styleRank(M.home,st,ssOfP({ c })):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
   // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に

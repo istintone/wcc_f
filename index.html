@@ -3832,6 +3832,8 @@ body[class] #cap.ht .htb{min-width:0;max-width:100%}
 :is(#club,#scene) .kb-txt .kb-roles b{margin:0 2px 0 7px} :is(#club,#scene) .kb-txt .kb-roles b:first-child{margin-left:0}
 :is(#club,#scene) .kb-txt .kb-ani{margin-left:8px}
 :is(#club,#scene) .kb-txt .kb-ani.first{margin-left:0}
+/* KP のランク C(特殊能力の★が無い。→docs/14 §14.184) */
+.rkC,.th-wr .rkC{background:#8a8f98!important;color:#fff}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4638,7 +4640,8 @@ const TUNING={
   // スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**(選手の能力・連携・★は効かない)
   //   th … 必要な軸(2つなら低いほう)が A / S になる値。G は必要な軸がすべて金色 / k … 「得るもの」に掛かる倍率(失うものには掛からない)
   //   none … 成長グラフを持たないチーム(1試合だけのモード)のランク
-  rank:{ th:[40,75], k:{ B:0.8, A:1.0, S:1.25, G:1.5 }, none:"A" },
+  // ssCap … KP の選手の特殊能力の★(0〜5)で決まるランクの上限(→docs/14 §14.184)。グラフのランクと、この上限の低いほう
+  rank:{ th:[40,75], k:{ C:0.6, B:0.8, A:1.0, S:1.25, G:1.5 }, none:"A", ssCap:["C","B","B","A","S","G"] },
   // 連携(→docs/04 §4.6)。段は 1〜3
   //   pass … 線で結ばれた2人のパスに、段ごとに乗る強さ
   //   full … 盤面に居る線の段の合計の満点の目安
@@ -6151,7 +6154,7 @@ function rareOf(p,T){
   const R=p&&p.kp?rareOfCard(p.c):null, st=R?styleOfCard(p.c):null;
   // 発動: KP の特殊能力が ★5 **かつ** そのスタイルのランクが G(必要な軸がすべて金色。→docs/15 §15.6)。
   // 相手も同じ条件(対称。→docs/21 §21.5): 育成の無い相手は、強さの段5か Premier Div のリーグ戦(育成レベル最大)を「★5 相当」とみなす
-  return R&&((p.c.ss||0)>=5||T.rareOpp)&&st&&styleRank(T,st)==="G"?R:null;
+  return R&&((p.c.ss||0)>=5||T.rareOpp)&&st&&styleRank(T,st,ssOfP(p))==="G"?R:null;
 }
 /** CP適性(キャプテンシー)0=C 〜 3=S。スキル(キャプテン・リーダー)と年齢から(→docs/12 §12.4) */
 const CAP_SKILL={ captain:3, leader:3, libero:1, stopper:1, sweeper:1, cover:1, dynamo:1, maker:1 };
@@ -6197,13 +6200,22 @@ function styleAxisVal(T,st){
  * スタイルのランク B / A / S / G(→docs/15 §15.5)。**チームの成長グラフだけで決まる**。
  * G = 必要な軸がすべて金色。成長グラフを持たないチームは TUNING.rank.none
  */
-function styleRank(T,st){
+/**
+ * KP のランク。グラフ(スタイルの軸)で決まるランクに、KP の選手の特殊能力の★(ss)で決まる上限をかける(→docs/14 §14.184)。
+ * ss を渡さない(育成の★を持たない CPU の相手など)ときは、グラフだけで決める
+ */
+const RANK_ORD=["C","B","A","S","G"];
+function styleRank(T,st,ss){
   const g=T.graph, R=TUNING.rank;
-  if(!g)return R.none;
-  if(styleAxes(st).every(a=>g.gold&&g.gold[a]))return "G";
-  const v=styleAxisVal(T,st);
-  return v>=R.th[1]?"S":v>=R.th[0]?"A":"B";
+  let r;
+  if(!g)r=R.none;
+  else if(styleAxes(st).every(a=>g.gold&&g.gold[a]))r="G";
+  else{ const v=styleAxisVal(T,st); r=v>=R.th[1]?"S":v>=R.th[0]?"A":"B"; }
+  if(ss!=null){ const cap=R.ssCap[Math.max(0,Math.min(5,ss|0))]; if(RANK_ORD.indexOf(cap)<RANK_ORD.indexOf(r))r=cap; }
+  return r;
 }
+/** 試合の中の選手の特殊能力の★(育成した自分の選手だけ。CPU は null = 上限なし) */
+const ssOfP=p=>p&&p.c&&p.c.ss!=null?p.c.ss:null;
 /** 全体スタイルの効果。**得るものにだけランクが掛かり、失うものは満額** */
 function teamFx(st,rk){
   const out={};
@@ -6231,7 +6243,7 @@ function refreshFx(M,min){
     T.style=st?SKILLS[kp.c.skill].style:null;
     T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
     T.axis=st?styleAxisVal(T,st)||0:0;
-    T.rank=st?styleRank(T,st):null;
+    T.rank=st?styleRank(T,st,ssOfP(kp)):null;
     T.rk0=st?TUNING.rank.k[T.rank]:0;
   }
   for(const T of teams){
@@ -6592,7 +6604,7 @@ function coachKp(M,T,mode,t){
   else for(const p of T.players){
     const st=styleOfCard(p.c);
     if(!st||(want&&st.kind!==want))continue;
-    const s=TUNING.rank.k[styleRank(T,st)]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
+    const s=TUNING.rank.k[styleRank(T,st,ssOfP(p))]+(p.id===T.kp0?0.01:0)+(st.scope==="team"?0.02:0);
     if(s>bs){ bs=s; best=p.id; }
   }
   if(best)changeKp(M,T,best,t);
@@ -12586,7 +12598,7 @@ function sqDetailHtml(){
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat">'+batteryHtml(g)+'</span></div>'+
     playerTagsHtml(id)+
     cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
-    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
+    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st,id))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
       '</div>'+
     '</div>';   // 選手のコメントは HOME の選手の声へ(→docs/14 §14.81)
 }
@@ -12634,7 +12646,7 @@ function squadHtml(){
   // いちばん上に HOME と同じ見出し(クラブ名・エンブレム。チームの画面を撮るとき用 →docs/14 §14.45)
   // 上部はチーム練習と同じ形(→docs/14 §14.42): 左に成長グラフのレーダー、右に OVR・KP・フォーメーションと最適配置
   const G=S.g.graph, R=TUNING.grow.graph, gv={}; for(const a in G)gv[a]=G[a]/R.max;
-  const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst):null;
+  const allG=graphGoldN(S)>=3, kc=S.kp&&CARDS[S.kp], kst=kc?styleOfCard(kc):null, krk=kst?myStyleRank(S,kst,S.kp):null;
   const pw=teamAxisPower(S), pv={}; for(const a in pw)pv[a]=pw[a]/STAT_MAX;
   let h=homeHeadHtml()+'<section class="sq-top"><button class="tf-g sq-gbtn" data-act="ggopen" aria-label="OVR の内訳を開く">'+
       radarSvg([{ v:pv, color:"#5e6470", fill:"#5e6470", op:0.2 },{ v:gv, color:allG?'#e8b11c':teamColor(myTeam(S)), op:allG?0.55:0.35 }],{ gold:S.g.gold, cls:"tf-radar"+(allG?' gold':'') })+
@@ -12660,7 +12672,8 @@ function squadHtml(){
   return h;
 }
 /** 自分のチームでの、そのスタイルのランク(成長グラフから。→docs/15 §15.5) */
-const myStyleRank=(S,st)=>styleRank({ graph:Object.assign({},S.g.graph,{ gold:S.g.gold }) },st);
+/** 自分のチームの KP のランク。id の選手の特殊能力の★で上限がかかる(→docs/14 §14.184) */
+const myStyleRank=(S,st,id)=>styleRank({ graph:Object.assign({},S.g.graph,{ gold:S.g.gold }) },st,id&&S.g.pl[id]?S.g.pl[id].ss||0:null);
 const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
 /**
  * チームの成長グラフ(→docs/15)。六角形は向かい合う軸が対角。横に対ごとの値(MAX・金色)、下に KP のランク。
@@ -12669,7 +12682,7 @@ const rankChip=r=>'<b class="rk rk'+r+'">'+r+'</b>';
 /** KP を選ぶフロート(→docs/14 §14.44)。先発でスタイルを持つ選手と、いまのランク。押すと KP にして閉じる */
 function kpModalHtml(){
   const S=CL.S, xi=S.sq.slice(0,11).filter(id=>styleOfCard(CARDS[id]));
-  const rows=xi.map(id=>{ const c=CARDS[id], st=styleOfCard(c), rk=myStyleRank(S,st), g=S.g.pl[id];
+  const rows=xi.map(id=>{ const c=CARDS[id], st=styleOfCard(c), rk=myStyleRank(S,st,id), g=S.g.pl[id];
     return '<button class="kp-row'+(S.kp===id?' on':'')+'" data-act="kppick" data-id="'+id+'"><i class="no">'+c.no+'</i><span><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ 特★'+(g?g.ss:0)+(rareOn(S,id)?' ・ <em>RARE</em>':'')+'</small></span>'+
       '<span class="st"><b>'+st.name+'</b><small>'+(st.scope==="team"?"全体":"個人")+' ・ '+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+'</small></span>'+rankChip(rk)+'</button>'; }).join("");
   return '<div class="kmodal" data-act="kpclose"><div class="kmod-box kp-box" data-act="none">'+
@@ -12703,7 +12716,7 @@ function growGraphHtml(S){
   for(const a in G)v[a]=G[a]/R.max;
   const ax=a=>'<span class="'+(gold[a]?'gd':G[a]>=R.max-1e-9?'mx':'')+'"><i>'+AXIS_ABBR[a]+'</i><b>'+Math.round(G[a])+'</b>'+
     (gold[a]?'<em>GOLD</em>':G[a]>=R.max-1e-9?'<em>MAX</em>':'')+'</span>';
-  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st):null;
+  const kc=S.kp&&CARDS[S.kp], st=kc?styleOfCard(kc):null, rk=st?myStyleRank(S,st,S.kp):null;
   return '<section class="card graph-r'+(all?' gold':'')+'"><h3>成長グラフ <small>'+(all?'黄金のチーム':'練習で伸び縮みする。KP のランクを決める')+'</small></h3>'+
     goldenLineHtml(S)+
     '<div class="gr-wrap nor">'+   // レーダーは SQUAD の上部に出すので、ここは対ごとの値だけ(→docs/14 §14.42)
@@ -12894,7 +12907,7 @@ function cardHtml(id,size,extra){
     '</div>';
 }
 /** その選手のレアKP が、いま KP にすれば発動するか(★5) */
-const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5&&myStyleRank(S,styleOfCard(CARDS[id]))==="G";   // 発動は ★5 かつランク G(→docs/15 §15.6)
+const rareOn=(S,id)=>!!rareOfCard(CARDS[id])&&!!S.g.pl[id]&&S.g.pl[id].ss>=5&&myStyleRank(S,styleOfCard(CARDS[id]),id)==="G";   // 発動は ★5 かつランク G(→docs/15 §15.6)
 /** カードの詳細に出すレアKP の行。★4以下のあいだは伏せる */
 function rareRowHtml(S,id){
   const R=rareOfCard(CARDS[id]); if(!R)return "";
@@ -15186,7 +15199,7 @@ function updateCtl(){
 function kpLabel(T,pendingKp){
   const id=pendingKp||T.kp, c=id?CARDS[id]:null, st=c?styleOfCard(c):null;
   if(!st)return { key:"none", html:'<b class="kbg">KP</b><span class="nm none">なし</span>' };
-  const rank=pendingKp?styleRank(T,st):T.rank||styleRank(T,st);
+  const rank=pendingKp?styleRank(T,st,ssOfP(playerOf(T,id))):T.rank||styleRank(T,st,ssOfP(playerOf(T,id)));
   return { key:id, html:'<b class="kbg">KP</b><span class="nm">'+nameOf(c)+'</span><small>'+st.name+'</small><b class="rk rk'+rank+'">'+rank+'</b>' };
 }
 /** KP が替わったときだけ、帯を滑り込ませる(自チームは左から、相手は右から) */
@@ -15277,7 +15290,7 @@ function showInfo(id){
   if(!c)return;
   const sk=c.skill?SKILLS[c.skill]:null;
   const kp=(BD.kp||M.home.kp)===id, st=styleOfCard(c);
-  const rank=st?styleRank(M.home,st):null;
+  const rank=st?styleRank(M.home,st,ssOfP({ c })):null;
   const bar=k=>'<span class="st"><i>'+STAT_LABEL[k]+'</i><b>'+(Math.round(c[k]*10)/10)+'</b><em><u style="width:'+
     (c[k]/STAT_MAX*100)+'%"></u></em></span>';
   // カードの裏の形で(→docs/14 §14.14)。いまの役割・適性・体力・KP のランクは下に
