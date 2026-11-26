@@ -222,6 +222,64 @@ function offBallGoal(p,bh,bx,att,press,now,dt){
   return [clamp(h,0.02,0.98),clamp(x,2,98)];
 }
 
+/* ---- ボールの軌道(→docs/29 §29.3)。プレーの種類で描き分ける ----
+ * ground … 地を這うパス(出だしが速く減速)/ through … スルーパス(速く転がり、受け手が後ろから走り込む)/ lowx … グラウンダーのクロス
+ * loft … 高い放物線 / drive … 低めの弾道 / shot … 速い直線と残像 / cross … セットプレーの高いボール */
+const BALL_KIND={ gkShort:"ground", cbVert:"ground", dmSpray:"ground", cfLay:"ground", cmThru:"through", omLast:"through",
+  gkLong:"loft", cbFeed:"loft", dmSwitch:"drive", cmWide:"drive", sbEarly:"drive", gkThrow:"drive", smCross:"cross?", wgCross:"cross?" };
+function ballKind(ev){
+  if(ev.type==="shot")return "shot";
+  if(ev.type==="cross")return "loft";
+  if(ev.type==="carry"||ev.type==="kickoff")return "carry";
+  let k=BALL_KIND[ev.ch]||"ground";
+  if(k==="cross?")k=(hashStr("x:"+ev.by+":"+ev.min+":"+(ev.ix||0))%3===0)?"lowx":"loft";   // クロスは3回に1回グラウンダー
+  return k;
+}
+/** t(0〜1)でのボールの位置と高さ。a・b は画面の [u, v] */
+function ballPath(ev,t,a,b){
+  const k=ballKind(ev), far=Math.hypot(b[0]-a[0],b[1]-a[1]);
+  const at=q=>[lerp(a[0],b[0],q),lerp(a[1],b[1],q)];
+  switch(k){
+    case "ground":  { const q=1-Math.pow(1-t,2.2); return { pos:at(q), lift:0, k }; }               // 転がって減速
+    case "through": { const q=1-Math.pow(1-t,1.6); return { pos:at(q), lift:0, k, trail:t<0.7 }; }
+    case "lowx":    { const q=1-Math.pow(1-t,1.8); return { pos:at(q), lift:far*0.04*Math.sin(Math.PI*q), k, trail:t<0.8 }; }
+    case "loft":    { const q=t; let lift=Math.sin(Math.PI*Math.min(1,q/0.9))*far*0.9; if(q>0.9)lift=Math.sin(Math.PI*(q-0.9)/0.1)*far*0.08; return { pos:at(Math.min(1,q*1.02)), lift:Math.max(0,lift), k }; }
+    case "drive":   { const q=t; return { pos:at(q), lift:Math.sin(Math.PI*q)*far*0.42, k }; }
+    case "shot":    { const q=Math.min(1,t*1.15); return { pos:at(q), lift:Math.sin(Math.PI*q)*far*0.12, k, trail:true }; }
+    default:        { const q=ease(t); return { pos:at(q), lift:0, k }; }
+  }
+}
+/** 速いボールの残像(シュート・スルーパス・グラウンダーのクロス) */
+function drawTrail(c,unit){
+  const T=RV.trail||[]; if(T.length<2)return;
+  for(let i=0;i<T.length-1;i++){ const [u,v,l]=T[i], [x,y,s]=proj(u,v), r=Math.max(2,unit*0.16*s)*(0.5+i/T.length*0.4);
+    c.fillStyle="rgba(255,255,255,"+(0.08+i/T.length*0.28).toFixed(2)+")"; c.beginPath(); c.arc(x,y-r-l*RV.h*0.6*s,r,0,Math.PI*2); c.fill(); }
+}
+/**
+ * 選手の走り(→docs/29 §29.2)。位置・速度を持ち、目標へ加速して走り、近づくと減速して止まる(最高速はスピードで変わる)。
+ * 速度から歩みの位相(ph)・向き(face)を進める。snap … ボールと一緒に動く人(ドリブル)はボールの位置に合わせる
+ */
+function kinStep(st,goal,p,fast,dt,snap){
+  const K=TUNING.view.kin, SX=105, SY=68;
+  if(snap){ const nx=goal[0], ny=goal[1], vx=(nx-st.x)*SX/Math.max(1,dt), vy=(ny-st.y)*SY/Math.max(1,dt);
+    st.vx=lerp(st.vx,vx,0.5); st.vy=lerp(st.vy,vy,0.5); st.x=nx; st.y=ny; }
+  else{
+    const dx=(goal[0]-st.x)*SX, dy=(goal[1]-st.y)*SY, d=Math.hypot(dx,dy);
+    const vmax=(K.v0+(p.c.spd||10)*K.vSpd)*(fast?K.ball:1), acc=K.acc*(fast?1.6:1), dec=K.dec*(fast?1.6:1);
+    const want=d>0.05?Math.min(vmax,Math.sqrt(2*dec*d)):0;
+    const tx=d>0.05?dx/d*want:0, ty=d>0.05?dy/d*want:0;
+    let ax=tx-st.vx, ay=ty-st.vy; const al=Math.hypot(ax,ay), lim=(want<Math.hypot(st.vx,st.vy)?dec:acc)*dt;
+    if(al>lim){ ax*=lim/al; ay*=lim/al; }
+    st.vx+=ax; st.vy+=ay;
+    st.x+=st.vx*dt/SX; st.y+=st.vy*dt/SY;
+  }
+  const sp=Math.hypot(st.vx,st.vy);
+  st.ph=(st.ph||0)+sp*dt/K.stride*Math.PI;
+  st.sp=sp/((K.v0+(p.c.spd||10)*K.vSpd));
+  if(Math.abs(st.vx)>K.face)st.face=st.vx>0?1:-1;
+  return st;
+}
+
 /** いま映すべき場面を G(main.js の状態)から組み立てて描く */
 function drawFrame(G,dt){
   const c=RV.ctx, M=G.M;
@@ -231,18 +289,26 @@ function drawFrame(G,dt){
   // ---- ボールの位置 ----
   const ev=G.cur;
   const pin=new Map();                       // この場面で位置が決まっている選手
-  let target, lift=0, holderId=null;
+  let target, lift=0, holderId=null, snapId=null, trail=false;
+  RV.kick=null;
   if(ev&&ev.from){
-    const t=ease(clamp(G.curT/ev.dur,0,1));
+    const t=clamp(G.curT/ev.dur,0,1);
     const a=scrOf(ev.side,ev.from[0],ev.from[1]), b=scrOf(ev.side,ev.dest[0],ev.dest[1]);
-    target=[lerp(a[0],b[0],t),lerp(a[1],b[1],t)];
+    const B=ballPath(ev,t,a,b); target=B.pos; lift=B.lift; trail=!!B.trail;
+    if(B.k==="carry"){   // ドリブル: ボールは足元の少し前で、小さくタッチしながら運ぶ
+      const du=b[0]-a[0], dv=b[1]-a[1], dl=Math.hypot(du,dv)||1, tp=0.5+0.5*Math.sin(t*Math.PI*6);
+      pin.set(ev.by,target); holderId=ev.by; snapId=ev.by;
+      target=[target[0]+du/dl*0.012*tp,target[1]+dv/dl*0.012*tp];
+    }
     RV.ball=target;
-    const far=Math.hypot(b[0]-a[0],b[1]-a[1]);
-    if(ev.type==="pass"||ev.type==="shot"||ev.type==="cross"||ev.type==="offside")lift=Math.sin(Math.PI*t)*far*0.9;
-    if(ev.type==="carry"||ev.type==="kickoff"){ pin.set(ev.by,target); holderId=ev.by; }
-    else{
+    if(B.k!=="carry"){
       pin.set(ev.by,a);
-      if(ev.to&&ev.ok)pin.set(ev.to,b);
+      if(t<0.22)RV.kick={ id:ev.by, dir:Math.sign(b[0]-a[0])||1 };   // 蹴る瞬間の踏み込み
+      if(ev.to&&ev.ok){
+        // スルーパスは受け手が後ろから走り込んで追いつく
+        if(B.k==="through"){ const back=[b[0]-(b[0]-a[0])*0.28,b[1]+(b[1]>0.5?-0.06:0.06)]; pin.set(ev.to,[lerp(back[0],b[0],Math.min(1,t*1.1)),lerp(back[1],b[1],Math.min(1,t*1.1))]); }
+        else pin.set(ev.to,b);
+      }
     }
     if(ev.vs){                               // 競った相手は競った場所へ寄る
       const cpt=ev.type==="pass"||ev.type==="cross"?b:a;
@@ -254,10 +320,14 @@ function drawFrame(G,dt){
     RV.ball=[lerp(RV.ball[0],target[0],k),lerp(RV.ball[1],target[1],k)];
     holderId=M.ball.holder.id;
     pin.set(holderId,RV.ball);
-  }else{
+  }
+else{
     const k=1-Math.exp(-dt/200);
     RV.ball=[lerp(RV.ball[0],0.5,k),lerp(RV.ball[1],0.5,k)];
   }
+  // 速いボールの残像
+  RV.trail=RV.trail||[];
+  if(trail){ RV.trail.push([RV.ball[0],RV.ball[1],lift]); if(RV.trail.length>6)RV.trail.shift(); } else RV.trail.length=0;
 
   // ---- 選手の位置(見た目だけ。1人ずつ独立して動く →docs/07 §7.15) ----
   const VM=TUNING.view.mv, now=(RV.t=(RV.t||0)+dt), seen=new Set(), list=[];
@@ -288,12 +358,12 @@ function drawFrame(G,dt){
       let goal=pin.get(p.id);
       if(!goal){ const bd=ballAt(mvOf(p).delay), dh=T.side==="H"?bd[1]:1-bd[1], dx=(T.side==="H"?bd[2]:1-bd[2])*100;
         const q=offBallGoal(p,dh,dx,att,pr.has(p.id)?[bh,bx]:null,now,dt); goal=scrOf(T.side,q[0],q[1]); }
-      let v=RV.vis.get(p.id);
-      if(!v){ v=goal.slice(); RV.vis.set(p.id,v); }
-      // 追いつく速さは1人ずつ(スピードが高いほど速い)。ボールに絡む人(pin)は速く
-      const lag=pin.has(p.id)?90:VM.lag0+(STAT_MAX-p.c.spd)*VM.lagSpd, k=1-Math.exp(-dt/lag);
-      v[0]=lerp(v[0],goal[0],k); v[1]=lerp(v[1],goal[1],k);
-      list.push({ p, T, u:v[0], v:v[1] });
+      let st=RV.vis.get(p.id);
+      if(!st||Array.isArray(st)){ st={ x:goal[0], y:goal[1], vx:0, vy:0, ph:Math.random()*6, face:T.side==="H"?1:-1 }; RV.vis.set(p.id,st); }
+      // 走る・止まる: 速度と加速度で目標へ(スピードが高いほど速い)。ボールに絡む人(pin)は速く、ドリブルする人はボールに合わせる(→docs/29 §29.2)
+      kinStep(st,goal,p,pin.has(p.id),Math.min(dt,60),p.id===snapId);
+      if(Math.abs(st.vx)*105<0.004){ const bf=RV.ball[0]>st.x?1:-1; if(st.sp<0.15)st.face=bf; }   // 止まっているときはボールの方を向く
+      list.push({ p, T, u:st.x, v:st.y, st });
     }
   }
   for(const id of RV.vis.keys())if(!seen.has(id))RV.vis.delete(id);
@@ -301,7 +371,7 @@ function drawFrame(G,dt){
   // ---- 奥から順に: ゴール・選手・ボール ----
   const V=TUNING.view, unit=RV.h*V.manH;    // 手前での選手の高さ
   const items=list.map(o=>({ v:o.v, draw:()=>drawMan(c,o,unit,holderId) }));
-  items.push({ v:RV.ball[1]+0.001, draw:()=>drawBall(c,unit,lift) });
+  items.push({ v:RV.ball[1]+0.001, draw:()=>{ drawTrail(c,unit); drawBall(c,unit,lift); } });
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
   items.sort((a,b)=>a.v-b.v).forEach(o=>o.draw());
 }
@@ -323,8 +393,13 @@ function drawMan(c,o,unit,holderId){
     c.lineWidth=p.id===holderId?2.6:1.8; c.strokeStyle=p.id===holderId?"#f2c14e":col;
     c.beginPath(); c.ellipse(x,y,w*0.72,h*0.16,0,0,Math.PI*2); c.stroke();
     if(p.kp)kpRing(c,x,y,w*0.72,h*0.16);   // KP は足元の輪の外側に金の輪(2重の輪。→docs/14 §14.161)
-    if(T.side==="A"){ c.save(); c.translate(x,0); c.scale(-1,1); c.drawImage(im,-iw/2,y-ih*0.97,iw,ih); c.restore(); }   // 相手は左右反転
-    else c.drawImage(im,x-iw/2,y-ih*0.97,iw,ih);
+    // 走り(→docs/29 §29.2): 速さに合わせて上下に揺れ・前に傾く。進む向き(止まっていればボールの方)を向く。蹴る瞬間は踏み込む
+    const K=TUNING.view.kin, st=o.st||{ sp:0, ph:0, face:T.side==="H"?1:-1 }, r=Math.min(1.2,st.sp||0);
+    const kick=RV.kick&&RV.kick.id===p.id, face=kick?RV.kick.dir:(st.face||1);
+    const bob=Math.abs(Math.sin(st.ph||0))*ih*K.bob*Math.min(1,r), lean=(kick?14:K.lean*Math.min(1,r))*face*Math.PI/180;
+    const sq=1-0.035*Math.min(1,r)*Math.cos(2*(st.ph||0));
+    c.save(); c.translate(x,y); c.rotate(lean); c.scale(face,sq);
+    c.drawImage(im,-iw/2,-ih*0.97-bob/sq,iw,ih); c.restore();
     const tw=Math.max(10,h*0.5), th=Math.max(7,h*0.32);
     c.fillStyle=col; c.fillRect(x-tw/2,y+2,tw,th);
     c.font="800 "+Math.max(6,Math.round(th*0.85))+"px system-ui,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
