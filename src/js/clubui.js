@@ -402,9 +402,10 @@ function sqTokenHtml(id,i,on,o){
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
     (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; if(!v.length)return '';
       const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
-      // 話題のタグ(白。→docs/23 §23.11): スターは ★、問題児は ✖
+      // 話題のタグ(白。→docs/23 §23.11)も数で: スターなど良いものは「+n」、問題児など悪いものは「−n」(同じ種類のタグが増えても並ぶように。→docs/14 §14.185)
+      const fu=fm.filter(t=>!t.bad).length, fd=fm.length-fu;
       return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+
-        fm.map(t=>'<i class="t fm'+(t.bad?' bad':'')+'">'+(t.bad?'✖':'★')+'</i>').join("")+'</span>'; })()+
+        (fu?'<i class="t fm">+'+fu+'</i>':'')+(fd?'<i class="t fm bad">−'+fd+'</i>':'')+'</span>'; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
