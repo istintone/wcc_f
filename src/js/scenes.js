@@ -298,6 +298,7 @@ function sceneCard(id,isNew,go){
         '<div class="pk-cardin r-'+r+'">'+k3dHtml(id,"kFlipPk").replace('data-act="none"','')+'</div>'+   // CARDS と同じ大きなカード(はじくと裏返る)
         '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"></div>'+
           '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
+        '<i class="pk-slash"></i>'+   // レアの閃光(破れ目に沿って走る。→docs/14 §14.173)
       '</div></div>'+
     '<div class="pk-msg"><b class="pk-pull">PULL<i>↓</i></b></div>',   // パックを下へ引き出す(→docs/14 §14.62)
     { lock:500 });
@@ -349,6 +350,7 @@ function packStep(){
   if(K.stage===1){
     if(SC.promote)SC.promote();                 // 昇格の前に破ったら、先に昇格させる
     K.stage=2; slot.classList.replace("st1","st2");
+    if(K.r==="K"||K.r==="L")slot.classList.add("rip-"+K.r);   // キラ・レジェンドは破れ目に閃光(→docs/14 §14.173)
     sndTear();
     if(K.r==="L"){ SC.el.classList.add("glow-L"); setTimeout(sndFanfare,350); setTimeout(()=>sndShimmer(true),500); }
     else if(K.r==="K"){ SC.el.classList.add("glow-K"); setTimeout(()=>sndShimmer(false),350); }

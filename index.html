@@ -3753,6 +3753,20 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 /* RIP A PACK!(PULL と同じ表し方。矢印は斜め上へ) */
 .pk-pull.rip i{animation:ripUp 1s ease-in-out infinite}
 @keyframes ripUp{0%,100%{transform:translate(0,0);opacity:1}60%{transform:translate(7px,-7px);opacity:.55}}
+/* 破るときの勢い(→docs/14 §14.173): 上の部分は速く飛び、パックが小さく弾む */
+.pk-slot.st2 .pk-top{transition:transform .3s cubic-bezier(.15,.8,.3,1),opacity .3s .08s!important;transform:translate(130px,-96px) rotate(42deg)!important}
+.pk-slot.st2 .pk-body{transition:transform .55s .26s cubic-bezier(.5,0,.7,.4),opacity .55s .26s!important}
+.pk-slot.st2 .pk-pack{animation:ripJolt .22s cubic-bezier(.3,1.6,.5,1)}
+@keyframes ripJolt{0%{transform:translate(0,0) rotate(0)}30%{transform:translate(3px,4px) rotate(1.4deg)}65%{transform:translate(-2px,-1px) rotate(-.8deg)}100%{transform:none}}
+/* レアの閃光: 破れ目(左 21% → 右 11%。パック 214 × 340 で約 -9.3°)に沿って光の線が走り、光って消える */
+.pk-slash{position:absolute;left:0;top:21%;z-index:6;width:104%;height:3px;margin-top:-1.5px;transform-origin:0 50%;transform:rotate(-9.3deg) scaleX(0);opacity:0;pointer-events:none;border-radius:2px}
+.pk-slot.st2.rip-K .pk-slash,.pk-slot.st2.rip-L .pk-slash{animation:ripSlash .5s cubic-bezier(.2,.8,.3,1) forwards}
+.pk-slot.rip-K .pk-slash{background:linear-gradient(90deg,#fff,#d9c8ff 30%,#9ef0ff 60%,#fff);box-shadow:0 0 8px 2px #fff,0 0 22px 6px rgba(170,140,255,.85),0 0 44px 12px rgba(120,220,255,.45)}
+.pk-slot.rip-L .pk-slash{background:linear-gradient(90deg,#fff,#fff3c4 40%,#fff);box-shadow:0 0 8px 3px #fff,0 0 24px 8px rgba(255,214,90,.95),0 0 56px 18px rgba(255,180,40,.6)}
+@keyframes ripSlash{0%{transform:rotate(-9.3deg) scaleX(0);opacity:1}28%{transform:rotate(-9.3deg) scaleX(1);opacity:1;height:3px}55%{transform:rotate(-9.3deg) scaleX(1);opacity:1;height:7px;margin-top:-3.5px}100%{transform:rotate(-9.3deg) scaleX(1.05);opacity:0;height:14px;margin-top:-7px}}
+/* レジェンドは画面全体も一瞬白く光る */
+#scene.glow-L::after{content:"";position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 35%,#fff,rgba(255,236,170,.6) 40%,transparent 75%);pointer-events:none;animation:ripFlash .55s .08s ease-out both}
+@keyframes ripFlash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -14499,6 +14513,7 @@ function sceneCard(id,isNew,go){
         '<div class="pk-cardin r-'+r+'">'+k3dHtml(id,"kFlipPk").replace('data-act="none"','')+'</div>'+   // CARDS と同じ大きなカード(はじくと裏返る)
         '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"></div>'+
           '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
+        '<i class="pk-slash"></i>'+   // レアの閃光(破れ目に沿って走る。→docs/14 §14.173)
       '</div></div>'+
     '<div class="pk-msg"><b class="pk-pull">PULL<i>↓</i></b></div>',   // パックを下へ引き出す(→docs/14 §14.62)
     { lock:500 });
@@ -14550,6 +14565,7 @@ function packStep(){
   if(K.stage===1){
     if(SC.promote)SC.promote();                 // 昇格の前に破ったら、先に昇格させる
     K.stage=2; slot.classList.replace("st1","st2");
+    if(K.r==="K"||K.r==="L")slot.classList.add("rip-"+K.r);   // キラ・レジェンドは破れ目に閃光(→docs/14 §14.173)
     sndTear();
     if(K.r==="L"){ SC.el.classList.add("glow-L"); setTimeout(sndFanfare,350); setTimeout(()=>sndShimmer(true),500); }
     else if(K.r==="K"){ SC.el.classList.add("glow-K"); setTimeout(()=>sndShimmer(false),350); }
