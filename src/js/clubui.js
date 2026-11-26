@@ -228,14 +228,13 @@ function restEffectHtml(){
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h one"><b>チーム練習</b><small>強いほど伸びるが疲れる ・ 疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
+  return '<div class="step-h one"><b>チーム練習</b><small>疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+   // 説明文は出さない(→docs/14 §14.174)
     // グラフを左に大きく、右に強さの4択と練習のボタンを詰める(→docs/14 §14.127)
     '<div class="tr-top tr-top2">'+trainEffectHtml("graph")+'<div class="tr-right">'+
-    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
-      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
-      '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
+    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休養</button>'+
+      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+'</button>').join("")+'</div>'+
     (CL.int===-1
-      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休養する</b></button></div></div></div>'+restEffectHtml()
       :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は金の札に指示の ★、イベントは銀の札(→docs/26 §26.8)
         return '<button class="tr'+(o.sp>=0?' sp':'')+(o.ev?' ev':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b>'+(!o.ev&&st?'<small class="trh">'+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());

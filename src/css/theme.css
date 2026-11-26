@@ -3178,3 +3178,6 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #club .tr-right .trs.two .tr:has(.trh){flex-direction:column;justify-content:center;gap:1px;padding:2px 3px;overflow:hidden}
 #club .tr-right .trs.two .tr:has(.trh) b{display:block;margin:0;font-size:11px;line-height:1.15}
 #club .tr-right .trs.two .tr .trh{margin:0;font-size:9.5px;line-height:1.15}
+/* チーム練習の文字の大きさを統一(→docs/14 §14.174): 練習の札・練習量のボタン・休養は、称号のレア訓練と同じ 11px */
+#club .tr-right .trs.two .tr b,#club .tr-right .trs.two .tr:has(.trh) b,#club .prep .ints .tab,#club .tr-right .tr.rest b{font-size:11px!important;font-weight:800;letter-spacing:0}
+#club .prep .ints .tab{display:flex;align-items:center;justify-content:center;min-height:30px}

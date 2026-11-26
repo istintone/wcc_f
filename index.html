@@ -3778,6 +3778,9 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #club .tr-right .trs.two .tr:has(.trh){flex-direction:column;justify-content:center;gap:1px;padding:2px 3px;overflow:hidden}
 #club .tr-right .trs.two .tr:has(.trh) b{display:block;margin:0;font-size:11px;line-height:1.15}
 #club .tr-right .trs.two .tr .trh{margin:0;font-size:9.5px;line-height:1.15}
+/* チーム練習の文字の大きさを統一(→docs/14 §14.174): 練習の札・練習量のボタン・休養は、称号のレア訓練と同じ 11px */
+#club .tr-right .trs.two .tr b,#club .tr-right .trs.two .tr:has(.trh) b,#club .prep .ints .tab,#club .tr-right .tr.rest b{font-size:11px!important;font-weight:800;letter-spacing:0}
+#club .prep .ints .tab{display:flex;align-items:center;justify-content:center;min-height:30px}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -8664,7 +8667,7 @@ function doRest(S){
     g.fat*=G0.rest.keep;
     if(g.mot<G0.mot.start&&g.mot>=1&&rng()<G0.rest.motUp){ g.mot++; up++; }
   }
-  out.push("休憩: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
+  out.push("休養: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
   S.g.step="comm"; S.g.cn=0; S.g.done=[];
   return out;
 }
@@ -12149,14 +12152,13 @@ function restEffectHtml(){
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h one"><b>チーム練習</b><small>強いほど伸びるが疲れる ・ 疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+
+  return '<div class="step-h one"><b>チーム練習</b><small>疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+   // 説明文は出さない(→docs/14 §14.174)
     // グラフを左に大きく、右に強さの4択と練習のボタンを詰める(→docs/14 §14.127)
     '<div class="tr-top tr-top2">'+trainEffectHtml("graph")+'<div class="tr-right">'+
-    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休憩<small>疲労が抜ける</small></button>'+
-      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+
-      '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
+    '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休養</button>'+
+      INT_LABEL.map((t,i)=>'<button class="tab'+(CL.int===i?' on':'')+'" data-act="int" data-i="'+i+'">'+t+'</button>').join("")+'</div>'+
     (CL.int===-1
-      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
+      ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休養する</b></button></div></div></div>'+restEffectHtml()
       :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は金の札に指示の ★、イベントは銀の札(→docs/26 §26.8)
         return '<button class="tr'+(o.sp>=0?' sp':'')+(o.ev?' ev':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
         '<b>'+trainLabel(o)+'</b>'+(!o.ev&&st?'<small class="trh">'+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());

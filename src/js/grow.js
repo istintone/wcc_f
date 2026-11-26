@@ -303,7 +303,7 @@ function doRest(S){
     g.fat*=G0.rest.keep;
     if(g.mot<G0.mot.start&&g.mot>=1&&rng()<G0.rest.motUp){ g.mot++; up++; }
   }
-  out.push("休憩: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
+  out.push("休養: 疲労が抜けた"+(up?"("+up+"人の調子が戻った)":""));
   S.g.step="comm"; S.g.cn=0; S.g.done=[];
   return out;
 }
