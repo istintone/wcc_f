@@ -3181,3 +3181,11 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 /* チーム練習の文字の大きさを統一(→docs/14 §14.174): 練習の札・練習量のボタン・休養は、称号のレア訓練と同じ 11px */
 #club .tr-right .trs.two .tr b,#club .tr-right .trs.two .tr:has(.trh) b,#club .prep .ints .tab,#club .tr-right .tr.rest b{font-size:11px!important;font-weight:800;letter-spacing:0}
 #club .prep .ints .tab{display:flex;align-items:center;justify-content:center;min-height:30px}
+/* ハーフタイムの右に前半の数字(結果の画面と同じ棒。→docs/14 §14.178)。吹き出しは左に寄せる */
+#cap.ht .ht-st{position:absolute;right:6px;bottom:12px;width:134px;pointer-events:none;animation:htPop .32s .3s cubic-bezier(.2,1.4,.4,1) both}
+#cap.ht .ht-st .res-st{max-width:none;padding:6px 8px;gap:4px;background:rgba(8,11,20,.55);border:1px solid rgba(255,255,255,.12);border-radius:4px}
+#cap.ht .ht-st .res-st>div{grid-template-columns:28px 1fr 28px;gap:4px}
+#cap.ht .ht-st .res-st b{font-size:13px;font-style:italic;font-weight:800;color:#fff}
+#cap.ht .ht-st .res-st span i{font-size:9px;color:#dfe6f2}
+#cap.ht .ht-opts{right:146px;left:78px}
+body[class] #cap.ht .htb{min-width:0;max-width:100%}

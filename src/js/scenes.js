@@ -142,14 +142,19 @@ const POS_ORD={ GK:0, DF:1, MF:2, FW:3 };
 const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
 const rateTxt=r=>r.toFixed(1);
 const resOf=M=>{ const d=M.pso?M.pso[0]-M.pso[1]:M.home.score-M.away.score; return d>0?"WIN":d<0?"LOSE":"DRAW"; };
+/** 試合の数字(シュート・枠内・支配率・パス成功率)を左右の棒で。結果の画面とハーフタイムで共通(→docs/14 §14.178) */
+function resStatsHtml(M,ST){
+  ST=ST||matchStats(M);
+  const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
+  return '<div class="res-st" style="--hc:'+teamColor(M.home)+';--ac:'+teamColor(M.away)+'">'+rows.map(([l,k,u])=>{
+    const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
+    return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
+}
 function sceneResult(M,last,go){
   bgmPlay("club");
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
   const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
-  const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
-  const stHtml='<div class="res-st" style="--hc:'+teamColor(H)+';--ac:'+teamColor(A)+'">'+rows.map(([l,k,u])=>{
-    const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
-    return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
+  const stHtml=resStatsHtml(M,ST);
   // 採点は両チーム(左に自チーム・右に相手。→docs/14)
   const side=sd=>RT.list.filter(x=>x.side===sd).sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
   const rtCol=(sd,T)=>'<div class="col"><h4 style="--tc:'+teamColor(T)+'">'+T.short+'</h4>'+side(sd).map(x=>{ const c=CARDS[x.id];

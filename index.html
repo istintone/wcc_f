@@ -3781,6 +3781,14 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 /* チーム練習の文字の大きさを統一(→docs/14 §14.174): 練習の札・練習量のボタン・休養は、称号のレア訓練と同じ 11px */
 #club .tr-right .trs.two .tr b,#club .tr-right .trs.two .tr:has(.trh) b,#club .prep .ints .tab,#club .tr-right .tr.rest b{font-size:11px!important;font-weight:800;letter-spacing:0}
 #club .prep .ints .tab{display:flex;align-items:center;justify-content:center;min-height:30px}
+/* ハーフタイムの右に前半の数字(結果の画面と同じ棒。→docs/14 §14.178)。吹き出しは左に寄せる */
+#cap.ht .ht-st{position:absolute;right:6px;bottom:12px;width:134px;pointer-events:none;animation:htPop .32s .3s cubic-bezier(.2,1.4,.4,1) both}
+#cap.ht .ht-st .res-st{max-width:none;padding:6px 8px;gap:4px;background:rgba(8,11,20,.55);border:1px solid rgba(255,255,255,.12);border-radius:4px}
+#cap.ht .ht-st .res-st>div{grid-template-columns:28px 1fr 28px;gap:4px}
+#cap.ht .ht-st .res-st b{font-size:13px;font-style:italic;font-weight:800;color:#fff}
+#cap.ht .ht-st .res-st span i{font-size:9px;color:#dfe6f2}
+#cap.ht .ht-opts{right:146px;left:78px}
+body[class] #cap.ht .htb{min-width:0;max-width:100%}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -14494,14 +14502,19 @@ const POS_ORD={ GK:0, DF:1, MF:2, FW:3 };
 const rateCls=r=>r>=7.5?"hi":r<=5.5?"lo":"";
 const rateTxt=r=>r.toFixed(1);
 const resOf=M=>{ const d=M.pso?M.pso[0]-M.pso[1]:M.home.score-M.away.score; return d>0?"WIN":d<0?"LOSE":"DRAW"; };
+/** 試合の数字(シュート・枠内・支配率・パス成功率)を左右の棒で。結果の画面とハーフタイムで共通(→docs/14 §14.178) */
+function resStatsHtml(M,ST){
+  ST=ST||matchStats(M);
+  const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
+  return '<div class="res-st" style="--hc:'+teamColor(M.home)+';--ac:'+teamColor(M.away)+'">'+rows.map(([l,k,u])=>{
+    const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
+    return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
+}
 function sceneResult(M,last,go){
   bgmPlay("club");
   const H=M.home, A=M.away, pso=M.pso, res=resOf(M), RT=matchRatings(M), ST=matchStats(M);
   const mvp=RT.mvp?RT.list.find(x=>x.id===RT.mvp):null;
-  const rows=[["シュート","shots",""],["枠内","onT",""],["支配率","poss","%"],["パス成功率","pass","%"]];
-  const stHtml='<div class="res-st" style="--hc:'+teamColor(H)+';--ac:'+teamColor(A)+'">'+rows.map(([l,k,u])=>{
-    const h=ST.H[k], a=ST.A[k], sh=h+a?Math.round(h/(h+a)*100):50;
-    return '<div><b>'+h+u+'</b><span><i>'+l+'</i><em style="--p:'+sh+'%"></em></span><b>'+a+u+'</b></div>'; }).join("")+'</div>';
+  const stHtml=resStatsHtml(M,ST);
   // 採点は両チーム(左に自チーム・右に相手。→docs/14)
   const side=sd=>RT.list.filter(x=>x.side===sd).sort((x,y)=>POS_ORD[CARDS[x.id].pos]-POS_ORD[CARDS[y.id].pos]||y.r-x.r);
   const rtCol=(sd,T)=>'<div class="col"><h4 style="--tc:'+teamColor(T)+'">'+T.short+'</h4>'+side(sd).map(x=>{ const c=CARDS[x.id];
@@ -15087,14 +15100,13 @@ function startEvent(ev){
     sndWhistle(2,true);
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
-    const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
     // 「このまま維持しろ」は無くした(選ばずに時間が来れば、何も変えずに後半へ)
     const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
     const btns=set.map((h,i)=>'<button class="htb" data-ht="'+h.id+'" style="--i:'+i+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
     const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
     // モニターの中だけに出す(得点はヘッダにあるので出さない)。監督は左下から入り、指示は3つの白い吹き出し(→docs/14 §14.157)
-    overlay("HALF TIME",'<small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
+    overlay("HALF TIME",'<div class="ht-st">'+resStatsHtml(G.M)+'</div>'+   // 前半の数字は右に棒で(結果の画面と同じ。→docs/14 §14.178)
       (bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
     $("cap").classList.add("ht");
     return;

@@ -337,14 +337,13 @@ function startEvent(ev){
     sndWhistle(2,true);
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
-    const H=G.M.home.st, A=G.M.away.st, all=(H.steps+A.steps)||1;
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
     // 「このまま維持しろ」は無くした(選ばずに時間が来れば、何も変えずに後半へ)
     const set=(CL&&CL.S&&CL.S.ht&&G.meta.career?CL.S.ht.set:["b1","b2","b3"]).map(htOf).filter(Boolean);
     const btns=set.map((h,i)=>'<button class="htb" data-ht="'+h.id+'" style="--i:'+i+'">'+h.name+'<i>'+htAxTxt(h)+'</i></button>').join("");
     const av=CL&&CL.S&&CL.S.mgr&&G.meta.career?CL.S.mgr.av:0, bust=typeof mgrArt==="function"?mgrArt(av,"bust"):null;
     // モニターの中だけに出す(得点はヘッダにあるので出さない)。監督は左下から入り、指示は3つの白い吹き出し(→docs/14 §14.157)
-    overlay("HALF TIME",'<small>シュート '+H.shots+' - '+A.shots+' ・ 支配率 '+Math.round(H.steps/all*100)+'% - '+Math.round(A.steps/all*100)+'%</small>'+
+    overlay("HALF TIME",'<div class="ht-st">'+resStatsHtml(G.M)+'</div>'+   // 前半の数字は右に棒で(結果の画面と同じ。→docs/14 §14.178)
       (bust?'<img class="ht-mgr" src="'+bust+'" alt="">':'')+'<div class="ht-opts">'+btns+'</div>',TUNING.ht.timer,()=>setPlaying(true));
     $("cap").classList.add("ht");
     return;
