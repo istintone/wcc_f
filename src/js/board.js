@@ -24,7 +24,8 @@ function mkCard(card){
   const el=document.createElement("div");
   el.className="cd "+card.pos.toLowerCase();
   el.dataset.id=card.id;
-  el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
+  el.dataset.no=card.no;
+  el.innerHTML='<i class="rl">'+card.no+'.'+card.pos+'</i><i class="no">'+statTotal(card)+'</i>'+   // ヘッダは「背番号.ポジション」、本体はカードの数値(→docs/14 §14.189)
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
     '<span class="rtags"><i class="t cap">CAP</i><i class="t kp">KP</i><i class="t pk">PK</i><i class="t fk">FK</i><i class="t ck">CK</i></span><b class="ycm"></b>'+   // 役割の札は左上に縦に(→docs/14 §14.56)
     // 個人能力の★は試合では出さない(→docs/14 §14.54)
@@ -103,7 +104,7 @@ function drawLinks(M){
 }
 function setCardLook(el,role,apt){
   const rl=el.firstChild;
-  rl.textContent=role; rl.className="rl "+aptClass(apt);
+  rl.textContent=(el.dataset.no?el.dataset.no+".":"")+role; rl.className="rl "+aptClass(apt);
 }
 function syncBoard(M){
   const hold=M.ball&&M.ball.side==="H"?M.ball.holder.id:null;

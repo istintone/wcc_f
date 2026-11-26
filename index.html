@@ -3868,6 +3868,14 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 #club .srep.pr .pr-st td.bar{height:14px}
 #club .srep.pr .pr-st td.bar u{top:4px;height:6px}
 #club .srep.pr .pr-key li i{min-width:38px;font-family:var(--f-num),sans-serif;letter-spacing:.06em}
+/* 盤面の札(→docs/14 §14.189): ヘッダ「背番号.ポジション」、本体はカードの数値と選手名を中段に */
+#club .sqc .rl{font-size:9.5px;letter-spacing:.02em;white-space:nowrap;overflow:hidden}
+#club .sqc .bd{position:absolute;left:0;right:0;top:15px;bottom:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none}
+#club .sqc .bd .no{position:static;display:block;padding:0!important;margin:0;line-height:1!important}
+#club .sqc .bd .nm{position:static;display:block;max-width:100%;padding:0 3px!important;margin:0;line-height:1.1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sqc.cmx .bd{bottom:12px}
+#club .sq-3col .sq-bench .sqc .rl{font-size:8px}
+.cd .rl{white-space:nowrap;overflow:hidden;font-size:9px;letter-spacing:.01em}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -9505,6 +9513,8 @@ function playerTagsView(S,id){
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
   const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
+  // 覚醒の兆し(→docs/14 §14.189): 覚醒を待っている状態を選手のタグとして見せる(前は札の★の欄で見せていた)
+  if(g.q||g.sq)uq.push({ id:"omen", name:"覚醒の兆し", pol:1, omen:true, desc:"フレンドリーマッチで勝つと、"+(g.q&&g.sq?"個人・特殊":g.q?"個人":"特殊")+"の力が開花するかもしれない", left:"" });
   return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"", fame:TAGS[t.id].kind==="fame", bad:!!TAGS[t.id].bad })));
 }
 
@@ -11943,7 +11953,8 @@ function mkCard(card){
   const el=document.createElement("div");
   el.className="cd "+card.pos.toLowerCase();
   el.dataset.id=card.id;
-  el.innerHTML='<i class="rl">'+card.pos+'</i><i class="no">'+card.no+'</i>'+
+  el.dataset.no=card.no;
+  el.innerHTML='<i class="rl">'+card.no+'.'+card.pos+'</i><i class="no">'+statTotal(card)+'</i>'+   // ヘッダは「背番号.ポジション」、本体はカードの数値(→docs/14 §14.189)
     '<u class="nm">'+nameOf(card)+'</u><s class="stm"><em style="width:100%"></em></s>'+
     '<span class="rtags"><i class="t cap">CAP</i><i class="t kp">KP</i><i class="t pk">PK</i><i class="t fk">FK</i><i class="t ck">CK</i></span><b class="ycm"></b>'+   // 役割の札は左上に縦に(→docs/14 §14.56)
     // 個人能力の★は試合では出さない(→docs/14 §14.54)
@@ -12022,7 +12033,7 @@ function drawLinks(M){
 }
 function setCardLook(el,role,apt){
   const rl=el.firstChild;
-  rl.textContent=role; rl.className="rl "+aptClass(apt);
+  rl.textContent=(el.dataset.no?el.dataset.no+".":"")+role; rl.className="rl "+aptClass(apt);
 }
 function syncBoard(M){
   const hold=M.ball&&M.ball.side==="H"?M.ball.holder.id:null;
@@ -12563,20 +12574,20 @@ function sqTokenHtml(id,i,on,o){
   return (o?'<button':'<div')+' class="sqc '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(!o&&CL.sqSel===id?' sel':'')+(on?'':' bn')+(S.kp===id&&on?' kp':'')+
     // 疲れているほど暗く(3段。→docs/14 §14.57)
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(3-batteryOf(g)):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
-    '<i class="no">'+c.no+'</i>'+
-    (rl?'<b class="rl '+rl.cls+'">'+rl.role+'</b>':'<b class="rl">'+c.pos+'</b>')+
-    '<span class="nm">'+nameOf(c)+'</span>'+
+    // ヘッダは「背番号.ポジション」、本体はカードの数値と選手名(盤面はどの画面も同じ並び。→docs/14 §14.189)
+    (rl?'<b class="rl '+rl.cls+'">'+c.no+'.'+rl.role+'</b>':'<b class="rl">'+c.no+'.'+c.pos+'</b>')+
+    '<span class="bd"><i class="no">'+statTotal(c)+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
     // 調子の丸。休憩の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
     (g?(()=>{ const to=CL.motTo&&CL.motTo[id]; return to!=null&&to>g.mot?'<em class="mt m'+g.mot+' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')"></em>':'<em class="mt m'+g.mot+'"></em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
-      if(!o)return CL.noStars?'':'<span class="stc"><b class="i'+(g.is>=5?' x':'')+'">★'+g.is+'</b><b class="s'+(g.ss>=5?' x':'')+'">★'+g.ss+'</b></span>';
+      if(!o)return '';   // SQUAD の札には★を出さない(育成は選手の詳細で。覚醒の兆しはタグに。→docs/14 §14.189)
       const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (g?batteryHtml(g,CL.batTo&&CL.batTo[id]):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)。休憩の見通しでは、回復するぶんが点滅
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
-    (()=>{ const v=g&&g.tags&&g.tags.length?playerTagsView(S,id):[]; if(!v.length)return '';
+    (()=>{ const v=g?playerTagsView(S,id):[]; if(!v.length)return '';
       const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
       // 話題のタグ(白。→docs/23 §23.11)も数で: スターなど良いものは「+n」、問題児など悪いものは「−n」(同じ種類のタグが増えても並ぶように。→docs/14 §14.185)
       const fu=fm.filter(t=>!t.bad).length, fd=fm.length-fu;
@@ -13497,8 +13508,8 @@ function oppTokenHtml(c,h,x,OR,on){
   const pos=on?(h<=0.06?"GK":posAt(h,x)):c.roles[0], a=aptOf(c,pos), p=on?sqPos(h,x):null;
   return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
     (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
-    '<i class="no">'+c.no+'</i><b class="rl '+aptClass(a)+'">'+pos+'</b><span class="nm">'+nameOf(c)+'</span>'+
-    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'<small class="if">計'+Math.round(cardTotal(c))+'</small></button>';
+    '<b class="rl '+aptClass(a)+'">'+c.no+'.'+pos+'</b><span class="bd"><i class="no">'+Math.round(cardTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
+    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'</button>';
 }
 /**
  * 相手の SQUAD(→docs/18 §18.5)。上部(レーダー・名前・★・陣形・監督・OVR・KP)と盤面(先発・控え。札を押すとカードの裏)。

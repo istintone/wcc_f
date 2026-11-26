@@ -3268,3 +3268,11 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 #club .srep.pr .pr-st td.bar{height:14px}
 #club .srep.pr .pr-st td.bar u{top:4px;height:6px}
 #club .srep.pr .pr-key li i{min-width:38px;font-family:var(--f-num),sans-serif;letter-spacing:.06em}
+/* 盤面の札(→docs/14 §14.189): ヘッダ「背番号.ポジション」、本体はカードの数値と選手名を中段に */
+#club .sqc .rl{font-size:9.5px;letter-spacing:.02em;white-space:nowrap;overflow:hidden}
+#club .sqc .bd{position:absolute;left:0;right:0;top:15px;bottom:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none}
+#club .sqc .bd .no{position:static;display:block;padding:0!important;margin:0;line-height:1!important}
+#club .sqc .bd .nm{position:static;display:block;max-width:100%;padding:0 3px!important;margin:0;line-height:1.1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#club .sqc.cmx .bd{bottom:12px}
+#club .sq-3col .sq-bench .sqc .rl{font-size:8px}
+.cd .rl{white-space:nowrap;overflow:hidden;font-size:9px;letter-spacing:.01em}
