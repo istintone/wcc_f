@@ -224,10 +224,14 @@ const TUNING={
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
   // 任期の終わり(→docs/05 §5.8)
-  //   salaryBase/salaryK … 年俸 = 基本 + その任期の賞金 × K + 称号の上乗せ(億)
-  //   facAt … 累計の年俸がこの額に届くごとに施設レベルが1つ上がる(1〜5)
   //   follow/bondMin … 次の任期についてくる選手の数の上限 / 要る絆
-  term:{ salaryBase:20, salaryK:0.15, facAt:[80,200,380,640], follow:3, bondMin:6 },
+  // 監督の年俸(→docs/28): 今の年俸 pay を任期の評価 P で上げ下げする。pay0 … 新しい監督の年俸(億)/ payMin … 下限
+  //   req … 求められる評価 R = a + b × log10(1 + pay / c) / up … 上がる係数 = k ÷ (1 + (pay / s)^e) / dn … 下がる係数 = k × (1 + (pay / s)^e) / bump … 安い年俸の底上げ(最大)
+  //   w … 評価の重み(exp クラブの目標の達成率 × 上限 expCap / title 称号の格 / win 勝率 ÷ winRef / mis 指令1つ)/ cup … 大会の格ごとの優勝 / lg … Div ごとのリーグ優勝 / cupMax … 優勝の合計の上限
+  //   rankAt … 監督ランク(1〜5)に要る今の年俸(億)
+  term:{ follow:3, bondMin:6, pay0:0.3, payMin:0.3, req:[0.40,0.30,8], up:[1.1,14,1.15], dn:[0.35,90,2.2], bump:1.0,
+    w:{ exp:0.40, expCap:1.25, title:0.25, win:0.12, winRef:0.65, mis:0.05 }, cup:{ E:0.02, D:0.03, C:0.05, B:0.07, A:0.10, S:0.14 }, lg:[0,0.04,0.07,0.12], cupMax:0.35,
+    rankAt:[5,15,35,70] },
   // クラブオファー(→docs/16)。size … 規模ごとの1部での幅(fans・money は部で divK 倍)・成長グラフの初めの幅・スタジアムの段・施設の段
   //   lean … 地域の得意な軸に足す / spread … 監督の格からの差が 0・±1 になる率(残りが ±2)
   //   rareP・rareSal・rareMax … レアオファーの率(累計の年俸 1億ごとに rareSal 増える。上限 rareMax)/ oilMoney … オイルマネークラブに足す資金
@@ -237,7 +241,7 @@ const TUNING={
                  mid: { fans:[9000,13000],  money:[10,30],  graph:[10,20], stad:1, fac:0 },
                  big: { fans:[18000,26000], money:[30,60],  graph:[20,35], stad:2, fac:1 },
                  mega:{ fans:[32000,45000], money:[60,100], graph:[35,50], stad:3, fac:1 } },
-          divK:[1,0.7,0.5], lean:15, spread:[0.6,0.32], rareP:0.05, rareSal:0.0003, rareMax:0.25, oilMoney:100,
+          divK:[1,0.7,0.5], lean:15, spread:[0.6,0.32], rareP:0.05, rareSal:0.003, rareMax:0.25, oilMoney:100,
           target:[70,80,95,110,125,140,160], targetSal:4,
           misP:[0.1,0.17,0.24,0.31,0.38,0.45,0.5], misWin:4, misLose:3 },
   // カード(→docs/06)

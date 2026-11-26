@@ -189,7 +189,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, paper:[],
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
     roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
@@ -630,6 +630,8 @@ function migrate(S){
   if(S.money0==null)S.money0=0;
   if(!S.career)S.career=[];
   if(S.salary==null)S.salary=0;
+  // 今の年俸(→docs/28)。前のセーブは累計から一度だけ見積もる(累計 ÷ 20、0.3〜40億)。監督ランクも付け直す
+  if(S.pay==null){ S.pay=S.salary>0?clamp(Math.round(S.salary/20*10)/10,TUNING.term.pay0,40):TUNING.term.pay0; S.fac=facLevel(S.pay); }
   if(S.fac==null)S.fac=1;
   if(S.tend===undefined)S.tend=null;
   if(S.termOver&&!S.tend)endTerm(S);
@@ -1001,7 +1003,7 @@ function makeOffers(S){
   const O=TUNING.offer, rng=mulberry32((S.seed^hashStr("offer:"+S.term))>>>0), base=mgrLv(S);
   const regs=OF_REGIONS.map(r=>r.id), pickR=[];
   while(pickR.length<3){ const r=regs[Math.floor(rng()*regs.length)]; if(!pickR.includes(r))pickR.push(r); }
-  const rareP=Math.min(O.rareMax,O.rareP+(S.salary||0)*O.rareSal);
+  const rareP=Math.min(O.rareMax,O.rareP+(S.pay||0)*O.rareSal);   // 今の年俸で(→docs/28 §28.4)
   const rareAt=rng()<rareP?Math.floor(rng()*3):-1;
   return pickR.map((reg,i)=>{
     const r=rng(), d=r<O.spread[0]?0:r<O.spread[0]+O.spread[1]?1:2, lv=clamp(base+(d?(rng()<0.5?-d:d):0),1,6);
@@ -1023,13 +1025,12 @@ function pickOffer(S,W,i){
 }
 /* ---- オーナーの指令(→docs/16 §16.3) ----
  * 大会の初戦(カップの1回戦・リーグの第1節)が終わったとき、期待の格で決まる率で「◯◯で優勝しろ」「リーグで N 位以内に入れ」。
- * S.mis = { kind:"cup"|"lg", comp, n, cyc, st:"on", text }。達成で年俸 +、失敗で年俸 −(S.ts.misSal に貯め、S.ts.misLog に残す) */
+ * S.mis = { kind:"cup"|"lg", comp, n, cyc, st:"on", text }。達成・失敗は任期の評価に入る(pt。S.ts.misLog に残す。→docs/28) */
 function misText(m){ return m.kind==="lg"?"リーグで "+m.n+"位以内に入れ":COMPS[m.comp].name+"で優勝しろ"; }
 function misEnd(S,ok,out){
-  const m=S.mis, O=TUNING.offer, lv=S.cprof&&S.cprof.expLv||1, v=Math.round((ok?O.misWin:-O.misLose)*lv);
-  S.ts.misSal=(S.ts.misSal||0)+v;
+  const m=S.mis, v=Math.round((ok?1:-1)*TUNING.term.w.mis*100);   // 指令は任期の評価に入る(pt。→docs/28)
   (S.ts.misLog||(S.ts.misLog=[])).push({ text:m.text, ok, v });
-  out.push(ok?"👔 オーナーの指令「"+m.text+"」を達成！ 年俸 +"+v+"億":"👔 オーナーの指令「"+m.text+"」は失敗… 年俸 "+v+"億");
+  out.push(ok?"👔 オーナーの指令「"+m.text+"」を達成！ 評価 +"+v+"pt":"👔 オーナーの指令「"+m.text+"」は失敗… 評価 "+v+"pt");
   S.mis=null;
 }
 function misAfterMatch(S,fx,out){
@@ -1048,7 +1049,7 @@ function misAfterMatch(S,fx,out){
   const lv=S.cprof.expLv, n=lv>=6?1:lv>=4?2:4;
   S.mis=fx.kind==="league"?{ kind:"lg", comp:"LG", n, cyc:S.cyc }:{ kind:"cup", comp:fx.comp, cyc:S.cyc };
   S.mis.text=misText(S.mis);
-  out.push("👔 オーナーから指令: 「"+S.mis.text+"」(達成で年俸アップ、失敗でダウン)");
+  out.push("👔 オーナーから指令: 「"+S.mis.text+"」");
 }
 
 /* ---------- 日程の見通し(SEASON の日程。→docs/07 §7.16) ----------

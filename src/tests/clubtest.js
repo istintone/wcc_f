@@ -223,8 +223,8 @@ function playOne(S,W,decline,opt){
   S.club=E.defaultClub();
   while(!S.termOver)playOne(S,W);
   const e=S.tend;
-  check("任期の終わりに、獲得賞金と期待を比べ、指令の結果を年俸に足す",e.exp&&e.exp.target===mega.target&&Math.abs(e.exp.prize-S.ts.prize)<1&&
-    e.mis.length>0&&e.misSal===e.mis.reduce((s,m)=>s+m.v,0),
+  check("任期の終わりに、獲得賞金と目標・指令の結果が評価に入り、年俸が評価で上げ下げされる(→docs/28)",e.exp&&e.exp.target===mega.target&&Math.abs(e.exp.prize-S.ts.prize)<1&&
+    e.mis.length>0&&Math.abs(e.parts.mis-e.mis.reduce((s,m)=>s+m.v,0)/100)<1e-9&&e.salary===E.nextPay(e.pay0,e.ev),
     "獲得 "+e.exp.prize+" / 期待 "+e.exp.target+" ・ 指令 "+e.mis.map(m=>(m.ok?"○":"×")+m.v).join(" ")+" ・ 年俸 "+e.salary+"億");
   E.startNextTerm(S,W);
   check("次の任期はクラブを選び直す(オファーが届く)",!S.cprof&&!S.club&&E.offersOf(S).length===3);
@@ -685,7 +685,11 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
     check("取りにくい称号が先(覚醒工場と生え抜きの両方を満たせば覚醒工場)・一度取った称号は後回し",
       P([])==="覚醒工場"&&P([{ title:"factory" }])==="生え抜き"&&P([{ title:"factory" },{ title:"native" }])==="覚醒工場",P([])+" / "+P([{ title:"factory" }]));
     check("どれにも当てはまらなければ新米監督",pick({ w:40, l:40 })==="新米監督"); }
-  check("施設は累計の年俸で上がる(0億 → 1 / 640億 → 5)",E.facLevel(0)===1&&E.facLevel(200)===3&&E.facLevel(640)===5);
+  check("監督ランクは今の年俸で上がる(0.3億 → 1 / 15億 → 3 / 70億 → 5)",E.facLevel(0.3)===1&&E.facLevel(15)===3&&E.facLevel(70)===5);
+  { // 年俸の伸び方(→docs/28): 毎任期「とても良い」(0.80)で 20任期 40〜60億、「並」(0.50)では 10億に届かない。100億では「良」(0.65)で下がる
+    const run=(P,n)=>{ let p=0.3; for(let i=0;i<n;i++)p=E.nextPay(p,P); return p; };
+    check("年俸は 10〜20任期で 50億を目指せ、20億から緩やか・100億から下がりやすい",run(0.8,20)>=40&&run(0.8,20)<=60&&run(0.5,20)<10&&E.nextPay(100,0.65)<100&&E.nextPay(20,0.8)/20<E.nextPay(5,0.8)/5,
+      "0.80×20 "+run(0.8,20)+" / 0.50×20 "+run(0.5,20)+" / 100億で0.65 → "+E.nextPay(100,0.65)); }
 }
 
 // ---------- ⑦ カード ----------

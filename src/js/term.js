@@ -76,11 +76,32 @@ function followers(S){
   return Object.keys(S.g.pl).filter(id=>S.g.pl[id].bond>=T.bondMin)
     .sort((a,b)=>S.g.pl[b].bond-S.g.pl[a].bond||(a<b?-1:1)).slice(0,T.follow);
 }
-/** 施設レベル。累計の年俸で上がる */
-function facLevel(total){
-  const th=TUNING.term.facAt; let lv=1;
-  while(lv<=th.length&&total>=th[lv-1])lv++;
+/** 監督ランク(1〜5)。今の年俸で決まる(→docs/28 §28.4) */
+function facLevel(pay){
+  const th=TUNING.term.rankAt; let lv=1;
+  while(lv<=th.length&&pay>=th[lv-1])lv++;
   return lv;
+}
+/** 今の年俸で求められる評価 R(→docs/28 §28.3) */
+const payReq=pay=>{ const q=TUNING.term.req; return q[0]+q[1]*Math.log10(1+pay/q[2]); };
+/** 任期の評価 P と内訳(0〜1.3 くらい。画面では ×100 の pt) */
+function termEval(S,x,title){
+  const W=TUNING.term.w, T=TUNING.term, cp=S.cprof&&!S.cprof.legacy?S.cprof:null;
+  const ratio=cp?(S.ts.prize||0)/cp.target:Math.min(1,x.wr/0.6);
+  const t=S.titles.filter(z=>z.term===S.term);
+  const cup=Math.min(T.cupMax,t.reduce((a,z)=>a+(z.comp==="LG"?(T.lg[z.div||S.grade]||T.lg[1]):(T.cup[COMPS[z.comp]&&COMPS[z.comp].grade]||0)),0));
+  const mis=(S.ts.misLog||[]).reduce((a,m)=>a+(m.ok===true?W.mis:m.ok===false?-W.mis:0),0);
+  const parts={ exp:W.exp*Math.min(W.expCap,ratio), title:W.title*title.grade/3, win:W.win*Math.min(1,x.wr/W.winRef), cup, mis };
+  const P=Object.values(parts).reduce((a,b)=>a+b,0);
+  return { P, parts };
+}
+/** 年俸を評価で上げ下げする(→docs/28 §28.3)。上がるのは 20億前後から緩やか、100億あたりから下がりやすい */
+function nextPay(pay,P){
+  const T=TUNING.term, d=P-payReq(pay);
+  let v;
+  if(d>=0){ const k=T.up[0]/(1+Math.pow(pay/T.up[1],T.up[2])); v=pay*(1+k*d)+T.bump*Math.min(1,d*4); }
+  else{ const k=T.dn[0]*(1+Math.pow(pay/T.dn[1],T.dn[2])); v=pay*(1+k*d); }
+  return Math.max(T.payMin,Math.round(v*10)/10);
 }
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
@@ -88,16 +109,17 @@ function endTerm(S){
   // 任期の終わりで決着しなかった指令は「打ち切り」(年俸は動かない。→docs/22)
   if(S.mis){ (S.ts.misLog||(S.ts.misLog=[])).push({ text:S.mis.text, ok:null, v:0 }); S.mis=null; }
   // クラブの期待(→docs/16 §16.3): 獲得賞金が期待値に届けば上乗せ。オーナーの指令の増減も足す
-  const cp=S.cprof&&!S.cprof.legacy?S.cprof:null, O=TUNING.offer;
-  const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target, bonus:0 }:null;
-  if(exp&&exp.ok)exp.bonus=O.targetSal*cp.expLv;
-  const misSal=S.ts.misSal||0;
-  const salary=Math.max(0,Math.round(T.salaryBase+x.money*T.salaryK+title.bonus+(exp?exp.bonus:0)+misSal));
-  const before=facLevel(S.salary);
-  S.salary+=salary;
-  S.fac=facLevel(S.salary);
+  // 年俸(→docs/28): 任期の評価 P と、今の年俸で求められる評価 R で上げ下げ。称号は年俸に直接足さず、格が評価に入る
+  const cp=S.cprof&&!S.cprof.legacy?S.cprof:null;
+  const exp=cp?{ target:cp.target, prize:Math.round(S.ts.prize||0), ok:(S.ts.prize||0)>=cp.target }:null;
+  const misSal=0, ev=termEval(S,x,title), pay0=S.pay!=null?S.pay:T.pay0, req=payReq(pay0);
+  const salary=nextPay(pay0,ev.P);
+  const before=S.fac||facLevel(pay0);
+  S.salary=Math.round(((S.salary||0)+pay0)*10)/10;   // 累計は、この任期に受け取った年俸
+  S.pay=salary;
+  S.fac=facLevel(S.pay);
   S.tend={ term:S.term, title:title.id, salary, total:S.salary, fac:S.fac, facUp:S.fac>before,
-    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal };
+    grade:title.grade, follow:followers(S), facts:x, club:cp?cp.name:null, exp, mis:(S.ts.misLog||[]).slice(), misSal, pay0, ev:ev.P, req, parts:ev.parts };
   S.career.push({ term:S.term, title:title.id, w:x.w, d:x.d, l:x.l, titles:x.titles, salary, money:Math.round(x.money) });   // money … その任期に稼いだ資金(最高額を競う)
   return S.tend;
 }
