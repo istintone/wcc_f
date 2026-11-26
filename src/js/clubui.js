@@ -468,7 +468,7 @@ function sqDetailHtml(){
     '<table class="pr-st">'+STATS.map(stRow).join("")+'<tr class="tot"><th>合計</th><td></td><td class="v">'+Math.round(STATS.reduce((a,k)=>a+c[k],0))+
       (STATS.reduce((a,k)=>a+cc[k]-c[k],0)>0.05?'<em>+'+STATS.reduce((a,k)=>a+cc[k]-c[k],0).toFixed(1)+'</em>':'')+'</td></tr></table></div>'+
     '<ul class="sr-key pr-key">'+(sk?'<li><i>技</i><b>'+sk.label+'</b><span>'+sk.desc+'</span></li>':'')+
-      (st?'<li><i class="kp">KP</i><b>'+st.name+'</b><span>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+' '+rankChip(myStyleRank(S,st,id))+'</span></li>':'')+
+      (st?'<li><i class="kp">KP</i>'+rankChip(myStyleRank(S,st,id))+'<b>'+st.name+'</b><span>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</span></li>':'')+   // ランクは KP のすぐ横(→docs/14 §14.187)
       (RK?'<li><i class="rk2">R</i><b>'+(g.ss>=5?RK.name:'？？？')+'</b><span>レア KP</span></li>':'')+
       '<li><i>役</i><b>CAP '+CAP_MARK[capApt(c)]+' ・ PK '+kg.pk+' ・ FK '+kg.fk+' ・ CK '+kg.ck+'</b><span>キャプテン・キッカー</span></li></ul>'+
     no(["02","チームでの所見"])+
@@ -480,7 +480,7 @@ function sqDetailHtml(){
       (dupOf(S,id)?'<dt>重なり</dt><dd>×'+dupOf(S,id)+' ・ 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%</dd>':'')+'</dl>'+
     playerTagsHtml(id)+
     '<footer class="sr-sign"><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
-    '<div class="sd-act pr-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st,id))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+'</div>'+
+    '<div class="sd-act pr-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+'</div>'+
     '</article>';
 }
 function sqDetailHtmlOld(){
