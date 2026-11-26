@@ -333,7 +333,11 @@ const TUNING={
     kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.045, lean:7, stride:8, face:0.004,
       // 段階2(→docs/29 §29.4): wind … 蹴る前の溜め(プレーの時間の割合)/ arrive … ボールが届く時点(残りはファーストタッチで止まる)
       //   line … 守備のラインをそろえる強さ / pressGap … 寄せる人が保持者の手前で止まる距離(u)/ sup … 攻撃の三角形に寄る強さ / celebMs … ゴールのあと集まる長さ
-      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 } },
+      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 },
+    // 段階3(→docs/29 §29.5)。cam … 中継のカメラ: z0 中盤の寄り / z1 ゴール前の寄り / zoneU ゴール前とみなす端からの距離(u)/ yFollow 縦にボールを追う割合 / tau なめらかさ(ms)
+    //   fx … 足元の演出: dustMs 砂埃の長さ / dustCd 同じ人の砂埃の間隔 / skidMs スライディングの跡の長さ / netMs ネットの揺れの長さ / netAmp 揺れの大きさ(u)
+    cam:{ z0:1.08, z1:1.22, zoneU:0.28, yFollow:0.4, tau:700 },
+    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,

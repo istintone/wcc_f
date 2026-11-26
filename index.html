@@ -4911,7 +4911,11 @@ const TUNING={
     kin:{ v0:0.016, vSpd:0.0011, acc:0.00011, dec:0.00016, ball:1.5, bob:0.045, lean:7, stride:8, face:0.004,
       // 段階2(→docs/29 §29.4): wind … 蹴る前の溜め(プレーの時間の割合)/ arrive … ボールが届く時点(残りはファーストタッチで止まる)
       //   line … 守備のラインをそろえる強さ / pressGap … 寄せる人が保持者の手前で止まる距離(u)/ sup … 攻撃の三角形に寄る強さ / celebMs … ゴールのあと集まる長さ
-      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 } },
+      wind:0.12, windShot:0.08, arrive:0.9, line:0.75, pressGap:0.025, sup:0.7, celebMs:2200 },
+    // 段階3(→docs/29 §29.5)。cam … 中継のカメラ: z0 中盤の寄り / z1 ゴール前の寄り / zoneU ゴール前とみなす端からの距離(u)/ yFollow 縦にボールを追う割合 / tau なめらかさ(ms)
+    //   fx … 足元の演出: dustMs 砂埃の長さ / dustCd 同じ人の砂埃の間隔 / skidMs スライディングの跡の長さ / netMs ネットの揺れの長さ / netAmp 揺れの大きさ(u)
+    cam:{ z0:1.08, z1:1.22, zoneU:0.28, yFollow:0.4, tau:700 },
+    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
@@ -11760,7 +11764,30 @@ function drawPitch(){
     const oc=off.getContext("2d"); oc.setTransform(dpr,0,0,dpr,0,0);
     drawPitchTo(oc,W,H); RV.bgKey=key;
   }
-  RV.ctx.save(); RV.ctx.setTransform(1,0,0,1,0,0); RV.ctx.drawImage(RV.bg,0,0); RV.ctx.restore();
+  const C=RV.cam||{ z:1, tx:0, ty:0 };
+  RV.ctx.save(); RV.ctx.setTransform(C.z,0,0,C.z,C.tx*dpr,C.ty*dpr); RV.ctx.drawImage(RV.bg,0,0); RV.ctx.restore();
+}
+/**
+ * 中継のカメラ(→docs/29 §29.5)。ボールを横に追い、ゴール前では寄る(中盤は少し引く)。画面の外が見えないよう動ける範囲で止める。
+ * 背景(drawPitch)と選手・ボール(drawFrame)に同じ拡大・移動をかける
+ */
+function camUpdate(dt){
+  const K=TUNING.view.cam, W=RV.w, H=RV.h, C=RV.cam||(RV.cam={ z:K.z0, tx:(W-W*K.z0)/2, ty:(H-H*K.z0)/2 });
+  const bu=RV.ball[0], near=Math.max(0,(Math.abs(bu-0.5)-(0.5-K.zoneU))/K.zoneU);
+  const z=K.z0+(K.z1-K.z0)*Math.min(1,near), f=proj(bu,RV.ball[1]);
+  let tx=W/2-f[0]*z, ty=lerp((H-H*z)/2,H/2-f[1]*z,K.yFollow);
+  tx=clamp(tx,W-W*z,0); ty=clamp(ty,H-H*z,0);
+  const k=1-Math.exp(-dt/K.tau);
+  C.z=lerp(C.z,z,k); C.tx=clamp(lerp(C.tx,tx,k),W-W*C.z,0); C.ty=clamp(lerp(C.ty,ty,k),H-H*C.z,0);
+}
+/** 足元の演出(→docs/29 §29.5): 砂埃・スライディングの跡。芝の上(選手より先)に描く */
+function fxAdd(o){ (RV.fx||(RV.fx=[])).push(o); if(RV.fx.length>80)RV.fx.shift(); }
+function drawFx(c,now,unit){
+  const F=RV.fx||[]; RV.fx=F.filter(o=>now-o.t0<o.life);
+  for(const o of RV.fx){ const a=(now-o.t0)/o.life, [x,y,s]=proj(o.u,o.v);
+    if(o.kind==="dust"){ const r=unit*s*(0.08+a*0.22); c.fillStyle="rgba(214,196,160,"+(0.5*(1-a)).toFixed(2)+")"; c.beginPath(); c.ellipse(x+o.dx*a*unit*s,y-r*0.3,r,r*0.55,0,0,Math.PI*2); c.fill(); }
+    else if(o.kind==="skid"){ const r=unit*s*0.07; c.fillStyle="rgba(40,60,30,"+(0.45*(1-a)).toFixed(2)+")"; c.beginPath(); c.ellipse(x,y,r*1.6,r*0.5,0,0,Math.PI*2); c.fill(); }
+  }
 }
 function drawPitchTo(c,W,H){
   // 毎回、画面全体を塗り直す(遠近で芝が届かない左右の外側に、前の場面のボールや選手が残らないように)
@@ -11788,10 +11815,14 @@ function drawPitchTo(c,W,H){
 }
 /** ゴール(枠に高さを付ける)。奥の柱から描く */
 function drawGoal(c,u){
-  const gh=TUNING.view.goalH, d=u<0.5?-0.025:0.025;
+  const gh=TUNING.view.goalH, F=TUNING.view.fx, N=RV.net, age=N&&N.u===u?(RV.t||0)-N.t0:-1;
+  // ゴールネットの揺れ(→docs/29 §29.5): 決まった瞬間に奥へふくらみ、揺れながら戻る
+  const amp=age>=0&&age<F.netMs?F.netAmp*Math.exp(-age/420)*Math.abs(Math.sin(age/70)):0;
+  const d=(u<0.5?-1:1)*(0.025+amp);
   const a=proj(u,0.445), b=proj(u,0.555), a2=proj(u+d,0.445), b2=proj(u+d,0.555);
-  c.fillStyle="rgba(255,255,255,.18)";
+  c.fillStyle="rgba(255,255,255,"+(amp?0.3:0.18)+")";
   quad(c,[[a2[0],a2[1]-gh*a2[2]*RV.h],[b2[0],b2[1]-gh*b2[2]*RV.h],[b2[0],b2[1]],[a2[0],a2[1]]]); c.fill();
+  if(amp){ c.strokeStyle="rgba(255,255,255,.45)"; c.lineWidth=0.8; for(let i=1;i<6;i++){ const q=0.445+0.11*i/6, f=proj(u,q), bk=proj(u+d,q); c.beginPath(); c.moveTo(f[0],f[1]-gh*f[2]*RV.h); c.lineTo(bk[0],bk[1]-gh*bk[2]*RV.h*0.9); c.stroke(); } }
   c.strokeStyle="#fff"; c.lineWidth=2;
   c.beginPath(); c.moveTo(a[0],a[1]); c.lineTo(a[0],a[1]-gh*a[2]*RV.h); c.lineTo(b[0],b[1]-gh*b[2]*RV.h); c.lineTo(b[0],b[1]); c.stroke();
 }
@@ -11906,6 +11937,7 @@ function kinStep(st,goal,p,fast,dt,snap){
 function drawFrame(G,dt){
   const c=RV.ctx, M=G.M;
   if(!M||!RV.w)return;
+  camUpdate(dt);                             // 中継のカメラ(前のコマのボールを追う)
   drawPitch();
 
   // ---- ボールの位置 ----
@@ -11957,7 +11989,8 @@ else{
   // パスが通ったら、味方の誰か(FW・MF)が走り出す(イベントで動きを起こす)
   if(ev&&ev!==RV.lastEv){
     RV.lastEv=ev;
-    if(ev.type==="shot"&&ev.res==="goal")RV.celeb={ side:ev.side, id:ev.by, until:now+ev.dur+TUNING.view.kin.celebMs };   // ゴールのあと集まる(→docs/29 §29.4)
+    if(ev.type==="shot"&&ev.res==="goal"){ RV.celeb={ side:ev.side, id:ev.by, until:now+ev.dur+TUNING.view.kin.celebMs };   // ゴールのあと集まる(→docs/29 §29.4)
+      RV.net={ u:ev.side==="H"?1:0, t0:now+ev.dur*0.9 }; }   // ネットが揺れる(→docs/29 §29.5)
     if(ev.type==="pass"&&ev.ok&&Math.random()<VM.evRun){
       const T=teamOf(M,ev.side), c=T.players.filter(p=>!p.gk&&p.id!==ev.by&&p.id!==ev.to&&GROUP_OF[p.role]!=="DF");
       const q=c[Math.floor(Math.random()*c.length)]; if(q)startRun(mvOf(q),now,VM,1.2);
@@ -11992,18 +12025,28 @@ else{
       if(!st||Array.isArray(st)){ st={ x:goal[0], y:goal[1], vx:0, vy:0, ph:Math.random()*6, face:T.side==="H"?1:-1 }; RV.vis.set(p.id,st); }
       // 走る・止まる: 速度と加速度で目標へ(スピードが高いほど速い)。ボールに絡む人(pin)は速く、ドリブルする人はボールに合わせる(→docs/29 §29.2)
       kinStep(st,goal,p,pin.has(p.id),Math.min(dt,60),p.id===snapId);
+      // 走り出し・蹴った瞬間の砂埃 / スライディングの跡(→docs/29 §29.5)
+      const FX=TUNING.view.fx, kicking=RV.kick&&RV.kick.id===p.id;
+      if(((st.sp>0.6&&(st.sp0||0)<0.3)||(kicking&&!st.kicked))&&now-(st.dust||0)>FX.dustCd){ st.dust=now;
+        for(let j=0;j<3;j++)fxAdd({ kind:"dust", u:st.x-Math.sign(st.vx||1)*0.006, v:st.y+(j-1)*0.012, dx:-(st.face||1)*0.6*(0.5+j*0.3), t0:now+j*40, life:FX.dustMs }); }
+      st.kicked=kicking; st.sp0=st.sp;
+      if(ev&&ev.mv===RARE_MOVES.sliding.label&&ev.mvBy===p.id)fxAdd({ kind:"skid", u:st.x, v:st.y, t0:now, life:FX.skidMs });
       if(Math.abs(st.vx)*105<0.004){ const bf=RV.ball[0]>st.x?1:-1; if(st.sp<0.15)st.face=bf; }   // 止まっているときはボールの方を向く
       list.push({ p, T, u:st.x, v:st.y, st });
     }
   }
   for(const id of RV.vis.keys())if(!seen.has(id))RV.vis.delete(id);
 
-  // ---- 奥から順に: ゴール・選手・ボール ----
+  // ---- 奥から順に: ゴール・選手・ボール(カメラの拡大・移動をかけて描く) ----
   const V=TUNING.view, unit=RV.h*V.manH;    // 手前での選手の高さ
+  const dpr=RV.cv.width/RV.w, CM=RV.cam||{ z:1, tx:0, ty:0 };
+  c.setTransform(dpr*CM.z,0,0,dpr*CM.z,dpr*CM.tx,dpr*CM.ty);
+  drawFx(c,now,unit);
   const items=list.map(o=>({ v:o.v, draw:()=>drawMan(c,o,unit,holderId) }));
   items.push({ v:RV.ball[1]+0.001, draw:()=>{ drawTrail(c,unit); drawBall(c,unit,lift); } });
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
   items.sort((a,b)=>a.v-b.v).forEach(o=>o.draw());
+  c.setTransform(dpr,0,0,dpr,0,0);
 }
 /**
  * 役割の動き(→docs/29 §29.4)。goals(画面の [u, v])を直す。ボールに絡む人(pin)は動かさない。
