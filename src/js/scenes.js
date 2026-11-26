@@ -291,12 +291,12 @@ function sceneCard(id,isNew,go){
   const shown=promo?OMEN_ORD[OMEN_ORD.indexOf(r)-1]:r;
   // 本家と同じく、上の排出口からパックを引き出し(①)、パックを破って中身を見る(②)。予兆の光は引き出したパックの後ろで
   sceneShow("sc-card",
-    '<div class="pk-head"><b>CARD</b><small>試合のあとに1枚</small></div>'+
+    '<div class="pk-head call"><b>CALL UP THE PLAYER</b></div>'+   // 見出し(→docs/14 §14.172)
     '<div class="pk-mouth top"><i></i></div>'+
     '<div class="pk-slot st0"><i class="pk-aura"></i>'+   // 金の放射(rays)はやめた。ゴールドパックが予兆の役目(→docs/14 §14.118)
       '<div class="pk-pack" data-sc="flip">'+
         '<div class="pk-cardin r-'+r+'">'+k3dHtml(id,"kFlipPk").replace('data-act="none"','')+'</div>'+   // CARDS と同じ大きなカード(はじくと裏返る)
-        '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"><span>ここから破る ✂</span></div>'+
+        '<div class="pk-wrap"><div class="pk-top" style="clip-path:'+packClip("top")+'"></div>'+
           '<div class="pk-body" style="clip-path:'+packClip("body")+'">'+(typeof LOGO_IMG!=="undefined"?'<img class="pk-logo" src="'+LOGO_IMG.white+'" alt="WCC/F">':'<b>WCC/F</b>')+'<i></i><em class="pk-crimp"></em></div></div>'+
       '</div></div>'+
     '<div class="pk-msg"><b class="pk-pull">PULL<i>↓</i></b></div>',   // パックを下へ引き出す(→docs/14 §14.62)
@@ -314,7 +314,7 @@ function sceneCard(id,isNew,go){
   pack.addEventListener("pointerdown",e=>{ p0={ x:e.clientX, y:e.clientY }; SC.packMoved=false; });   // 前のなぞりの印は押すたびに消す(→docs/14)
   pack.addEventListener("pointermove",e=>{
     if(!p0)return; const dx=e.clientX-p0.x, dy=e.clientY-p0.y, st=SC.card&&SC.card.stage;
-    if((st===0&&dy>28)||(st===1&&Math.abs(dx)>28)){ if(SC.busy)return; p0=null; SC.packMoved=true; packStep(); }   // 待ちの間のなぞりは、明けてから効く
+    if((st===0&&dy>28)||(st===1&&Math.hypot(dx,dy)>28)){ if(SC.busy)return; p0=null; SC.packMoved=true; packStep(); }   // 待ちの間のなぞりは、明けてから効く
   });
   pack.addEventListener("pointerup",()=>{ p0=null; });
   pack.addEventListener("dragstart",e=>e.preventDefault());
@@ -322,14 +322,16 @@ function sceneCard(id,isNew,go){
   sndUi("tap");
 }
 /**
- * パックの包みの形(→docs/14 §14.60): 上下の端は圧着のギザギザ、破り口の左右に V の切り込み。
- * top … 上の圧着(切り口)/ body … 本体(下の端もギザギザ)
+ * パックの包みの形(→docs/14 §14.60・§14.172): 上下の端は圧着のギザギザ。上の部分(top)と本体(body)は同じ大きさで重ね、
+ * 左の切り込みから右上へ斜めに走る破れ目(ギザギザ)で分ける。破ると top が破れ目からちぎれて飛ぶ
  */
 function packClip(part){
   const n=26, d=5, zig=(y0,dir)=>{ const p=[]; for(let i=0;i<=n;i++)p.push((i/n*100).toFixed(2)+"% "+(i%2?(dir>0?"calc("+y0+" + "+d+"px)":"calc("+y0+" - "+d+"px)"):y0)); return p; };
-  const v=7;
-  if(part==="top")return "polygon("+zig("0px",1).join(",")+",100% calc(100% - "+v+"px),calc(100% - "+v+"px) 100%,"+v+"px 100%,0 calc(100% - "+v+"px))";
-  return "polygon("+v+"px 0,calc(100% - "+v+"px) 0,100% "+v+"px,"+zig("100%",-1).reverse().join(",")+",0 "+v+"px)";
+  const L=21, Rr=11, m=14, tear=[];          // 破れ目: 左 L% → 右 Rr%(高さ)。小さくジグザグ
+  for(let i=0;i<=m;i++){ const x=i/m, y=L+(Rr-L)*x; tear.push((x*100).toFixed(2)+"% calc("+y.toFixed(2)+"% "+(i%2?"+ 3px":"- 2px")+")"); }
+  tear[0]="7px calc("+L+"% + 0px)";          // 左の切り込み(V)の奥から破れ始める
+  if(part==="top")return "polygon("+zig("0px",1).join(",")+",100% calc("+Rr+"% - 2px),"+tear.slice().reverse().join(",")+",0 calc("+L+"% - 6px))";
+  return "polygon(0 calc("+L+"% + 6px),"+tear.join(",")+",100% calc("+Rr+"% - 2px),"+zig("100%",-1).reverse().join(",")+")";
 }
 /** パックを1段進める: 0 口から少し出ている → 1 引き出した → 2 破って中身が見えた → 監督室へ */
 function packStep(){
@@ -337,7 +339,7 @@ function packStep(){
   const slot=SC.el.querySelector(".pk-slot"), msg=SC.el.querySelector(".pk-msg");
   if(K.stage===0){
     K.stage=1; slot.classList.replace("st0","st1"); slot.classList.add("om-"+K.shown);
-    msg.textContent="切り口を横になぞって破る";
+    msg.innerHTML='<b class="pk-pull rip">RIP A PACK!<i>↗</i></b>';   // PULL と同じ表し方(→docs/14 §14.172)
     sndPull(); if(K.shown!=="W")setTimeout(()=>sndShimmer(K.shown==="L"),420);
     SC.promoT=K.promo?setTimeout(()=>SC.promote&&SC.promote(),TUNING.pack.promoMs):0;
     if(!K.promo)SC.promote=null;
@@ -353,8 +355,8 @@ function packStep(){
     else setTimeout(()=>sndUi("ok"),300);
     msg.innerHTML='<b class="rar r-'+K.r+'">'+RAR_TAG[K.r]+'</b>'+(K.isNew?' <b class="new">NEW</b>':'')+
       '<br><span>'+nameOf(K.c)+' ・ '+clubOfCard(K.c)+'</span>';
-    // 監督室へは、下の「TOUCH で監督室へ」の周りを押したときだけ(カードをつまんで引っ張っても戻らない。→docs/14 §14.118)
-    const go=document.createElement("button"); go.className="pk-go"; go.dataset.sc="cardgo"; go.innerHTML="<small>TOUCH で監督室へ</small>";
+    // 監督室へは、下の「TOUCH HERE」の周りを押したときだけ(カードをつまんで引っ張っても戻らない。→docs/14 §14.118・§14.172)
+    const go=document.createElement("button"); go.className="pk-go"; go.dataset.sc="cardgo"; go.innerHTML="<small>TOUCH HERE</small>";
     msg.parentNode.appendChild(go);
     SC.cardGo=K.go; SC.next=null; SC.busy=true; setTimeout(()=>{ SC.busy=false; },700);
     return;

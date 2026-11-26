@@ -3114,3 +3114,42 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #club .srep .sr-sec{position:relative}
 #club .srep .sr-unk{position:absolute;right:8%;top:50%;z-index:1;margin-top:-16px;padding:2px 10px;font-style:normal;font-family:var(--f-num),sans-serif;font-size:18px;font-weight:900;letter-spacing:.16em;
   color:#c8102e;border:3px double #c8102e;border-radius:5px;background:rgba(251,249,243,.82);transform:rotate(-9deg);opacity:.95;pointer-events:none;z-index:5}   /* 黒塗りより上に(乗算だと黒に沈む。→docs/14 §14.169) */
+/* ---- カードの排出の作り直し(→docs/14 §14.172) ---- */
+/* 見出し: CALL UP THE PLAYER(説明の「試合のあとに1枚」は外した) */
+#scene .pk-head.call b,.th-wr #scene .pk-head.call b{display:block;font-size:25px;letter-spacing:.1em;line-height:1.1;white-space:nowrap}
+#scene .pk-head.call{margin-bottom:12px}
+/* 排出口: 金属の板に細い差し込み口、下に赤く光る線 */
+#scene .pk-mouth.top{width:270px;height:38px;margin:0 0 -18px;border-radius:12px 12px 5px 5px;
+  background:linear-gradient(180deg,#4a505e 0%,#262a33 38%,#14161b 100%);
+  box-shadow:0 10px 18px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.6)}
+#scene .pk-mouth.top::before{content:"";position:absolute;left:14px;right:14px;top:8px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18) 20%,rgba(255,255,255,.18) 80%,transparent)}
+#scene .pk-mouth.top i{left:8%;right:8%;bottom:9px;height:7px;border-radius:4px;background:#000;box-shadow:inset 0 -2px 3px rgba(0,0,0,.95),0 1px 0 rgba(255,255,255,.12)}
+#scene .pk-mouth.top::after{content:"";position:absolute;left:12%;right:12%;bottom:3px;height:2px;border-radius:1px;background:#ff2a4a;box-shadow:0 0 6px 1px rgba(255,42,74,.85),0 0 14px rgba(255,42,74,.55);animation:mouthGlow 1.6s ease-in-out infinite alternate}
+@keyframes mouthGlow{from{opacity:.55}to{opacity:1}}
+/* パック: カードと同じ縦の大きさ。上下の圧着の帯は同じ太さ(24px) */
+#scene .pk-slot{width:214px;height:340px}
+#scene .pk-slot .pk-cardin{top:24px!important;bottom:24px!important;left:8px!important;right:8px!important}
+.pk-top{top:0!important;bottom:0!important;height:auto!important;border-radius:0!important;background:linear-gradient(90deg,rgba(0,0,0,.42),rgba(0,0,0,0) 13%,rgba(0,0,0,0) 85%,rgba(0,0,0,.45)),
+    linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0) 10%,rgba(0,0,0,0) 84%,rgba(0,0,0,.3)),
+    linear-gradient(100deg,transparent 14%,rgba(255,255,255,.26) 21%,rgba(255,255,255,.06) 27%,transparent 33%),
+    radial-gradient(ellipse 70% 55% at 50% 50%,rgba(255,255,255,.14),transparent 70%),
+    repeating-linear-gradient(135deg,#c8102e 0 9px,#d8243f 9px 11px)!important;
+  transform-origin:100% 0;transition:transform .55s cubic-bezier(.3,.7,.4,1),opacity .55s .1s!important}
+.pk-top::after{display:none!important}
+.pk-top::before{content:"";position:absolute;left:0;right:0;top:0;height:24px;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(255,255,255,.1) 30%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,rgba(255,255,255,.08) 1px 2px,transparent 2px 4px)}
+.pk-body{top:0!important;bottom:0!important}
+.pk-body::before{top:24%!important;bottom:11%!important}
+.pk-logo{margin-top:6%!important}
+.pk-crimp{height:24px!important}
+.om-K .pk-top,.om-L .pk-top{background:linear-gradient(90deg,rgba(80,50,0,.45),rgba(0,0,0,0) 13%,rgba(0,0,0,0) 85%,rgba(80,50,0,.5)),
+    linear-gradient(180deg,rgba(80,50,0,.3),rgba(0,0,0,0) 10%,rgba(0,0,0,0) 84%,rgba(80,50,0,.3)),
+    linear-gradient(100deg,transparent 14%,rgba(255,255,255,.5) 21%,rgba(255,255,255,.12) 27%,transparent 33%),
+    radial-gradient(ellipse 70% 55% at 50% 50%,rgba(255,250,220,.35),transparent 70%),
+    repeating-linear-gradient(135deg,#c9961e 0 9px,#e6b93a 9px 11px)!important}
+/* 破る: 左の切り込みから斜めにちぎれて右上へ飛び、少し遅れて本体が下へ抜ける */
+.pk-slot.st2 .pk-top{transform:translate(96px,-74px) rotate(34deg)!important;opacity:0!important}
+.pk-slot.st2 .pk-body{transition:transform .65s .32s cubic-bezier(.5,0,.7,.4),opacity .65s .32s!important}
+/* RIP A PACK!(PULL と同じ表し方。矢印は斜め上へ) */
+.pk-pull.rip i{animation:ripUp 1s ease-in-out infinite}
+@keyframes ripUp{0%,100%{transform:translate(0,0);opacity:1}60%{transform:translate(7px,-7px);opacity:.55}}
