@@ -4693,6 +4693,7 @@ const TUNING={
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
   sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15,
     // 視察レポートで読める量(親密度の段 0〜3。→docs/14 §14.167)。notes … 所見の数 / key … 要注意人物(kp・atk 攻めの柱・dfn 守りの柱・sub スーパーサブ)
+    repHint:0.12,   // HOME で秘書が視察レポートの出来(親密度)をほのめかす率(試合ごと。→docs/14 §14.170)
     rep:{ notes:[1,3,5,99], key:[["kp"],["kp","atk"],["kp","atk","dfn"],["kp","atk","dfn","sub"]] } },
   // ケガ(→docs/08 §8.8)。判定は試合の中、別の乱数で行う(ほかの判定の並びを変えない)
   //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
@@ -9614,6 +9615,33 @@ const TAG_EV_RX={
   bday:["うわ、ケーキまで！ 最高の誕生日です！","いつもどおりが一番です。今日も練習、頑張ります。"],
   extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"]
 };
+/**
+ * 視察レポートの出来(= 親密度の段)をほのめかす秘書の一言(→docs/14 §14.170)。試合ごとに TUNING.sec.repHint の率で、ごくまれに。
+ * 同じ試合の中では出るか出ないかは変わらない。最初の試合と任期の終わりは出さない
+ */
+const SEC_REP_HINT={
+  s0:["まだこの仕事に慣れていなくて……視察のレポート、うまく集められずにすみません。",
+      "監督とお話しするうちに、相手チームの見方が少し分かってきました。レポートも、前よりはまとめられるはずです。",
+      "監督とよくお話ししているおかげで、レポートも上達してきました。次の相手も、しっかり調べておきますね。",
+      "次の相手の情報、すべてまとめておきました。監督のお役に立てるのが、何よりうれしいです。"],
+  s1:["うぅ、レポートってむずかしいです……。まだ全然集めきれなくて、ごめんなさい！",
+      "最近ちょっとコツがわかってきました！レポート、前より書けてる気がします！",
+      "監督といっぱい話してるから、相手の見るところがわかってきました！レポート、自信あります！",
+      "監督！次の相手の情報も完璧にしあげたよ！"],
+  s2:["……情報網の構築がまだ不十分です。レポートの精度が低いことは、自覚しています。",
+      "監督の判断の傾向がつかめてきました。必要な情報の優先順位も、整理できつつあります。",
+      "監督との対話が、分析の精度に直結しています。レポートの質は確実に上がっています。",
+      "次の相手の分析、完了しています。……監督のためなら、手は抜きません。"],
+  s3:["ごめんなさいね、まだ勝手がわからなくて。レポート、あまり集められなかったの。",
+      "ふふ、少しずつ慣れてきたわ。レポートも前より読みやすくなったでしょう？",
+      "監督とよくお話しするから、相手のことも見えてくるのよ。レポート、自信あるわ。",
+      "次の相手のこと、ぜんぶ調べておいたわ。監督のためだもの、当然よ。"]
+};
+function secRepHint(S){
+  if(!S.sec||!S.sec.chosen||S.termOver||!S.played)return null;
+  if(mulberry32((S.seed^hashStr("srh:"+S.term+":"+S.played))>>>0)()>=TUNING.sec.repHint)return null;
+  return (SEC_REP_HINT[secOf(S).id]||SEC_REP_HINT.s0)[secLv(S)]||null;
+}
 /** 秘書の会話のリアクション(言葉だけ) */
 function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
 /** 出来事のリアクション。{ who:"sec"|"pl", text } */
@@ -12694,6 +12722,7 @@ function secLine(S){
   // ケガをした先発がいれば、入れ替えかケアを勧める(→docs/08 §8.8)
   const hurt=S.sq.slice(0,11).filter(id=>g.pl[id]&&g.pl[id].mot===0);
   if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
+  const rh=secRepHint(S); if(rh)return rh;      // ごくまれに、視察レポートの出来(親密度)をほのめかす(→docs/14 §14.170)
   if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
   if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
   if(tiredStarters(S)>=TUNING.voice.manyTired)return secSay(S,"tiredMany");   // 多くの選手が疲れを訴えている(→docs/14 §14.81)
@@ -12791,6 +12820,7 @@ function secNeeded(S){
   if(S.sq.slice(0,11).some(id=>g.pl[id]&&g.pl[id].mot===0)&&g.step!=="ready")return true;   // ケガ
   if(fx&&fx.kind==="friendly"&&(Object.values(g.pl).some(p=>p.q||p.sq)||Object.values(g.links).some(l=>l.gold)))return true;   // 兆し
   if(fx&&fx.ko&&/決勝/.test(fx.label||""))return true;
+  if(secRepHint(S))return true;
   return S.played===0;                            // 最初のあいさつ
 }
 /** 秘書の一言 */
@@ -13057,7 +13087,7 @@ function scoutRepModalHtml(){
         keyRow("atk","攻",R.atk,"攻めの柱")+keyRow("dfn","守",R.dfn,"守りの柱")+keyRow("sub","控",sub,"スーパーサブ")+'</ul></div>'+
       no(["04","所見"])+
       '<div class="sr-sec">'+(open.size<R.lines.length?'<i class="sr-unk">UNKNOWN</i>':'')+'<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol></div>'+
-      (open.size<R.lines.length||RP.key[lv].length<4?'<p class="sr-lock">黒塗りの箇所は、'+se.name+'との仲が深まると読めるようになる</p>':'')+
+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '</article></div></div>';
 }

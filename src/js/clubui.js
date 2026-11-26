@@ -964,6 +964,7 @@ function secLine(S){
   // ケガをした先発がいれば、入れ替えかケアを勧める(→docs/08 §8.8)
   const hurt=S.sq.slice(0,11).filter(id=>g.pl[id]&&g.pl[id].mot===0);
   if(hurt.length&&g.step!=="ready")return secSay(S,"hurt",{ n:hurt.map(cname).join("・") });
+  const rh=secRepHint(S); if(rh)return rh;      // ごくまれに、視察レポートの出来(親密度)をほのめかす(→docs/14 §14.170)
   if(fx.kind==="friendly"&&omen)return secSay(S,"omen");
   if(g.step!=="train"&&commLeft(S))return secSay(S,"comm",{ n:commLeft(S) });
   if(tiredStarters(S)>=TUNING.voice.manyTired)return secSay(S,"tiredMany");   // 多くの選手が疲れを訴えている(→docs/14 §14.81)
@@ -1061,6 +1062,7 @@ function secNeeded(S){
   if(S.sq.slice(0,11).some(id=>g.pl[id]&&g.pl[id].mot===0)&&g.step!=="ready")return true;   // ケガ
   if(fx&&fx.kind==="friendly"&&(Object.values(g.pl).some(p=>p.q||p.sq)||Object.values(g.links).some(l=>l.gold)))return true;   // 兆し
   if(fx&&fx.ko&&/決勝/.test(fx.label||""))return true;
+  if(secRepHint(S))return true;
   return S.played===0;                            // 最初のあいさつ
 }
 /** 秘書の一言 */
@@ -1327,7 +1329,7 @@ function scoutRepModalHtml(){
         keyRow("atk","攻",R.atk,"攻めの柱")+keyRow("dfn","守",R.dfn,"守りの柱")+keyRow("sub","控",sub,"スーパーサブ")+'</ul></div>'+
       no(["04","所見"])+
       '<div class="sr-sec">'+(open.size<R.lines.length?'<i class="sr-unk">UNKNOWN</i>':'')+'<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol></div>'+
-      (open.size<R.lines.length||RP.key[lv].length<4?'<p class="sr-lock">黒塗りの箇所は、'+se.name+'との仲が深まると読めるようになる</p>':'')+
+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '</article></div></div>';
 }
