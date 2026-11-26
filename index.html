@@ -14298,11 +14298,11 @@ function onClubClick(e){
   else if(act==="trgo"&&CL.trSel!=null){
     const i=CL.trSel, o=trainOptions(S)[i]; CL.trSel=null;
     CL.msg=["練習: "+trainLabel(o)+"("+INT_LABEL[CL.int]+")"].concat(doTraining(S,i,CL.int));
-    CL.comm=null; CL.pick=[]; save(); showClub();
+    CL.comm="ind"; CL.pick=[]; save(); showClub();   // 個別指導は個人練習を開いた状態で(→docs/14 §14.194)
     infoBar(CL.msg.filter(x=>INFO_BAR_RE.test(x)));   // めったに出ない大事な知らせは、横から出るインフォバーで(→docs/14 §14.41)
   }
   else if(act==="int"){ CL.int=+b.dataset.i; if(CL.int===-1)CL.trSel=null; showClub(true); }
-  else if(act==="rest"){ CL.msg=doRest(S); CL.comm=null; CL.pick=[]; CL.int=1; save(); showClub(); }
+  else if(act==="rest"){ CL.msg=doRest(S); CL.comm="ind"; CL.pick=[]; CL.int=1; save(); showClub(); }
   else if(act==="cf"){ CL.cf=b.dataset.v; CL.sel=null; showClub(true); }
   else if(act==="cs"){ const o=["rar","no","tot"]; CL.cs=b.dataset.v==="next"?o[(o.indexOf(CL.cs||"rar")+1)%3]:b.dataset.v; showClub(true); }
   else if(act==="card"){ if(!b.dataset.id)return; const nx=b.dataset.id, nav=b.classList.contains("km-nav")||b.classList.contains("kn");
