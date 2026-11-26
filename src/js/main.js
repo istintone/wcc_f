@@ -156,7 +156,7 @@ function overlay(title,body,ms,fn){
 const capOn=()=>$("cap").classList.contains("on");
 /** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
 const HT_AX={ O:"攻", D:"守", R:"支", C:"奪", S:"速", P:"力" };
-const htAxTxt=h=>h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"");
+const htAxTxt=h=>(h.pos?h.pos.join("・")+"の ":"")+h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"")+(h.stam?" スタミナ消耗":"");
 /**
  * 指示の効きを2段で(→docs/14 §14.33)。上段 = 上がる能力(青)、下段 = 下がる能力(赤)。
  * 矢印の数は1軸あたりの効きの強さ(エンジンと同じ: 上がる = k、下がる = k × downR)で 1〜3 本
@@ -165,7 +165,7 @@ const htArrows=v=>v>=0.9?3:v>=0.55?2:1;
 function htAxHtml(h){
   const X=TUNING.ht, ax=t=>t.split("").map(a=>AXIS_ABBR[a]).join(" ");
   return '<span class="hx"><span class="hx-up">'+(h.up?ax(h.up)+' <b>'+"↑".repeat(htArrows(h.k))+'</b>':'—')+'</span>'+
-    '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':'下がる能力なし')+'</span></span>';
+    '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':h.stam?'スタミナ消耗 ×'+X.stamK:h.pos?h.pos.join("・")+' だけに効く':'下がる能力なし')+'</span></span>';
 }
 function closeOverlay(){
   // 閉じるときは、上下の赤い線が中央へ寄って1本の光の線になり、横に縮んで消える(テレビが切れるように。→docs/14 §14.160)。
@@ -488,7 +488,7 @@ function boot(){
   $("cap").addEventListener("click",e=>{
     const b=e.target.closest("[data-ht]"), cap=$("cap"); if(!b||cap.classList.contains("picked"))return;
     const h=htOf(b.dataset.ht);
-    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, stam:h.stam, pos:h.pos, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
     sndUi("ok");
     // 選んだ吹き出しが残り、ほかは落ちて消える。少し見せてから後半へ(→docs/14 §14.157)
     b.classList.add("sel"); cap.classList.add("picked"); G.capT=0;

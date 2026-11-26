@@ -60,6 +60,7 @@ function showClub(keepScroll){
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
   const kb=el.querySelector(".kmod-box"), ky=kb?kb.scrollTop:0;
   CL.fx=nextFixture(CL.S,CL.W);
+  if(CL.S&&CL.S.htNotice){ delete CL.S.htNotice; setTimeout(()=>infoBar(["💬 "+secOf(CL.S).name+"「ハーフタイムの指示は、これからは任期ごとにチーム練習で身につけるそうです。前に覚えた指示はいったんリセットですね。」"]),0); }   // →docs/26 §26.5
   el.innerHTML=clubHtml();
   el.classList.add("on");
   const main=el.querySelector(".cl-main");
@@ -235,8 +236,9 @@ function trainStepHtml(){
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
-      :'<div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
+      :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は指示の ★、イベントは EVENT(→docs/26)
+        return '<button class="tr'+(o.sp>=0?' sp':'')+(o.ev?' ev':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b>'+(o.ev?'<small class="trh">EVENT ・ 1回だけ</small>':st?'<small class="trh">HT '+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
@@ -464,7 +466,7 @@ function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
-  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
+  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 称号のレア訓練を'+TUNING.ht.unlock+'回で身につく(この任期の中だけ)</small></h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';

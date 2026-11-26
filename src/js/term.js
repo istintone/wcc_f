@@ -133,18 +133,39 @@ const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
  *   ほかは小さな効き目(数値は TUNING.tset)
  * S.tset = 称号の id | null、S.tsetChosen = その任期に選んだか */
 const TITLE_FX={
-  legend:   { favor:null,              desc:"特殊練習がどの系統も出やすい" },
-  emperor:  { favor:{ axis:"ORDCSP" }, desc:"戦力グラフを伸ばす特殊練習 ・ 大会の試合で負けてもやる気が下がりにくい" },
-  master:   { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの★突破が成功しやすい" },
-  factory:  { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 個人練習の経験 +10%" },
-  magic:    { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの経験 +10%" },
-  heir:     { favor:{ eff:"link" },    desc:"連携の特殊練習 ・ ラウンジが大成功しやすい" },
-  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 強豪に勝つとやる気が上がりやすい" },
-  tactician:{ favor:{ eff:"set" },     desc:"セットプレイの特殊練習 ・ セットプレイの伸び +20%" },
-  native:   { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 21歳以下の伸びやすさ +10%" },
-  fickle:   { favor:{ axis:"S" },      desc:"スピードの特殊練習 ・ 控えのやる気が下がりにくい" },
-  fighter:  { favor:{ axis:"O" },      desc:"攻撃の特殊練習 ・ 勝つとやる気が上がりやすい" }
+  legend:   { favor:null,              desc:"「トータルフットボール」のレア訓練 ・ レア訓練が出やすい" },
+  emperor:  { favor:{ axis:"ORDCSP" }, desc:"「王者の圧力」のレア訓練 ・ 大会の試合で負けてもやる気が下がりにくい" },
+  master:   { favor:{ eff:"sp" },      desc:"「ポゼッション」のレア訓練 ・ ミーティングの★突破が成功しやすい" },
+  factory:  { favor:{ eff:"ind" },     desc:"「個の力」のレア訓練 ・ 個人練習の経験 +10%" },
+  magic:    { favor:{ eff:"sp" },      desc:"「ファンタジスタ」のレア訓練 ・ ミーティングの経験 +10%" },
+  heir:     { favor:{ eff:"link" },    desc:"「連動」のレア訓練 ・ ラウンジが大成功しやすい" },
+  assassin: { favor:{ axis:"DC" },     desc:"「堅守速攻」のレア訓練 ・ 強豪に勝つとやる気が上がりやすい" },
+  tactician:{ favor:{ eff:"set" },     desc:"「セットプレー」のレア訓練 ・ セットプレイの伸び +20%" },
+  native:   { favor:{ eff:"ind" },     desc:"「走る組織」のレア訓練 ・ 21歳以下の伸びやすさ +10%" },
+  fickle:   { favor:{ axis:"S" },      desc:"「ターンオーバー」のレア訓練 ・ 控えのやる気が下がりにくい" },
+  fighter:  { favor:{ axis:"O" },      desc:"「ハイプレス」のレア訓練 ・ 勝つとやる気が上がりやすい" }
 };
+/**
+ * 称号ごとのレア訓練(→docs/26 §26.3)。チーム練習の枠に差し替わって出るのは、セットした称号のものだけ。
+ * 称号をセットしていなければ none。残りのレア訓練は HOME の出来事でだけ出る(TAG_EVENTS の tr)
+ */
+const TITLE_TRAIN={
+  legend:["トータルフットボール","ムービングフットボール","攻守の切り替え"],
+  emperor:["ゲルマン魂","ハイインテンシティー","ビルドアップ"],
+  master:["ポゼッションフットボール","組織プレイ","ダイレクトパス"],
+  magic:["シャンパンサッカー","セクシーフットボール","サインプレイ"],
+  heir:["1タッチゲーム","オフ・ザ・ボールの動き","パス&ラン"],
+  assassin:["カテナチオ","ショートカウンター","マンマーク"],
+  factory:["1VS1","ダイレクトシュート","ポストプレイ"],
+  tactician:["FK練習","CK練習","ラインディフェンス"],
+  fickle:["ポジション変更","ミニゲーム"],
+  fighter:["ゲーゲンプレス","ハイプレス","キック&ラッシュ"],
+  native:["ダイナミズム","リトリート"],
+  none:["紅白戦","コーチング"]
+};
+const trainIx=name=>TRAIN_SP.findIndex(t=>t.name===name);
+/** いまの称号で出るレア訓練の番号 */
+function titleTrainPool(S){ const k=S&&S.tset&&TITLE_TRAIN[S.tset]?S.tset:"none"; return TITLE_TRAIN[k].map(trainIx).filter(i=>i>=0); }
 /** これまでに獲った称号のうち、セットできるもの(効き目のあるもの。新しい順) */
 function earnedTitles(S){ const out=[]; for(let i=S.career.length-1;i>=0;i--){ const id=S.career[i].title; if(TITLE_FX[id]&&!out.includes(id))out.push(id); } return out; }
 /** いまセットしている称号の数値(TUNING.tset)。セットしていなければ null */

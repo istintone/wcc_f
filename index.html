@@ -3767,6 +3767,15 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 /* レジェンドは画面全体も一瞬白く光る */
 #scene.glow-L::after{content:"";position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 35%,#fff,rgba(255,236,170,.6) 40%,transparent 75%);pointer-events:none;animation:ripFlash .55s .08s ease-out both}
 @keyframes ripFlash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
+/* チーム練習の札: 称号のレア訓練は指示の ★、イベントのレア訓練は EVENT(→docs/26) */
+#club .trs .tr .trh{display:block;margin-top:1px;font-size:10px;font-weight:800;letter-spacing:.04em;color:#b8892c}
+#club .trs .tr.ev{box-shadow:inset 0 0 0 2px #c8102e}
+#club .trs .tr.ev .trh{color:#c8102e}
+#club .trs .tr:has(.trh){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.15}
+#club .trs .tr:has(.trh) b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#club .tr-right .trs.two .tr:has(.trh){flex-direction:column;justify-content:center;gap:1px;padding:2px 3px;overflow:hidden}
+#club .tr-right .trs.two .tr:has(.trh) b{display:block;margin:0;font-size:11px;line-height:1.15}
+#club .tr-right .trs.two .tr .trh{margin:0;font-size:9.5px;line-height:1.15}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4643,7 +4652,7 @@ const TUNING={
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
-  grow:{ startOff:-1.4, startKeep:6, spChance:0.12,
+  grow:{ startOff:-1.4, startKeep:6, spChance:0.12, evTrainK:1.3, trainEvP:0.10,   // イベントのレア訓練: 経験の倍率・試合ごとに出来事が起きる率(→docs/26 §26.4)
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeUp:[1,0.6,0.4] },
          // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
          //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
@@ -4739,7 +4748,8 @@ const TUNING={
   // ハーフタイムの指示(→docs/10 §10.8)。unlock … 覚えるのに要る同じ特殊練習の回数 / max … 登録できる数 / timer … ハーフタイムに選ぶ時間(ミリ秒)
   //   allK … 上がる軸がオフェンス・ディフェンスのときの力の倍率 / otherK … ほかの軸(受ける・追う・防ぐ・スタミナ・空中戦)の倍率
   //   downR … 下がる軸の効き(上がる軸に対する割合)/ basicK … 初めから使える指示の効き / graph … 後半のあいだ成長グラフに足す量(ランクが上がることがある。金色は変わらない)
-  ht:{ unlock:2, max:3, timer:8000, pickMs:700, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
+  // unlock … 称号のレア訓練を何回で指示を身につけるか(任期の中だけ。→docs/26 §26.5)/ budget・stamMul・posMul・kMax … 指示の強さをそろえる物差し / stamK … 消耗の指示のスタミナの減り
+  ht:{ unlock:3, budget:1.2, stamMul:1.25, posMul:1.6, kMax:2, stamK:1.5, max:3, timer:8000, pickMs:700, allK:0.012, otherK:0.05, downR:0.6, basicK:0.5, graph:8 },
   // クラブ新聞(→docs/07 §7.13)。max … 残す記事の数 / recent … HOME に出す直近の試合の数
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
@@ -5160,11 +5170,33 @@ const HT_PHRASE={ "1VS1":"1対1で勝負しろ", "1タッチゲーム":"細か�
   "マンマーク":"マークを外すな", "ミニゲーム":"狭い所で勝て", "ムービングフットボール":"動きながら崩せ", "ラインディフェンス":"ラインをそろえろ",
   "リトリート":"一度引いて守れ", "ロングカウンター":"引いて一気に返せ", "攻守の切り替え":"切り替えを速く", "紅白戦":"練習どおりにやれ",
   "組織プレイ":"組織で戦え", "中央突破":"真ん中をこじ開けろ", "特殊セットプレイ":"とっておきを出せ", "非公開練習":"相手の裏をかけ" };
+/* ハーフタイムの指示(→docs/26 §26.5)。どの指示にも「代わりに失うもの」がある:
+ *   振り分け(down で下がる軸)/ 消耗(stam: 後半のスタミナの減りが TUNING.ht.stamK 倍)/ 限定(pos: その役割の選手にだけ効く)
+ * 強さ k は htK が物差しでそろえる */
 const HT_BASIC=[
-  { id:"b1", name:"気合いを入れ直せ", up:"ODRCSP", down:"" },
-  { id:"b2", name:"集中を切らすな",   up:"DC",     down:"" },
-  { id:"b3", name:"攻めの姿勢を見せろ", up:"OS",   down:"" }
+  { id:"b1", name:"気合いを入れ直せ", up:"ODRCSP", down:"", stam:true },
+  { id:"b2", name:"集中を切らすな",   up:"DC",     down:"O" },
+  { id:"b3", name:"攻めの姿勢を見せろ", up:"OS",   down:"D" }
 ];
+const HT_SPEC={
+  "トータルフットボール":{ up:"ODRCSP", stam:true }, "ムービングフットボール":{ up:"ORS", down:"P" }, "攻守の切り替え":{ up:"OD", stam:true },
+  "ゲルマン魂":{ up:"PD", down:"S" }, "ハイインテンシティー":{ up:"OPDCS", stam:true }, "ビルドアップ":{ up:"RP", down:"C" },
+  "ポゼッションフットボール":{ up:"OR", down:"S" }, "組織プレイ":{ up:"DC", down:"O" }, "ダイレクトパス":{ up:"RS", down:"P" },
+  "シャンパンサッカー":{ up:"ORS", down:"D" }, "セクシーフットボール":{ up:"OR", pos:["MF"] }, "サインプレイ":{ up:"RP", down:"O" },
+  "1タッチゲーム":{ up:"RS", down:"D" }, "オフ・ザ・ボールの動き":{ up:"OS", pos:["FW"] }, "パス&ラン":{ up:"ORS", stam:true },
+  "カテナチオ":{ up:"DC", down:"OS" }, "ショートカウンター":{ up:"OS", down:"R" }, "マンマーク":{ up:"DC", pos:["DF"] },
+  "1VS1":{ up:"OS", pos:["FW"] }, "ダイレクトシュート":{ up:"OR", pos:["FW"] }, "ポストプレイ":{ up:"OP", pos:["FW"] },
+  "FK練習":{ up:"OP", down:"S" }, "CK練習":{ up:"PD", down:"S" }, "ラインディフェンス":{ up:"DR", down:"S" },
+  "ポジション変更":{ up:"ODP", stam:true }, "ミニゲーム":{ up:"RC", down:"P" },
+  "ゲーゲンプレス":{ up:"OCS", stam:true }, "ハイプレス":{ up:"C", pos:["FW","MF"] }, "キック&ラッシュ":{ up:"OP", down:"R" },
+  "ダイナミズム":{ up:"ODCS", stam:true }, "リトリート":{ up:"DS", down:"O" },
+  "紅白戦":{ up:"ODRCSP", stam:true }, "コーチング":{ up:"PD", down:"O" }
+};
+/** 指示の強さ: budget を「上がる軸の数 − 下がる軸の数 × downR」で割り、代わり(消耗・限定)の分だけ上乗せ(どの指示もほぼ同じ得に) */
+function htK(h){
+  const X=TUNING.ht, n=Math.max(0.5,h.up.length-(h.down||"").length*X.downR);
+  return Math.min(X.kMax,X.budget/n*(h.stam?X.stamMul:1)*(h.pos?X.posMul:1));
+}
 
 const CARDS={};
 CARD_ROWS.forEach(r=>{
@@ -5437,7 +5469,20 @@ const TAG_EVENTS=[
   { k:"press",  q:"{n} の私生活が週刊誌に載りました。",                    p:true, ch:[["かばう",{}],["本人に任せる",{ bet:[0.5,"mood","gossip"] }]] },
   { k:"mood",   q:"{n} がロッカールームを盛り上げています。",              p:true, ch:[["任せる",{ player:"mood" }],["静かに見守る",{}]] },
   { k:"bday",   q:"今日は {n} の誕生日です。",                             p:true, ch:[["みんなで祝う",{ player:"birthday" }],["普段どおり",{}]] },
-  { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] }
+  { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] },
+  // 練習のイベント(→docs/26 §26.4)。tr … 次のチーム練習に1回だけ出るレア訓練(配列なら1つを選ぶ)/ need … スタジアム・施設の条件 / w … 選ばれやすさ(段が高いほど大きい)
+  { k:"trMedia", tr:"非公開練習", need:{ stad:5 }, w:5, q:"メディアが練習を取材に来ています。今日は非公開練習にしましょうか？", ch:[["非公開にする",{ train:1 }],["公開のままにする",{}]] },
+  { k:"trFans",  tr:"フルコート3対3", need:{ stad:3 }, w:3, q:"サポーターが練習を見に来ています。見せる練習「{t}」をしませんか？", ch:[["やろう",{ train:1 }],["いつもどおりで",{}]] },
+  { k:"trLocal", tr:["サイドアタック","中央突破","クロスボール","ロングカウンター"], need:{}, w:1, q:"地元のクラブから練習試合の申し込みです。「{t}」を試せそうです。", ch:[["受ける",{ train:1 }],["断る",{}]] },
+  { k:"trPitch1", tr:"3vs1とりかご", need:{ train:1 }, w:1, q:"練習場に新しいミニピッチができました。「{t}」ができますよ。", ch:[["やろう",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trPitch2", tr:"4VS4パスゲーム", need:{ train:2 }, w:2, q:"練習場のミニピッチが広くなりました。「{t}」ができますよ。", ch:[["やろう",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trPhys1", tr:"シャトルラン", need:{ med:1 }, w:1, q:"フィジカルコーチが来てくれるそうです。「{t}」を見てもらいましょうか？", ch:[["頼む",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trPhys3", tr:"オーバーラップ", need:{ med:3 }, w:3, q:"一流のフィジカルコーチが来てくれるそうです。「{t}」を見てもらいましょうか？", ch:[["頼む",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trVideo1", tr:"セットプレイ", need:{ tact:1 }, w:1, q:"戦術室で、相手の映像を分析しました。「{t}」を詰めておきましょうか？", ch:[["やろう",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trVideo2", tr:"特殊セットプレイ", need:{ tact:2 }, w:2, q:"戦術室の分析で、相手の弱点が見えました。「{t}」を仕込みませんか？", ch:[["仕込もう",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trVideo3", tr:"ストップ・ザ・ゲーム", need:{ tact:3 }, w:3, q:"戦術室で、相手のエースの癖まで丸裸にしました。「{t}」をやりましょう。", ch:[["やろう",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trOb1", tr:"ダイレクトプレイ", need:{ lounge:1 }, w:1, q:"クラブの OB が顔を出してくれました。「{t}」を教えてくれるそうです。", ch:[["お願いする",{ train:1 }],["今回は見送る",{}]] },
+  { k:"trOb3", tr:"カバーリング", need:{ lounge:3 }, w:3, q:"伝説の OB がラウンジに来ています。「{t}」を伝授してくれるそうです。", ch:[["お願いする",{ train:1 }],["今回は見送る",{}]] }
 ];
 
 /* ---- COACHING NOTE(→docs/23 §23.10)----
@@ -6171,7 +6216,9 @@ function refreshFx(M,min){
       if(B.saving&&p.gk)fx.gk*=1+B.saving;
       if(B.spurt&&min>=75)fx.all*=1+B.spurt;
       // ハーフタイムの指示(→docs/10 §10.8): 上がる軸は強く、下がる軸は弱く
-      if(T.ht){ const H=T.ht, X=TUNING.ht, m=a=>(H.up.includes(a)?1:0)-(H.down.includes(a)?X.downR:0), kA=X.allK*H.k, kO=X.otherK*H.k;
+      // 限定の指示はその役割の選手だけ、消耗の指示は後半のスタミナの減りが stamK 倍(→docs/26 §26.5)
+      if(T.ht&&(!T.ht.pos||T.ht.pos.includes(g))){ const H=T.ht, X=TUNING.ht, m=a=>(H.up.includes(a)?1:0)-(H.down.includes(a)?X.downR:0), kA=X.allK*H.k, kO=X.otherK*H.k;
+        if(H.stam)fx.sta*=X.stamK;
         if(g==="FW"||g==="MF")fx.all*=1+m("O")*kA*(g==="FW"?1:0.5);
         if(g==="DF")fx.all*=1+m("D")*kA;
         fx.recv*=1+m("R")*kO; fx.chase*=1+m("C")*kO; fx.blk*=1+m("C")*kO; fx.sta*=1-m("S")*kO; fx.aerial*=1+m("P")*kO; }
@@ -6387,8 +6434,8 @@ function applyOrders(M,t){
       else if(o.type==="sub")doSub(M,T,o.out,o.in,t);
       else if(o.type==="shoot")T.shootOrder=TUNING.shot.orderN;      // 自分たちが持っている間、最大 orderN 手(→docs/08 §8.12)
       else if(o.type==="shootCancel")T.shootOrder=0;
-      else if(o.type==="htPlan"){ T.ht={ up:o.up||"", down:o.down||"", k:o.k||1 };   // ハーフタイムの指示(後半のあいだ。→docs/10 §10.8)
-        if(T.graph){ T.graph=Object.assign({},T.graph); for(const a of T.ht.up)T.graph[a]=(T.graph[a]||0)+TUNING.ht.graph*T.ht.k; for(const a of T.ht.down)T.graph[a]=(T.graph[a]||0)-TUNING.ht.graph*TUNING.ht.downR*T.ht.k; }
+      else if(o.type==="htPlan"){ T.ht={ up:o.up||"", down:o.down||"", k:o.k||1, stam:!!o.stam, pos:o.pos||null };   // ハーフタイムの指示(後半のあいだ。→docs/10 §10.8)
+        if(T.graph&&!T.ht.pos){ T.graph=Object.assign({},T.graph); for(const a of T.ht.up)T.graph[a]=(T.graph[a]||0)+TUNING.ht.graph*T.ht.k; for(const a of T.ht.down)T.graph[a]=(T.graph[a]||0)-TUNING.ht.graph*TUNING.ht.downR*T.ht.k; }
         M.events.push({ ix:M.ix, min:t.min, half:t.half, side:T.side, type:"htPlan", name:o.name||"" }); }
       else if(o.type==="ins")setIns(M,T,o,t);
       else if(o.type==="kp")changeKp(M,T,o.id,t);
@@ -7228,7 +7275,7 @@ function newCareer(seed){
     rec:{ w:0, d:0, l:0, gf:0, ga:0 }, titles:[], prev:null, league:null, cups:null,
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
-    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, paper:[],
+    sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:[], xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, paper:[],
     roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
@@ -7595,6 +7642,7 @@ function newTerm(S,W){
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
+  if(S.ht)S.ht.set=S.ht.set.filter(x=>/^b/.test(x));   // ハーフタイムの指示も任期ごと(→docs/26 §26.5)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
   // 残るのは監督の情報(称号・年俸・監督ランク・歴代)・ついてくる選手・カード・秘書との親密度
   S.money=0; S.ts=newTermStats(); S.money0=0;
@@ -7678,6 +7726,8 @@ function migrate(S){
   if(S.tset===undefined){ S.tset=null; S.tsetChosen=true; }
   if(!S.mab)S.mab={ set:[], xp:{} };
   if(!S.ht)S.ht={ cnt:{}, set:["b1","b2","b3"] };
+  // ハーフタイムの指示は任期の中だけになった(→docs/26 §26.5)。前に覚えた指示はリセットし、一度だけ知らせる
+  if(!S.htV2){ if(Object.keys(S.ht.cnt||{}).length)S.htNotice=true; S.ht.cnt={}; S.ht.set=S.ht.set.filter(x=>/^b/.test(x)); S.htV2=true; }
   if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
   if(!S.capHist)S.capHist=[];
   if(!S.tgoals)S.tgoals={};
@@ -8437,14 +8487,26 @@ function trainOptions(S){
   const G0=TUNING.grow, rng=mulberry32((S.seed^hashStr("tr:"+S.term+":"+S.played))>>>0);
   S.g.opts=STATS.map(param=>{
     if(rng()<G0.spChance*(S.fac||1)*(tsetOf(S,"spK")||1)){   // 監督ランク(累計の年俸 →term.js)と、セットした称号(レジェンド)
-      const pool=TRAIN_SP.map((t,i)=>i).filter(i=>TRAIN_SP[i].slot===param||TRAIN_SP[i].slot==="any");
-      // セットした称号の系統に合う特殊練習ほど出やすい(→docs/10 §10.2 B)
-      const w=pool.map(i=>trainWeight(S,TRAIN_SP[i])), tot=w.reduce((a,b)=>a+b,0);
-      if(pool.length){ let r=rng()*tot; for(let j=0;j<pool.length;j++){ if(r<w[j])return { param, sp:pool[j] }; r-=w[j]; } return { param, sp:pool[pool.length-1] }; }
+      // 出るのはセットした称号のレア訓練だけ(→docs/26 §26.3)。同じ回に同じ訓練は2つ出さない
+      const used=new Set(), pool=titleTrainPool(S);
+      return { param, sp:pool.length?pool[Math.floor(rng()*pool.length)]:-1, used };
     }
     return { param, sp:-1 };
   });
-  return S.g.opts;
+  const seen=new Set(); S.g.opts.forEach(o=>{ delete o.used; if(o.sp>=0){ if(seen.has(o.sp))o.sp=-1; else seen.add(o.sp); } });
+  return evTrainOpts(S);
+}
+/** HOME の出来事で決まったレア訓練(1回だけ)を、練習の枠の1つに差し込む(→docs/26 §26.4) */
+function evTrainOpts(S){
+  const o=S.g.opts, ev=S.g.evTrain;
+  if(ev!=null&&!o.some(x=>x.ev)){ const i=o.findIndex(x=>x.sp<0); o[i>=0?i:0]={ param:o[i>=0?i:0].param, sp:ev, ev:true }; }
+  return o;
+}
+/** レア訓練の指示の ★(任期の中だけ。→docs/26 §26.5)。称号の訓練でなければ null */
+function htStars(S,sp){
+  if(sp<0||!titleTrainPool(S).includes(sp))return null;
+  const n=Math.min(TUNING.ht.unlock,(S.g.htc&&S.g.htc[sp])||0);
+  return "★".repeat(n)+"☆".repeat(TUNING.ht.unlock-n);
 }
 /** 基本の練習の名前(能力ごと) */
 const TRAIN_NAME={ off:"攻撃練習", def:"守備練習", spd:"速攻練習", tec:"パス練習", pow:"奪取練習", sta:"走行練習" };
@@ -8540,7 +8602,8 @@ function squadXi(S){
 function doTraining(S,i,intensity){
   const G0=TUNING.grow, I=G0.ind, R=G0.graph, N=G0.int, o=trainOptions(S)[i], out=[];
   if(S.g.step!=="train"||!o)return out;
-  const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv];
+  const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv]*(o.ev?G0.evTrainK:1);   // イベントのレア訓練は1回きりなので育ちが強い(→docs/26 §26.4)
+  if(o.ev)S.g.evTrain=null;
   const ids=Object.keys(S.g.pl);
   const gk=facK(S,"tact"), maxed=Object.keys(S.g.graph).filter(a=>S.g.graph[a]>=R.max-1e-9&&!S.g.gold[a]);   // 練習の前から MAX の軸(戦術室で伸びやすい)
   let ups=[];
@@ -8569,8 +8632,10 @@ function doTraining(S,i,intensity){
     for(const a of t.down)graphAdd(S,a,-R.down*k);
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k*gk);
     ups=[...t.up];
-    // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
-    if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
+    // ハーフタイムの指示を身につける(称号のレア訓練を unlock 回。任期の中だけ。→docs/26 §26.5)
+    if(!o.ev&&titleTrainPool(S).includes(o.sp)){ const c=S.g.htc||(S.g.htc={}), n=c[o.sp]=(c[o.sp]||0)+1;
+      if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を身につけた(戦略方針で登録できる。この任期の中だけ)");
+      else if(n<TUNING.ht.unlock)out.push("📋 「"+htName(TRAIN_SP[o.sp].name)+"」 "+htStars(S,o.sp)); }
   }
   for(const id of ids){
     const g=S.g.pl[id];
@@ -8589,6 +8654,7 @@ function doTraining(S,i,intensity){
 function doRest(S){
   const G0=TUNING.grow, out=[];
   if(S.g.step!=="train")return out;
+  S.g.evTrain=null;                             // イベントのレア訓練は、休んだら消える(1回だけ)
   const rng=mulberry32((S.seed^hashStr("rest:"+S.term+":"+S.played))>>>0);
   let up=0;
   for(const id in S.g.pl){
@@ -9088,12 +9154,14 @@ function teamPower(S){
  * 指示の id: 初めから使えるものは "b1"〜"b3"、特殊練習から覚えたものは "t" + 特殊練習の番号 */
 const htName=n=>HT_PHRASE[n]||n+"を思い出せ";
 function htOf(id){
-  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ k:TUNING.ht.basicK },b);
-  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]];
-  return t?{ id, name:htName(t.name), up:t.up, down:t.down, k:1, train:t.name }:null;
+  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ down:"" },b,{ k:htK(b) });
+  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]]; if(!t)return null;
+  const sp=HT_SPEC[t.name]||{ up:t.up||"ODRCSP", down:t.down||"", stam:!t.down };   // 指示の中身は練習の軸と別に作り直した(→docs/26 §26.5)
+  const h={ id, name:htName(t.name), up:sp.up, down:sp.down||"", stam:!!sp.stam, pos:sp.pos||null, train:t.name };
+  h.k=htK(h); return h;
 }
-/** 使える指示(初めからの3つ + 覚えたもの) */
-function htAvail(S){ const out=HT_BASIC.map(b=>b.id); if(S&&S.ht)for(const i in S.ht.cnt)if(S.ht.cnt[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
+/** 使える指示(初めからの3つ + この任期に身につけたもの。→docs/26 §26.5) */
+function htAvail(S){ const out=HT_BASIC.map(b=>b.id), c=S&&S.g&&S.g.htc; if(c)for(const i in c)if(c[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
 function toggleHt(S,id){
   const set=S.ht.set, i=set.indexOf(id);
   if(i>=0){ set.splice(i,1); return true; }
@@ -9306,6 +9374,7 @@ function tagsAfterMatch(S,fx,res,out){
   autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
+  trainEventRoll(S);                            // 練習の出来事(スタジアム・施設の段で。→docs/26 §26.4)
   noteSeen(S);                                  // 見えているタグも手帳に
   playerVoiceRoll(S);                           // 選手の声(→docs/14 §14.79)
 }
@@ -9625,11 +9694,24 @@ function tagEventRoll(S){
   if(S.g.tev||S.termOver)return;
   const r=mulberry32((S.seed^hashStr("tev:"+S.term+":"+S.played))>>>0);
   if(r()>=TUNING.tag.event.p)return;
-  const ev=TAG_EVENTS[Math.floor(r()*TAG_EVENTS.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
+  const base=TAG_EVENTS.filter(e=>!e.tr);
+  const ev=base[Math.floor(r()*base.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
   S.g.tev={ k:ev.k, id:ev.p&&sq.length?sq[Math.floor(r()*sq.length)]:null };
 }
+/** 練習の出来事(→docs/26 §26.4)。スタジアム・施設の段で起きる出来事が変わり、段の高いものほど選ばれやすい */
+const trEvOk=(S,e)=>{ const B=S.biz||{ stad:1, fac:{} }; return Object.keys(e.need).every(k=>k==="stad"?(B.stad||1)>=e.need.stad:((B.fac||{})[k]||0)>=e.need[k]); };
+function trainEventRoll(S){
+  if(S.g.tev||S.termOver||S.g.evTrain!=null)return;
+  const r=mulberry32((S.seed^hashStr("trev:"+S.term+":"+S.played))>>>0);
+  if(r()>=TUNING.grow.trainEvP)return;
+  const c=TAG_EVENTS.filter(e=>e.tr&&trEvOk(S,e)); if(!c.length)return;
+  let x=r()*c.reduce((a,e)=>a+e.w,0), ev=c[c.length-1];
+  for(const e of c){ if(x<e.w){ ev=e; break; } x-=e.w; }
+  const tr=Array.isArray(ev.tr)?ev.tr[Math.floor(r()*ev.tr.length)]:ev.tr;
+  S.g.tev={ k:ev.k, id:null, tr };
+}
 const tagEventOf=S=>S.g&&S.g.tev?TAG_EVENTS.find(e=>e.k===S.g.tev.k):null;
-const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"");
+const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"").split("{t}").join(S.g.tev.tr||"");
 /**
  * 会話・出来事の答えへのリアクション(→docs/14 §14.165)。効果は通知で出すので、ここは純粋な会話の言葉だけ。
  * SEC_EV_RX[秘書][会話の番号][答えの番号] / TAG_EV_RX[出来事] = 選手の言葉 [答えごと](sec:true は秘書が答える → [秘書][答え])
@@ -9666,7 +9748,11 @@ const TAG_EV_RX={
   press:["監督……ありがとうございます。迷惑をかけてすみません。","自分のことは、自分でけじめをつけます。"],
   mood:["任せてください！みんなを笑わせますよ！","あ、ちょっと騒ぎすぎましたかね。へへ。"],
   bday:["うわ、ケーキまで！ 最高の誕生日です！","いつもどおりが一番です。今日も練習、頑張ります。"],
-  extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"]
+  extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"],
+  train:{ sec:true, s0:["承知しました。次の練習に組み込んでおきますね。","かしこまりました。今回は見送りましょう。"],
+    s1:["了解です！みんな、きっと喜びますよ！","わかりました！また今度ですね！"],
+    s2:["了解です。練習メニューを差し替えます。","承知しました。今のメニューを優先します。"],
+    s3:["ええ、準備しておくわね。楽しみだわ。","そう、わかったわ。また機会があるわよ。"] }
 };
 /**
  * 視察レポートの出来(= 親密度の段)をほのめかす秘書の一言(→docs/14 §14.170)。試合ごとに TUNING.sec.repHint の率で、ごくまれに。
@@ -9698,13 +9784,14 @@ function secRepHint(S){
 /** 秘書の会話のリアクション(言葉だけ) */
 function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
 /** 出来事のリアクション。{ who:"sec"|"pl", text } */
-function tagEvRx(S,k,i){ const X=TAG_EV_RX[k]; if(!X)return null;
+function tagEvRx(S,k,i){ const X=TAG_EV_RX[k]||(/^tr/.test(k)?TAG_EV_RX.train:null); if(!X)return null;
   if(X.sec)return { who:"sec", text:((X[secOf(S).id]||X.s0)[i])||"" };
   return { who:"pl", text:X[i]||"" }; }
 /** 出来事に答える。結果の行を返す */
 function answerTagEvent(S,i){
   const ev=tagEventOf(S); if(!ev||!ev.ch[i])return [];
-  const id=S.g.tev.id, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  const id=S.g.tev.id, tr=S.g.tev.tr, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  if(R.train&&tr){ const ix=trainIx(tr); if(ix>=0){ S.g.evTrain=ix; S.g.opts&&evTrainOpts(S); out.push("📋 次のチーム練習に「"+tr+"」が加わる(1回だけ)"); } }
   if(R.team)addTeamTag(S,R.team,out);
   if(R.player&&id)addPlayerTag(S,id,R.player,out);
   if(R.bet&&id){ const [p,hit,miss]=R.bet, ok=mulberry32((S.seed^hashStr("teb:"+S.term+":"+S.played+":"+id))>>>0)()<p, t=ok?hit:miss;
@@ -10076,18 +10163,39 @@ const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
  *   ほかは小さな効き目(数値は TUNING.tset)
  * S.tset = 称号の id | null、S.tsetChosen = その任期に選んだか */
 const TITLE_FX={
-  legend:   { favor:null,              desc:"特殊練習がどの系統も出やすい" },
-  emperor:  { favor:{ axis:"ORDCSP" }, desc:"戦力グラフを伸ばす特殊練習 ・ 大会の試合で負けてもやる気が下がりにくい" },
-  master:   { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの★突破が成功しやすい" },
-  factory:  { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 個人練習の経験 +10%" },
-  magic:    { favor:{ eff:"sp" },      desc:"特殊能力の特殊練習 ・ ミーティングの経験 +10%" },
-  heir:     { favor:{ eff:"link" },    desc:"連携の特殊練習 ・ ラウンジが大成功しやすい" },
-  assassin: { favor:{ axis:"DC" },     desc:"守備・奪取の特殊練習 ・ 強豪に勝つとやる気が上がりやすい" },
-  tactician:{ favor:{ eff:"set" },     desc:"セットプレイの特殊練習 ・ セットプレイの伸び +20%" },
-  native:   { favor:{ eff:"ind" },     desc:"個人能力の特殊練習 ・ 21歳以下の伸びやすさ +10%" },
-  fickle:   { favor:{ axis:"S" },      desc:"スピードの特殊練習 ・ 控えのやる気が下がりにくい" },
-  fighter:  { favor:{ axis:"O" },      desc:"攻撃の特殊練習 ・ 勝つとやる気が上がりやすい" }
+  legend:   { favor:null,              desc:"「トータルフットボール」のレア訓練 ・ レア訓練が出やすい" },
+  emperor:  { favor:{ axis:"ORDCSP" }, desc:"「王者の圧力」のレア訓練 ・ 大会の試合で負けてもやる気が下がりにくい" },
+  master:   { favor:{ eff:"sp" },      desc:"「ポゼッション」のレア訓練 ・ ミーティングの★突破が成功しやすい" },
+  factory:  { favor:{ eff:"ind" },     desc:"「個の力」のレア訓練 ・ 個人練習の経験 +10%" },
+  magic:    { favor:{ eff:"sp" },      desc:"「ファンタジスタ」のレア訓練 ・ ミーティングの経験 +10%" },
+  heir:     { favor:{ eff:"link" },    desc:"「連動」のレア訓練 ・ ラウンジが大成功しやすい" },
+  assassin: { favor:{ axis:"DC" },     desc:"「堅守速攻」のレア訓練 ・ 強豪に勝つとやる気が上がりやすい" },
+  tactician:{ favor:{ eff:"set" },     desc:"「セットプレー」のレア訓練 ・ セットプレイの伸び +20%" },
+  native:   { favor:{ eff:"ind" },     desc:"「走る組織」のレア訓練 ・ 21歳以下の伸びやすさ +10%" },
+  fickle:   { favor:{ axis:"S" },      desc:"「ターンオーバー」のレア訓練 ・ 控えのやる気が下がりにくい" },
+  fighter:  { favor:{ axis:"O" },      desc:"「ハイプレス」のレア訓練 ・ 勝つとやる気が上がりやすい" }
 };
+/**
+ * 称号ごとのレア訓練(→docs/26 §26.3)。チーム練習の枠に差し替わって出るのは、セットした称号のものだけ。
+ * 称号をセットしていなければ none。残りのレア訓練は HOME の出来事でだけ出る(TAG_EVENTS の tr)
+ */
+const TITLE_TRAIN={
+  legend:["トータルフットボール","ムービングフットボール","攻守の切り替え"],
+  emperor:["ゲルマン魂","ハイインテンシティー","ビルドアップ"],
+  master:["ポゼッションフットボール","組織プレイ","ダイレクトパス"],
+  magic:["シャンパンサッカー","セクシーフットボール","サインプレイ"],
+  heir:["1タッチゲーム","オフ・ザ・ボールの動き","パス&ラン"],
+  assassin:["カテナチオ","ショートカウンター","マンマーク"],
+  factory:["1VS1","ダイレクトシュート","ポストプレイ"],
+  tactician:["FK練習","CK練習","ラインディフェンス"],
+  fickle:["ポジション変更","ミニゲーム"],
+  fighter:["ゲーゲンプレス","ハイプレス","キック&ラッシュ"],
+  native:["ダイナミズム","リトリート"],
+  none:["紅白戦","コーチング"]
+};
+const trainIx=name=>TRAIN_SP.findIndex(t=>t.name===name);
+/** いまの称号で出るレア訓練の番号 */
+function titleTrainPool(S){ const k=S&&S.tset&&TITLE_TRAIN[S.tset]?S.tset:"none"; return TITLE_TRAIN[k].map(trainIx).filter(i=>i>=0); }
 /** これまでに獲った称号のうち、セットできるもの(効き目のあるもの。新しい順) */
 function earnedTitles(S){ const out=[]; for(let i=S.career.length-1;i>=0;i--){ const id=S.career[i].title; if(TITLE_FX[id]&&!out.includes(id))out.push(id); } return out; }
 /** いまセットしている称号の数値(TUNING.tset)。セットしていなければ null */
@@ -11871,6 +11979,7 @@ function showClub(keepScroll){
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
   const kb=el.querySelector(".kmod-box"), ky=kb?kb.scrollTop:0;
   CL.fx=nextFixture(CL.S,CL.W);
+  if(CL.S&&CL.S.htNotice){ delete CL.S.htNotice; setTimeout(()=>infoBar(["💬 "+secOf(CL.S).name+"「ハーフタイムの指示は、これからは任期ごとにチーム練習で身につけるそうです。前に覚えた指示はいったんリセットですね。」"]),0); }   // →docs/26 §26.5
   el.innerHTML=clubHtml();
   el.classList.add("on");
   const main=el.querySelector(".cl-main");
@@ -12046,8 +12155,9 @@ function trainStepHtml(){
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
-      :'<div class="trs two">'+trainOptions(S).map((o,i)=>'<button class="tr'+(o.sp>=0?' sp':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b></button>').join("")+'</div></div></div>'+trainEffectHtml());
+      :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は指示の ★、イベントは EVENT(→docs/26)
+        return '<button class="tr'+(o.sp>=0?' sp':'')+(o.ev?' ev':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
+        '<b>'+trainLabel(o)+'</b>'+(o.ev?'<small class="trh">EVENT ・ 1回だけ</small>':st?'<small class="trh">HT '+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
@@ -12275,7 +12385,7 @@ function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
-  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 同じ特殊練習を'+TUNING.ht.unlock+'回すると覚える</small></h3>'+
+  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 称号のレア訓練を'+TUNING.ht.unlock+'回で身につく(この任期の中だけ)</small></h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
@@ -14769,7 +14879,7 @@ function overlay(title,body,ms,fn){
 const capOn=()=>$("cap").classList.contains("on");
 /** 指示の軸を短く(例: OFE・奪取↑ スピード↓) */
 const HT_AX={ O:"攻", D:"守", R:"支", C:"奪", S:"速", P:"力" };
-const htAxTxt=h=>h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"");
+const htAxTxt=h=>(h.pos?h.pos.join("・")+"の ":"")+h.up.split("").map(a=>HT_AX[a]).join("")+"↑"+(h.down?" "+h.down.split("").map(a=>HT_AX[a]).join("")+"↓":"")+(h.stam?" スタミナ消耗":"");
 /**
  * 指示の効きを2段で(→docs/14 §14.33)。上段 = 上がる能力(青)、下段 = 下がる能力(赤)。
  * 矢印の数は1軸あたりの効きの強さ(エンジンと同じ: 上がる = k、下がる = k × downR)で 1〜3 本
@@ -14778,7 +14888,7 @@ const htArrows=v=>v>=0.9?3:v>=0.55?2:1;
 function htAxHtml(h){
   const X=TUNING.ht, ax=t=>t.split("").map(a=>AXIS_ABBR[a]).join(" ");
   return '<span class="hx"><span class="hx-up">'+(h.up?ax(h.up)+' <b>'+"↑".repeat(htArrows(h.k))+'</b>':'—')+'</span>'+
-    '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':'下がる能力なし')+'</span></span>';
+    '<span class="hx-dn">'+(h.down?ax(h.down)+' <b>'+"↓".repeat(htArrows(h.k*X.downR))+'</b>':h.stam?'スタミナ消耗 ×'+X.stamK:h.pos?h.pos.join("・")+' だけに効く':'下がる能力なし')+'</span></span>';
 }
 function closeOverlay(){
   // 閉じるときは、上下の赤い線が中央へ寄って1本の光の線になり、横に縮んで消える(テレビが切れるように。→docs/14 §14.160)。
@@ -15101,7 +15211,7 @@ function boot(){
   $("cap").addEventListener("click",e=>{
     const b=e.target.closest("[data-ht]"), cap=$("cap"); if(!b||cap.classList.contains("picked"))return;
     const h=htOf(b.dataset.ht);
-    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
+    if(h){ orderMatch(G.M,"H",{ type:"htPlan", up:h.up, down:h.down, k:h.k, stam:h.stam, pos:h.pos, name:h.name }); say("監督「"+h.name+"！」",false,"boss"); }
     sndUi("ok");
     // 選んだ吹き出しが残り、ほかは落ちて消える。少し見せてから後半へ(→docs/14 §14.157)
     b.classList.add("sel"); cap.classList.add("picked"); G.capT=0;

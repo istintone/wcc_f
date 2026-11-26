@@ -128,14 +128,26 @@ function trainOptions(S){
   const G0=TUNING.grow, rng=mulberry32((S.seed^hashStr("tr:"+S.term+":"+S.played))>>>0);
   S.g.opts=STATS.map(param=>{
     if(rng()<G0.spChance*(S.fac||1)*(tsetOf(S,"spK")||1)){   // 監督ランク(累計の年俸 →term.js)と、セットした称号(レジェンド)
-      const pool=TRAIN_SP.map((t,i)=>i).filter(i=>TRAIN_SP[i].slot===param||TRAIN_SP[i].slot==="any");
-      // セットした称号の系統に合う特殊練習ほど出やすい(→docs/10 §10.2 B)
-      const w=pool.map(i=>trainWeight(S,TRAIN_SP[i])), tot=w.reduce((a,b)=>a+b,0);
-      if(pool.length){ let r=rng()*tot; for(let j=0;j<pool.length;j++){ if(r<w[j])return { param, sp:pool[j] }; r-=w[j]; } return { param, sp:pool[pool.length-1] }; }
+      // 出るのはセットした称号のレア訓練だけ(→docs/26 §26.3)。同じ回に同じ訓練は2つ出さない
+      const used=new Set(), pool=titleTrainPool(S);
+      return { param, sp:pool.length?pool[Math.floor(rng()*pool.length)]:-1, used };
     }
     return { param, sp:-1 };
   });
-  return S.g.opts;
+  const seen=new Set(); S.g.opts.forEach(o=>{ delete o.used; if(o.sp>=0){ if(seen.has(o.sp))o.sp=-1; else seen.add(o.sp); } });
+  return evTrainOpts(S);
+}
+/** HOME の出来事で決まったレア訓練(1回だけ)を、練習の枠の1つに差し込む(→docs/26 §26.4) */
+function evTrainOpts(S){
+  const o=S.g.opts, ev=S.g.evTrain;
+  if(ev!=null&&!o.some(x=>x.ev)){ const i=o.findIndex(x=>x.sp<0); o[i>=0?i:0]={ param:o[i>=0?i:0].param, sp:ev, ev:true }; }
+  return o;
+}
+/** レア訓練の指示の ★(任期の中だけ。→docs/26 §26.5)。称号の訓練でなければ null */
+function htStars(S,sp){
+  if(sp<0||!titleTrainPool(S).includes(sp))return null;
+  const n=Math.min(TUNING.ht.unlock,(S.g.htc&&S.g.htc[sp])||0);
+  return "★".repeat(n)+"☆".repeat(TUNING.ht.unlock-n);
 }
 /** 基本の練習の名前(能力ごと) */
 const TRAIN_NAME={ off:"攻撃練習", def:"守備練習", spd:"速攻練習", tec:"パス練習", pow:"奪取練習", sta:"走行練習" };
@@ -231,7 +243,8 @@ function squadXi(S){
 function doTraining(S,i,intensity){
   const G0=TUNING.grow, I=G0.ind, R=G0.graph, N=G0.int, o=trainOptions(S)[i], out=[];
   if(S.g.step!=="train"||!o)return out;
-  const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv];
+  const lv=intensity==null?1:clamp(intensity,0,2), k=N.k[lv]*(o.ev?G0.evTrainK:1);   // イベントのレア訓練は1回きりなので育ちが強い(→docs/26 §26.4)
+  if(o.ev)S.g.evTrain=null;
   const ids=Object.keys(S.g.pl);
   const gk=facK(S,"tact"), maxed=Object.keys(S.g.graph).filter(a=>S.g.graph[a]>=R.max-1e-9&&!S.g.gold[a]);   // 練習の前から MAX の軸(戦術室で伸びやすい)
   let ups=[];
@@ -260,8 +273,10 @@ function doTraining(S,i,intensity){
     for(const a of t.down)graphAdd(S,a,-R.down*k);
     for(const a of t.up)graphAdd(S,a,(all?R.upAll:R.up)*k*gk);
     ups=[...t.up];
-    // ハーフタイムの指示を覚える(同じ特殊練習を unlock 回。→docs/10 §10.8)
-    if(S.ht){ const n=S.ht.cnt[o.sp]=(S.ht.cnt[o.sp]||0)+1; if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を覚えた(SQUAD で登録できる)"); }
+    // ハーフタイムの指示を身につける(称号のレア訓練を unlock 回。任期の中だけ。→docs/26 §26.5)
+    if(!o.ev&&titleTrainPool(S).includes(o.sp)){ const c=S.g.htc||(S.g.htc={}), n=c[o.sp]=(c[o.sp]||0)+1;
+      if(n===TUNING.ht.unlock)out.push("📋 ハーフタイムの指示「"+htName(TRAIN_SP[o.sp].name)+"」を身につけた(戦略方針で登録できる。この任期の中だけ)");
+      else if(n<TUNING.ht.unlock)out.push("📋 「"+htName(TRAIN_SP[o.sp].name)+"」 "+htStars(S,o.sp)); }
   }
   for(const id of ids){
     const g=S.g.pl[id];
@@ -280,6 +295,7 @@ function doTraining(S,i,intensity){
 function doRest(S){
   const G0=TUNING.grow, out=[];
   if(S.g.step!=="train")return out;
+  S.g.evTrain=null;                             // イベントのレア訓練は、休んだら消える(1回だけ)
   const rng=mulberry32((S.seed^hashStr("rest:"+S.term+":"+S.played))>>>0);
   let up=0;
   for(const id in S.g.pl){
@@ -779,12 +795,14 @@ function teamPower(S){
  * 指示の id: 初めから使えるものは "b1"〜"b3"、特殊練習から覚えたものは "t" + 特殊練習の番号 */
 const htName=n=>HT_PHRASE[n]||n+"を思い出せ";
 function htOf(id){
-  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ k:TUNING.ht.basicK },b);
-  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]];
-  return t?{ id, name:htName(t.name), up:t.up, down:t.down, k:1, train:t.name }:null;
+  const b=HT_BASIC.find(x=>x.id===id); if(b)return Object.assign({ down:"" },b,{ k:htK(b) });
+  const i=/^t(\d+)$/.exec(id||""); const t=i&&TRAIN_SP[+i[1]]; if(!t)return null;
+  const sp=HT_SPEC[t.name]||{ up:t.up||"ODRCSP", down:t.down||"", stam:!t.down };   // 指示の中身は練習の軸と別に作り直した(→docs/26 §26.5)
+  const h={ id, name:htName(t.name), up:sp.up, down:sp.down||"", stam:!!sp.stam, pos:sp.pos||null, train:t.name };
+  h.k=htK(h); return h;
 }
-/** 使える指示(初めからの3つ + 覚えたもの) */
-function htAvail(S){ const out=HT_BASIC.map(b=>b.id); if(S&&S.ht)for(const i in S.ht.cnt)if(S.ht.cnt[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
+/** 使える指示(初めからの3つ + この任期に身につけたもの。→docs/26 §26.5) */
+function htAvail(S){ const out=HT_BASIC.map(b=>b.id), c=S&&S.g&&S.g.htc; if(c)for(const i in c)if(c[i]>=TUNING.ht.unlock)out.push("t"+i); return out; }
 function toggleHt(S,id){
   const set=S.ht.set, i=set.indexOf(id);
   if(i>=0){ set.splice(i,1); return true; }
@@ -997,6 +1015,7 @@ function tagsAfterMatch(S,fx,res,out){
   autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
+  trainEventRoll(S);                            // 練習の出来事(スタジアム・施設の段で。→docs/26 §26.4)
   noteSeen(S);                                  // 見えているタグも手帳に
   playerVoiceRoll(S);                           // 選手の声(→docs/14 §14.79)
 }
@@ -1316,11 +1335,24 @@ function tagEventRoll(S){
   if(S.g.tev||S.termOver)return;
   const r=mulberry32((S.seed^hashStr("tev:"+S.term+":"+S.played))>>>0);
   if(r()>=TUNING.tag.event.p)return;
-  const ev=TAG_EVENTS[Math.floor(r()*TAG_EVENTS.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
+  const base=TAG_EVENTS.filter(e=>!e.tr);
+  const ev=base[Math.floor(r()*base.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
   S.g.tev={ k:ev.k, id:ev.p&&sq.length?sq[Math.floor(r()*sq.length)]:null };
 }
+/** 練習の出来事(→docs/26 §26.4)。スタジアム・施設の段で起きる出来事が変わり、段の高いものほど選ばれやすい */
+const trEvOk=(S,e)=>{ const B=S.biz||{ stad:1, fac:{} }; return Object.keys(e.need).every(k=>k==="stad"?(B.stad||1)>=e.need.stad:((B.fac||{})[k]||0)>=e.need[k]); };
+function trainEventRoll(S){
+  if(S.g.tev||S.termOver||S.g.evTrain!=null)return;
+  const r=mulberry32((S.seed^hashStr("trev:"+S.term+":"+S.played))>>>0);
+  if(r()>=TUNING.grow.trainEvP)return;
+  const c=TAG_EVENTS.filter(e=>e.tr&&trEvOk(S,e)); if(!c.length)return;
+  let x=r()*c.reduce((a,e)=>a+e.w,0), ev=c[c.length-1];
+  for(const e of c){ if(x<e.w){ ev=e; break; } x-=e.w; }
+  const tr=Array.isArray(ev.tr)?ev.tr[Math.floor(r()*ev.tr.length)]:ev.tr;
+  S.g.tev={ k:ev.k, id:null, tr };
+}
 const tagEventOf=S=>S.g&&S.g.tev?TAG_EVENTS.find(e=>e.k===S.g.tev.k):null;
-const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"");
+const tagEventText=(S,ev)=>ev.q.split("{n}").join(S.g.tev.id?nameOf(CARDS[S.g.tev.id]):"").split("{t}").join(S.g.tev.tr||"");
 /**
  * 会話・出来事の答えへのリアクション(→docs/14 §14.165)。効果は通知で出すので、ここは純粋な会話の言葉だけ。
  * SEC_EV_RX[秘書][会話の番号][答えの番号] / TAG_EV_RX[出来事] = 選手の言葉 [答えごと](sec:true は秘書が答える → [秘書][答え])
@@ -1357,7 +1389,11 @@ const TAG_EV_RX={
   press:["監督……ありがとうございます。迷惑をかけてすみません。","自分のことは、自分でけじめをつけます。"],
   mood:["任せてください！みんなを笑わせますよ！","あ、ちょっと騒ぎすぎましたかね。へへ。"],
   bday:["うわ、ケーキまで！ 最高の誕生日です！","いつもどおりが一番です。今日も練習、頑張ります。"],
-  extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"]
+  extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"],
+  train:{ sec:true, s0:["承知しました。次の練習に組み込んでおきますね。","かしこまりました。今回は見送りましょう。"],
+    s1:["了解です！みんな、きっと喜びますよ！","わかりました！また今度ですね！"],
+    s2:["了解です。練習メニューを差し替えます。","承知しました。今のメニューを優先します。"],
+    s3:["ええ、準備しておくわね。楽しみだわ。","そう、わかったわ。また機会があるわよ。"] }
 };
 /**
  * 視察レポートの出来(= 親密度の段)をほのめかす秘書の一言(→docs/14 §14.170)。試合ごとに TUNING.sec.repHint の率で、ごくまれに。
@@ -1389,13 +1425,14 @@ function secRepHint(S){
 /** 秘書の会話のリアクション(言葉だけ) */
 function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
 /** 出来事のリアクション。{ who:"sec"|"pl", text } */
-function tagEvRx(S,k,i){ const X=TAG_EV_RX[k]; if(!X)return null;
+function tagEvRx(S,k,i){ const X=TAG_EV_RX[k]||(/^tr/.test(k)?TAG_EV_RX.train:null); if(!X)return null;
   if(X.sec)return { who:"sec", text:((X[secOf(S).id]||X.s0)[i])||"" };
   return { who:"pl", text:X[i]||"" }; }
 /** 出来事に答える。結果の行を返す */
 function answerTagEvent(S,i){
   const ev=tagEventOf(S); if(!ev||!ev.ch[i])return [];
-  const id=S.g.tev.id, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  const id=S.g.tev.id, tr=S.g.tev.tr, R=ev.ch[i][1], out=[]; S.g.tev=null;
+  if(R.train&&tr){ const ix=trainIx(tr); if(ix>=0){ S.g.evTrain=ix; S.g.opts&&evTrainOpts(S); out.push("📋 次のチーム練習に「"+tr+"」が加わる(1回だけ)"); } }
   if(R.team)addTeamTag(S,R.team,out);
   if(R.player&&id)addPlayerTag(S,id,R.player,out);
   if(R.bet&&id){ const [p,hit,miss]=R.bet, ok=mulberry32((S.seed^hashStr("teb:"+S.term+":"+S.played+":"+id))>>>0)()<p, t=ok?hit:miss;

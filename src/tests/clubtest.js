@@ -422,14 +422,35 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
     check("「！」は種類ごと: 個人=★が近い / ミーティング=★突破 / ラウンジ=黄金線の兆し / ケア=ケガ",
       who("ind")==="h10"&&who("meet")==="h08"&&who("lounge")==="h02,h03"&&who("talk")==="h05",["ind","meet","lounge","talk"].map(who).join(" / "));
   }
-  { // ハーフタイムの指示(→docs/10 §10.8)
+  { // ハーフタイムの指示・称号のレア訓練(→docs/26)
     const T=E.newCareer(101);
     check("初めは3つの指示が使えて、登録済み",E.htAvail(T).length===3&&T.ht.set.length===3);
+    // 称号なしなら、出るレア訓練は「称号なし」の2種だけ
+    const pool=E.titleTrainPool(T), seen=new Set();
     let n=0, got=null;
-    for(let i=0;i<200&&!got;i++){ T.g.step="train"; T.g.opts=null; const o=E.trainOptions(T); const j=o.findIndex(x=>x.sp>=0);
-      if(j>=0){ const L=E.doTraining(T,j,0); n++; if(L.some(x=>/を覚えた/.test(x)))got=L.find(x=>/を覚えた/.test(x)); } T.played++; }
-    check("同じ特殊練習を2回すると、その指示を覚える",!!got&&E.htAvail(T).length>3,got||"");
+    for(let i=0;i<300&&!got;i++){ T.g.step="train"; T.g.opts=null; const o=E.trainOptions(T); o.forEach(x=>{ if(x.sp>=0)seen.add(x.sp); }); const j=o.findIndex(x=>x.sp>=0);
+      if(j>=0){ const L=E.doTraining(T,j,0); n++; if(L.some(x=>/を身につけた/.test(x)))got=L.find(x=>/を身につけた/.test(x)); } T.played++; }
+    check("出るレア訓練は称号のものだけ(称号なし = 2種)",pool.length===2&&[...seen].every(i=>pool.includes(i)),[...seen].map(i=>E.TRAIN_SP[i].name).join("・"));
+    check("同じレア訓練を3回すると、その指示を身につける",!!got&&E.htAvail(T).length>3,got||"");
     check("登録は3つまで(外してから入れ替える)",!E.toggleHt(T,E.htAvail(T)[3])&&E.toggleHt(T,"b1")&&E.toggleHt(T,E.htAvail(T)[3]));
+    // どの指示にも代わりがある(下がる軸・消耗・限定のどれか)
+    const ids=E.HT_BASIC.map(b=>b.id).concat(E.TRAIN_SP.map((t,i)=>E.HT_SPEC[t.name]?"t"+i:null).filter(Boolean)), bad=ids.map(E.htOf).filter(h=>!h.down&&!h.stam&&!h.pos);
+    check("どの指示にも代わり(下がる軸・スタミナ消耗・役割の限定)がある",ids.length===36&&!bad.length,bad.map(h=>h.name).join("・"));
+    // 称号ごとのレア訓練は2〜3種で、どの称号にも重なりがない
+    const all=Object.values(E.TITLE_TRAIN).flat();
+    check("称号ごとのレア訓練は2〜3種で重ならない",Object.values(E.TITLE_TRAIN).every(a=>a.length>=2&&a.length<=3)&&new Set(all).size===all.length);
+    // イベントのレア訓練: 次の練習に1回だけ出て、練習したら消える
+    const ev=E.TAG_EVENTS.find(e=>e.k==="trLocal"); T.g.tev={ k:"trLocal", id:null, tr:ev.tr[0] }; T.g.step="train"; T.g.opts=null;
+    const L1=E.answerTagEvent(T,0), o1=E.trainOptions(T), ei=o1.findIndex(x=>x.ev);
+    check("イベントのレア訓練は次の練習に1回だけ出る",ei>=0&&E.TRAIN_SP[o1[ei].sp].name===ev.tr[0]&&L1.some(x=>/1回だけ/.test(x)),L1.join(" / "));
+    E.doTraining(T,ei,0); T.g.step="train"; T.g.opts=null;
+    check("イベントのレア訓練は練習したら消え、指示の ★ は付かない",!E.trainOptions(T).some(x=>x.ev)&&E.htStars(T,o1[ei].sp)===null);
+    // 練習の出来事は施設の段で変わる: スタジアム Lv5 でないと非公開練習は出ない
+    let media=0; const T2=E.newCareer(77);
+    for(let i=0;i<400;i++){ T2.g.tev=null; T2.g.evTrain=null; T2.played=i; E.trainEventRoll(T2); if(T2.g.tev&&T2.g.tev.k==="trMedia")media++; }
+    T2.biz.stad=5; let media5=0;
+    for(let i=0;i<400;i++){ T2.g.tev=null; T2.g.evTrain=null; T2.played=i; E.trainEventRoll(T2); if(T2.g.tev&&T2.g.tev.k==="trMedia")media5++; }
+    check("非公開練習の出来事はスタジアム Lv5 でだけ起きる",media===0&&media5>0,media+" → "+media5);
   }
   { // 監督能力(→docs/10 §10.2 C)
     const T=E.newCareer(99), TW=E.worldOf(T), on=T.sq.slice(0,11);
