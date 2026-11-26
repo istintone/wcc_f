@@ -389,7 +389,7 @@ function sqTokenHtml(id,i,on,o){
     (g&&g.fat>=TUNING.grow.int.tiredSign?' tired t'+(3-batteryOf(g)):'')+(o?' cmx'+(o.hi?' on':'')+(o.sign?' hsg':'')+(g&&g.mot===0?' inj':''):'')+'"'+(o?' data-act="'+(o.act||"pick")+'"':'')+' data-id="'+id+'" data-i="'+i+'"'+pos+'>'+
     // ヘッダは「背番号.ポジション」、本体はカードの数値と選手名(盤面はどの画面も同じ並び。→docs/14 §14.189)
     (rl?'<b class="rl '+rl.cls+'">'+c.no+'.'+rl.role+'</b>':'<b class="rl">'+c.no+'.'+c.pos+'</b>')+
-    '<span class="bd"><i class="no">'+statTotal(c)+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
+    '<span class="bd"><i class="no">'+Math.round(statTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
     // 調子の丸。休憩の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
     (g?(()=>{ const to=CL.motTo&&CL.motTo[id]; return to!=null&&to>g.mot?'<em class="mt m'+g.mot+' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')"></em>':'<em class="mt m'+g.mot+'"></em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる

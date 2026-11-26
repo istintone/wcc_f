@@ -3276,3 +3276,6 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 #club .sqc.cmx .bd{bottom:12px}
 #club .sq-3col .sq-bench .sqc .rl{font-size:8px}
 .cd .rl{white-space:nowrap;overflow:hidden;font-size:9px;letter-spacing:.01em}
+/* 盤面の札の選手名は中央寄せ(→docs/14 §14.190) */
+#club .sqc .bd .nm,#club .sqc .bd .no{text-align:center;align-self:center;width:100%}
+.cd .nm,.cd .no{text-align:center!important;justify-self:center}
