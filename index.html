@@ -12152,7 +12152,7 @@ function restEffectHtml(){
 /** ① チーム練習 */
 function trainStepHtml(){
   const S=CL.S, N=TUNING.grow.int, fat=teamFatigue(S);
-  return '<div class="step-h one"><b>チーム練習</b><small>疲労 <b class="'+(fat>=N.tiredSign?'warn':'')+'">'+Math.round(fat*100)+'%</b></small></div>'+   // 説明文は出さない(→docs/14 §14.174)
+  return '<div class="step-h one"><b>チーム練習</b></div>'+   // 説明文・疲労の数字は出さない(疲労は盤面の電池で見せる。→docs/14 §14.174・§14.175)
     // グラフを左に大きく、右に強さの4択と練習のボタンを詰める(→docs/14 §14.127)
     '<div class="tr-top tr-top2">'+trainEffectHtml("graph")+'<div class="tr-right">'+
     '<div class="ints i4"><button class="tab rest'+(CL.int===-1?' on':'')+'" data-act="int" data-i="-1">休養</button>'+
