@@ -499,7 +499,7 @@ function applyResult(S,W,fx,res){
   }
   // 監督能力の熟練度: セットして試合をした能力に +1(ランクが上がったら知らせる)
   if(S.mab)for(const k of S.mab.set){ const r0=mabRank(S,k); S.mab.xp[k]=(S.mab.xp[k]||0)+1; const r1=mabRank(S,k);
-    if(r1>r0)out.push("🎖 監督能力「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
+    if(r1>r0)out.push("🎖 チームスタイル「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));

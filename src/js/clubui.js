@@ -465,7 +465,7 @@ function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
-  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 称号のレア訓練を'+TUNING.ht.unlock+'回で身につく(この任期の中だけ)</small></h3>'+
+  return '<section class="card htset"><h3>ハーフタイムの指示</h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
@@ -1343,6 +1343,7 @@ function oppCardModalHtml(){
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
   return '<div class="step-h one sc-h"><b>戦略方針</b><small></small><button class="bk" data-act="stratback">‹ 視察</button></div>'+   // 戻るは見出しの右端(→docs/14 §14.148)
+    cmSayHtml(secStratLine(CL.S,CL.fx&&TEAMS[CL.fx.opp]?teamNameOf(TEAMS[CL.fx.opp]):""))+   // 秘書の呼びかけ(個別指導と同じ形。→docs/14 §14.176)
     mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
 function mabHtml(){
@@ -1350,9 +1351,9 @@ function mabHtml(){
   const chip=k=>{ const a=MAB.find(x=>x.id===k), r=mabRank(S,k), on=set.includes(k), xp=S.mab.xp[k]||0, nx=M.rankAt[r+1];
     return '<button class="mab'+(on?' on':'')+'" data-act="mab" data-v="'+k+'"><b>'+a.name+'</b><i>'+MAB_RANK[r]+'</i>'+
       '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
-  return '<section class="card mabs"><h3>監督能力 <small>試合に軽く効く ・ '+set.length+'/'+M.max+' ・ 使うほどランクが上がる</small></h3>'+
+  return '<section class="card mabs"><h3>チームスタイル</h3>'+   // 名称は「チームスタイル」、見出しの説明は外した(→docs/14 §14.176)
     (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div>'+foldBtn("mabopen",true)
-      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">監督能力を選ぶ</button>')+'</section>';
+      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
 }
 /* ---- 称号のセット(→docs/10 §10.2 B) ---- */
 function titleSetHtml(){
@@ -1806,7 +1807,7 @@ function onClubClick(e){
   if(act==="none")return;
   if(act==="htopen"){ CL.htOpen=!CL.htOpen; showClub(true); return; }
   if(act==="htset"){ CL.htOpen=true; if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
-  if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
+  if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["チームスタイルは "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
   if(act==="notecat"){ CL.noteCat=CL.noteCat===b.dataset.v?null:b.dataset.v; showClub(true); return; }

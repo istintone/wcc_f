@@ -7590,7 +7590,7 @@ function applyResult(S,W,fx,res){
   }
   // 監督能力の熟練度: セットして試合をした能力に +1(ランクが上がったら知らせる)
   if(S.mab)for(const k of S.mab.set){ const r0=mabRank(S,k); S.mab.xp[k]=(S.mab.xp[k]||0)+1; const r1=mabRank(S,k);
-    if(r1>r0)out.push("🎖 監督能力「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
+    if(r1>r0)out.push("🎖 チームスタイル「"+MAB.find(x=>x.id===k).name+"」がランク "+MAB_RANK[r1]+" に"); }
   // カードの払い出し(→pool.js)。試合のたびに1枚
   const card=payout(S);
   out.unshift("カード: "+RARITY[CARDS[card.id].rar].name+" "+nameOf(CARDS[card.id])+(card.isNew?"(NEW)":""));
@@ -9785,6 +9785,25 @@ function secRepHint(S){
   if(!S.sec||!S.sec.chosen||S.termOver||!S.played)return null;
   if(mulberry32((S.seed^hashStr("srh:"+S.term+":"+S.played))>>>0)()>=TUNING.sec.repHint)return null;
   return (SEC_REP_HINT[secOf(S).id]||SEC_REP_HINT.s0)[secLv(S)]||null;
+}
+/**
+ * 戦略方針の画面の秘書の呼びかけ(→docs/14 §14.176)。親密度の段 0〜1 / 2〜3 で3つずつ。{o} は相手の名前。
+ * どれが出るかは試合ごとの乱数で、同じ試合の中では変わらない
+ */
+const SEC_STRAT={
+  s0:[["監督、今日はどのような方針でいきましょうか？","相手は{o}です。戦い方を決めておきましょう。","試合前の最後の確認です。方針をお聞かせください。"],
+      ["監督、今日はどんな戦い方で{o}に挑みますか？ 私はどんな方針でもついていきます。","{o}戦ですね。監督のお考え、聞かせてください。","いよいよですね。監督の采配、楽しみにしています。"]],
+  s1:[["監督！今日はどんな作戦でいきますか？","次は{o}ですね！方針、決めちゃいましょう！","作戦会議です！どうしますか、監督？"],
+      ["監督の作戦、いつもワクワクします！今日はどうします？","{o}なんて、監督の作戦でやっつけちゃいましょう！","今日も勝ちにいきましょうね、監督！どの方針にします？"]],
+  s2:[["方針の決定をお願いします。","対戦相手は{o}。戦い方を選択してください。","試合前の最終確認です。方針は？"],
+      ["{o}の傾向は分析済みです。あとは監督の判断だけです。","監督の判断なら、裏付けは私が取ります。方針をどうぞ。","……監督の采配、信頼しています。今日の方針は？"]],
+  s3:[["さて監督、今日はどんな方針でいくの？","次は{o}ね。どう戦うか、決めておきましょう。","ゆっくりでいいわ。方針を聞かせてちょうだい。"],
+      ["監督のことだもの、もう考えはまとまってるんでしょう？","{o}が相手ね。監督の好きなようにやってみて。","ふふ、今日の監督はどんな顔を見せてくれるのかしら。方針は？"]]
+};
+function secStratLine(S,opp){
+  const L=(SEC_STRAT[secOf(S).id]||SEC_STRAT.s0)[secLv(S)>=2?1:0];
+  const t=L[Math.floor(mulberry32((S.seed^hashStr("sst:"+S.term+":"+S.played))>>>0)()*L.length)];
+  return t.split("{o}").join(opp||"相手");
 }
 /** 秘書の会話のリアクション(言葉だけ) */
 function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
@@ -12389,7 +12408,7 @@ function htSetHtml(){
   const S=CL.S, set=S.ht.set, av=htAvail(S);
   const tile=id=>{ const h=htOf(id); return '<button class="ht'+(set.includes(id)?' on':'')+'" data-act="htset" data-v="'+id+'"><b>'+h.name+'</b>'+htAxHtml(h)+
     (h.train?'<small>'+h.train+'</small>':'<small>初めから</small>')+'</button>'; };
-  return '<section class="card htset"><h3>ハーフタイムの指示 <small>'+set.length+'/'+TUNING.ht.max+' 登録 ・ 称号のレア訓練を'+TUNING.ht.unlock+'回で身につく(この任期の中だけ)</small></h3>'+
+  return '<section class="card htset"><h3>ハーフタイムの指示</h3>'+
     (CL.htOpen?'<div class="ht-list">'+av.map(tile).join("")+'</div>'+foldBtn("htopen",true)
       :'<div class="ht-set">'+(set.length?set.map(id=>tile(id).replace('data-act="htset"','data-act="htopen"')).join(""):'<p class="dim">登録していない</p>')+'</div>'+
         '<button class="btn btn-sub" data-act="htopen">ハーフタイムの指示を選ぶ</button>')+'</section>';
@@ -13267,6 +13286,7 @@ function oppCardModalHtml(){
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
   return '<div class="step-h one sc-h"><b>戦略方針</b><small></small><button class="bk" data-act="stratback">‹ 視察</button></div>'+   // 戻るは見出しの右端(→docs/14 §14.148)
+    cmSayHtml(secStratLine(CL.S,CL.fx&&TEAMS[CL.fx.opp]?teamNameOf(TEAMS[CL.fx.opp]):""))+   // 秘書の呼びかけ(個別指導と同じ形。→docs/14 §14.176)
     mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
 function mabHtml(){
@@ -13274,9 +13294,9 @@ function mabHtml(){
   const chip=k=>{ const a=MAB.find(x=>x.id===k), r=mabRank(S,k), on=set.includes(k), xp=S.mab.xp[k]||0, nx=M.rankAt[r+1];
     return '<button class="mab'+(on?' on':'')+'" data-act="mab" data-v="'+k+'"><b>'+a.name+'</b><i>'+MAB_RANK[r]+'</i>'+
       '<small>'+a.desc+(nx!=null?' ・ 次のランクまで '+(nx-xp)+'試合':'')+'</small></button>'; };
-  return '<section class="card mabs"><h3>監督能力 <small>試合に軽く効く ・ '+set.length+'/'+M.max+' ・ 使うほどランクが上がる</small></h3>'+
+  return '<section class="card mabs"><h3>チームスタイル</h3>'+   // 名称は「チームスタイル」、見出しの説明は外した(→docs/14 §14.176)
     (CL.mabOpen?'<div class="mab-list">'+MAB.map(a=>chip(a.id)).join("")+'</div>'+foldBtn("mabopen",true)
-      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">監督能力を選ぶ</button>')+'</section>';
+      :'<div class="mab-set">'+(set.length?set.map(chip).join(""):'<p class="dim">セットしていない</p>')+'</div><button class="btn btn-sub" data-act="mabopen">チームスタイルを選ぶ</button>')+'</section>';
 }
 /* ---- 称号のセット(→docs/10 §10.2 B) ---- */
 function titleSetHtml(){
@@ -13730,7 +13750,7 @@ function onClubClick(e){
   if(act==="none")return;
   if(act==="htopen"){ CL.htOpen=!CL.htOpen; showClub(true); return; }
   if(act==="htset"){ CL.htOpen=true; if(!toggleHt(S,b.dataset.v))CL.msg=["ハーフタイムの指示は "+TUNING.ht.max+" つまで"]; save(); showClub(true); return; }
-  if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["監督能力は "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
+  if(act==="mab"){ if(!toggleMab(S,b.dataset.v))CL.msg=["チームスタイルは "+TUNING.mab.max+" つまで"]; save(); showClub(true); return; }
   if(act==="mabopen"){ CL.mabOpen=!CL.mabOpen; showClub(true); return; }
   if(act==="tset"){ setTitle(S,b.dataset.v||null); CL.msg=S.tset?["称号「"+titleOf(S.tset).name+"」をセットした("+TITLE_FX[S.tset].desc+")"]:[]; save(); showClub(true); return; }
   if(act==="notecat"){ CL.noteCat=CL.noteCat===b.dataset.v?null:b.dataset.v; showClub(true); return; }
