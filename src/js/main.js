@@ -218,7 +218,7 @@ function showInfo(id){
   const b=$("infoKp");
   b.style.display=p?"":"none";
   b.disabled=kp||M.over;
-  b.textContent=kp?"KP に指定中":"KP にする";
+  b.textContent=kp?"キープレイヤーに指名中":"キープレイヤーに指名";
   updateStyleBar();
   G.info=id;
   $("info").classList.add("on");

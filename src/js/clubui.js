@@ -480,7 +480,7 @@ function sqDetailHtml(){
       (dupOf(S,id)?'<dt>重なり</dt><dd>×'+dupOf(S,id)+' ・ 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%</dd>':'')+'</dl>'+
     playerTagsHtml(id)+
     '<footer class="sr-sign"><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
-    '<div class="sd-act pr-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+'</div>'+
+    '<div class="sd-act pr-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">キープレイヤーに指名</button>'):'')+'</div>'+
     '</article>';
 }
 function sqDetailHtmlOld(){
@@ -499,7 +499,7 @@ function sqDetailHtmlOld(){
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat">'+batteryHtml(g)+'</span></div>'+
     playerTagsHtml(id)+
     cardBackOf(id)+                    // 能力・適性のマップ・スキルはカードの裏で(CARDS のフロートと同じ。→docs/14 §14.14)
-    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st,id))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">KP にする</button>'):'')+
+    '<div class="sd-act">'+(st?'<span class="sd-rk">'+st.name+' '+rankChip(myStyleRank(S,st,id))+'</span>':'')+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">キープレイヤーに指名</button>'):'')+
       '</div>'+
     '</div>';   // 選手のコメントは HOME の選手の声へ(→docs/14 §14.81)
 }
