@@ -3226,3 +3226,9 @@ body[class] #cap.ht .htb{min-width:0;max-width:100%}
 #club .ee-txt small{font-size:10px;opacity:.6}
 #club .ee-kb{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
 #club .ee-kb .ce{min-width:0;padding:6px 0;font-weight:900;font-size:12px}
+/* カードの裏の下の段: 字を小さくして全部見せる。CAP の横に PK・FK・CK(→docs/14 §14.183) */
+:is(#club,#scene) .kb-txt{gap:1px;font-size:6.9px;line-height:1.22}
+:is(#club,#scene) .kb-txt small{font-size:6.2px}
+:is(#club,#scene) .kb-txt .kb-roles b{margin:0 2px 0 7px} :is(#club,#scene) .kb-txt .kb-roles b:first-child{margin-left:0}
+:is(#club,#scene) .kb-txt .kb-ani{margin-left:8px}
+:is(#club,#scene) .kb-txt .kb-ani.first{margin-left:0}

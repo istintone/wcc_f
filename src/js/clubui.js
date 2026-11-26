@@ -825,6 +825,23 @@ function k3dHtml(id,fk,tag){
  * 上の帯 = 背番号・名前・ポジション / クラブ・年齢・国籍、中段 = 適性マップと6能力、下段 = スキル・KP・RARE KP・キャプテンシー、いちばん下 = レアリティ・番号・枚数。
  * 登録中の選手は育成を入れた値
  */
+/**
+ * キッカーの向き(→docs/14 §14.183)。試合で相手のキッカーを決める式(oppRoles)と同じ物差しで、全カードの中の順位から
+ * 上位 10% = S / 30% = A / 65% = B / 残り C。フリーキッカーのスキルは FK を一段上げる
+ */
+const KICK_F={ pk:c=>c.off*1.2+c.tec, fk:c=>c.tec*1.2+c.off*0.8, ck:c=>c.tec+c.pow*0.6 };
+let KICK_SORT=null;
+function kickGrades(c){
+  if(!KICK_SORT){ KICK_SORT={}; const L=Object.values(CARDS).filter(x=>x.pos!=="GK"); for(const k in KICK_F)KICK_SORT[k]=L.map(KICK_F[k]).sort((a,b)=>b-a); }
+  const out={};
+  for(const k in KICK_F){
+    if(c.pos==="GK"){ out[k]="C"; continue; }
+    const v=KICK_F[k](c), L=KICK_SORT[k]; let i=L.findIndex(x=>x<=v); if(i<0)i=L.length; const q=i/L.length;
+    let gr=q<0.10?3:q<0.30?2:q<0.65?1:0; if(k==="fk"&&c.skill==="kicker")gr=Math.min(3,gr+1);
+    out[k]=CAP_MARK[gr];
+  }
+  return out;
+}
 function kBackHtml(id){
   const S=CL.S, c0=CARDS[id], g=S.g.pl[id], c=g?growCard(S,c0):c0, r=c0.rar||"B";
   const sk=c0.skill?SKILLS[c0.skill]:null, st=styleOfCard(c0), RK=rareOfCard(c0), tot=Math.round(STATS.reduce((a,k)=>a+c[k],0));
@@ -837,8 +854,9 @@ function kBackHtml(id){
     '<div class="kb-txt">'+(sk?'<p><b>★'+sk.label+'</b>'+sk.desc+'</p>':'')+
       (st?'<p><b>KP</b>'+st.name+' <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (RK?'<p class="rkp"><b>RARE KP</b>'+((g?g.ss:0)>=5?RK.name:'？？？')+'</p>':'')+
-      (S.persSeen&&S.persSeen[id]?'<p><b>性格</b>'+PERS_LABEL[persOf(id)]+'</p>':'')+   // ★突破に成功すると分かる(→docs/24 G3)
-      '<p><b>CAP</b>'+CAP_MARK[capApt(c0)]+(g?' <small>個★'+g.is+' 特★'+g.ss+'</small>':'')+'</p></div>'+
+      (()=>{ const ps=S.persSeen&&S.persSeen[id], an=S.aniSeen&&S.aniSeen[id]&&aniTxt(c0);   // 性格は★突破の成功、動物は HOME で選手がほのめかすと分かる(→docs/24 G3・docs/14 §14.183)
+        return ps||an?'<p>'+(ps?'<b>性格</b>'+PERS_LABEL[persOf(id)]:'')+(an?'<b class="kb-ani'+(ps?'':' first')+'">動物</b>'+an:'')+'</p>':''; })()+
+      '<p class="kb-roles"><b>CAP</b>'+CAP_MARK[capApt(c0)]+(()=>{ const k=kickGrades(c0); return '<b>PK</b>'+k.pk+'<b>FK</b>'+k.fk+'<b>CK</b>'+k.ck; })()+'</p></div>'+   // 育成の★は SQUAD で見せる
     '<div class="kb-foot"><b>'+RAR_TAG[r]+' '+CARD_SEASON+'</b><span>'+cardNoOf(c0)+'</span><span>×'+(S.coll[id]||0)+(dupOf(S,id)?' ・ 経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%':'')+'</span></div>'+
     '<i class="k-glare"></i></div>';
 }

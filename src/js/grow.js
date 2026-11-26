@@ -1534,6 +1534,7 @@ function playerVoiceRoll(S){
   vars.me=PV_ME[hashStr("me:"+id)%PV_ME.length];
   let t=pick(PV_LINES[kind]); for(const k in vars)t=t.split("{"+k+"}").join(vars[k]);
   S.g.pvoice={ id, text:t, kind };
+  if(kind==="ani")(S.aniSeen||(S.aniSeen={}))[id]=true;   // 選手が動物をほのめかしたら判明(カードの裏に載る。任期をまたいで残る。→docs/14 §14.183)
 }
 /* ---- 個別指導の会話(→docs/14 §14.108) ----
  * 選手は性格で話し方が変わる(0 褒められて伸びる = 素直でほめてほしい / 1 負けず嫌い = 強気 / 2 マイペース = のんびり)。
