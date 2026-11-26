@@ -434,14 +434,17 @@ function embOrnPath(kind,gold,dark){
   }
 }
 /** 地の柄。2色目(b)で描く。 */
-function embFieldPath(kind,b){
+function embFieldPath(kind,b,n){
   switch(kind){
-    case "stripe": return [22,44,66].map(x=>'<rect x="'+x+'" y="0" width="11" height="100" fill="'+b+'"/>').join("");
+    // 縞の本数 n(帯の数。奇数で両端が地の色。→docs/27)
+    case "stripe": if(n&&n!==7){ const w=100/n; let g=""; for(let i=1;i<n;i+=2)g+='<rect x="'+(i*w).toFixed(2)+'" y="0" width="'+w.toFixed(2)+'" height="100" fill="'+b+'"/>'; return g; }
+                   return [22,44,66].map(x=>'<rect x="'+x+'" y="0" width="11" height="100" fill="'+b+'"/>').join("");
     case "half":   return '<rect x="50" y="0" width="50" height="100" fill="'+b+'"/>';
     case "quarter":return '<rect x="50" y="0" width="50" height="50" fill="'+b+'"/>'
                          +'<rect x="0" y="50" width="50" height="50" fill="'+b+'"/>';
     case "sash":   return '<path d="M0 78 L78 0 H100 L0 100 Z" fill="'+b+'"/>';
-    case "hoop":   return '<rect x="0" y="30" width="100" height="16" fill="'+b+'"/>'
+    case "hoop":   if(n&&n!==5){ const w=100/n; let g=""; for(let i=1;i<n;i+=2)g+='<rect x="0" y="'+(i*w).toFixed(2)+'" width="100" height="'+w.toFixed(2)+'" fill="'+b+'"/>'; return g; }
+                   return '<rect x="0" y="30" width="100" height="16" fill="'+b+'"/>'
                          +'<rect x="0" y="60" width="100" height="16" fill="'+b+'"/>';
     case "chevron":return '<path d="M0 42 L50 14 L100 42 V62 L50 34 L0 62 Z" fill="'+b+'"/>';
     // 十字。**縦を少し細く**しないと、盾の中で横棒だけが目立つ
@@ -512,60 +515,188 @@ function embMainColor(clubId,name,opts){
   const o=opts||{}, d=embDesign(clubId,name,o.design||null,o.color||null), ph=embHueById(d.home);
   return ph?ph.hex:"oklch(0.72 0.22 "+(hashStr("hue:"+clubId)%360).toFixed(1)+")";
 }
+/* ================= v2: パーツを重ねる(→wcc_f docs/27)=================
+ * エンブレム = 盾(形・地の柄・縁)+ パーツ(紋章・文字・リボン・外装)を下から順に最大 EMB_MAXPARTS。
+ * 旧い形(紋章 or 文字1つ・外装1つ)は embParts がパーツの並びに読み替えるので、CPU のクラブもそのまま描ける。
+ *   紋章 { t:"crest", k, x, y, s, f(左右反転), c }
+ *   文字 { t:"text", s(英字・記号 4字まで), font, x, y, size, arc(-1〜1), c } / 旧い並べ方は lay(row・col・diag)
+ *   リボン { t:"ribbon", pos:"top"|"bottom"|"mid", s(12字まで), c(帯), ink(字) }
+ *   外装 { t:"orn", k:"crown"|"laurel"|"stars", n(星の数) }
+ * 色 c は "home"・"away"・"third"・"ink"(地の明るさで白か黒)・"gold"・"white"・"black" か #rrggbb
+ */
+const EMB_MAXPARTS=6;
+const EMB_FONTS={ serif:"Georgia,'Times New Roman',serif", sans:"'Arial Black','Helvetica Neue',Arial,sans-serif", slab:"Rockwell,'Roboto Slab','Courier New',serif" };
+const EMB_FONT_W={ serif:700, sans:900, slab:700 };
+const EMB_COLS=["home","away","third","ink","gold","white","black"];
+/** 文字に使える字(英字・数字・& . ' と空白)だけにして大文字に */
+const embTxt=(s,n)=>String(s||"").toUpperCase().replace(/[^A-Z0-9&.' ]/g,"").slice(0,n||4);
+/** 色の明るさ(#rrggbb と oklch(L …) の両方) */
+function embLumAny(c){
+  const s=String(c||"");
+  if(/^#[0-9a-fA-F]{6}$/.test(s))return embLum(s);
+  const m=/oklch\(\s*([\d.]+)/.exec(s); return m?+m[1]:0.5;
+}
+/** 二重の縁取りの色 [内側, 外側]。明るい色には暗い内縁、暗い色には明るい内縁(同じ色が重なっても境目が見える。→docs/27 §27.6) */
+const embEdge2=fill=>embLumAny(fill)>=0.55?["#141418","#FFFFFF"]:["#FFFFFF","#141418"];
+/** 旧い形 → パーツの並び */
+function embParts(d){
+  if(Array.isArray(d.parts))return d.parts.slice(0,EMB_MAXPARTS);
+  const P=[];
+  if(d.crest&&d.crest!=="none")P.push({ t:"crest", k:d.crest, x:50, y:50, s:1, c:"ink" });
+  else if(d.lay&&d.lay!=="none")P.push({ t:"text", s:d.text, lay:d.lay, c:"ink" });
+  const o=d.orn;
+  if(o==="laurel"||o==="wreath")P.push({ t:"orn", k:"laurel" });
+  if(o==="crown"||o==="wreath")P.push({ t:"orn", k:"crown" });
+  if(o==="ribbon"||o==="wreath")P.push({ t:"ribbon", pos:"bottom", s:"", c:"gold" });
+  return P;
+}
+/** 盾の外へはみ出す量(viewBox を広げる) */
+function embPad2(P){
+  const p={ t:0, b:0, x:0 };
+  const has=f=>P.some(f);
+  const rTop=has(x=>x.t==="ribbon"&&x.pos==="top"), rBot=has(x=>x.t==="ribbon"&&x.pos==="bottom");
+  if(rTop){ p.t=Math.max(p.t,16); p.x=Math.max(p.x,8); }
+  if(rBot){ p.b=Math.max(p.b,24); p.x=Math.max(p.x,8); }
+  if(has(x=>x.t==="ribbon"&&x.pos==="mid"))p.x=Math.max(p.x,8);
+  if(has(x=>x.t==="orn"&&x.k==="laurel")){ p.x=Math.max(p.x,20); p.t=Math.max(p.t,4); p.b=Math.max(p.b,14); }
+  if(has(x=>x.t==="orn"&&x.k==="crown"))p.t=Math.max(p.t,(rTop?16:0)+52);
+  if(has(x=>x.t==="orn"&&x.k==="stars"))p.t=Math.max(p.t,(rTop?16:0)+16);
+  return p;
+}
+/** 縁取りを2重に重ねる(外側 → 内側 → 塗り)。el は d や x・y などの属性。w は内側の縁の太さ */
+function embLayer(tag,attrs,body,fill,w,extra){
+  const [inn,out]=embEdge2(fill), j=' stroke-linejoin="round" stroke-linecap="round"';
+  return '<'+tag+' '+attrs+' fill="'+out+'" stroke="'+out+'" stroke-width="'+(w+2.4).toFixed(2)+'"'+j+(extra||"")+'>'+body+'</'+tag+'>'
+    +'<'+tag+' '+attrs+' fill="'+inn+'" stroke="'+inn+'" stroke-width="'+w.toFixed(2)+'"'+j+(extra||"")+'>'+body+'</'+tag+'>'
+    +'<'+tag+' '+attrs+' fill="'+fill+'"'+(extra||"")+'>'+body+'</'+tag+'>';
+}
+function embCrestEl(p,fill){
+  const s=p.s||1, art=(typeof EMB_ART!=="undefined"&&EMB_ART[p.k])||(p.k==="star"?"M50 16 L57.5 41 L84 41 L62.5 56.5 L70.5 82 L50 66.5 L29.5 82 L37.5 56.5 L16 41 L42.5 41 Z":"");
+  if(!art)return "";
+  const tf='transform="translate('+(p.x!=null?p.x:50)+','+(p.y!=null?p.y:50)+') scale('+(p.f?-s:s)+','+s+') translate(-50,-50)"';
+  return '<g '+tf+'>'+embLayer("path",'fill-rule="evenodd" d="'+art+'"',"",fill,2.2/s,"").replace(/<path ([^>]*)><\/path>/g,'<path $1/>')+'</g>';
+}
+function embTextEl(p,fill,uid){
+  const t=embTxt(p.s,4); if(!t)return "";
+  const font=EMB_FONTS[p.font]||EMB_FONTS.serif, fw=EMB_FONT_W[p.font]||700;
+  const fa=' font-family="'+font.replace(/'/g,"&apos;")+'" font-weight="'+fw+'" text-anchor="middle"';
+  // 旧い並べ方(row・col・diag)。2文字を置き方で見せる
+  if(p.lay){
+    const one=(ch,x,y,sz,rot)=>embLayer("text",'x="'+x+'" y="'+y+'" font-size="'+sz+'"'+(rot?' transform="rotate('+rot+' '+x+' '+y+')"':"")+fa,embEsc(ch),fill,3);
+    if(p.lay==="col")return one(t[0]||"",50,45,34)+one(t[1]||"",50,81,34);
+    if(p.lay==="diag")return one(t[0]||"",34,44,34,-30)+one(t[1]||"",66,74,34,-30);
+    return embLayer("text",'x="50" y="65" font-size="'+(t.length>2?Math.round(80/t.length):40)+'" letter-spacing="-1"'+fa,embEsc(t),fill,3);
+  }
+  const x=p.x!=null?p.x:50, y=p.y!=null?p.y:62, sz=p.size||28, arc=+p.arc||0;
+  if(!arc)return embLayer("text",'x="'+x+'" y="'+y+'" font-size="'+sz+'"'+fa,embEsc(t),fill,Math.max(1.6,sz/12));
+  // 円弧: arc>0 は上に反る(アーチ)、arc<0 は下に反る(笑顔)
+  const R=60/Math.abs(arc), th=0.9, id="et"+uid, sx=R*Math.sin(th), dy=R-R*Math.cos(th);
+  const d=arc>0?"M"+(x-sx).toFixed(1)+" "+(y+dy).toFixed(1)+" A"+R.toFixed(1)+" "+R.toFixed(1)+" 0 0 1 "+(x+sx).toFixed(1)+" "+(y+dy).toFixed(1)
+               :"M"+(x-sx).toFixed(1)+" "+(y-dy).toFixed(1)+" A"+R.toFixed(1)+" "+R.toFixed(1)+" 0 0 0 "+(x+sx).toFixed(1)+" "+(y-dy).toFixed(1);
+  return '<defs><path id="'+id+'" d="'+d+'"/></defs>'
+    +embLayer("text",'font-size="'+sz+'"'+fa,'<textPath href="#'+id+'" startOffset="50%">'+embEsc(t)+'</textPath>',fill,Math.max(1.6,sz/12));
+}
+/** リボン(盾の上・下・中央を横切る帯)。名前を帯の中心線に沿って書く */
+function embRibbonEl(p,band,ink,uid){
+  const pos=p.pos||"bottom";
+  const G=pos==="top"?{ x0:-4, x1:104, y:2, cy:-16 }:pos==="mid"?{ x0:-6, x1:106, y:56, cy:62 }:{ x0:-4, x1:104, y:98, cy:116 };
+  const h=7, dk=embShade(/^#/.test(band)?band:"#B8892C",0.62);
+  const q=(o)=>"M"+G.x0+" "+(G.y+o)+" Q50 "+(G.cy+o)+" "+G.x1+" "+(G.y+o);
+  // 両端の折り返し(奥の暗い面)と、V の切り込みの端
+  const tail=(sx)=>{ const x=sx<0?G.x0:G.x1, d=sx<0?-1:1;
+    return '<path d="M'+x+' '+(G.y-h+4)+' L'+(x+d*12)+' '+(G.y-h+8)+' L'+(x+d*7)+' '+(G.y+2)+' L'+(x+d*12)+' '+(G.y+h+8)+' L'+x+' '+(G.y+h+4)+' Z" fill="'+dk+'" stroke="#141418" stroke-width="1"/>'; };
+  const body='<path d="'+q(-h)+' L'+G.x1+' '+(G.y+h)+' Q50 '+(G.cy+h)+' '+G.x0+' '+(G.y+h)+' Z" fill="'+band+'" stroke="#141418" stroke-width="1.4" stroke-linejoin="round"/>';
+  const t=embTxt(p.s,12), id="er"+uid;
+  const fs=t?Math.min(10,150/Math.max(5,t.length)):0;
+  const txt=t?'<defs><path id="'+id+'" d="'+q(fs*0.36)+'"/></defs>'+
+    '<text font-size="'+fs.toFixed(1)+'" font-family="'+EMB_FONTS.sans.replace(/'/g,"&apos;")+'" font-weight="900" letter-spacing="0.6" text-anchor="middle" fill="'+ink+'">'+
+    '<textPath href="#'+id+'" startOffset="50%">'+embEsc(t)+'</textPath></text>':"";
+  return tail(-1)+tail(1)+body+txt;
+}
+/**
+ * 月桂樹(→docs/27 §27.7)。盾の後ろで、下の交差から上へ伸びる2本の枝。
+ * 葉は先の尖った1枚の形(葉脈の筋と、上半分の明るい面)を使い回し、外側・内側に互い違いに付け、先ほど小さく
+ */
+function embLaurel2(gold,dark,light){
+  const leaf=(x,y,rot,sc)=>'<g transform="translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+rot.toFixed(1)+') scale('+sc.toFixed(2)+')">'
+    +'<path d="M0 0 C5 -5.6 13 -6.6 21 0 C13 4.6 5 4.2 0 0 Z" fill="'+gold+'" stroke="'+dark+'" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M1.5 -0.6 C6 -4.4 13 -5.2 19 -0.6 C13 -2 7 -2 1.5 -0.6 Z" fill="'+light+'"/>'
+    +'<path d="M1 0 C7 -0.8 14 -0.8 20 0" fill="none" stroke="'+dark+'" stroke-width="0.8"/></g>';
+  const CX=50, CY=50, R=50, A0=168, A1=22, N=9;
+  const rad=d=>d*Math.PI/180;
+  const bough=side=>{
+    const P=phi=>[CX+side*R*Math.sin(rad(phi)), CY-R*Math.cos(rad(phi))];
+    let stem="M"; for(let i=0;i<=20;i++){ const q=P(A0+(A1-A0)*i/20); stem+=(i?" L":"")+q[0].toFixed(1)+" "+q[1].toFixed(1); }
+    let g='<path d="'+stem+'" fill="none" stroke="'+dark+'" stroke-width="3.4" stroke-linecap="round"/><path d="'+stem+'" fill="none" stroke="'+gold+'" stroke-width="1.8" stroke-linecap="round"/>';
+    const tanAt=phi=>Math.atan2(-Math.sin(rad(phi)),-side*Math.cos(rad(phi)))*180/Math.PI;   // 先(上)へ向かう接線の向き
+    for(let i=0;i<N;i++){
+      const t=(i+0.5)/N, phi=A0+(A1-A0)*t, q=P(phi), sc=1.05-0.5*t, tan=tanAt(phi);
+      const phi2=phi-(A1-A0)/N*0.5, q2=P(phi2);
+      g+=leaf(q[0],q[1],tan+34*side,sc)+leaf(q2[0],q2[1],tanAt(phi2)-30*side,sc*0.9);
+    }
+    const tip=P(A1); g+=leaf(tip[0],tip[1],tanAt(A1),0.6);
+    return g;
+  };
+  // 下の交差と、結び目
+  const b0=[CX-R*Math.sin(rad(A0)),CY-R*Math.cos(rad(A0))], b1=[CX+R*Math.sin(rad(A0)),CY-R*Math.cos(rad(A0))];
+  const cross='<path d="M'+b0[0].toFixed(1)+' '+b0[1].toFixed(1)+' L58 108 M'+b1[0].toFixed(1)+' '+b1[1].toFixed(1)+' L42 108" stroke="'+dark+'" stroke-width="3.4" stroke-linecap="round"/>'
+    +'<path d="M'+b0[0].toFixed(1)+' '+b0[1].toFixed(1)+' L58 108 M'+b1[0].toFixed(1)+' '+b1[1].toFixed(1)+' L42 108" stroke="'+gold+'" stroke-width="1.8" stroke-linecap="round"/>'
+    +'<path d="M44 99 Q50 95 56 99 Q53 104 50 103 Q47 104 44 99 Z" fill="'+gold+'" stroke="'+dark+'" stroke-width="1.2"/>';
+  return cross+bough(-1)+bough(1);
+}
+function embStarsOrn(n,top,gold,dark){
+  n=Math.max(1,Math.min(5,n||3)); let g="";
+  for(let k=0;k<n;k++){ const t=n===1?0:k/(n-1)-0.5, x=50+t*(n-1)*15, y=top-6+Math.abs(t)*6*(n>2?1:0);
+    g+='<path transform="translate('+x.toFixed(1)+','+y.toFixed(1)+') scale(0.3)" d="M0 -22 L6.5 -7 L23 -7 L10 3 L15 19 L0 9 L-15 19 L-10 3 L-23 -7 L-6.5 -7 Z" fill="'+gold+'" stroke="'+dark+'" stroke-width="4" paint-order="stroke"/>'; }
+  return g;
+}
+
 let EMB_UID=0;
 function embSvg(clubId,name,size,opts){
   const o=opts||{};
   const d=embDesign(clubId,name,o.design||null,o.color||null);
   if(o.text)d.text=String(o.text).replace(/[^A-Za-z]/g,"").slice(0,2).toUpperCase()||d.text;   // 自分のクラブは略称の頭2文字(→docs/14 §14.77)
-  const i=-1;
   const h2=hashStr("emb2:"+clubId);
   // **選んだ色があればそれを使う**(ホーム=地 / アウェイ=柄 →docs/10 §3.54)
-  const ph=embHueById(d.home), pa=embHueById(d.away);
-  const hue=ph&&ph.h!=null?ph.h:(i>=0?((i*137.5+20)%360):(hashStr("hue:"+clubId)%360));
+  const ph=embHueById(d.home), pa=embHueById(d.away), pt=embHueById(d.third);
+  const hue=ph&&ph.h!=null?ph.h:(hashStr("hue:"+clubId)%360);
   const hue2=pa&&pa.h!=null?pa.h:(hue+((h2%2)?150:40))%360;
-  // 選んだ色は hex をそのまま使い、選んでいなければ色相から作る
   const a=ph?ph.hex:"oklch(0.72 0.22 "+hue.toFixed(1)+")";
   const b=pa?pa.hex:"oklch(0.38 0.14 "+hue2.toFixed(1)+")";
-  // **地が明るいときは字を暗く**。レモンや白の上に白字を置くと消える
   const la=ph?embLum(ph.hex):0.62;
-  // 紋章・文字の色: 選んでいればその色、おまかせなら地の明るさで白か黒
-  const ink=d.ink==="white"?"#FFFFFF":d.ink==="black"?"#1A1A1E":d.ink==="gold"?"oklch(0.84 0.15 88)":d.ink==="away"?b:(la>=0.62?"#1A1A1E":"#FFFFFF");
+  // 紋章・文字の色(旧い ink の指定も読む): おまかせなら地の明るさで白か黒
+  const auto=la>=0.62?"#1A1A1E":"#FFFFFF";
+  const ink=d.ink==="white"?"#FFFFFF":d.ink==="black"?"#1A1A1E":d.ink==="gold"?"oklch(0.84 0.15 88)":d.ink==="away"?b:auto;
+  const gold="oklch(0.82 0.14 88)", dark="oklch(0.34 0.08 78)", light="oklch(0.93 0.09 92)";
+  const col=c=>c==="home"?a:c==="away"?b:c==="third"?(pt?pt.hex:auto):c==="gold"?gold:c==="white"?"#FFFFFF":c==="black"?"#1A1A1E":c==="ink"||!c?ink:(/^#[0-9a-fA-F]{6}$/.test(c)?c:ink);
+  // 盾の縁。地と同じ明るさに沈まないよう、地より一段明るい / 暗い色(二重の縁は内側に白か黒の細い線)
   const rim=ph?embShade(ph.hex,la>=0.62?0.55:1.35):"oklch(0.93 0.06 "+hue.toFixed(1)+")";
   const path=EMB_PATH[d.shape]||EMB_PATH.shield;
-  // **idはクラブごとに変える**。同じ画面に2つ出したとき clipPath がぶつかる
-  // **描くたびに別の id**: 同じクラブのエンブレムが同じ画面に2つ以上あると(見出しと CLUB の欄など)、先に置いた形で切り抜かれ、
-  // 盾なのに丸く塗られることがあった(→docs/14 §14.72)
-  const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"")+"_"+(++EMB_UID);
-  const stars=o.stars===false?0:embStars(clubId);
-  // ★も外装も**盾の外へ足す**。盾を縮めないので、付いた瞬間に中身が小さくならない
-  const orn=(d.orn&&d.orn!=="none")?d.orn:null;
-  const op=embOrnPad(orn);
-  const top=(stars?18:0)+op.t, bot=op.b, side=op.x;
+  const uid=++EMB_UID;
+  const cid="ec"+String(clubId).replace(/[^A-Za-z0-9]/g,"")+(o.tag||"")+"_"+uid;
+  const P=embParts(d);
+  if(o.text)P.forEach(p=>{ if(p.t==="text"&&p.lay)p.s=d.text; });
+  const pad=embPad2(P), top=pad.t, bot=pad.b, side=pad.x;
   const vb=(-side)+" "+(-top)+" "+(100+side*2)+" "+(100+top+bot);
-  const gold="oklch(0.82 0.14 88)", dark="oklch(0.34 0.08 78)";
-  const starRow=!stars?"":'<g>'+Array.from({length:stars},(_,k)=>{
-      const x=50+(k-(stars-1)/2)*20;
-      return '<path class="emb-star" transform="translate('+x+',-9) scale(0.34)" '
-        +'d="M0 -22 L6.5 -7 L23 -7 L10 3 L15 19 L0 9 L-15 19 L-10 3 L-23 -7 L-6.5 -7 Z" '
-        +'fill="oklch(0.88 0.16 92)" stroke="oklch(0.42 0.10 80)" stroke-width="4" '
-        +'paint-order="stroke"/>';
-    }).join("")+'</g>';
+  const rTop=P.some(x=>x.t==="ribbon"&&x.pos==="top");
+  const rimW=d.rim==="thin"?2.5:d.rim==="thick"?6:4;
+  const rimSvg='<path d="'+path+'" fill="none" stroke="'+rim+'" stroke-width="'+(d.rim==="double"?6:rimW)+'"/>'
+    +(d.rim==="double"?'<path d="'+path+'" fill="none" stroke="'+(la>=0.62?"#1A1A1E":"#FFFFFF")+'" stroke-width="1.4"/>':"");
+  let back="", front="";
+  P.forEach((p,k)=>{
+    if(p.t==="orn"&&p.k==="laurel")back+=embLaurel2(gold,dark,light);   // 月桂樹は盾の後ろ
+    else if(p.t==="orn"&&p.k==="crown")front+='<g transform="translate(10,'+(-70-(rTop?16:0))+') scale(0.8)"><path fill-rule="evenodd" d="'+EMB_ART.crown+'" fill="'+gold+'" stroke="'+dark+'" stroke-width="3" paint-order="stroke"/></g>';
+    else if(p.t==="orn"&&p.k==="stars")front+=embStarsOrn(p.n,rTop?-16:0,gold,dark);
+    else if(p.t==="crest")front+=embCrestEl(p,col(p.c));
+    else if(p.t==="text")front+=embTextEl(p,col(p.c),uid+"_"+k);
+    else if(p.t==="ribbon")front+=embRibbonEl(p,col(p.c||"gold"),col(p.ink||(embLumAny(col(p.c||"gold"))>=0.55?"black":"white")),uid+"_"+k);
+  });
   return '<svg class="emb-svg" viewBox="'+vb+'" width="'+size+'" height="'+size+'" '
     +'role="img" aria-label="'+embEsc(name||"")+'">'
     +'<defs><clipPath id="'+cid+'"><path d="'+path+'"/></clipPath></defs>'
-    // 月桂冠は**盾の後ろ**に回す(前に出すと盾の柄が隠れる)
-    +(orn==="laurel"||orn==="wreath"?embOrnPath(orn==="wreath"?"laurel":"laurel",gold,dark):"")
+    +back
     +'<g clip-path="url(#'+cid+')"><rect x="0" y="0" width="100" height="100" fill="'+a+'"/>'
-    +embFieldPath(d.field,b)+'</g>'
-    +'<path d="'+path+'" fill="none" stroke="'+rim+'" stroke-width="4"/>'
-    +(d.crest&&d.crest!=="none"
-      ? embCrestPath(d.crest,ink,b)
-      : embTextPath(d.lay,d.text,ink,b))
-    // 王冠とリボンは**盾の前**(重なっても手前に出す)
-    +(orn==="crown"?embOrnPath("crown",gold,dark)
-      :orn==="ribbon"?embOrnPath("ribbon",gold,dark)
-      :orn==="wreath"?embOrnPath("crown",gold,dark)
-        +embOrnPath("ribbon",gold,dark):"")
-    +starRow
+    +embFieldPath(d.field,b,d.n)+'</g>'
+    +rimSvg+front
   +'</svg>';
 }

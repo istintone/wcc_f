@@ -56,6 +56,7 @@ function persist(S){
   return ok;
 }
 function showClub(keepScroll){
+  if(typeof eeBindDrag==="function")eeBindDrag();
   if(typeof bgmPlay==="function")bgmPlay("club");   // 監督室の BGM(→docs/14 第4弾)
   const el=document.getElementById("club"), old=el.querySelector(".cl-main"), y=old?old.scrollTop:0;
   const kb=el.querySelector(".kmod-box"), ky=kb?kb.scrollTop:0;
@@ -1457,6 +1458,115 @@ function termExpHtml(e){
     (e.exp?'<li class="'+(e.exp.ok?'ok':'ng')+'">獲得賞金 '+e.exp.prize+' / 期待 '+e.exp.target+'億 → '+(e.exp.ok?'達成 年俸 +'+e.exp.bonus+'億':'届かず')+'</li>':'')+
     (e.mis||[]).map(m=>'<li class="'+(m.ok===null?'':m.ok?'ok':'ng')+'">👔 '+m.text+' → '+(m.ok===null?'任期の終わりで打ち切り':(m.ok?'達成 ':'失敗 ')+(m.v>=0?'+':'')+m.v+'億')+'</li>').join("")+'</ul>';
 }
+/* ---- エンブレムエディター(→docs/27 §27.8)。盾の上にパーツ(紋章・文字・リボン・外装)を最大6つ重ねる ----
+ * 大きなプレビューで、選んだパーツを指でドラッグして動かす(矢印・大きさの − + で微調整)。タブは パーツ / 盾 / 色。
+ * 文字は画面の英字キーボードで入れる(英字・数字・& . ')。テンプレートはどれも架空の組み合わせ */
+const EE_TPL=[
+  { n:"紋章と上下のリボン", e:{ shape:"shield", field:"solid", rim:"double", parts:[{ t:"crest", k:"lion", x:50, y:52, s:0.85, c:"third" },{ t:"ribbon", pos:"top", s:"", c:"gold" },{ t:"ribbon", pos:"bottom", s:"", c:"gold" }] } },
+  { n:"丸に円弧の文字", e:{ shape:"round", field:"solid", rim:"double", parts:[{ t:"text", s:"", font:"serif", x:50, y:40, size:20, arc:1, c:"gold" },{ t:"crest", k:"star", x:50, y:60, s:0.5, c:"gold" }] } },
+  { n:"縦縞に頭文字", e:{ shape:"oval", field:"stripe", n:5, parts:[{ t:"text", s:"", font:"sans", x:50, y:64, size:30, c:"ink" }] } },
+  { n:"月桂樹と王冠", e:{ shape:"shield", field:"half", parts:[{ t:"crest", k:"eagle", x:50, y:50, s:0.8, c:"ink" },{ t:"orn", k:"laurel" },{ t:"orn", k:"crown" }] } }
+];
+const EE_PART_LABEL={ crest:"紋章", text:"文字", ribbon:"リボン", orn:"外装" };
+const EE_COL_LABEL={ home:"地", away:"柄", third:"3色目", ink:"おまかせ", gold:"金", white:"白", black:"黒" };
+/** いまの下書きを v2(パーツの並び)にそろえる。旧い並べ方の文字は、動かせる文字に直す */
+function eeDesign(c,name){
+  const e=c.emb||{};
+  if(Array.isArray(e.parts))return e;
+  const d=embDesign("azr",name,e,c.color), short=(c.short||clubAbbr(name)).toUpperCase();
+  const parts=embParts(d).map(p=>p.t==="text"&&p.lay?{ t:"text", s:short.slice(0,3), font:"serif", x:50, y:64, size:short.length>2?28:38, c:p.c }:p);
+  c.emb={ v:2, shape:d.shape, field:d.field, home:d.home, away:d.away, ink:d.ink, parts };
+  return c.emb;
+}
+function emblemEditorHtml(c,name){
+  const e=eeDesign(c,name), P=e.parts, sel=Math.min(CL.eeSel|0,P.length-1), p=P[sel], tab=CL.eeTab||"parts";
+  const btn=(op,v,lab,on,extra)=>'<button class="ce'+(on?' on':'')+'" data-act="ee" data-op="'+op+'" data-v="'+v+'"'+(extra||"")+'>'+lab+'</button>';
+  const row=(lab,html)=>'<div class="ce-row"><i>'+lab+'</i>'+html+'</div>';
+  const hues=EMB_CLASSIC.map(id=>embHueById(id));
+  const sw=(op,cur)=>hues.map(h=>'<button class="ce sw'+(cur===h.id||cur===h.hex?' on':'')+'" data-act="ee" data-op="'+op+'" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("");
+  const cols=(op,cur,list)=>(list||EMB_COLS).map(k=>btn(op,k,EE_COL_LABEL[k],(cur||"ink")===k)).join("");
+  const kb=(max)=>'<div class="ee-kb">'+"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&.'".split("").map(ch=>btn("key",ch,ch,false)).join("")+
+    (max>4?btn("key"," ","␣",false):"")+btn("bs","","⌫",false)+'</div>';
+  let h='<div class="ee"><div class="ee-prev">'+embSvg("azr",name,200,{ color:c.color, design:e, tag:"ee" })+'</div>';
+  // 動かす(紋章・文字)/ 大きさ
+  const movable=p&&(p.t==="crest"||p.t==="text");
+  h+='<div class="ee-nudge'+(movable?'':' off')+'">'+btn("mv","-1,0","←")+btn("mv","0,-1","↑")+btn("mv","0,1","↓")+btn("mv","1,0","→")+btn("sz","-1","−")+btn("sz","1","＋")+'</div>';
+  h+='<div class="tabs t3 ee-tabs">'+[["parts","パーツ"],["shield","盾"],["color","色"]].map(([k,l])=>'<button class="tab'+(tab===k?' on':'')+'" data-act="ee" data-op="tab" data-v="'+k+'">'+l+'</button>').join("")+'</div>';
+  if(tab==="shield"){
+    h+=row("形",EMB_SHAPES.map(v=>btn("set","shape:"+v,EMB_LABEL[v],e.shape===v)).join(""))
+      +row("地の柄",EMB_FIELDS.map(v=>btn("set","field:"+v,EMB_LABEL[v],e.field===v)).join(""))
+      +(e.field==="stripe"||e.field==="hoop"?row("本数",[3,5,7,9].map(n=>btn("set","n:"+n,n+"本",(e.n||(e.field==="stripe"?7:5))===n)).join("")):"")
+      +row("縁",[["thin","細い"],["normal","ふつう"],["thick","太い"],["double","二重"]].map(([v,l])=>btn("set","rim:"+v,l,(e.rim||"normal")===v)).join(""));
+  }else if(tab==="color"){
+    h+=row("地の色",sw("col","home:"+"",e.home).replace(/data-v="/g,'data-v="home:'))
+      +row("柄の色",sw("col","",e.away).replace(/data-v="/g,'data-v="away:'))
+      +row("3色目",sw("col","",e.third).replace(/data-v="/g,'data-v="third:'));
+  }else{
+    h+=row("テンプレート",EE_TPL.map((t,i)=>btn("tpl",i,t.n,false)).join(""));
+    h+='<div class="ee-parts">'+P.map((q,i)=>'<button class="ee-pt'+(i===sel?' on':'')+'" data-act="ee" data-op="pick" data-v="'+i+'"><small>'+(i+1)+'</small>'+EE_PART_LABEL[q.t]+
+        '<b>'+embEsc(q.t==="crest"?EMB_LABEL[q.k]||q.k:q.t==="orn"?EMB_LABEL[q.k]||q.k:(q.s||"—"))+'</b></button>').join("")+'</div>';
+    h+='<div class="ee-add">'+["crest","text","ribbon","orn"].map(t=>btn("add",t,"＋ "+EE_PART_LABEL[t],false,P.length>=EMB_MAXPARTS?" disabled":"")).join("")+'</div>';
+    if(p){
+      h+='<div class="ee-sel"><div class="ee-ops">'+btn("z","-1","奥へ")+btn("z","1","手前へ")+btn("del","","消す")+'</div>';
+      if(p.t==="crest")h+=row("紋章",EMB_CRESTS.filter(v=>v!=="none").map(v=>btn("pset","k:"+v,EMB_LABEL[v],p.k===v)).join(""))+row("色",cols("pset",p.c).replace(/data-v="/g,'data-v="c:'))+row("向き",btn("pset","f:0","そのまま",!p.f)+btn("pset","f:1","左右反転",!!p.f));
+      if(p.t==="text")h+='<div class="ee-txt"><b>'+embEsc(p.s||"")+'</b><small>'+(p.s||"").length+'/4</small></div>'+kb(4)
+        +row("字体",[["serif","セリフ"],["sans","ゴシック"],["slab","スラブ"]].map(([v,l])=>btn("pset","font:"+v,l,(p.font||"serif")===v)).join(""))
+        +row("円弧",[["-1","下に反る"],["0","なし"],["1","上に反る"]].map(([v,l])=>btn("pset","arc:"+v,l,String(p.arc||0)===v)).join(""))
+        +row("色",cols("pset",p.c).replace(/data-v="/g,'data-v="c:'));
+      if(p.t==="ribbon")h+='<div class="ee-txt"><b>'+embEsc(p.s||"")+'</b><small>'+(p.s||"").length+'/12</small></div>'+kb(12)
+        +row("位置",[["top","上"],["mid","中央"],["bottom","下"]].map(([v,l])=>btn("pset","pos:"+v,l,(p.pos||"bottom")===v)).join(""))
+        +row("帯の色",cols("pset",p.c||"gold").replace(/data-v="/g,'data-v="c:'))+row("字の色",cols("pset",p.ink||"ink",["ink","home","away","third","white","black","gold"]).replace(/data-v="/g,'data-v="ink:'));
+      if(p.t==="orn")h+=row("種類",[["crown","王冠"],["laurel","月桂樹"],["stars","星"]].map(([v,l])=>btn("pset","k:"+v,l,p.k===v)).join(""))
+        +(p.k==="stars"?row("星の数",[1,2,3,4,5].map(n=>btn("pset","n:"+n,n,(p.n||3)===n)).join("")):"");
+      h+='</div>';
+    }
+  }
+  return h+'</div>';
+}
+/** エディターの操作 */
+function eeAct(op,v){
+  const c=CL.draft&&CL.draft.c; if(!c)return;
+  const name=c.name||"(クラブ名)", e=eeDesign(c,name), P=e.parts; let sel=Math.min(CL.eeSel|0,P.length-1); const p=P[sel];
+  const kv=s=>{ const i=String(s).indexOf(":"); return [s.slice(0,i),s.slice(i+1)]; };
+  const num=x=>/^-?[\d.]+$/.test(x)?+x:x;
+  if(op==="tab"){ CL.eeTab=v; return; }
+  if(op==="pick"){ CL.eeSel=+v; return; }
+  if(op==="tpl"){ const T=JSON.parse(JSON.stringify(EE_TPL[+v].e)), short=(c.short||clubAbbr(name)).toUpperCase();
+    T.parts.forEach(q=>{ if(q.t==="text")q.s=short.slice(0,3); if(q.t==="ribbon")q.s=q.pos==="top"?embTxt(String(name).replace(/[^A-Za-z ]/g,""),12)||short:""; });
+    c.emb=Object.assign({ v:2, home:e.home, away:e.away, third:e.third, ink:e.ink },T); CL.eeSel=0; return; }
+  if(op==="set"){ const [k,x]=kv(v); e[k]=num(x); return; }
+  if(op==="col"){ const [k,x]=kv(v); e[k]=x; if(k==="home")c.color=(embHueById(x)||{}).hex||c.color; return; }
+  if(op==="add"){ if(P.length>=EMB_MAXPARTS)return;
+    const q=v==="crest"?{ t:"crest", k:"star", x:50, y:50, s:0.6, c:"ink" }:v==="text"?{ t:"text", s:(c.short||clubAbbr(name)).toUpperCase().slice(0,3), font:"serif", x:50, y:64, size:28, c:"ink" }
+      :v==="ribbon"?{ t:"ribbon", pos:P.some(x=>x.t==="ribbon"&&x.pos==="bottom")?"top":"bottom", s:"", c:"gold" }:{ t:"orn", k:"crown" };
+    P.push(q); CL.eeSel=P.length-1; return; }
+  if(!p)return;
+  if(op==="del"){ P.splice(sel,1); CL.eeSel=Math.max(0,sel-1); return; }
+  if(op==="z"){ const j=sel+(+v); if(j<0||j>=P.length)return; P.splice(sel,1); P.splice(j,0,p); CL.eeSel=j; return; }
+  if(op==="pset"){ const [k,x]=kv(v); p[k]=num(x); if(k==="f")p.f=x==="1"; return; }
+  if(op==="key"){ const max=p.t==="ribbon"?12:4; if(p.t!=="text"&&p.t!=="ribbon")return; p.s=embTxt((p.s||"")+v,max); return; }
+  if(op==="bs"){ p.s=String(p.s||"").slice(0,-1); return; }
+  if(op==="mv"&&(p.t==="crest"||p.t==="text")){ const [dx,dy]=v.split(",").map(Number); p.x=clamp((p.x!=null?p.x:50)+dx,0,100); p.y=clamp((p.y!=null?p.y:50)+dy,0,100); return; }
+  if(op==="sz"){ if(p.t==="crest")p.s=clamp(+((p.s||1)+(+v)*0.05).toFixed(2),0.2,1.4); else if(p.t==="text")p.size=clamp((p.size||28)+(+v)*2,8,48); return; }
+}
+/** プレビューを指でドラッグして、選んだパーツ(紋章・文字)を動かす。動かしている間はプレビューだけ描き直す */
+let EE_DRAG=null;
+function eeBindDrag(){
+  if(eeBindDrag.done)return; eeBindDrag.done=true;
+  const at=(ev,svg)=>{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+  document.addEventListener("pointerdown",ev=>{
+    const box=ev.target.closest&&ev.target.closest(".ee-prev"); if(!box)return;
+    const c=CL.draft&&CL.draft.c, e=c&&c.emb, p=e&&e.parts&&e.parts[CL.eeSel|0]; if(!p||(p.t!=="crest"&&p.t!=="text"))return;
+    const svg=box.querySelector("svg"), q=at(ev,svg);
+    EE_DRAG={ box, p, dx:(p.x!=null?p.x:50)-q.x, dy:(p.y!=null?p.y:50)-q.y }; box.setPointerCapture&&box.setPointerCapture(ev.pointerId); ev.preventDefault();
+  });
+  document.addEventListener("pointermove",ev=>{
+    if(!EE_DRAG)return; const D=EE_DRAG, svg=D.box.querySelector("svg"); if(!svg)return;
+    const q=at(ev,svg); D.p.x=Math.round(clamp(q.x+D.dx,0,100)); D.p.y=Math.round(clamp(q.y+D.dy,0,100));
+    const c=CL.draft.c; D.box.innerHTML=embSvg("azr",c.name||"(クラブ名)",200,{ color:c.color, design:c.emb, tag:"ee" });
+  });
+  document.addEventListener("pointerup",()=>{ if(EE_DRAG){ EE_DRAG=null; } });
+}
 /* ---- 監督ライセンスと監督契約(→docs/10 §10.2 A) ---- */
 /** 監督ライセンス(初回だけ。あとから変えられない) */
 function licenseHtml(){
@@ -1479,16 +1589,13 @@ function contractHtml(edit){
   const row=(k,list,lab)=>'<div class="ce-row"><i>'+lab+'</i>'+list.map(v=>'<button class="ce'+(e[k]===v?' on':'')+'" data-act="emb" data-k="'+k+'" data-v="'+v+'">'+(EMB_LABEL[v]||v)+'</button>').join("")+'</div>';
   const hues=EMB_CLASSIC.map(id=>embHueById(id));
   return '<section class="card contract">'+(edit?'<h3>クラブの設定 <small>名前・エンブレムなどを変える</small></h3>':'<h3>監督契約 <small>第'+S.term+'任期'+(S.term>1?' ・ 新しいクラブ':'')+'</small></h3>')+
-    '<div class="ce-prev">'+embSvg("azr",name,96,{ color:c.color, design:c.emb, text:c.short||clubAbbr(name) })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
+    '<div class="ce-prev">'+embSvg("azr",name,64,{ color:c.color, design:c.emb, text:c.short||clubAbbr(name) })+'<div><b>'+embEsc(name)+'</b><small>'+(leagueOf(S.cprof)?embEsc(leagueOf(S.cprof))+' ・ ':'')+embEsc((c.short||clubAbbr(name)).toUpperCase().slice(0,3))+'</small>'+
       (S.mgr?'<small>監督 '+embEsc(S.mgr.name)+'</small>':'')+'</div></div>'+
     '<label>クラブ名<input data-f="cname" maxlength="10" value="'+embEsc(c.name)+'" placeholder="例: ミナト・ブルーズ"></label>'+
     '<label>略称(英字3字・スコアに出る)<input data-f="cshort" maxlength="3" value="'+embEsc(c.short)+'" placeholder="'+clubAbbr(name)+'"></label>'+
     // ホームタウンは今は選ばない(2026-11-22 オーナー。データは残す →docs/14 §14.71)
     '<div class="ce-row"><i>クラブの色</i>'+hues.map(h=>'<button class="ce sw'+(c.color===h.hex?' on':'')+'" data-act="ccolor" data-v="'+h.hex+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
-    '<h4>エンブレム</h4>'+
-    row("shape",EMB_SHAPES,"形")+row("field",EMB_FIELDS,"地の柄")+row("crest",EMB_CRESTS,"紋章")+row("orn",EMB_ORNS,"外装")+row("lay",EMB_LAYS,"文字")+
-    '<div class="ce-row"><i>紋章・文字の色</i>'+EMB_INKS.map(v=>'<button class="ce'+((e.ink||"auto")===v?' on':'')+'" data-act="emb" data-k="ink" data-v="'+v+'">'+EMB_INK_LABEL[v]+'</button>').join("")+'</div>'+
-    '<div class="ce-row"><i>柄の色</i>'+hues.map(h=>'<button class="ce sw'+(e.away===h.id?' on':'')+'" data-act="emb" data-k="away" data-v="'+h.id+'" style="--sw:'+h.hex+'" title="'+h.name+'"></button>').join("")+'</div>'+
+    '<h4>エンブレム</h4>'+emblemEditorHtml(c,name)+   // パーツを重ねるエディター(→docs/27)
     '<div class="ce-acts"><button class="btn btn-sub" data-act="embauto">おまかせ</button>'+
       (edit?'<button class="btn btn-main" data-act="csave">この内容で保存する</button></div><button class="lnk" data-act="cedit">やめる</button>'
         :'<button class="btn btn-main" data-act="contract">この内容で契約する</button></div>')+'</section>';
@@ -1497,7 +1604,7 @@ const EMB_INK_LABEL={ auto:"おまかせ", white:"白", black:"黒", gold:"金",
 const EMB_LABEL={ shield:"盾", round:"丸", oval:"楕円", pointed:"尖り盾", banner:"旗",
   solid:"無地", stripe:"縦縞", half:"左右", quarter:"四分割", sash:"たすき", hoop:"横縞", chevron:"山形", cross:"十字", saltire:"斜め十字",
   none:"なし", star:"星", crown:"王冠", eagle:"鷲", lion:"獅子", horse:"馬", helm:"兜", dragon:"竜", fleur:"百合", cannon:"大砲", griffin:"グリフィン", wyvern:"ワイバーン", athena:"女神",
-  laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め" };
+  laurel:"月桂樹", ribbon:"リボン", wreath:"月桂冠", row:"横", col:"縦", diag:"斜め", stars:"星" };
 EMB_LABEL.none="なし";   // 紋章・外装・文字の「なし」(文字なし = 無地)
 /** 監督の絵(→docs/14 §14.69)。k: full 立ち絵 / bust バストアップ / face 顔 */
 const mgrArt=(av,k)=>typeof MGR_ART!=="undefined"&&MGR_ART.length?MGR_ART[Math.min(MGR_ART.length-1,Math.max(0,av|0))][k||"face"]:null;
@@ -1819,7 +1926,8 @@ function onClubClick(e){
   if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth,d.av|0)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
   if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)
   if(act==="emb"){ const c=CL.draft.c; c.emb=Object.assign({},c.emb,{ [b.dataset.k]:b.dataset.v }); showClub(true); return; }
-  if(act==="embauto"){ const c=CL.draft.c; c.emb={}; showClub(true); return; }
+  if(act==="embauto"){ const c=CL.draft.c; c.emb={}; CL.eeSel=0; showClub(true); return; }
+  if(act==="ee"){ eeAct(b.dataset.op,b.dataset.v||""); showClub(true); return; }
   if(act==="offer"){ if(pickOffer(S,CL.W,+b.dataset.i)){ CL.msg=[S.cprof.name+" の監督に就任した。次はクラブ名とエンブレムを決める"]; save(); } showClub(true); return; }
   if(act==="cedit"){ CL.clubEdit=!CL.clubEdit; if(CL.clubEdit){ const c=S.club||{};
       (CL.draft||(CL.draft={})).c={ name:c.name||myTeam(S).name, short:c.short||"", town:c.town||TOWNS[0], color:c.color||myTeam(S).color, emb:Object.assign({},c.emblem||{}) }; }
