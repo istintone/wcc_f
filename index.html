@@ -3656,6 +3656,53 @@ body[class] #hudComp i{display:block;font-style:italic;font-size:9.5px;font-weig
 #club .sec-ev.done.anim .tk-me span{animation:tkIn .28s cubic-bezier(.2,1.3,.4,1) both}
 #club .sec-ev.done.anim .tk-rx{animation:tkIn .32s .75s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes tkIn{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:none}}
+/* 視察レポート(報告書の書式。→docs/14 §14.166) */
+body[class] #club .srep-box{position:relative;padding:0!important;background:#fbf9f3!important;color:#1a1a1a!important;overflow-y:auto;max-height:92dvh}
+body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;width:30px}
+#club .srep{padding:16px 16px 14px;background:repeating-linear-gradient(180deg,transparent 0 23px,rgba(0,0,0,.035) 23px 24px);border-top:6px solid #c8102e;font-size:12px;line-height:1.6}
+#club .srep .sr-top{position:relative;padding-bottom:8px;border-bottom:2px solid #1a1a1a}
+#club .srep .sr-top small{display:block;font-family:var(--f-num),sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.18em;color:#777}
+#club .srep .sr-top h2{margin:2px 0 0;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:900;font-size:24px;letter-spacing:.06em;line-height:1.05}
+#club .srep .sr-stamp{position:absolute;right:34px;top:14px;padding:2px 7px;font-style:normal;font-family:var(--f-num),sans-serif;font-size:11px;font-weight:900;letter-spacing:.14em;color:#c8102e;border:2px solid #c8102e;border-radius:3px;transform:rotate(-8deg);opacity:.85}
+#club .srep .sr-meta{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0 4px;padding:0 0 8px;border-bottom:1px solid rgba(0,0,0,.25)}
+#club .srep .sr-meta dt{font-size:10.5px;font-weight:800;color:#777}
+#club .srep .sr-meta dd{margin:0;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;min-width:0}
+#club .srep .sr-tier{color:#c8a028;font-size:11px}
+#club .srep h4{display:flex;align-items:center;gap:7px;margin:12px 0 6px;font-size:12.5px;font-weight:900}
+#club .srep h4 i{font-style:italic;font-family:var(--f-num),sans-serif;font-weight:900;font-size:11px;padding:1px 5px;color:#fff;background:#1a1a1a}
+#club .srep .sr-ovr{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;padding:6px 0 4px}
+#club .srep .sr-ovr div{text-align:center}
+#club .srep .sr-ovr small{display:block;font-size:10px;font-weight:800;color:#777}
+#club .srep .sr-ovr b{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:900;font-size:26px;line-height:1}
+#club .srep .sr-ovr span{font-family:var(--f-num),sans-serif;font-style:italic;font-weight:900;font-size:13px;color:#c8102e}
+#club .srep .sr-verdict{position:absolute;right:4px;top:50%;margin-top:-17px;padding:4px 9px;font-style:normal;font-size:15px;font-weight:900;letter-spacing:.1em;border:2.5px solid currentColor;border-radius:50%;transform:rotate(-12deg)}
+#club .srep .sr-verdict.v-up{color:#1f8a4c} #club .srep .sr-verdict.v-dn{color:#c8102e} #club .srep .sr-verdict.v-ev{color:#555}
+#club .srep .sr-ax{width:100%;border-collapse:collapse;font-size:11px}
+#club .srep .sr-ax thead th{font-size:9.5px;font-weight:800;color:#777;padding:0 0 3px;text-align:center}
+#club .srep .sr-ax tbody th{width:34px;font-family:var(--f-num),sans-serif;font-size:10.5px;font-weight:800;text-align:left}
+#club .srep .sr-ax td{position:relative;height:18px;padding:0;border-bottom:1px dotted rgba(0,0,0,.2)}
+#club .srep .sr-ax td.me,#club .srep .sr-ax td.op{width:42%}
+#club .srep .sr-ax td u{position:absolute;top:5px;height:8px;text-decoration:none}
+#club .srep .sr-ax td.me u{right:30px;background:#c8102e} #club .srep .sr-ax td.op u{left:30px;background:#1a1a1a}
+#club .srep .sr-ax td.me u{max-width:calc(100% - 32px)} #club .srep .sr-ax td.op u{max-width:calc(100% - 32px)}
+#club .srep .sr-ax td b{position:absolute;top:1px;font-family:var(--f-num),sans-serif;font-size:11px;font-weight:800}
+#club .srep .sr-ax td.me b{right:2px} #club .srep .sr-ax td.op b{left:2px}
+#club .srep .sr-ax td.mk{width:22px;text-align:center;font-size:10px}
+#club .srep .sr-ax td.mk i{font-style:normal} #club .srep .sr-ax .up{color:#1f8a4c} #club .srep .sr-ax .dn{color:#c8102e} #club .srep .sr-ax .ev{color:#999}
+#club .srep .sr-key{list-style:none;margin:0;padding:0}
+#club .srep .sr-key li{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px dotted rgba(0,0,0,.2)}
+#club .srep .sr-key li i{flex:0 0 auto;min-width:22px;padding:0 4px;font-style:normal;font-size:10px;font-weight:900;text-align:center;color:#fff;background:#1a1a1a;border-radius:2px}
+#club .srep .sr-key li i.kp{color:#2a1d00;background:linear-gradient(180deg,#fff3c4,#e9c76b 55%,#b8892c)}
+#club .srep .sr-key li b{font-size:12.5px} #club .srep .sr-key li span{margin-left:auto;font-size:10.5px;color:#666}
+#club .srep .sr-notes{margin:0;padding:0 0 0 18px}
+#club .srep .sr-notes li{margin:0 0 3px;font-size:12px;line-height:1.6}
+#club .srep .sr-notes li::marker{font-family:var(--f-num),sans-serif;font-weight:800;color:#c8102e}
+#club .srep .sr-sign{margin-top:12px;padding-top:8px;border-top:1px solid rgba(0,0,0,.25);text-align:right}
+#club .srep .sr-sign small{display:block;font-size:11px;color:#555}
+#club .srep .sr-sign div{display:inline-flex;align-items:center;gap:8px;margin-top:4px}
+#club .srep .sr-sign span{font-size:10px;color:#777}
+#club .srep .sr-sign b{font-size:15px;font-weight:900;font-style:italic;letter-spacing:.04em}
+#club .srep .sr-hanko{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;font-style:normal;font-size:9.5px;font-weight:900;line-height:1;color:#c8102e;border:2px solid #c8102e;border-radius:50%;transform:rotate(-10deg);opacity:.85}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12010,7 +12057,7 @@ function prepHtml(){
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
         :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="bk" data-act="scoutback">‹ 個別指導</button>':'')
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
             :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
@@ -12917,7 +12964,7 @@ function scoutReport(S,fx,def){
   const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
   say("scRoles",{ c:nm(CARDS[OR.cap]), k:Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、") });
   say(ovM>=ovO+2?"scUp":ovO>=ovM+2?"scDown":"scEven");
-  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
+  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers, atk, dfn };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
 function oppTokenHtml(c,h,x,OR,on){
@@ -12962,10 +13009,34 @@ function oppViewModalHtml(){
 /** 相手の選手のカードの裏(フロート) */
 /** 視察レポート(秘書の報告)のフロート */
 function scoutRepModalHtml(){
-  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S);
-  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox" data-act="none">'+
-    '<header class="km-head"><span></span><b>視察レポート</b><small>'+teamNameOf(TEAMS[fx.opp])+'</small><span></span><button class="km-x" data-act="screpclose" aria-label="閉じる">×</button></header>'+
-    '<section class="sec scout-sec">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section></div></div>';
+  // 報告書の書式(→docs/14 §14.166): 題と判子 → 相手・大会・作成者 → 01 総合評価 → 02 戦力比較 → 03 要注意人物 → 04 所見 → 署名
+  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
+  const nm=c=>c?c.no+" "+nameOf(c):"—", en=compEn(fx);
+  const vd=R.ovM>=R.ovO+2?["up","優勢"]:R.ovO>=R.ovM+2?["dn","劣勢"]:["ev","互角"];
+  const bw=v=>Math.max(4,Math.min(100,(v-6)/12*100)).toFixed(0);
+  const axRow=a=>{ const m=R.mpw[a], o=R.opw[a], d=m-o, mk=d>0.3?'<i class="up">▲</i>':d<-0.3?'<i class="dn">▼</i>':'<i class="ev">＝</i>';
+    return '<tr><th>'+AXIS_ABBR[a]+'</th><td class="me"><u style="width:'+bw(m)+'%"></u><b>'+m.toFixed(1)+'</b></td><td class="mk">'+mk+'</td><td class="op"><u style="width:'+bw(o)+'%"></u><b>'+o.toFixed(1)+'</b></td></tr>'; };
+  const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
+  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
+    '<button class="km-x sr-x" data-act="screpclose" aria-label="閉じる">×</button>'+
+    '<article class="srep">'+
+      '<header class="sr-top"><small>WCC F ・ SCOUTING DEPARTMENT</small><h2>SCOUTING REPORT</h2><i class="sr-stamp">CONFIDENTIAL</i></header>'+
+      '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
+        '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
+        '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
+        '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
+      no(["01","総合評価"])+
+      '<div class="sr-ovr"><div><small>自チーム</small><b>'+R.ovM.toFixed(1)+'</b></div><span>VS</span><div><small>'+t.short+'</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
+        '<i class="sr-verdict v-'+vd[0]+'">'+vd[1]+'</i></div>'+
+      no(["02","戦力比較"])+
+      '<table class="sr-ax"><thead><tr><th></th><th>自チーム</th><th></th><th>'+t.short+'</th></tr></thead><tbody>'+["O","R","S","D","C","P"].map(axRow).join("")+'</tbody></table>'+
+      no(["03","要注意人物"])+
+      '<ul class="sr-key">'+(R.kc?'<li><i class="kp">KP</i><b>'+nm(R.kc)+'</b><span>'+(R.st?R.st.name+' '+rankChip(R.rk):'')+'</span></li>':'')+
+        (R.atk?'<li><i>攻</i><b>'+nm(R.atk)+'</b><span>攻めの柱</span></li>':'')+(R.dfn?'<li><i>守</i><b>'+nm(R.dfn)+'</b><span>守りの柱</span></li>':'')+'</ul>'+
+      no(["04","所見"])+
+      '<ol class="sr-notes">'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ol>'+
+      '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
+    '</article></div></div>';
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";

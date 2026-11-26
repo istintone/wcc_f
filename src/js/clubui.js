@@ -340,7 +340,7 @@ function prepHtml(){
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
         :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'+(commLeft(CL.S)?'<button class="bk" data-act="scoutback">‹ 個別指導</button>':'')
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
             :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
@@ -1247,7 +1247,7 @@ function scoutReport(S,fx,def){
   const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
   say("scRoles",{ c:nm(CARDS[OR.cap]), k:Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、") });
   say(ovM>=ovO+2?"scUp":ovO>=ovM+2?"scDown":"scEven");
-  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers };
+  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers, atk, dfn };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
 function oppTokenHtml(c,h,x,OR,on){
@@ -1292,10 +1292,34 @@ function oppViewModalHtml(){
 /** 相手の選手のカードの裏(フロート) */
 /** 視察レポート(秘書の報告)のフロート */
 function scoutRepModalHtml(){
-  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S);
-  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox" data-act="none">'+
-    '<header class="km-head"><span></span><b>視察レポート</b><small>'+teamNameOf(TEAMS[fx.opp])+'</small><span></span><button class="km-x" data-act="screpclose" aria-label="閉じる">×</button></header>'+
-    '<section class="sec scout-sec">'+secAv(S)+'<div><b class="sec-nm">'+se.name+'</b><ul>'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ul></div></section></div></div>';
+  // 報告書の書式(→docs/14 §14.166): 題と判子 → 相手・大会・作成者 → 01 総合評価 → 02 戦力比較 → 03 要注意人物 → 04 所見 → 署名
+  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
+  const nm=c=>c?c.no+" "+nameOf(c):"—", en=compEn(fx);
+  const vd=R.ovM>=R.ovO+2?["up","優勢"]:R.ovO>=R.ovM+2?["dn","劣勢"]:["ev","互角"];
+  const bw=v=>Math.max(4,Math.min(100,(v-6)/12*100)).toFixed(0);
+  const axRow=a=>{ const m=R.mpw[a], o=R.opw[a], d=m-o, mk=d>0.3?'<i class="up">▲</i>':d<-0.3?'<i class="dn">▼</i>':'<i class="ev">＝</i>';
+    return '<tr><th>'+AXIS_ABBR[a]+'</th><td class="me"><u style="width:'+bw(m)+'%"></u><b>'+m.toFixed(1)+'</b></td><td class="mk">'+mk+'</td><td class="op"><u style="width:'+bw(o)+'%"></u><b>'+o.toFixed(1)+'</b></td></tr>'; };
+  const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
+  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
+    '<button class="km-x sr-x" data-act="screpclose" aria-label="閉じる">×</button>'+
+    '<article class="srep">'+
+      '<header class="sr-top"><small>WCC F ・ SCOUTING DEPARTMENT</small><h2>SCOUTING REPORT</h2><i class="sr-stamp">CONFIDENTIAL</i></header>'+
+      '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
+        '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
+        '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
+        '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
+      no(["01","総合評価"])+
+      '<div class="sr-ovr"><div><small>自チーム</small><b>'+R.ovM.toFixed(1)+'</b></div><span>VS</span><div><small>'+t.short+'</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
+        '<i class="sr-verdict v-'+vd[0]+'">'+vd[1]+'</i></div>'+
+      no(["02","戦力比較"])+
+      '<table class="sr-ax"><thead><tr><th></th><th>自チーム</th><th></th><th>'+t.short+'</th></tr></thead><tbody>'+["O","R","S","D","C","P"].map(axRow).join("")+'</tbody></table>'+
+      no(["03","要注意人物"])+
+      '<ul class="sr-key">'+(R.kc?'<li><i class="kp">KP</i><b>'+nm(R.kc)+'</b><span>'+(R.st?R.st.name+' '+rankChip(R.rk):'')+'</span></li>':'')+
+        (R.atk?'<li><i>攻</i><b>'+nm(R.atk)+'</b><span>攻めの柱</span></li>':'')+(R.dfn?'<li><i>守</i><b>'+nm(R.dfn)+'</b><span>守りの柱</span></li>':'')+'</ul>'+
+      no(["04","所見"])+
+      '<ol class="sr-notes">'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ol>'+
+      '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
+    '</article></div></div>';
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";
