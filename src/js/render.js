@@ -236,9 +236,10 @@ function offBallGoal(p,bh,bx,att,press,now,dt){
   const V=TUNING.view.mv, m=mvOf(p);
   // ⓪ 隊列の上下は1人ずつ遅れて、役割ごとの幅で(全員が同じ上下動にならないように)
   const hb=blockH(p,0.5);
-  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
+  const TR=TUNING.trait, tr=p.c.trait;   // 特性の動き(→docs/30): 上下の幅(ボックス・トゥ・ボックス)・横のゆらぎ(ファンタジスタ)
+  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(TR.amp[tr]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
   // ① その場のゆらぎ(1人ずつ周期が違う)
-  const g=p.gk?0.3:1;
+  const g=(p.gk?0.3:1)*(TR.drift[tr]||1);
   h+=V.driftH*g*Math.sin(now*m.f+m.ph); x+=V.driftX*g*Math.sin(now*m.f2+m.ph2);
   // ② 走り込み(攻めているとき。FW と攻撃的な選手ほど、スキルの向きで増減)
   if(m.run&&now-m.run.t0>m.run.dur)m.run=null;
@@ -394,7 +395,7 @@ else{
     const bx=(T.side==="H"?RV.ball[1]:1-RV.ball[1])*100, att=atkSide===T.side;
     // 守っているときにボールへ寄せる人(ボールに近い順に pressN 人。GK は除く)
     const pr=att?new Set():new Set(T.players.filter(p=>!p.gk&&!pin.has(p.id))
-      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));
+      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100)*(TUNING.trait.press[p.c.trait]||1) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));   // 番犬・ストッパーは寄せ役に選ばれやすい(→docs/30)
     // まず全員の目標を出し、役割の動きで直してから走らせる(→docs/29 §29.4)
     const goals=new Map();
     for(const p of T.players){

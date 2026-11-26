@@ -1235,8 +1235,11 @@ function applyTagStats(def,tagIds,S,fx,combos){
       if(P.capX)cap=T.statCapX;
       for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue;
         if(x.when==="hot"&&c.gm!==4)continue; if(x.when==="cold"&&!(c.gm<=2))continue; put(x); } }
-    if(!Object.keys(add).length)return c;
+    // 効いている特性の印(試合の処理と映像が、特性に合った動きをする。→docs/30)
+    const tr=S&&start&&role?pTags(S,c.id).map(tg=>TAGS[tg.id]).find(P=>P&&P.kind==="trait"&&P.pos.includes(role)):null;
+    if(!Object.keys(add).length&&!tr)return c;
     const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.max(-cap,Math.min(cap,add[k])),1,STAT_MAX);
+    if(tr)o.trait=Object.keys(TAGS).find(k=>TAGS[k]===tr).slice(2);
     return o; };
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));

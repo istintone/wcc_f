@@ -4891,6 +4891,18 @@ const TUNING={
   //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
   //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
   inj:{ duel:0.00045, foul:0.0058, fatK:4.0, k:0.85, heal:0.5, maxN:3, healTo:2 },
+  // 特性の動き(→docs/30)。特性タグが効いている選手(そのポジションで先発)は、試合の処理と映像の両方で特性に合った動きをする
+  //   quick … アンカー: 奪って quickN 手目までパスを pass 倍・持ち運びを carry 倍 / h … 隊列の高さのずれ / xIn・xOut … 中央へ寄せる・外へ開く割合
+  //   ch … 選ぶ手の重み / recv … [下, 上, 倍率] この高さの範囲で受けやすい / recvLong … ロングボールの受け手 / mark … 守備で競りに行く重み
+  //   sweep … GK の飛び出し / lob … 前に出たときの頭越しへの弱さ / save … セーブの上乗せ(壁は至近距離 wallH より奥のシュートだけ)/ amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役の選ばれやすさ
+  trait:{ quickN:1, quick:{ pass:2.2, carry:0.3 },
+    h:{ no95:-0.05, no10:0, sweeper:-0.02, libero:0.03, wingback:0.04, target:0.02, anchor:-0.02, gkSweep:0.015 },
+    xIn:{ target:0.3, anchor:0.3, no10:0.08 }, xOut:{ dribbler:0.15, crosser:0.2, wingback:0.15 },
+    ch:{ libero:{ cbCarry:1.8 }, wingback:{ sbOver:1.4 }, crosser:{ sbEarly:1.8, smCross:1.8, wgCross:1.8 }, b2b:{ dmCarry:1.4, cmDrib:1.4 },
+      fanta:{ omLast:1.5, omDrib:1.5 }, dribbler:{ wgCut:1.2, wgRun:1.2 }, no95:{ cfLay:1.6 }, target:{ cfLay:1.3 } },
+    recv:{ no95:[0.45,0.7,1.4], no10:[0.62,0.82,1.6], b2b:[0.75,1,1.4] }, recvLong:{ target:2.0 }, mark:{ stopper:1.25, watchdog:1.6 },
+    sweep:{ gkSweep:1.8 }, lob:{ gkSweep:0.5 }, save:{ gkGuard:0.05, gkWall:0.08 }, wallH:0.85,
+    amp:{ b2b:1.4 }, drift:{ fanta:2.0 }, press:{ watchdog:0.6, stopper:0.75 } },
   // 試合映像の見え方(→docs/07 §7.11)。斜め上の横から見た立体
   //   far … 奥のタッチラインの縮み(手前 = 1)/ farY・nearY … 奥と手前のタッチラインの高さ(モニターの高さに対する割合)/ nearW … 手前の幅
   //   manH … 手前での選手の高さ / goalH … ゴールの高さ / standH … スタジアムの段ごとの奥のスタンドの高さ
@@ -6156,7 +6168,7 @@ function insLane(ins){
 }
 function gkOut(gk){
   const K=TUNING.gk;
-  return gk&&gk.gk?clamp((gk.h+(gk.up||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
+  return gk&&gk.gk?clamp((gk.h+(gk.up||0)+(gk.tH||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
 }
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
@@ -6164,6 +6176,11 @@ function placePlayer(p,h,x){
   p.pos=p.gk?"GK":posAt(p.h,p.x);            // 細かいポジション(表示と適性)
   p.role=baseRole(p.pos);
   p.apt=aptOf(p.c,p.pos);
+  // 特性の立ち位置(→docs/30): 高さのずれ(tH。blockH が足す)と、中央へ寄せる / 外へ開く(ポジションは元の位置で決めてから)
+  const tr=p.c.trait, TR=TUNING.trait;
+  p.tH=tr&&TR.h[tr]||0;
+  if(tr&&TR.xIn[tr])p.x=p.x+(50-p.x)*TR.xIn[tr];
+  if(tr&&TR.xOut[tr])p.x=clamp(p.x+(p.x<50?-1:1)*Math.abs(50-p.x)*TR.xOut[tr],4,96);
 }
 /** 効果の入れ物。数値は倍率(1=何も無い)、cov と range だけ加算 */
 const FX0=()=>({ chs:[], defs:[], shot:1, mid:1, aerial:1, fk:1, ck:1, pkK:1, blk:1, gk:1, pk:1,
@@ -6395,7 +6412,7 @@ function refreshFx(M,min){
 function blockH(p,bh){
   if(p.gk)return p.h;
   const d=(bh-0.5)*TUNING.block.shiftK;
-  return clamp(p.h+(d<0?d*p.stayK:d)+p.lo,0.04,0.97);
+  return clamp(p.h+(d<0?d*p.stayK:d)+p.lo+(p.tH||0),0.04,0.97);
 }
 const gauss2=(dh,dx,sh,sx)=>Math.exp(-(dh/sh)*(dh/sh)-(dx/sx)*(dx/sx));
 
@@ -6420,10 +6437,10 @@ function matchupDefender(rng,h,x,D,ballH){
   const bt=U.beaten*(D.fx.beaten||1)*(1+Math.max(0,D.lineOff)*TUNING.ins.lineBeaten);
   const dhOf=q=>{ const d=blockH(q,bh)-mh; return d<0?d*U.goalSide:d*bt; };
   // **飛び出したGKは守備者として数える**(→docs/02 §2.3a)。定位置では関与しない
-  const gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep;
+  const TR=TUNING.trait, gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep*(TR.sweep[gk.c.trait]||1);   // スイーパーキーパーはよく飛び出す
   const geom=q=>gauss2(dhOf(q),(q.x-mx)/100,U.sigH,U.sigX)*(q.gk?sw:1);
   const field=outfield(D), list=sw>0?field.concat(gk):field;
-  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd));
+  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd)*(TR.mark[q.c.trait]||1));   // 番犬・ストッパーは競りに行く
   if(!p)return null;
   let n=0;
   for(const q of field)
@@ -6440,14 +6457,16 @@ function sideW(T,x){
   return d>12?I.sideOn:d<-12?I.sideOff:1;
 }
 /** パスの受け手。行き先に近い味方ほど選ばれ、深い位置ほど決定力のある選手を探す */
-function receiverAt(rng,T,D,tg,self,bh){
-  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH;
+function receiverAt(rng,T,D,tg,self,bh,ch){
+  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH, TR=TUNING.trait;
+  // 特性(→docs/30): その高さで受けやすい(No.9.5 は中盤まで降りて・No.10 はライン間)/ ターゲットマンはロングボールの受け手
+  const trW=q=>{ const t=q.c.trait; if(!t)return 1; let w=1; const r=TR.recv[t]; if(r&&tg.h>=r[0]&&tg.h<=r[1])w*=r[2]; if(ch&&ch.to&&TR.recvLong[t])w*=TR.recvLong[t]; return w; };
   const geom=q=>gauss2(blockH(q,bh)-tg.h,(q.x-tg.x)/100,R.sigH,R.sigX);
   const list=outfield(T).filter(q=>q!==self);
   const p=pickW(rng,list,q=>geom(q)*(1+tg.h*eff(q,"off")/STAT_MAX*R.atk)
     *q.fx.recv*(deep?q.fx.recvDeep:1)*sideW(T,q.x)
     *(A.recvRole&&A.recvRole[q.role]||1)
-    *(q.kp?(A.kpRecv||1)*(D.fx.antiRecv!=null?D.fx.antiRecv:1):1));
+    *(q.kp?(A.kpRecv||1)*(D.fx.antiRecv!=null?D.fx.antiRecv:1):1)*trW(q));
   if(!p)return null;
   const g=geom(p);
   return { p, q:R.qMin+(1-R.qMin)*Math.min(1,g*1.15),
@@ -6459,8 +6478,8 @@ function strayOf(p,h,x){
   return Math.sqrt(dh*dh+dx*dx);
 }
 
-function pickChannel(rng,p,h,x,T,fast,ctr){
-  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{};
+function pickChannel(rng,p,h,x,T,fast,ctr,pn){
+  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{}, TR=TUNING.trait, tr=p.c.trait;
   const mv=p.mv&&RARE_MOVES[p.mv], hand=mv&&mv.ch&&mv.roles.includes(p.role)?CHANNELS[p.role].concat([mv.ch]):CHANNELS[p.role];
   return pickW(rng,hand,ch=>{
     let w=eff(p,ch.stat)*chW(p,ch)*(ch===(mv&&mv.ch)?TUNING.rare.mvW:1);
@@ -6469,6 +6488,8 @@ function pickChannel(rng,p,h,x,T,fast,ctr){
     if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
     if(ctr&&ch.to)w*=I.counterTo;              // カウンター: 奪った直後は裏へ
     if(A.chW&&A.chW[ch.id])w*=A.chW[ch.id];
+    if(tr){ const tw=TR.ch[tr]; if(tw&&tw[ch.id])w*=tw[ch.id];   // 特性の得意な手(→docs/30)
+      if(tr==="anchor"&&pn!=null&&pn<=TR.quickN)w*=ch.kind==="pass"?TR.quick.pass:TR.quick.carry; }   // アンカー: 奪ってすぐはパス
     if(A.safe)w*=Math.pow(ch.risk,A.safe);
     if(ch.to){ if(fast&&A.fastTo)w*=A.fastTo; if(A.direct)w*=A.direct; }
     if(ch.kind==="carry"){
@@ -6839,8 +6860,8 @@ function stepMatch(M){
 
   const U=TUNING.duel;
   const ctr=T.ins.counter&&M.poss.n<TUNING.ins.counterN&&M.poss.h0<0.5;
-  const ch=pickChannel(rng,c,h,x,T,fast,ctr), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
-  const rc=ch.kind==="pass"?receiverAt(rng,T,D,tg,c,h):null;
+  const ch=pickChannel(rng,c,h,x,T,fast,ctr,M.poss.n), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
+  const rc=ch.kind==="pass"?receiverAt(rng,T,D,tg,c,h,ch):null;
   const dest=rc?{ h:rc.h, x:rc.x }:tg;
   // 競る場所: パスは届け先(カットされる場所)、持ち運びはいま居る場所
   const cp=ch.kind==="pass"?dest:{ h, x };
@@ -7038,7 +7059,7 @@ function gkPosK(gk,h,x){
   const ideal=50+((100-x)-50)*K.follow;
   const lat=1-K.lat*(Math.abs(gk.x-ideal)-Math.abs(50-ideal))/K.latSpan;
   const close=clamp((h-K.farH)/(K.nearH-K.farH),0,1);
-  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(1-close)));
+  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(TUNING.trait.lob[gk.c.trait]||1)*(1-close)));
 }
 
 /**
@@ -7109,7 +7130,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist,xk){
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
   if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
   const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as*(xk||1);   // xk … 薄いサイドを崩したクロス(→docs/02 §2.15)
-  const gk1=sp==="pk"?gk.fx.pk:gk.fx.gk;
+  const TRs=TUNING.trait.save, gk1=(sp==="pk"?gk.fx.pk:gk.fx.gk)*(1+(TRs[gk.c.trait]&&(gk.c.trait!=="gkWall"||h>=TUNING.trait.wallH)?TRs[gk.c.trait]:0));   // 守護神・壁(至近距離)(→docs/30)
   const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
   ev.dest=[1.0,r2(gy)];
   const a=rr(rng), b=rr(rng);
@@ -9749,8 +9770,11 @@ function applyTagStats(def,tagIds,S,fx,combos){
       if(P.capX)cap=T.statCapX;
       for(const x of P.stat){ if(x.when==="start"&&!start)continue; if(x.when==="sub"&&start)continue; if(x.when==="final"&&!fin)continue;
         if(x.when==="hot"&&c.gm!==4)continue; if(x.when==="cold"&&!(c.gm<=2))continue; put(x); } }
-    if(!Object.keys(add).length)return c;
+    // 効いている特性の印(試合の処理と映像が、特性に合った動きをする。→docs/30)
+    const tr=S&&start&&role?pTags(S,c.id).map(tg=>TAGS[tg.id]).find(P=>P&&P.kind==="trait"&&P.pos.includes(role)):null;
+    if(!Object.keys(add).length&&!tr)return c;
     const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.max(-cap,Math.min(cap,add[k])),1,STAT_MAX);
+    if(tr)o.trait=Object.keys(TAGS).find(k=>TAGS[k]===tr).slice(2);
     return o; };
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });
   def.bench=def.bench.map(c=>boost(c,false,null));
@@ -11871,9 +11895,10 @@ function offBallGoal(p,bh,bx,att,press,now,dt){
   const V=TUNING.view.mv, m=mvOf(p);
   // ⓪ 隊列の上下は1人ずつ遅れて、役割ごとの幅で(全員が同じ上下動にならないように)
   const hb=blockH(p,0.5);
-  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
+  const TR=TUNING.trait, tr=p.c.trait;   // 特性の動き(→docs/30): 上下の幅(ボックス・トゥ・ボックス)・横のゆらぎ(ファンタジスタ)
+  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(TR.amp[tr]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
   // ① その場のゆらぎ(1人ずつ周期が違う)
-  const g=p.gk?0.3:1;
+  const g=(p.gk?0.3:1)*(TR.drift[tr]||1);
   h+=V.driftH*g*Math.sin(now*m.f+m.ph); x+=V.driftX*g*Math.sin(now*m.f2+m.ph2);
   // ② 走り込み(攻めているとき。FW と攻撃的な選手ほど、スキルの向きで増減)
   if(m.run&&now-m.run.t0>m.run.dur)m.run=null;
@@ -12029,7 +12054,7 @@ else{
     const bx=(T.side==="H"?RV.ball[1]:1-RV.ball[1])*100, att=atkSide===T.side;
     // 守っているときにボールへ寄せる人(ボールに近い順に pressN 人。GK は除く)
     const pr=att?new Set():new Set(T.players.filter(p=>!p.gk&&!pin.has(p.id))
-      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));
+      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100)*(TUNING.trait.press[p.c.trait]||1) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));   // 番犬・ストッパーは寄せ役に選ばれやすい(→docs/30)
     // まず全員の目標を出し、役割の動きで直してから走らせる(→docs/29 §29.4)
     const goals=new Map();
     for(const p of T.players){

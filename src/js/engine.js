@@ -77,7 +77,7 @@ function insLane(ins){
 }
 function gkOut(gk){
   const K=TUNING.gk;
-  return gk&&gk.gk?clamp((gk.h+(gk.up||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
+  return gk&&gk.gk?clamp((gk.h+(gk.up||0)+(gk.tH||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
 }
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
@@ -85,6 +85,11 @@ function placePlayer(p,h,x){
   p.pos=p.gk?"GK":posAt(p.h,p.x);            // 細かいポジション(表示と適性)
   p.role=baseRole(p.pos);
   p.apt=aptOf(p.c,p.pos);
+  // 特性の立ち位置(→docs/30): 高さのずれ(tH。blockH が足す)と、中央へ寄せる / 外へ開く(ポジションは元の位置で決めてから)
+  const tr=p.c.trait, TR=TUNING.trait;
+  p.tH=tr&&TR.h[tr]||0;
+  if(tr&&TR.xIn[tr])p.x=p.x+(50-p.x)*TR.xIn[tr];
+  if(tr&&TR.xOut[tr])p.x=clamp(p.x+(p.x<50?-1:1)*Math.abs(50-p.x)*TR.xOut[tr],4,96);
 }
 /** 効果の入れ物。数値は倍率(1=何も無い)、cov と range だけ加算 */
 const FX0=()=>({ chs:[], defs:[], shot:1, mid:1, aerial:1, fk:1, ck:1, pkK:1, blk:1, gk:1, pk:1,
@@ -316,7 +321,7 @@ function refreshFx(M,min){
 function blockH(p,bh){
   if(p.gk)return p.h;
   const d=(bh-0.5)*TUNING.block.shiftK;
-  return clamp(p.h+(d<0?d*p.stayK:d)+p.lo,0.04,0.97);
+  return clamp(p.h+(d<0?d*p.stayK:d)+p.lo+(p.tH||0),0.04,0.97);
 }
 const gauss2=(dh,dx,sh,sx)=>Math.exp(-(dh/sh)*(dh/sh)-(dx/sx)*(dx/sx));
 
@@ -341,10 +346,10 @@ function matchupDefender(rng,h,x,D,ballH){
   const bt=U.beaten*(D.fx.beaten||1)*(1+Math.max(0,D.lineOff)*TUNING.ins.lineBeaten);
   const dhOf=q=>{ const d=blockH(q,bh)-mh; return d<0?d*U.goalSide:d*bt; };
   // **飛び出したGKは守備者として数える**(→docs/02 §2.3a)。定位置では関与しない
-  const gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep;
+  const TR=TUNING.trait, gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep*(TR.sweep[gk.c.trait]||1);   // スイーパーキーパーはよく飛び出す
   const geom=q=>gauss2(dhOf(q),(q.x-mx)/100,U.sigH,U.sigX)*(q.gk?sw:1);
   const field=outfield(D), list=sw>0?field.concat(gk):field;
-  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd));
+  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd)*(TR.mark[q.c.trait]||1));   // 番犬・ストッパーは競りに行く
   if(!p)return null;
   let n=0;
   for(const q of field)
@@ -361,14 +366,16 @@ function sideW(T,x){
   return d>12?I.sideOn:d<-12?I.sideOff:1;
 }
 /** パスの受け手。行き先に近い味方ほど選ばれ、深い位置ほど決定力のある選手を探す */
-function receiverAt(rng,T,D,tg,self,bh){
-  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH;
+function receiverAt(rng,T,D,tg,self,bh,ch){
+  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH, TR=TUNING.trait;
+  // 特性(→docs/30): その高さで受けやすい(No.9.5 は中盤まで降りて・No.10 はライン間)/ ターゲットマンはロングボールの受け手
+  const trW=q=>{ const t=q.c.trait; if(!t)return 1; let w=1; const r=TR.recv[t]; if(r&&tg.h>=r[0]&&tg.h<=r[1])w*=r[2]; if(ch&&ch.to&&TR.recvLong[t])w*=TR.recvLong[t]; return w; };
   const geom=q=>gauss2(blockH(q,bh)-tg.h,(q.x-tg.x)/100,R.sigH,R.sigX);
   const list=outfield(T).filter(q=>q!==self);
   const p=pickW(rng,list,q=>geom(q)*(1+tg.h*eff(q,"off")/STAT_MAX*R.atk)
     *q.fx.recv*(deep?q.fx.recvDeep:1)*sideW(T,q.x)
     *(A.recvRole&&A.recvRole[q.role]||1)
-    *(q.kp?(A.kpRecv||1)*(D.fx.antiRecv!=null?D.fx.antiRecv:1):1));
+    *(q.kp?(A.kpRecv||1)*(D.fx.antiRecv!=null?D.fx.antiRecv:1):1)*trW(q));
   if(!p)return null;
   const g=geom(p);
   return { p, q:R.qMin+(1-R.qMin)*Math.min(1,g*1.15),
@@ -380,8 +387,8 @@ function strayOf(p,h,x){
   return Math.sqrt(dh*dh+dx*dx);
 }
 
-function pickChannel(rng,p,h,x,T,fast,ctr){
-  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{};
+function pickChannel(rng,p,h,x,T,fast,ctr,pn){
+  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{}, TR=TUNING.trait, tr=p.c.trait;
   const mv=p.mv&&RARE_MOVES[p.mv], hand=mv&&mv.ch&&mv.roles.includes(p.role)?CHANNELS[p.role].concat([mv.ch]):CHANNELS[p.role];
   return pickW(rng,hand,ch=>{
     let w=eff(p,ch.stat)*chW(p,ch)*(ch===(mv&&mv.ch)?TUNING.rare.mvW:1);
@@ -390,6 +397,8 @@ function pickChannel(rng,p,h,x,T,fast,ctr){
     if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
     if(ctr&&ch.to)w*=I.counterTo;              // カウンター: 奪った直後は裏へ
     if(A.chW&&A.chW[ch.id])w*=A.chW[ch.id];
+    if(tr){ const tw=TR.ch[tr]; if(tw&&tw[ch.id])w*=tw[ch.id];   // 特性の得意な手(→docs/30)
+      if(tr==="anchor"&&pn!=null&&pn<=TR.quickN)w*=ch.kind==="pass"?TR.quick.pass:TR.quick.carry; }   // アンカー: 奪ってすぐはパス
     if(A.safe)w*=Math.pow(ch.risk,A.safe);
     if(ch.to){ if(fast&&A.fastTo)w*=A.fastTo; if(A.direct)w*=A.direct; }
     if(ch.kind==="carry"){
@@ -760,8 +769,8 @@ function stepMatch(M){
 
   const U=TUNING.duel;
   const ctr=T.ins.counter&&M.poss.n<TUNING.ins.counterN&&M.poss.h0<0.5;
-  const ch=pickChannel(rng,c,h,x,T,fast,ctr), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
-  const rc=ch.kind==="pass"?receiverAt(rng,T,D,tg,c,h):null;
+  const ch=pickChannel(rng,c,h,x,T,fast,ctr,M.poss.n), tg=ballTarget(rng,h,x,ch,ch.to?1:A.gainK,T.ins.side);
+  const rc=ch.kind==="pass"?receiverAt(rng,T,D,tg,c,h,ch):null;
   const dest=rc?{ h:rc.h, x:rc.x }:tg;
   // 競る場所: パスは届け先(カットされる場所)、持ち運びはいま居る場所
   const cp=ch.kind==="pass"?dest:{ h, x };
@@ -959,7 +968,7 @@ function gkPosK(gk,h,x){
   const ideal=50+((100-x)-50)*K.follow;
   const lat=1-K.lat*(Math.abs(gk.x-ideal)-Math.abs(50-ideal))/K.latSpan;
   const close=clamp((h-K.farH)/(K.nearH-K.farH),0,1);
-  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(1-close)));
+  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(TUNING.trait.lob[gk.c.trait]||1)*(1-close)));
 }
 
 /**
@@ -1030,7 +1039,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist,xk){
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
   if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
   const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as*(xk||1);   // xk … 薄いサイドを崩したクロス(→docs/02 §2.15)
-  const gk1=sp==="pk"?gk.fx.pk:gk.fx.gk;
+  const TRs=TUNING.trait.save, gk1=(sp==="pk"?gk.fx.pk:gk.fx.gk)*(1+(TRs[gk.c.trait]&&(gk.c.trait!=="gkWall"||h>=TUNING.trait.wallH)?TRs[gk.c.trait]:0));   // 守護神・壁(至近距離)(→docs/30)
   const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
   ev.dest=[1.0,r2(gy)];
   const a=rr(rng), b=rr(rng);

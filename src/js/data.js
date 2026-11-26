@@ -311,6 +311,18 @@ const TUNING={
   //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
   //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
   inj:{ duel:0.00045, foul:0.0058, fatK:4.0, k:0.85, heal:0.5, maxN:3, healTo:2 },
+  // 特性の動き(→docs/30)。特性タグが効いている選手(そのポジションで先発)は、試合の処理と映像の両方で特性に合った動きをする
+  //   quick … アンカー: 奪って quickN 手目までパスを pass 倍・持ち運びを carry 倍 / h … 隊列の高さのずれ / xIn・xOut … 中央へ寄せる・外へ開く割合
+  //   ch … 選ぶ手の重み / recv … [下, 上, 倍率] この高さの範囲で受けやすい / recvLong … ロングボールの受け手 / mark … 守備で競りに行く重み
+  //   sweep … GK の飛び出し / lob … 前に出たときの頭越しへの弱さ / save … セーブの上乗せ(壁は至近距離 wallH より奥のシュートだけ)/ amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役の選ばれやすさ
+  trait:{ quickN:1, quick:{ pass:2.2, carry:0.3 },
+    h:{ no95:-0.05, no10:0, sweeper:-0.02, libero:0.03, wingback:0.04, target:0.02, anchor:-0.02, gkSweep:0.015 },
+    xIn:{ target:0.3, anchor:0.3, no10:0.08 }, xOut:{ dribbler:0.15, crosser:0.2, wingback:0.15 },
+    ch:{ libero:{ cbCarry:1.8 }, wingback:{ sbOver:1.4 }, crosser:{ sbEarly:1.8, smCross:1.8, wgCross:1.8 }, b2b:{ dmCarry:1.4, cmDrib:1.4 },
+      fanta:{ omLast:1.5, omDrib:1.5 }, dribbler:{ wgCut:1.2, wgRun:1.2 }, no95:{ cfLay:1.6 }, target:{ cfLay:1.3 } },
+    recv:{ no95:[0.45,0.7,1.4], no10:[0.62,0.82,1.6], b2b:[0.75,1,1.4] }, recvLong:{ target:2.0 }, mark:{ stopper:1.25, watchdog:1.6 },
+    sweep:{ gkSweep:1.8 }, lob:{ gkSweep:0.5 }, save:{ gkGuard:0.05, gkWall:0.08 }, wallH:0.85,
+    amp:{ b2b:1.4 }, drift:{ fanta:2.0 }, press:{ watchdog:0.6, stopper:0.75 } },
   // 試合映像の見え方(→docs/07 §7.11)。斜め上の横から見た立体
   //   far … 奥のタッチラインの縮み(手前 = 1)/ farY・nearY … 奥と手前のタッチラインの高さ(モニターの高さに対する割合)/ nearW … 手前の幅
   //   manH … 手前での選手の高さ / goalH … ゴールの高さ / standH … スタジアムの段ごとの奥のスタンドの高さ
