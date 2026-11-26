@@ -3103,3 +3103,9 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #club .srep .sr-sign span{font-size:10px;color:#777}
 #club .srep .sr-sign b{font-size:15px;font-weight:900;font-style:italic;letter-spacing:.04em}
 #club .srep .sr-hanko{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;font-style:normal;font-size:9.5px;font-weight:900;line-height:1;color:#c8102e;border:2px solid #c8102e;border-radius:50%;transform:rotate(-10deg);opacity:.85}
+/* 視察レポートの黒塗り(秘書の親密度で読める量が変わる。→docs/14 §14.167) */
+#club .srep .sr-red{display:inline-block;height:11px;vertical-align:middle;background:#141414;border-radius:1px;text-decoration:none}
+#club .srep .sr-notes li.lock{list-style-position:outside}
+#club .srep .sr-notes li.lock .sr-red{height:10px}
+#club .srep .sr-key li.lock span{color:#999}
+#club .srep .sr-lock{margin:6px 0 0;font-size:10px;color:#888}

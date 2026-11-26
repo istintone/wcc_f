@@ -3703,6 +3703,12 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #club .srep .sr-sign span{font-size:10px;color:#777}
 #club .srep .sr-sign b{font-size:15px;font-weight:900;font-style:italic;letter-spacing:.04em}
 #club .srep .sr-hanko{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;font-style:normal;font-size:9.5px;font-weight:900;line-height:1;color:#c8102e;border:2px solid #c8102e;border-radius:50%;transform:rotate(-10deg);opacity:.85}
+/* 視察レポートの黒塗り(秘書の親密度で読める量が変わる。→docs/14 §14.167) */
+#club .srep .sr-red{display:inline-block;height:11px;vertical-align:middle;background:#141414;border-radius:1px;text-decoration:none}
+#club .srep .sr-notes li.lock{list-style-position:outside}
+#club .srep .sr-notes li.lock .sr-red{height:10px}
+#club .srep .sr-key li.lock span{color:#999}
+#club .srep .sr-lock{margin:6px 0 0;font-size:10px;color:#888}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4680,7 +4686,9 @@ const TUNING={
   paper:{ max:30, recent:5 },
   // 秘書(→docs/08 §8.7)。lv … 親密度の段の境目(他人行儀 → 打ち解けた → 信頼 → 相棒)/ follow … 段ごとのフォローの率
   //   match … 試合のたびの親密度 / title … 大会の優勝1つの親密度 / eventP … 試合のあとに監督室の会話が起きる率
-  sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15 },
+  sec:{ lv:[5,20,45], follow:[0.15,0.25,0.35,0.5], match:1, title:3, eventP:0.15,
+    // 視察レポートで読める量(親密度の段 0〜3。→docs/14 §14.167)。notes … 所見の数 / key … 要注意人物(kp・atk 攻めの柱・dfn 守りの柱・sub スーパーサブ)
+    rep:{ notes:[1,3,5,99], key:[["kp"],["kp","atk"],["kp","atk","dfn"],["kp","atk","dfn","sub"]] } },
   // ケガ(→docs/08 §8.8)。判定は試合の中、別の乱数で行う(ほかの判定の並びを変えない)
   //   duel … 競り合いで止められた持ち手 / foul … 反則を受けた選手 の起きる率。疲れているほど (1 + fatK × 消耗) 倍
   //   k … ケガをした試合の残りで能力に掛かる倍率(出続ける) / heal … 試合のあとに治る率(続いても maxN 試合で治る) / healTo … 治ったあとの調子
@@ -12960,11 +12968,12 @@ function scoutReport(S,fx,def){
   if(st){ const g=String(st.get||"").split(/[。、]/)[0];
     if(st.scope==="team")say("scKpTeam",{ g }); else say("scKpOne",{ n:nm(kc), g });
     if(def.rareOpp&&rareOfCard(kc))say("scRare",{ n:nm(kc) }); }
+  const pillarIx=atk||dfn?lines.length:-1;
   if(atk||dfn)say("scPillar",{ x:(atk?"攻めは "+nm(atk):"")+(atk&&dfn?"、":"")+(dfn?"守りは "+nm(dfn):"") });
   const OR=oppRoles(def), kick={}; for(const k of ["pk","fk","ck"]){ const id=OR[k]; (kick[id]=kick[id]||[]).push(k.toUpperCase()); }
   say("scRoles",{ c:nm(CARDS[OR.cap]), k:Object.keys(kick).map(id=>kick[id].join("・")+" を "+nm(CARDS[id])).join("、") });
   say(ovM>=ovO+2?"scUp":ovO>=ovM+2?"scDown":"scEven");
-  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers, atk, dfn };
+  return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers, atk, dfn, pillarIx };
 }
 /** 相手の札(SQUAD の作り。押すとカードの裏) */
 function oppTokenHtml(c,h,x,OR,on){
@@ -13012,6 +13021,14 @@ function scoutRepModalHtml(){
   // 報告書の書式(→docs/14 §14.166): 題と判子 → 相手・大会・作成者 → 01 総合評価 → 02 戦力比較 → 03 要注意人物 → 04 所見 → 署名
   const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
   const nm=c=>c?c.no+" "+nameOf(c):"—", en=compEn(fx);
+  // 秘書の親密度で読める量が変わる(→docs/14 §14.167)。読めないところは黒塗り
+  const lv=secLv(S), RP=TUNING.sec.rep, keyOk=k=>RP.key[lv].includes(k);
+  const rng=mulberry32((S.seed^hashStr("srep:"+S.term+":"+S.played+":"+fx.opp))>>>0);   // どの所見が読めるかは、この試合の中では変わらない
+  const hide=i=>i===R.pillarIx&&!(keyOk("atk")&&keyOk("dfn"));   // 柱の名前が出る所見は、両方の柱が読めるまで選ばない
+  const order=R.lines.map((l,i)=>({ i, r:rng()+(hide(i)?9:0) })).sort((a,b)=>a.r-b.r), open=new Set(order.slice(0,RP.notes[lv]).map(o=>o.i));
+  const red=w=>'<s class="sr-red" style="width:'+w+'%"></s>';
+  const sub=(def.bench||[]).filter(c=>c.pos!=="GK").sort((a,b)=>(b.off*1.2+b.spd+b.tec)-(a.off*1.2+a.spd+a.tec))[0];   // スーパーサブ(控えで攻めの力がいちばん)
+  const keyRow=(k,tag,c,lab)=>c?'<li'+(keyOk(k)?'':' class="lock"')+'><i>'+tag+'</i>'+(keyOk(k)?'<b>'+nm(c)+'</b>':red(38))+'<span>'+lab+'</span></li>':'';
   const vd=R.ovM>=R.ovO+2?["up","優勢"]:R.ovO>=R.ovM+2?["dn","劣勢"]:["ev","互角"];
   const bw=v=>Math.max(4,Math.min(100,(v-6)/12*100)).toFixed(0);
   const axRow=a=>{ const m=R.mpw[a], o=R.opw[a], d=m-o, mk=d>0.3?'<i class="up">▲</i>':d<-0.3?'<i class="dn">▼</i>':'<i class="ev">＝</i>';
@@ -13032,9 +13049,10 @@ function scoutRepModalHtml(){
       '<table class="sr-ax"><thead><tr><th></th><th>自チーム</th><th></th><th>'+t.short+'</th></tr></thead><tbody>'+["O","R","S","D","C","P"].map(axRow).join("")+'</tbody></table>'+
       no(["03","要注意人物"])+
       '<ul class="sr-key">'+(R.kc?'<li><i class="kp">KP</i><b>'+nm(R.kc)+'</b><span>'+(R.st?R.st.name+' '+rankChip(R.rk):'')+'</span></li>':'')+
-        (R.atk?'<li><i>攻</i><b>'+nm(R.atk)+'</b><span>攻めの柱</span></li>':'')+(R.dfn?'<li><i>守</i><b>'+nm(R.dfn)+'</b><span>守りの柱</span></li>':'')+'</ul>'+
+        keyRow("atk","攻",R.atk,"攻めの柱")+keyRow("dfn","守",R.dfn,"守りの柱")+keyRow("sub","控",sub,"スーパーサブ")+'</ul>'+
       no(["04","所見"])+
-      '<ol class="sr-notes">'+R.lines.map(l=>'<li>'+l+'</li>').join("")+'</ol>'+
+      '<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol>'+
+      (open.size<R.lines.length||RP.key[lv].length<4?'<p class="sr-lock">黒塗りの箇所は、'+se.name+'との仲が深まると読めるようになる</p>':'')+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '</article></div></div>';
 }
