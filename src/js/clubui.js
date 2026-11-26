@@ -1203,12 +1203,17 @@ function stadiumSvgOld(lv){
   return '<svg class="stad-svg" viewBox="0 0 300 120" preserveAspectRatio="xMidYMax meet">'+g+'</svg>';
 }
 /** HOME の改修の知らせ(秘書の言葉で)。払うか見送るか */
+/** スタジアムの改修の話の問い(秘書の言葉と絵) */
+function stadOfferQ(S){
+  const o=S.biz.offer, nx=TUNING.biz.stad[o.lv-1], why=o.why==="資金"?secSay(S,"stadMoney"):secSay(S,"stadRep",{ r:o.why });
+  return why+secSay(S,"stad",{ nm:nx.name, cap:(nx.cap/10000).toFixed(1), c:o.cost, d:o.why!=="資金"?"(今なら割引)":"" })+'</p>'+stadiumSvg(o.lv)+'<p class="dim0">';
+}
 function stadOfferHtml(){
-  const S=CL.S, o=S.biz&&S.biz.offer; if(!o||S.termOver)return "";
-  const nx=TUNING.biz.stad[o.lv-1], why=o.why==="資金"?secSay(S,"stadMoney"):secSay(S,"stadRep",{ r:o.why });
+  const S=CL.S, o=S.biz&&S.biz.offer;
+  if(!o&&CL.stadDone&&!S.termOver)return talkDoneHtml(CL.stadDone,secAv(S),secOf(S).name,"STADIUM").replace('class="sec sec-ev done','class="sec sec-ev stad-offer done');   // 答えたあと(→docs/14 §14.197)
+  if(!o||S.termOver)return "";
   return '<section class="sec stad-offer">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">STADIUM</em></b>'+
-    '<p>'+why+secSay(S,"stad",{ nm:nx.name, cap:(nx.cap/10000).toFixed(1), c:o.cost, d:o.why!=="資金"?"(今なら割引)":"" })+'</p>'+
-    stadiumSvg(o.lv)+
+    '<p>'+stadOfferQ(S)+'</p>'+
     '<div class="sec-ch"><button class="btn ch" data-act="stad" data-v="1"'+(S.money<o.cost?' disabled':'')+'>改修する(資金 '+S.money.toFixed(0)+'億)</button>'+
     '<button class="btn ch" data-act="stad" data-v="0">見送る</button></div></div></section>';
 }
@@ -1926,7 +1931,7 @@ function clubHtml(){
 
 /** 試合を始める。配置は前の試合の最後のまま */
 function startFixture(){
-  CL.secDone=CL.tagDone=null;                  // 答えた会話は、次の試合に入ったら下げる(→docs/14 §14.165)
+  CL.secDone=CL.tagDone=CL.stadDone=null;      // 答えた会話は、次の試合に入ったら下げる(→docs/14 §14.165・§14.197)
   skipComm(CL.S);                              // 残りのコミュニケーションは使わない
   CL.flow=null; CL.tab="home";
   const fx=CL.fx, m=fixtureMatch(CL.S,fx), comp=COMPS[fx.comp];
@@ -2013,7 +2018,11 @@ function onClubClick(e){
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
     else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
-  if(act==="stad"){ const r=answerStadium(S,b.dataset.v==="1"); if(r&&r.ok&&typeof paperNews==="function")paperNews(S,{ t:"stad", lv:S.biz.stad });   // 次の号の話題 if(r)CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); save(); showClub(true);
+  if(act==="stad"){ const yes=b.dataset.v==="1", q=stadOfferQ(S);   // 答えた話を残す(トークと同じ。→docs/14 §14.197)
+    const r=answerStadium(S,yes); if(r&&r.ok&&typeof paperNews==="function")paperNews(S,{ t:"stad", lv:S.biz.stad });   // 次の号の話題
+    if(r){ CL.stadDone={ q, a:yes?"改修しよう":"今回は見送ろう", rx:secStadRx(S,!!r.ok), who:secOf(S).name };
+      CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); }
+    save(); showClub(true);
     if(r&&r.tl&&r.tl.length)setTimeout(()=>infoBar(r.tl),0); return; }
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }

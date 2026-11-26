@@ -1443,6 +1443,14 @@ function secStratLine(S,opp){
   const t=L[Math.floor(mulberry32((S.seed^hashStr("sst:"+S.term+":"+S.played))>>>0)()*L.length)];
   return t.split("{o}").join(opp||"相手");
 }
+/** スタジアムの改修の話への秘書のリアクション(→docs/14 §14.197)。[改修した, 見送った] */
+const SEC_STAD_RX={
+  s0:["承知しました。改修の手配を進めます。新しいスタジアム、楽しみですね。","承知しました。また良い時期にご提案しますね。"],
+  s1:["やったー！新しいスタジアム、早く見たいです！","わかりました！また今度ですね！"],
+  s2:["了解です。工事の段取りを組みます。","承知しました。資金は温存します。"],
+  s3:["まあ、素敵。完成が楽しみね。","そう。焦らなくていいわ、また機会はあるもの。"]
+};
+const secStadRx=(S,ok)=>(SEC_STAD_RX[secOf(S).id]||SEC_STAD_RX.s0)[ok?0:1];
 /** 秘書の会話のリアクション(言葉だけ) */
 function secEvRx(S,ev,i){ const L=SEC_EV_RX[secOf(S).id]||SEC_EV_RX.s0; return ((L[ev]||[])[i])||""; }
 /** 出来事のリアクション。{ who:"sec"|"pl", text } */
