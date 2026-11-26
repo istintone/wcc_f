@@ -148,10 +148,15 @@ function drawPitch(){
  * 中継のカメラ(→docs/29 §29.5)。ボールを横に追い、ゴール前では寄る(中盤は少し引く)。画面の外が見えないよう動ける範囲で止める。
  * 背景(drawPitch)と選手・ボール(drawFrame)に同じ拡大・移動をかける
  */
+/** 並びをキックオフのときに戻す(試合の始めと、ハーフタイムのあと。→docs/29 §29.6) */
+function viewKickoff(){
+  RV.vis.clear(); RV.ball=[0.5,0.5]; RV.sb=null; RV.hist=[]; RV_MV.clear();
+  RV.celeb=null; RV.trail=[]; RV.fx=[]; RV.net=null; RV.cam=null; RV.kick=null;
+}
 function camUpdate(dt){
   const K=TUNING.view.cam, W=RV.w, H=RV.h, C=RV.cam||(RV.cam={ z:K.z0, tx:(W-W*K.z0)/2, ty:(H-H*K.z0)/2 });
   const bu=RV.ball[0], near=Math.max(0,(Math.abs(bu-0.5)-(0.5-K.zoneU))/K.zoneU);
-  const z=K.z0+(K.z1-K.z0)*Math.min(1,near), f=proj(bu,RV.ball[1]);
+  const z=K.z0+(K.z1-K.z0)*Math.min(1,near)+(RV.spZoom?TUNING.view.sp.zoom:0), f=proj(bu,RV.ball[1]);   // セットプレーの溜めはもう少し寄る
   let tx=W/2-f[0]*z, ty=lerp((H-H*z)/2,H/2-f[1]*z,K.yFollow);
   tx=clamp(tx,W-W*z,0); ty=clamp(ty,H-H*z,0);
   const k=1-Math.exp(-dt/K.tau);
@@ -332,6 +337,9 @@ function drawFrame(G,dt){
       target=[target[0]+du/dl*0.012*tp,target[1]+dv/dl*0.012*tp];
     }
     RV.ball=target;
+    // セットプレーの溜め(試合が止まっている間): ボールを置く位置の印と、カメラの寄り
+    RV.spZoom=!!((ev.type==="cross"&&ev.sp)||(ev.type==="shot"&&(ev.sp==="fk"||ev.sp==="pk")))&&t<0.05;
+    RV.spot=RV.spZoom?a:null;
     if(B.k!=="carry"){
       pin.set(ev.by,a);
       if(t<TUNING.view.kin.wind+0.1)RV.kick={ id:ev.by, dir:Math.sign(b[0]-a[0])||1 };   // 溜めて蹴る瞬間の踏み込み
@@ -346,6 +354,7 @@ function drawFrame(G,dt){
       pin.set(ev.vs,[lerp(cpt[0],target[0],0.3)+(ev.side==="H"?0.022:-0.022),cpt[1]]);
     }
   }else if(M.ball){
+    RV.spZoom=false; RV.spot=null;
     target=scrOf(M.ball.side,M.ball.h,M.ball.x);
     const k=1-Math.exp(-dt/90);
     RV.ball=[lerp(RV.ball[0],target[0],k),lerp(RV.ball[1],target[1],k)];
@@ -419,6 +428,8 @@ else{
   const dpr=RV.cv.width/RV.w, CM=RV.cam||{ z:1, tx:0, ty:0 };
   c.setTransform(dpr*CM.z,0,0,dpr*CM.z,dpr*CM.tx,dpr*CM.ty);
   drawFx(c,now,unit);
+  if(RV.spot){ const [sx,sy,ss]=proj(RV.spot[0],RV.spot[1]), r=unit*ss*0.2, pu=0.6+0.4*Math.sin(now/160);   // ボールを置く位置の印(セットプレー)
+    c.strokeStyle="rgba(255,226,138,"+pu.toFixed(2)+")"; c.lineWidth=1.6; c.beginPath(); c.ellipse(sx,sy,r*1.3,r*0.5,0,0,Math.PI*2); c.stroke(); }
   const items=list.map(o=>({ v:o.v, draw:()=>drawMan(c,o,unit,holderId) }));
   items.push({ v:RV.ball[1]+0.001, draw:()=>{ drawTrail(c,unit); drawBall(c,unit,lift); } });
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
@@ -438,6 +449,27 @@ function roleMoves(T,goals,pin,att,pr,ev,holderId,now){
     for(const p of T.players){ if(!free(p)||p.id===C.id)continue; const g=goals.get(p.id);
       if(T.side===C.side&&sc){ const h=hashStr("cb:"+p.id), a=(h%628)/100; g[0]=sc.x+Math.cos(a)*0.035; g[1]=sc.y+Math.sin(a)*0.06; }
       else g[0]=lerp(g[0],T.side==="H"?0.3:0.7,0.6); }
+    return;
+  }
+  // PK: キッカー以外はペナルティエリアの外(弧のまわり)。キーパーはゴールライン(→docs/29 §29.6)
+  if(ev&&ev.type==="shot"&&ev.sp==="pk"){
+    const gu=ev.side==="H"?1:0, d=ev.side==="H"?-1:1;
+    for(const p of T.players){ const g=goals.get(p.id), h=hashStr("pk:"+p.id);
+      if(p.gk){ if(T.side!==ev.side){ g[0]=gu+d*0.004; g[1]=0.5; } continue; }
+      if(!free(p)||p.id===ev.by)continue;
+      g[0]=gu+d*(0.18+(h%4)*0.02); g[1]=0.3+((h>>3)%9)*0.05; }
+    return;
+  }
+  // 直接フリーキック: 守る側の数人がボールとゴールの間に壁を作る。ほかはゴール前と、こぼれ球に備える
+  if(ev&&ev.type==="shot"&&ev.sp==="fk"){
+    const S=TUNING.view.sp, a=scrOf(ev.side,ev.from[0],ev.from[1]), gu=ev.side==="H"?1:0;
+    const dx=(gu-a[0])*105, dy=(0.5-a[1])*68, dl=Math.hypot(dx,dy)||1, cx=a[0]+dx/dl*S.wallM/105, cy=a[1]+dy/dl*S.wallM/68;
+    if(T.side!==ev.side){
+      const W=T.players.filter(p=>free(p)).map(p=>({ p, d:Math.hypot(goals.get(p.id)[0]-cx,goals.get(p.id)[1]-cy) })).sort((x,y)=>x.d-y.d).slice(0,S.wallN);
+      W.forEach((o,i)=>{ const g=goals.get(o.p.id), k=i-(W.length-1)/2; g[0]=cx+(-dy/dl)*k*0.8/105; g[1]=cy+(dx/dl)*k*0.8/68; });
+    }
+    for(const p of T.players){ if(!free(p)||p.id===ev.by)continue; const g=goals.get(p.id), h=hashStr("fk:"+p.id);
+      if(T.side===ev.side||Math.hypot(g[0]-cx,g[1]-cy)>0.02){ const d=ev.side==="H"?-1:1; if(Math.abs(g[0]-gu)>0.2){ g[0]=gu+d*(0.05+(h%5)*0.02); g[1]=0.35+((h>>3)%7)*0.045; } } }
     return;
   }
   // セットプレー(コーナー・フリーキックのクロス): ゴール前に集まる

@@ -337,7 +337,9 @@ const TUNING={
     // 段階3(→docs/29 §29.5)。cam … 中継のカメラ: z0 中盤の寄り / z1 ゴール前の寄り / zoneU ゴール前とみなす端からの距離(u)/ yFollow 縦にボールを追う割合 / tau なめらかさ(ms)
     //   fx … 足元の演出: dustMs 砂埃の長さ / dustCd 同じ人の砂埃の間隔 / skidMs スライディングの跡の長さ / netMs ネットの揺れの長さ / netAmp 揺れの大きさ(u)
     cam:{ z0:1.08, z1:1.22, zoneU:0.28, yFollow:0.4, tau:700 },
-    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 } },
+    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 },
+    // セットプレー(→docs/29 §29.6): pre … 蹴る前に帯を出して並びを見せる時間(ms)/ zoom … そのときのカメラの寄りの上乗せ / wallM … 壁までの距離(m)/ wallN … 壁の人数
+    sp:{ pre:900, zoom:0.08, wallM:9.15, wallN:4 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,

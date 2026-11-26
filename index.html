@@ -3897,6 +3897,8 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 /* カードの排出の画面のカードの裏は、拡大されないので下の段の字を大きく(→docs/14 §14.195) */
 .pk-cardin .kb-txt{font-size:8.2px!important;line-height:1.32!important;gap:2px!important}
 .pk-cardin .kb-txt small{font-size:7.2px!important}
+/* セットプレーの帯(→docs/29 §29.6) */
+#flash.sp b{font-size:34px!important;letter-spacing:.08em}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4915,7 +4917,9 @@ const TUNING={
     // 段階3(→docs/29 §29.5)。cam … 中継のカメラ: z0 中盤の寄り / z1 ゴール前の寄り / zoneU ゴール前とみなす端からの距離(u)/ yFollow 縦にボールを追う割合 / tau なめらかさ(ms)
     //   fx … 足元の演出: dustMs 砂埃の長さ / dustCd 同じ人の砂埃の間隔 / skidMs スライディングの跡の長さ / netMs ネットの揺れの長さ / netAmp 揺れの大きさ(u)
     cam:{ z0:1.08, z1:1.22, zoneU:0.28, yFollow:0.4, tau:700 },
-    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 } },
+    fx:{ dustMs:520, dustCd:650, skidMs:1600, netMs:1400, netAmp:0.02 },
+    // セットプレー(→docs/29 §29.6): pre … 蹴る前に帯を出して並びを見せる時間(ms)/ zoom … そのときのカメラの寄りの上乗せ / wallM … 壁までの距離(m)/ wallN … 壁の人数
+    sp:{ pre:900, zoom:0.08, wallM:9.15, wallN:4 } },
   // 再生(見た目だけ。結果には触れない)
   //   replayN … リプレイで流し直す、得点までのボールの動きの数 / replaySlow … リプレイの速さ(1 = 通常)/ replayEnd … 終わりの間
   play:{ stepMs:620, shotMs:520, kickMs:450, goalHold:1900, shotHold:420, foulHold:800, cardHold:1500, psoHold:650,
@@ -11771,10 +11775,15 @@ function drawPitch(){
  * 中継のカメラ(→docs/29 §29.5)。ボールを横に追い、ゴール前では寄る(中盤は少し引く)。画面の外が見えないよう動ける範囲で止める。
  * 背景(drawPitch)と選手・ボール(drawFrame)に同じ拡大・移動をかける
  */
+/** 並びをキックオフのときに戻す(試合の始めと、ハーフタイムのあと。→docs/29 §29.6) */
+function viewKickoff(){
+  RV.vis.clear(); RV.ball=[0.5,0.5]; RV.sb=null; RV.hist=[]; RV_MV.clear();
+  RV.celeb=null; RV.trail=[]; RV.fx=[]; RV.net=null; RV.cam=null; RV.kick=null;
+}
 function camUpdate(dt){
   const K=TUNING.view.cam, W=RV.w, H=RV.h, C=RV.cam||(RV.cam={ z:K.z0, tx:(W-W*K.z0)/2, ty:(H-H*K.z0)/2 });
   const bu=RV.ball[0], near=Math.max(0,(Math.abs(bu-0.5)-(0.5-K.zoneU))/K.zoneU);
-  const z=K.z0+(K.z1-K.z0)*Math.min(1,near), f=proj(bu,RV.ball[1]);
+  const z=K.z0+(K.z1-K.z0)*Math.min(1,near)+(RV.spZoom?TUNING.view.sp.zoom:0), f=proj(bu,RV.ball[1]);   // セットプレーの溜めはもう少し寄る
   let tx=W/2-f[0]*z, ty=lerp((H-H*z)/2,H/2-f[1]*z,K.yFollow);
   tx=clamp(tx,W-W*z,0); ty=clamp(ty,H-H*z,0);
   const k=1-Math.exp(-dt/K.tau);
@@ -11955,6 +11964,9 @@ function drawFrame(G,dt){
       target=[target[0]+du/dl*0.012*tp,target[1]+dv/dl*0.012*tp];
     }
     RV.ball=target;
+    // セットプレーの溜め(試合が止まっている間): ボールを置く位置の印と、カメラの寄り
+    RV.spZoom=!!((ev.type==="cross"&&ev.sp)||(ev.type==="shot"&&(ev.sp==="fk"||ev.sp==="pk")))&&t<0.05;
+    RV.spot=RV.spZoom?a:null;
     if(B.k!=="carry"){
       pin.set(ev.by,a);
       if(t<TUNING.view.kin.wind+0.1)RV.kick={ id:ev.by, dir:Math.sign(b[0]-a[0])||1 };   // 溜めて蹴る瞬間の踏み込み
@@ -11969,6 +11981,7 @@ function drawFrame(G,dt){
       pin.set(ev.vs,[lerp(cpt[0],target[0],0.3)+(ev.side==="H"?0.022:-0.022),cpt[1]]);
     }
   }else if(M.ball){
+    RV.spZoom=false; RV.spot=null;
     target=scrOf(M.ball.side,M.ball.h,M.ball.x);
     const k=1-Math.exp(-dt/90);
     RV.ball=[lerp(RV.ball[0],target[0],k),lerp(RV.ball[1],target[1],k)];
@@ -12042,6 +12055,8 @@ else{
   const dpr=RV.cv.width/RV.w, CM=RV.cam||{ z:1, tx:0, ty:0 };
   c.setTransform(dpr*CM.z,0,0,dpr*CM.z,dpr*CM.tx,dpr*CM.ty);
   drawFx(c,now,unit);
+  if(RV.spot){ const [sx,sy,ss]=proj(RV.spot[0],RV.spot[1]), r=unit*ss*0.2, pu=0.6+0.4*Math.sin(now/160);   // ボールを置く位置の印(セットプレー)
+    c.strokeStyle="rgba(255,226,138,"+pu.toFixed(2)+")"; c.lineWidth=1.6; c.beginPath(); c.ellipse(sx,sy,r*1.3,r*0.5,0,0,Math.PI*2); c.stroke(); }
   const items=list.map(o=>({ v:o.v, draw:()=>drawMan(c,o,unit,holderId) }));
   items.push({ v:RV.ball[1]+0.001, draw:()=>{ drawTrail(c,unit); drawBall(c,unit,lift); } });
   items.push({ v:0.5, draw:()=>{ drawGoal(c,0); drawGoal(c,1); } });
@@ -12061,6 +12076,27 @@ function roleMoves(T,goals,pin,att,pr,ev,holderId,now){
     for(const p of T.players){ if(!free(p)||p.id===C.id)continue; const g=goals.get(p.id);
       if(T.side===C.side&&sc){ const h=hashStr("cb:"+p.id), a=(h%628)/100; g[0]=sc.x+Math.cos(a)*0.035; g[1]=sc.y+Math.sin(a)*0.06; }
       else g[0]=lerp(g[0],T.side==="H"?0.3:0.7,0.6); }
+    return;
+  }
+  // PK: キッカー以外はペナルティエリアの外(弧のまわり)。キーパーはゴールライン(→docs/29 §29.6)
+  if(ev&&ev.type==="shot"&&ev.sp==="pk"){
+    const gu=ev.side==="H"?1:0, d=ev.side==="H"?-1:1;
+    for(const p of T.players){ const g=goals.get(p.id), h=hashStr("pk:"+p.id);
+      if(p.gk){ if(T.side!==ev.side){ g[0]=gu+d*0.004; g[1]=0.5; } continue; }
+      if(!free(p)||p.id===ev.by)continue;
+      g[0]=gu+d*(0.18+(h%4)*0.02); g[1]=0.3+((h>>3)%9)*0.05; }
+    return;
+  }
+  // 直接フリーキック: 守る側の数人がボールとゴールの間に壁を作る。ほかはゴール前と、こぼれ球に備える
+  if(ev&&ev.type==="shot"&&ev.sp==="fk"){
+    const S=TUNING.view.sp, a=scrOf(ev.side,ev.from[0],ev.from[1]), gu=ev.side==="H"?1:0;
+    const dx=(gu-a[0])*105, dy=(0.5-a[1])*68, dl=Math.hypot(dx,dy)||1, cx=a[0]+dx/dl*S.wallM/105, cy=a[1]+dy/dl*S.wallM/68;
+    if(T.side!==ev.side){
+      const W=T.players.filter(p=>free(p)).map(p=>({ p, d:Math.hypot(goals.get(p.id)[0]-cx,goals.get(p.id)[1]-cy) })).sort((x,y)=>x.d-y.d).slice(0,S.wallN);
+      W.forEach((o,i)=>{ const g=goals.get(o.p.id), k=i-(W.length-1)/2; g[0]=cx+(-dy/dl)*k*0.8/105; g[1]=cy+(dx/dl)*k*0.8/68; });
+    }
+    for(const p of T.players){ if(!free(p)||p.id===ev.by)continue; const g=goals.get(p.id), h=hashStr("fk:"+p.id);
+      if(T.side===ev.side||Math.hypot(g[0]-cx,g[1]-cy)>0.02){ const d=ev.side==="H"?-1:1; if(Math.abs(g[0]-gu)>0.2){ g[0]=gu+d*(0.05+(h%5)*0.02); g[1]=0.35+((h>>3)%7)*0.045; } } }
     return;
   }
   // セットプレー(コーナー・フリーキックのクロス): ゴール前に集まる
@@ -15432,7 +15468,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
   G.ins={}; G.kpMode=false; G.cutDone=false;
-  RV.vis.clear(); RV.ball=[0.5,0.5]; RV.sb=null; RV.hist=[]; RV_MV.clear();
+  viewKickoff();                                // 並び・ボール・カメラ・演出をキックオフのときに(→docs/29 §29.6)
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
   $("hudH").textContent=M.home.short; $("hudA").textContent=M.away.short;
@@ -15747,6 +15783,7 @@ function startEvent(ev){
   }
   if(ev.type==="halftime"){
     sndWhistle(2,true);
+    if(typeof viewKickoff==="function")viewKickoff();   // 後半はキックオフと同じ並びから(→docs/29 §29.6)
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
@@ -15783,6 +15820,10 @@ function startEvent(ev){
   if(ev.type==="shot"&&ev.mv&&ev.mv!==RARE_MOVES.godsave.label)mvFlash(ev);      // ロングシュート・オーバーヘッドは撃つ前に
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
+  // セットプレー(→docs/29 §29.6): 蹴る前に帯を出し、その間(試合は止まる)に並び・ボールを置く位置を見せる
+  const spk=ev.type==="cross"&&ev.sp?ev.sp:ev.type==="shot"&&(ev.sp==="fk"||ev.sp==="pk")?ev.sp:null;
+  if(spk&&!G.replay){ const f=$("flash"); f.innerHTML='<b>'+(spk==="ck"?"CORNER KICK":spk==="pk"?"PENALTY KICK":"FREE KICK")+'</b>';
+    f.className="on sp"+(ev.side==="H"?" mine":""); G.flash=true; G.hold=Math.max(G.hold||0,TUNING.view.sp.pre); }
   const lr=G.rec[G.rec.length-1];
   if(ev.type==="kickoff"||(lr&&lr.side!==ev.side))G.rec=[];
   G.rec.push(ev); if(G.rec.length>P.replayN)G.rec.shift();

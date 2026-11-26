@@ -20,7 +20,7 @@ function newMatch(homeDef,awayDef,seed,opts,meta){
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
   G.queue=[]; G.cur=null; G.hold=0; G.playing=false; G.rec=[]; endReplay();
   G.ins={}; G.kpMode=false; G.cutDone=false;
-  RV.vis.clear(); RV.ball=[0.5,0.5]; RV.sb=null; RV.hist=[]; RV_MV.clear();
+  viewKickoff();                                // 並び・ボール・カメラ・演出をキックオフのときに(→docs/29 §29.6)
   BD.pendingIn.clear(); BD.kp=null;
   const M=G.M;
   $("hudH").textContent=M.home.short; $("hudA").textContent=M.away.short;
@@ -335,6 +335,7 @@ function startEvent(ev){
   }
   if(ev.type==="halftime"){
     sndWhistle(2,true);
+    if(typeof viewKickoff==="function")viewKickoff();   // 後半はキックオフと同じ並びから(→docs/29 §29.6)
     setPlaying(false);
     setHud(ev.hg,ev.ag,"HT");
     // ハーフタイムの指示(→docs/10 §10.8・docs/14 §14.69): 監督のバストアップが、吹き出しで登録した3つの指示を出す。
@@ -371,6 +372,10 @@ function startEvent(ev){
   if(ev.type==="shot"&&ev.mv&&ev.mv!==RARE_MOVES.godsave.label)mvFlash(ev);      // ロングシュート・オーバーヘッドは撃つ前に
   if(ev.type==="shot")sndKick();
   ev.dur=ev.type==="shot"?P.shotMs:ev.type==="kickoff"?P.kickMs:ev.type==="cross"?P.stepMs*1.3:P.stepMs;
+  // セットプレー(→docs/29 §29.6): 蹴る前に帯を出し、その間(試合は止まる)に並び・ボールを置く位置を見せる
+  const spk=ev.type==="cross"&&ev.sp?ev.sp:ev.type==="shot"&&(ev.sp==="fk"||ev.sp==="pk")?ev.sp:null;
+  if(spk&&!G.replay){ const f=$("flash"); f.innerHTML='<b>'+(spk==="ck"?"CORNER KICK":spk==="pk"?"PENALTY KICK":"FREE KICK")+'</b>';
+    f.className="on sp"+(ev.side==="H"?" mine":""); G.flash=true; G.hold=Math.max(G.hold||0,TUNING.view.sp.pre); }
   const lr=G.rec[G.rec.length-1];
   if(ev.type==="kickoff"||(lr&&lr.side!==ev.side))G.rec=[];
   G.rec.push(ev); if(G.rec.length>P.replayN)G.rec.shift();
