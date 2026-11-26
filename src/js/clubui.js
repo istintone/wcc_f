@@ -236,9 +236,9 @@ function trainStepHtml(){
       '<small>×'+N.k[i]+(N.fat[i]?' 疲労+'+Math.round(N.fat[i]*100)+'%':'')+'</small></button>').join("")+'</div>'+
     (CL.int===-1
       ?'<div class="trs"><button class="tr rest" data-act="rest"><b>休憩する</b><small>練習の代わりに休む。経験は入らないが、疲労が大きく抜け、調子の落ちた選手が戻る</small></button></div></div></div>'+restEffectHtml()
-      :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は指示の ★、イベントは EVENT(→docs/26)
+      :'<div class="trs two">'+trainOptions(S).map((o,i)=>{ const st=htStars(S,o.sp);   // 称号のレア訓練は金の札に指示の ★、イベントは銀の札(→docs/26 §26.8)
         return '<button class="tr'+(o.sp>=0?' sp':'')+(o.ev?' ev':'')+(CL.trSel===i?' on':'')+'" data-act="train" data-i="'+i+'">'+
-        '<b>'+trainLabel(o)+'</b>'+(o.ev?'<small class="trh">EVENT ・ 1回だけ</small>':st?'<small class="trh">HT '+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());
+        '<b>'+trainLabel(o)+'</b>'+(!o.ev&&st?'<small class="trh">'+st+'</small>':'')+'</button>'; }).join("")+'</div></div></div>'+trainEffectHtml());
 }
 /** ② コミュニケーション */
 /* ---- コミュニケーションのチャット(→docs/07 §7.14)。画面の下に重なる層で、選手(左)・秘書(紫)・監督(右・金)が話す ---- */
