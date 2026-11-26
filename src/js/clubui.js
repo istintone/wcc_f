@@ -463,15 +463,15 @@ function sqDetailHtml(){
     '<dl class="sr-meta"><dt>選手</dt><dd><b class="pr-no">'+c.no+'</b><b>'+nameOf(c)+'</b></dd>'+
       '<dt>所属・年齢</dt><dd>'+clubOfCard(c)+' ・ '+c.age+'歳 ・ '+natTxt(c)+'</dd>'+
       '<dt>カード</dt><dd>'+RAR_TAG[c.rar||"B"]+' '+CARD_SEASON+' ・ '+cardNoOf(c)+' ・ 持っている枚数 '+(S.coll[id]||0)+'</dd></dl>'+
-    no(["01","カードの基本データ"])+
+    no(["01","SPEC INFORMATION"])+
     '<div class="pr-card"><div class="pr-front">'+cardHtml(id,"s")+'</div><div class="pr-map">'+aptMapSvg(cc)+'<small>'+c.roles.join(" / ")+'</small></div>'+
     '<table class="pr-st">'+STATS.map(stRow).join("")+'<tr class="tot"><th>合計</th><td></td><td class="v">'+Math.round(STATS.reduce((a,k)=>a+c[k],0))+
       (STATS.reduce((a,k)=>a+cc[k]-c[k],0)>0.05?'<em>+'+STATS.reduce((a,k)=>a+cc[k]-c[k],0).toFixed(1)+'</em>':'')+'</td></tr></table></div>'+
-    '<ul class="sr-key pr-key">'+(sk?'<li><i>技</i><b>'+sk.label+'</b><span>'+sk.desc+'</span></li>':'')+
+    '<ul class="sr-key pr-key">'+(sk?'<li><i>SKILL</i><b>'+sk.label+'</b><span>'+sk.desc+'</span></li>':'')+
       (st?'<li><i class="kp">KP</i>'+rankChip(myStyleRank(S,st,id))+'<b>'+st.name+'</b><span>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</span></li>':'')+   // ランクは KP のすぐ横(→docs/14 §14.187)
       (RK?'<li><i class="rk2">R</i><b>'+(g.ss>=5?RK.name:'？？？')+'</b><span>レア KP</span></li>':'')+
-      '<li><i>役</i><b>CAP '+CAP_MARK[capApt(c)]+' ・ PK '+kg.pk+' ・ FK '+kg.fk+' ・ CK '+kg.ck+'</b><span>キャプテン・キッカー</span></li></ul>'+
-    no(["02","チームでの所見"])+
+      '<li><i>ROLE</i><b>CAP '+CAP_MARK[capApt(c)]+' ・ PK '+kg.pk+' ・ FK '+kg.fk+' ・ CK '+kg.ck+'</b><span>キャプテン・キッカー</span></li></ul>'+
+    no(["02","STATS PERFORMANCE"])+
     '<dl class="sr-meta pr-team"><dt>個人</dt><dd><b class="st5">'+stars(g.is)+'</b></dd>'+
       '<dt>特殊</dt><dd><b class="st5">'+stars(g.ss)+'</b>'+(g.q||g.sq?' <span class="sgn">覚醒の兆し</span>':'')+'</dd>'+
       '<dt>信頼度</dt><dd>'+TRUST_LABEL[trustLv(g)]+'</dd>'+

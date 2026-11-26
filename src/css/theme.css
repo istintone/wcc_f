@@ -3267,3 +3267,4 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 #club .srep.pr .pr-st td.v{width:52px;font-size:11px}
 #club .srep.pr .pr-st td.bar{height:14px}
 #club .srep.pr .pr-st td.bar u{top:4px;height:6px}
+#club .srep.pr .pr-key li i{min-width:38px;font-family:var(--f-num),sans-serif;letter-spacing:.06em}

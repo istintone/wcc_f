@@ -1371,3 +1371,8 @@
 
 - オーナーの指摘: 最下段の「KP にする」の左の KP とランクは不要(上に KP の表示があるため)。KP の行は KP の横にランクを(右端だと視線が遠い)
 - 01 の KP の行を「KP [ランク] スタイル名 … 全体・STA」の並びに。下の段は「KP にする」ボタン(KP なら KP の札)だけ
+
+## 14.188 選手の詳細の見出しを英字に(2026-11-26)
+
+- オーナーの希望: 01 カードの基本データ → SPEC INFORMATION / 技 → SKILL / 役 → ROLE / 02 チームでの所見 → STATS PERFORMANCE(いただいた綴りの INFOTMATION・ROLL は INFORMATION・ROLE にした)
+- 札(SKILL・KP・ROLE)は英字が入る幅(最小 38px)に
