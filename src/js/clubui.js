@@ -1304,7 +1304,7 @@ function scoutRepModalHtml(){
   const red=w=>'<s class="sr-red" style="width:'+w+'%"></s>';
   const sub=(def.bench||[]).filter(c=>c.pos!=="GK").sort((a,b)=>(b.off*1.2+b.spd+b.tec)-(a.off*1.2+a.spd+a.tec))[0];   // スーパーサブ(控えで攻めの力がいちばん)
   const keyRow=(k,tag,c,lab)=>c?'<li'+(keyOk(k)?'':' class="lock"')+'><i>'+tag+'</i>'+(keyOk(k)?'<b>'+nm(c)+'</b>':red(38))+'<span>'+lab+'</span></li>':'';
-  const vd=R.ovM>=R.ovO+2?["up","優勢"]:R.ovO>=R.ovM+2?["dn","劣勢"]:["ev","互角"];
+  const vd=R.ovM>=R.ovO+2?["up","LEAD"]:R.ovO>=R.ovM+2?["dn","BEHIND"]:["ev","EVEN"];   // 英字の判子(→docs/14 §14.168)
   const bw=v=>Math.max(4,Math.min(100,(v-6)/12*100)).toFixed(0);
   const axRow=a=>{ const m=R.mpw[a], o=R.opw[a], d=m-o, mk=d>0.3?'<i class="up">▲</i>':d<-0.3?'<i class="dn">▼</i>':'<i class="ev">＝</i>';
     return '<tr><th>'+AXIS_ABBR[a]+'</th><td class="me"><u style="width:'+bw(m)+'%"></u><b>'+m.toFixed(1)+'</b></td><td class="mk">'+mk+'</td><td class="op"><u style="width:'+bw(o)+'%"></u><b>'+o.toFixed(1)+'</b></td></tr>'; };
@@ -1323,10 +1323,10 @@ function scoutRepModalHtml(){
       no(["02","戦力比較"])+
       '<table class="sr-ax"><thead><tr><th></th><th>自チーム</th><th></th><th>'+t.short+'</th></tr></thead><tbody>'+["O","R","S","D","C","P"].map(axRow).join("")+'</tbody></table>'+
       no(["03","要注意人物"])+
-      '<ul class="sr-key">'+(R.kc?'<li><i class="kp">KP</i><b>'+nm(R.kc)+'</b><span>'+(R.st?R.st.name+' '+rankChip(R.rk):'')+'</span></li>':'')+
-        keyRow("atk","攻",R.atk,"攻めの柱")+keyRow("dfn","守",R.dfn,"守りの柱")+keyRow("sub","控",sub,"スーパーサブ")+'</ul>'+
+      '<div class="sr-sec">'+(RP.key[lv].length<4?'<i class="sr-unk">UNKNOWN</i>':'')+'<ul class="sr-key">'+(R.kc?'<li><i class="kp">KP</i><b>'+nm(R.kc)+'</b><span>'+(R.st?R.st.name+' '+rankChip(R.rk):'')+'</span></li>':'')+
+        keyRow("atk","攻",R.atk,"攻めの柱")+keyRow("dfn","守",R.dfn,"守りの柱")+keyRow("sub","控",sub,"スーパーサブ")+'</ul></div>'+
       no(["04","所見"])+
-      '<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol>'+
+      '<div class="sr-sec">'+(open.size<R.lines.length?'<i class="sr-unk">UNKNOWN</i>':'')+'<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol></div>'+
       (open.size<R.lines.length||RP.key[lv].length<4?'<p class="sr-lock">黒塗りの箇所は、'+se.name+'との仲が深まると読めるようになる</p>':'')+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '</article></div></div>';
