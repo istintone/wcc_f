@@ -161,7 +161,7 @@ function sceneResult(M,last,go){
   const mv=mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
       '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'';
   sceneShow("sc-res r-"+res.toLowerCase(),
-    '<div class="res-mark">'+logoMarkSvg(300,"wm")+'</div>'+   // ロゴのマークの透かし(→docs/14 第3弾)
+    '<div class="res-mark">'+(typeof LOGO_IMG!=="undefined"&&LOGO_IMG.ball?'<img src="'+LOGO_IMG.ball+'" alt="">':logoMarkSvg(300,"wm"))+'</div>'+   // 透かしは TOP のロゴのボール(→docs/14 §14.171)
     '<div class="res-word">'+res+'</div>'+
     '<div class="res-score">'+
       '<div class="rs">'+emblemSvg(H,40)+'<b>'+H.short+'</b></div>'+

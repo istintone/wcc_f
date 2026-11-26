@@ -1117,7 +1117,7 @@ body.th-bk{
 @keyframes lgShine{0%{transform:translateX(0) skewX(-20deg)}30%,100%{transform:translateX(560px) skewX(-20deg)}}
 @media (prefers-reduced-motion:reduce){.lg *{animation:none!important;stroke-dashoffset:0!important}}
 #scene>.res-mark{position:absolute!important;left:50%;top:4%;transform:translateX(-50%) rotate(-12deg);opacity:.05;pointer-events:none;z-index:0!important}
-#scene .res-mark svg{width:300px;height:300px}
+#scene .res-mark svg,#scene .res-mark img{display:block;width:300px;height:300px}
 
 /* ---- 操作の台(暗いテーマ): 立体のベージュをやめ、暗い平面の平行四辺形に(→docs/14 第3弾)。
    点いているものだけ赤。中央(プレス)は形で区別(ひし形)。SHOOT・KEEPER の「玉」は光沢を弱める ---- */

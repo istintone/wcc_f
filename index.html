@@ -1717,7 +1717,7 @@ body.th-bk{
 @keyframes lgShine{0%{transform:translateX(0) skewX(-20deg)}30%,100%{transform:translateX(560px) skewX(-20deg)}}
 @media (prefers-reduced-motion:reduce){.lg *{animation:none!important;stroke-dashoffset:0!important}}
 #scene>.res-mark{position:absolute!important;left:50%;top:4%;transform:translateX(-50%) rotate(-12deg);opacity:.05;pointer-events:none;z-index:0!important}
-#scene .res-mark svg{width:300px;height:300px}
+#scene .res-mark svg,#scene .res-mark img{display:block;width:300px;height:300px}
 
 /* ---- 操作の台(暗いテーマ): 立体のベージュをやめ、暗い平面の平行四辺形に(→docs/14 第3弾)。
    点いているものだけ赤。中央(プレス)は形で区別(ひし形)。SHOOT・KEEPER の「玉」は光沢を弱める ---- */
@@ -14323,7 +14323,7 @@ function sceneResult(M,last,go){
   const mv=mvp?'<div class="res-mvp">'+(artSrc(CARDS[mvp.id],"play")?'<img class="mvp-art" src="'+artSrc(CARDS[mvp.id],"play")+'" alt="">':'')+
       '<i>MVP</i><b>'+nameOf(CARDS[mvp.id])+'</b><em>'+rateTxt(mvp.r)+'</em><small>'+(mvp.side==="H"?H.short:A.short)+'</small></div>':'';
   sceneShow("sc-res r-"+res.toLowerCase(),
-    '<div class="res-mark">'+logoMarkSvg(300,"wm")+'</div>'+   // ロゴのマークの透かし(→docs/14 第3弾)
+    '<div class="res-mark">'+(typeof LOGO_IMG!=="undefined"&&LOGO_IMG.ball?'<img src="'+LOGO_IMG.ball+'" alt="">':logoMarkSvg(300,"wm"))+'</div>'+   // 透かしは TOP のロゴのボール(→docs/14 §14.171)
     '<div class="res-word">'+res+'</div>'+
     '<div class="res-score">'+
       '<div class="rs">'+emblemSvg(H,40)+'<b>'+H.short+'</b></div>'+
