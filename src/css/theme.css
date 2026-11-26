@@ -3189,3 +3189,11 @@ body[class] #club .srep-box .sr-x{position:absolute;top:8px;right:8px;z-index:2;
 #cap.ht .ht-st .res-st span i{font-size:9px;color:#dfe6f2}
 #cap.ht .ht-opts{right:146px;left:78px}
 body[class] #cap.ht .htb{min-width:0;max-width:100%}
+/* ハーフタイムの STATS は右半分の上下左右の中央に(狭い画面では吹き出しの右から。→docs/14 §14.179) */
+#cap.ht .ht-st{left:max(50%,244px);right:0;top:34px;bottom:4px;width:auto;display:flex;align-items:center;justify-content:center}
+#cap.ht .ht-opts{right:calc(100% - max(50%,244px) + 4px)}
+#cap.ht .ht-stbox{width:140px;padding:6px 8px 7px;background:rgba(8,11,20,.62);border:1px solid rgba(255,255,255,.14);border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+#cap.ht .ht-stbox h5{margin:0 0 4px;font-family:var(--f-num),sans-serif;font-style:italic;font-weight:900;font-size:12px;letter-spacing:.22em;text-align:center;color:#ffe28a;
+  border-bottom:1px solid rgba(255,226,138,.35);padding-bottom:3px}
+#cap.ht .ht-stbox .res-st{padding:0;background:none;border:0;border-radius:0;gap:5px}
+#cap.ht .ht-stbox .res-st b{font-size:14px}
