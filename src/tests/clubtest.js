@@ -117,6 +117,8 @@ function commOnce(S,log){
   const xi=E.squadXi(S), out=log||[];
   const ready=Object.keys(S.g.pl).find(id=>E.spReady(S,id));
   if(ready){ out.push(...E.doMeeting(S,ready,E.persOf(ready)).lines); return; }
+  const iready=Object.keys(S.g.pl).find(id=>E.indReady(S,id));   // 個人練習の★突破(→docs/14 §14.201)
+  if(iready){ out.push(...E.doIndTrain(S,iready,E.indBest(S,iready)).lines); return; }
   const low=xi.find(id=>S.g.pl[id].mot<=1);
   if(low){ out.push(...E.doTalk(S,low).lines); return; }
   if(S.g.cn===2){
@@ -369,6 +371,12 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   const mOk=mt(true), mNg=mt(false);
   // 性格に合う言い方は成功しやすいが外れることもあり、合わなくても通ることがある(→docs/14 §14.108)
   check("ミーティングの★突破は、性格に合う言い方で成功しやすい(外れも・合わなくても通ることも)",mOk[0]>0.6&&mOk[0]<0.95&&mNg[0]>0.15&&mNg[0]<0.45,pc(mOk[0])+" / "+pc(mNg[0]));
+  // 個人練習の★突破(→docs/14 §14.201): 得意な能力のメニューで成功しやすい。外れ(例: FW の守備)も低い率で通り、選んだ能力が伸びる
+  const itr=ok=>cnt(T=>{ const g=T.g.pl.h10; g.ie=99; const b=E.indBest(T,"h10"), k=ok?b:E.indOpts(T,"h10").map(o=>o.k).find(x=>x!==b); const u0=g.up[k]||0, r=E.doIndTrain(T,"h10",k).res; if(r===0&&!((g.up[k]||0)>u0))throw new Error("選んだ能力が伸びない"); return r; },600);
+  const iOk=itr(true), iNg=itr(false);
+  check("個人練習の★突破は、得意な能力のメニューで成功しやすい(外れも低い率で通り、選んだ能力が伸びる)",iOk[0]>0.6&&iOk[0]<0.95&&iNg[0]>0.15&&iNg[0]<0.45,pc(iOk[0])+" / "+pc(iNg[0]));
+  { const T=E.newCareer(4242), seen=new Set(); for(let i=0;i<40;i++){ T.played=i; T.g.pl.h10.ie=99; E.indOpts(T,"h10").forEach(o=>seen.add(o.k)); }
+    check("個人練習の3択には、試合ごとにどの能力のメニューも出てくる(正解は毎回入る)",seen.size===6&&[0,1,2,3].every(i=>{ T.played=i; return E.indOpts(T,"h10").some(o=>o.k===E.indBest(T,"h10")); }),seen.size+"種"); }
   { const tr=lv=>cnt(T=>{ T.g.pl.h10.se=99; T.g.pl.h10.bond=lv; return E.doMeeting(T,"h10",(E.persOf("h10")+1)%3).res; },600)[0];
     const lo=tr(0), hi=tr(999);
     check("信頼が深いと、合わない言い方でも通りやすくなる",hi>lo+0.08,pc(lo)+" → "+pc(hi)); }
@@ -416,10 +424,10 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   }
   { // コミュニケーションの「！」は種類ごと(その指示を求めている選手だけ)
     const T=E.newCareer(4242), P=T.g.pl;
-    P.h10.ie=E.TUNING.grow.ind.need[0]*0.9; P.h08.se=E.TUNING.grow.sp.need[0]; P.h05.mot=0;
+    P.h10.ie=E.TUNING.grow.ind.need[0]; P.h08.se=E.TUNING.grow.sp.need[0]; P.h05.mot=0;
     T.g.links[["h02","h03"].sort().join("|")]={ lv:2, exp:0, gold:true, cap:2 };
     const who=k=>Object.keys(P).filter(id=>E.commSign(T,id,k)).sort().join(",");
-    check("「！」は種類ごと: 個人=★が近い / ミーティング=★突破 / ラウンジ=黄金線の兆し / ケア=ケガ",
+    check("「！」は種類ごと: 個人=★突破(→docs/14 §14.201) / ミーティング=★突破 / ラウンジ=黄金線の兆し / ケア=ケガ",
       who("ind")==="h10"&&who("meet")==="h08"&&who("lounge")==="h02,h03"&&who("talk")==="h05",["ind","meet","lounge","talk"].map(who).join(" / "));
   }
   { // ハーフタイムの指示・称号のレア訓練(→docs/26)
@@ -640,10 +648,10 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   check("育てると強くなる(得失点差 +0.2 以上)",after>before+0.2,f2(before)+" → "+f2(after));
   check("ただし別物にはならない(+2.0 未満)",after<before+2.0);
   check("任期の初めは段4の相手より弱い",before<0,f2(before));
-  // ★と連携の段の上昇は、試合のあとの行に出る(練習の行には出ない)
+  // 個人能力の★は個人練習の3択で上がる(試合のあとの行には出ない。→docs/14 §14.201)。連携の段は試合のあとの行に出る
   const later=[]; { const T=E.newCareer(77), TW=E.worldOf(T); for(let i=0;i<30;i++){ const r=playOne(T,TW); later.push(...r.lines); } }
-  check("★の上昇と連携の変化は、試合のあとに出る",later.some(x=>/個人能力 ★/.test(x))&&later.some(x=>/連携が/.test(x))&&
-    !log.some(x=>/個人能力 ★/.test(x)),later.length+"行");
+  check("個人能力の★は個人練習で上がり、連携の変化は試合のあとに出る",!later.some(x=>/個人能力 ★/.test(x))&&later.some(x=>/連携が/.test(x))&&
+    log.some(x=>/個人能力 ★/.test(x)),later.length+"行");
   // 特殊練習は施設が良いほど出る
   const spN=fac=>{ let n=0; for(let i=0;i<200;i++){ const T=E.newCareer(8000+i); T.fac=fac; n+=E.trainOptions(T).filter(o=>o.sp>=0).length; } return n/200; };
   check("特殊練習は施設レベルが高いほど候補に出る",spN(1)>0.3&&spN(5)>spN(1)*2.5,f2(spN(1))+" → "+f2(spN(5))+" 枠/回");

@@ -192,18 +192,9 @@ function graphBreak(S,axes,out){
     }
   }
 }
-/** 個人能力の★が上がるか見る(試合のあとに呼ぶ)。上がったら、その間にいちばん練習した能力が伸びる */
+/** 個人能力の覚醒の兆しを見る(試合のあと・個人練習のあと)。★1〜4 は個人練習の3択で上がる(→docs/14 §14.201) */
 function checkInd(S,id,out){
   const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id];
-  while(g.is<4&&g.ie>=I.need[g.is]){
-    g.ie-=I.need[g.is]; g.is++;
-    let best=null, bv=-1;
-    for(const k of STATS){ const v=(g.tr[k]||0)*100+card[k]; if(card[k]+(g.up[k]||0)<STAT_MAX&&v>bv){ bv=v; best=k; } }
-    if(best)g.up[best]=(g.up[best]||0)+I.starUp;
-    g.tr={};
-    out.push(nameOf(card)+" 個人能力 ★"+g.is+(best?"("+STAT_LABEL[best]+" +"+I.starUp+")":""));
-    newsOf("star",[id],out);
-  }
   if(g.is===4&&!g.q&&g.ie>=I.awake){ g.q=true; out.push(nameOf(card)+" に覚醒の兆し(フレンドリーマッチで勝てば覚醒)"); newsOf("q",[id],out); }
 }
 function checkSp(S,id,out){
@@ -212,6 +203,31 @@ function checkSp(S,id,out){
 }
 /** ミーティングで★突破の3択が出る状態か */
 const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.need[g.ss]; };
+/** 個人練習で★突破の3択が出る状態か(→docs/14 §14.201) */
+const indReady=(S,id)=>{ const g=S.g.pl[id]; return !!g&&g.is<4&&g.ie>=TUNING.grow.ind.need[g.is]; };
+/** 得意な能力(カード + 育成の上乗せがいちばん高く、まだ上限でないもの)。個人練習の3択の正解 */
+function indBest(S,id){
+  const c=CARDS[id], g=S.g.pl[id], v=k=>c[k]+((g&&g.up[k])||0);
+  const room=STATS.filter(k=>v(k)<STAT_MAX);
+  return (room.length?room:STATS).slice().sort((a,b)=>v(b)-v(a))[0];
+}
+/** 個人練習の★突破の3択の練習メニュー(能力ごとに2通り) */
+const IND_MENU={ off:["シュート練習で決定力を磨く","ゴール前の動き出しを繰り返す"], def:["1対1の守備を叩き込む","守備の位置取りを見直す"],
+  tec:["ボールタッチを磨く","パスの精度を上げる"], pow:["当たり負けしない体を作る","空中戦の競り合いを鍛える"],
+  spd:["スプリントで走力を上げる","初速と切り返しを磨く"], sta:["走り込みで体力を付ける","90分走りきれる体を作る"] };
+/** ★突破の話のときの選手の言葉: 得意な能力をほのめかす(3択の手がかり) */
+const IND_VOICE={ off:["点を取る形を、もっと突き詰めたいんです。","ゴール前で、もう一段怖い選手になりたい。"], def:["守備で、誰にも抜かれない自信をつけたいんです。","相手のエースを完全に止めたい。"],
+  tec:["ボールを持ったときの精度、まだ上げられる気がします。","足元の技術、もっと磨けると思うんです。"], pow:["競り合いで、もう絶対に負けたくないんです。","体の強さを、自分の武器にしたい。"],
+  spd:["スピードなら、まだ伸ばせる気がします。","一歩目の速さで、相手を置き去りにしたい。"], sta:["最後まで走りきれる体が欲しいんです。","90分、誰よりも走れる選手になりたい。"] };
+/** ★突破の3択: [{ k:能力, t:メニュー }]。正解(得意な能力)と、ほかの能力から2つ。並びと言い方は試合と選手ごとに変わる */
+function indOpts(S,id){
+  const h=hashStr("iq:"+S.term+":"+S.played+":"+id), best=indBest(S,id), c=CARDS[id], g=S.g.pl[id];
+  const rest=STATS.filter(k=>k!==best&&c[k]+((g&&g.up[k])||0)<STAT_MAX);
+  const pool=rest.length>=2?rest:STATS.filter(k=>k!==best);
+  const a=pool[h%pool.length], others=pool.filter(k=>k!==a), b=others[(h>>>3)%others.length];
+  const ord=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]][(h>>>6)%6], ks=[best,a,b];
+  return ord.map(i=>({ k:ks[i], t:IND_MENU[ks[i]][(h>>>(9+i))&1] }));
+}
 /** 連携の経験を足す。**段は試合のあとに上がる**(settleLinks)。cap は相性で決まる上限 */
 function linkExp(S,a,b,v,cap){
   const l=linkSet(S,a,b);
@@ -348,12 +364,14 @@ const VOICE={
   new:    ["よろしくお願いします。","まだ監督のことがよく分からなくて……。"],
   plain:  ["はい、なんでしょう。","次の試合も頑張ります。"]
 };
-function voiceOf(S,id){
+function voiceOf(S,id,kind){
   const g=S.g.pl[id], c=CARDS[id], G0=TUNING.grow;
   if(!g)return "";
+  // 個人練習の★突破の話: 得意な能力をほのめかす(→docs/14 §14.201)
+  if(kind==="ind"&&indReady(S,id)){ const L=IND_VOICE[indBest(S,id)]; return L[hashStr("vi:"+S.term+":"+S.played+":"+id)%L.length]; }
   // 性格で話し方が変わる。成長期・反抗期などのタグの影響も言葉に出す(→docs/14 §14.108)
   const ck=playerTagK(S,id,"comm"), ek=playerTagK(S,id,"exp");
-  const k=spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
+  const k=(kind!=="ind"&&spReady(S,id))?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":g.fat>=G0.int.tiredSign*1.5?"tired"
     :ck<1?"rebel":(ck>1||ek>1)?"grow"
     :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
     :c.age<=21?"young":c.age>=31?"vet":"plain";   // 信頼の深さは trustSay で添える(→docs/14 §14.109)
@@ -382,14 +400,36 @@ function useComm(S,kind){
 }
 const canComm=S=>S.g.step==="comm"&&S.g.cn<TUNING.grow.comm.max;
 
-/** 個人練習。1人を呼び出して個別に指導する。個人能力の経験が入る(★は試合のあとに上がる) */
-function doIndTrain(S,id){
-  const C=TUNING.grow.comm, g=S.g.pl[id], out=[];
+/**
+ * 個人練習。1人を呼び出して個別に指導する。個人能力の経験が入る。
+ * 経験が満ちていれば★突破の3択(練習メニュー)が出る(choice = 能力)。得意な能力のメニューほど成功しやすい(→docs/14 §14.201)
+ */
+function doIndTrain(S,id,choice){
+  const C=TUNING.grow.comm, I=TUNING.grow.ind, P=TUNING.grow.sp, g=S.g.pl[id], out=[];
   if(!canComm(S)||!g)return { res:-1, lines:out };
-  // 重なったカード1枚ごとに +10%(→docs/08 §8.12)
-  g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1)*playerTagK(S,id,"exp");
+  let res=1;
+  if(indReady(S,id)){
+    // 成功の率はミーティングと同じ(正解 qOk / 外れ qNg + 信頼度・監督と動物の相性・称号)
+    const k=STATS.includes(choice)?choice:indBest(S,id);
+    const ma=S.mgr&&S.mgr.ani!=null&&ANIMALS[S.mgr.ani]&&ANIMALS[CARDS[id].ani]?aniCompat(S.mgr.ani,CARDS[id].ani):1;
+    const p=clamp(((k===indBest(S,id)?P.qOk:P.qNg)+P.qTrust[trustLv(g)]+P.qAni[ma]+(tsetOf(S,"qOk")||0))*playerTagK(S,id,"comm"),P.qMin,P.qMax);
+    const r=mulberry32((S.seed^hashStr("it:"+S.term+":"+S.played+":"+S.g.cn+":"+id+":"+k))>>>0)();
+    if(r<p){
+      g.ie-=I.need[g.is]; g.is++; res=0;
+      const card=CARDS[id], room=card[k]+(g.up[k]||0)<STAT_MAX;
+      if(room)g.up[k]=(g.up[k]||0)+I.starUp;
+      out.push(nameOf(card)+" 個人能力 ★"+g.is+(room?"("+STAT_LABEL[k]+" +"+I.starUp+")":""));
+    }else{
+      g.ie=Math.floor(g.ie*P.failKeep); res=2;
+      if(g.mot>0)g.mot=Math.max(1,g.mot-1);
+      out.push(nameOf(CARDS[id])+" の練習は空回りした…(やる気が下がった)");
+    }
+  }else{
+    // 重なったカード1枚ごとに +10%(→docs/08 §8.12)
+    g.ie+=C.ind*growK(id,S)*facK(S,"train")*(spBoost(S,"indExp")||1)*(1+TUNING.grow.dup.indK*dupOf(S,id))*(tsetOf(S,"indK")||1)*playerTagK(S,id,"exp");
+    out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
+  }
   g.bond++;
-  out.push(nameOf(CARDS[id])+" に個別指導(個人能力の経験 +"+C.ind+")");
   // 選手からの提案(→docs/23 §23.2 の 5): 信頼の深い選手が、まれに育成の方針を3択で出す。1人につき任期に1回
   const TP=TUNING.tag.player;
   if(trustLv(g)>=TP.propTrust&&!g.propDone&&mulberry32((S.seed^hashStr("pp:"+S.term+":"+S.played+":"+S.g.cn+":"+id))>>>0)()<TP.propP){
@@ -402,8 +442,9 @@ function doIndTrain(S,id){
     const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].is<5).sort((a,b)=>S.g.pl[a].is-S.g.pl[b].is)[0];
     if(o){ S.g.pl[o].ie+=C.ind*0.5*growK(o,S)*facK(S,"train"); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" の練習も見てくれた(経験の半分)"); }
   }
+  checkInd(S,id,out);
   useComm(S,"ind");
-  return { res:1, lines:out };
+  return { res, lines:out };
 }
 /** ケア。調子の落ちた選手を立て直す。モチベーションが上がる。**ケガの選手は手当てで「不調」まで戻る**(→docs/08 §8.8) */
 function doTalk(S,id){
@@ -537,7 +578,7 @@ function skipComm(S){ if(S.g.step==="comm")S.g.step="ready"; }
  * **疲労では出さない**(練習のたびに全員に付いて、印の意味が無くなるため。疲労は選手一覧と秘書が伝える)
  */
 /** 「！」の印。★突破の話がある選手と、先発で絶不調の選手だけ(控えにまで付けると印の意味が薄れる) */
-function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||(g.mot<=1&&S.sq.indexOf(id)<11); }
+function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||indReady(S,id)||(g.mot<=1&&S.sq.indexOf(id)<11); }
 
 /* ---------- ③ 試合のあと ---------- */
 
@@ -816,7 +857,7 @@ function toggleHt(S,id){
  */
 function commSign(S,id,kind){
   const g=S.g.pl[id], K=TUNING.grow.commSignK; if(!g)return false;
-  if(kind==="ind")return g.is<4&&!g.q&&indProgress(g)>=K;
+  if(kind==="ind")return indReady(S,id);   // ★突破の3択が出る選手(→docs/14 §14.201)
   if(kind==="meet")return spReady(S,id);
   if(kind==="talk")return g.mot===0||(g.mot<=1&&S.sq.indexOf(id)<11);
   if(kind==="lounge")return Object.keys(S.g.links).some(k=>{ const p=k.split("|"); return p.includes(id)&&linkSign(S,p[0],p[1]); });
@@ -1530,7 +1571,7 @@ function playerVoiceRoll(S){
   const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0), pick=a=>a[Math.floor(r()*a.length)];
   // 調子・疲労・出番・★突破の話(前は SQUAD の選手の窓に出ていた)。疲れた先発が多いときは、秘書がまとめて知らせるので個別には言わない
   const G0=TUNING.grow, many=tiredStarters(S)>=V.manyTired;
-  const stateK=id=>{ const g=S.g.pl[id]; return spReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":(!many&&g.fat>=G0.int.tiredSign*1.5)?"tired":(g.bench||0)>=G0.mot.benchGrace?"bench":null; };
+  const stateK=id=>{ const g=S.g.pl[id]; return spReady(S,id)||indReady(S,id)?"ready":(g.q||g.sq)?"awake":g.mot<=1?"low":(!many&&g.fat>=G0.int.tiredSign*1.5)?"tired":(g.bench||0)>=G0.mot.benchGrace?"bench":null; };
   const st=sq.map(id=>[id,stateK(id)]).filter(x=>x[1]);
   if(st.length&&r()<V.pState){ const [id,k]=pick(st); S.g.pvoice={ id, text:pick(VOICE[k]), kind:k }; return; }
   if(r()>=V.p)return;
@@ -1670,6 +1711,7 @@ function growLine(S,id,kind){
   const g=S.g.pl[id]; if(!g)return "";
   const L=SEC_GROW[secOf(S).id]||SEC_GROW.s0, n=cname0(id), f=t=>t.split("{n}").join(n);
   if(kind==="talk")return f(L.mot[g.mot])+(g.fat>=TUNING.grow.int.tiredSign?L.tired:"");
+  if(kind==="ind"&&indReady(S,id))return f(talkPick(S,SEC_IND_READY[secOf(S).id]||SEC_IND_READY.s0,"ri"+id));
   const tx=kind==="meet"&&spReady(S,id)?talkPick(S,L.ready,"r"+id):talkPick(S,L[kind==="meet"?"ss":"is"][growStage(kind==="meet"?g.ss:g.is,kind==="meet"?g.sq:g.q)],kind+id);
   const ek=playerTagK(S,id,"exp"), ck=playerTagK(S,id,"comm");
   return f(tx)+(ck<1?L.commDn:ck>1?L.commUp:"")+(ek>1&&ck<=1?L.expUp:ek<1?L.expDn:"");
@@ -1701,3 +1743,11 @@ function trustSay(S,id){
   const a=TRUST_SAY[persOf(id)][trustLv(g)];
   return a[hashStr("ts:"+S.term+":"+S.played+":"+id)%a.length];
 }
+
+/** 秘書: 個人練習の★突破の3択が出ている選手のこと(→docs/14 §14.201)。秘書ごとの口調 */
+const SEC_IND_READY={
+  s0:["{n}選手が、個人の壁を越えようとしています。何を鍛えるか、選んであげてください。","{n}選手、一段上へのきっかけを練習に求めているようです。"],
+  s1:["{n}選手、個人の壁を越えたいみたいです！ 練習メニュー、大事ですよ！","{n}選手、一段上に行けそうです！ 何を鍛えましょう？"],
+  s2:["{n}、個人能力の壁の手前です。練習の選択が結果を左右します。","{n}、一段上への契機を練習に求めています。"],
+  s3:["{n}が個人の壁を越えたがってるわ。何を鍛えるか、選んであげて。","{n}、一段上へのきっかけを探してるみたい。"]
+};

@@ -267,7 +267,7 @@ function commChatHtml(){
   if(!U||CL.pick.length!==U.n)return "";
   const id=CL.pick[0], who=CL.pick.slice();
   // 信頼度は注記で見せず、選手の言葉の距離感で伝える(→docs/14 §14.109)
-  let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x)+trustSay(S,x)+"」",true)).join(""), acts="";
+  let log=who.map(x=>chatPl(x,"「"+voiceOf(S,x,CL.comm)+trustSay(S,x)+"」",true)).join(""), acts="";
   if(CL.comm==="lounge"){
     const f=loungeInfo(S,who[0],who[1]), bo=linkBonusOf(who[0],who[1]);
     log+=chatSec(secSay(S,"chLink",{ a:cname(who[0]), b:cname(who[1]), l:REL_LABEL[f.lv]+(f.gold?"(信頼の兆し)":"") }),true)+
@@ -282,7 +282,9 @@ function commChatHtml(){
   }else if(CL.comm==="ind"){
     const p=S.g.pl[id];
     log+=chatSec(growLine(S,id,"ind"),true);   // 育成の様子を秘書の言葉で(→docs/14 §14.108)
-    acts='<button class="cr" data-act="ind">個別に指導する</button>';
+    // ★突破の3択は練習メニュー(→docs/14 §14.201)
+    acts=indReady(S,id)?indOpts(S,id).map(o=>'<button class="cr" data-act="ind" data-k="'+o.k+'">'+o.t+'</button>').join("")
+      :'<button class="cr" data-act="ind">個別に指導する</button>';
   }else{
     const p=S.g.pl[id];
     log+=chatSec(growLine(S,id,"talk"),true);   // 調子と疲れを秘書の言葉で(→docs/14 §14.108)
@@ -2114,7 +2116,8 @@ function onClubClick(e){
   }
   else if(act==="comm"){ CL.comm=b.dataset.v; CL.pick=[]; showClub(true); }
   else if(act==="ind"&&CL.pick.length===1){
-    const id=CL.pick[0], said=mgrSay(S,"ind",0,id), r=doIndTrain(S,id); chatResult("ind",[id],said,r,reactOf(S,id,"ind",hashStr("ri:"+S.term+":"+S.played+":"+id)%2));
+    const id=CL.pick[0], ready=indReady(S,id), said=ready?b.textContent:mgrSay(S,"ind",0,id), r=doIndTrain(S,id,b.dataset.k);
+    chatResult("ind",[id],said,r,reactOf(S,id,"ind",ready?r.res:hashStr("ri:"+S.term+":"+S.played+":"+id)%2));
     save(); showClub(true);
   }
   else if(act==="talk"&&CL.pick.length===1){
