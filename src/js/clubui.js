@@ -1217,7 +1217,8 @@ function secClubHtml(){
   return '<section class="card sec-card"><h3>SECRETARY</h3>'+
     '<div class="sc-row">'+(f?'<img class="sp-full" src="'+f+'" alt="">':'')+'<div>'+
     '<p><b>'+se.name+'</b> ・ '+se.desc+'</p><p class="dim">親密度 '+SEC_LV_LABEL[lv]+(lv<t.length?'(次まで '+(t[lv]-b)+')':'')+
-    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p><p class="sc-say">「'+secSay(S,"next")+'」</p></div></div></section>';
+    ' ・ フォローの起きやすさ '+Math.round(TUNING.sec.follow[lv]*100)+'%</p><p class="sc-say">「'+secSay(S,"next")+'」</p></div></div>'+
+    '<button class="btn btn-sub" data-act="secopen">秘書を替える</button></section>';   // 見出しを英字にしたときに消えていた入口を戻す(→docs/14 §14.211)
 }
 /* ---- スタジアムと施設(→docs/05 §5.13) ---- */
 /** スタジアムの絵(夜)。段が上がるほどスタンドが高く広く、照明塔と屋根が付く(独自の意匠 →docs/14 第3弾) */
