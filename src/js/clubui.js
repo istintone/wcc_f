@@ -1924,6 +1924,15 @@ function trepModalHtml(){
     '<footer class="sr-sign"><div><span>クラブオーナー</span><b>BOARD</b><i class="sr-hanko">理事</i></div></footer>'+
     '</article></div></div>';
 }
+/** 大金を使う前の確認(→docs/14 §14.210)。何に・いくら・資金がどう変わるか・何が良くなるか */
+function confirmHtml(){
+  const S=CL.S, c=CL.confirm; if(!c)return "";
+  return '<div class="kmodal mid cfm" data-act="cfno"><div class="kmod-box cf-box" data-act="none">'+
+    '<header class="cf-h"><small>INVESTMENT</small><b>'+c.title+'</b></header>'+
+    '<dl class="cf-dl"><dt>費用</dt><dd><b>'+c.cost+'億</b></dd><dt>資金</dt><dd>'+S.money.toFixed(0)+'億 → <b>'+(S.money-c.cost).toFixed(0)+'億</b></dd><dt>効果</dt><dd>'+c.eff+'</dd></dl>'+
+    '<div class="cf-act"><button class="btn btn-sub" data-act="cfno">やめる</button><button class="btn btn-main" data-act="'+c.act+'" data-v="'+c.v+'" data-ok="1">投資する</button></div>'+
+    '</div></div>';
+}
 function homeHtml(){
   const S=CL.S;
   // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
@@ -2121,7 +2130,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?homeHeadHtml()+collectionHtml():CL.tab==="season"?homeHeadHtml()+seasonHtml()
     :CL.tab==="club"?homeHeadHtml()+clubTabHtml():CL.tab==="mgr"?homeHeadHtml()+managerTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'')+(CL.mrepOpen&&CL.S.mrep?mrepModalHtml():'')+(CL.trepOpen&&CL.S.tend?trepModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'')+(CL.mrepOpen&&CL.S.mrep?mrepModalHtml():'')+(CL.trepOpen&&CL.S.tend?trepModalHtml():'')+(CL.confirm?confirmHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -2220,7 +2229,9 @@ function onClubClick(e){
     if(c&&signClub(S,{ name:c.name, short:c.short, town:c.town, color:c.color,
       emblem:Object.keys(c.emb).length?Object.assign(embDesign("azr",c.name,c.emb,c.color),{ text:undefined }):null })){ CL.draft=null; save(); }
     else CL.msg=["クラブ名を入れてください"]; showClub(true); return; }
-  if(act==="stad"){ const yes=b.dataset.v==="1", q=stadOfferQ(S);   // 答えた話を残す(トークと同じ。→docs/14 §14.197)
+  if(act==="stad"&&b.dataset.v==="1"&&!b.dataset.ok){ const o=S.biz.offer; if(!o||S.money<o.cost)return; const sd=TUNING.biz.stad[o.lv-1];   // 大金を使う前に確認
+    CL.confirm={ act:"stad", v:"1", cost:o.cost, title:"スタジアムを「"+sd.name+"」に", eff:"収容 "+(sd.cap/10000).toFixed(1)+"万人" }; showClub(true); return; }
+  if(act==="stad"){ CL.confirm=null; const yes=b.dataset.v==="1", q=stadOfferQ(S);   // 答えた話を残す(トークと同じ。→docs/14 §14.197)
     const r=answerStadium(S,yes); if(r&&r.ok&&typeof paperNews==="function")paperNews(S,{ t:"stad", lv:S.biz.stad });   // 次の号の話題
     if(r){ CL.stadDone={ q, a:yes?"改修しよう":"今回は見送ろう", rx:secStadRx(S,!!r.ok), who:secOf(S).name };
       CL.msg=[r.ok?"スタジアムを改修した: 「"+stadOf(S).name+"」(収容 "+(stadOf(S).cap/10000).toFixed(1)+"万人)":"改修を見送った"].concat(r.tl||[]); }
@@ -2229,7 +2240,10 @@ function onClubClick(e){
   if(act==="spopen"){ CL.spOpen=true; showClub(true); return; }
   if(act==="spsign"||act==="spkeep"){ CL.spOpen=false; }
   if(act==="spsign"||act==="spkeep"){ if(signSponsor(S,+b.dataset.i,act==="spkeep"))CL.msg=[S.biz.sp.name+" と契約した(ユニフォームの胸に "+S.biz.sp.name+")"]; save(); showClub(true); return; }
-  if(act==="fac"){ const k=b.dataset.v; if(buildFac(S,k)){ CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"];  if(typeof paperNews==="function")paperNews(S,{ t:"fac", k, lv:S.biz.fac[k] }); } save(); showClub(true); return; }
+  if(act==="fac"&&!b.dataset.ok){ const k=b.dataset.v, c=facCost(S,k); if(c==null||S.money<c)return;   // 大金を使う前に確認(→docs/14 §14.210)
+    CL.confirm={ act:"fac", v:k, cost:c, title:FAC_INFO[k].name+" を Lv"+(S.biz.fac[k]+1)+" に", eff:facEffTxt(k,S.biz.fac[k]+1) }; showClub(true); return; }
+  if(act==="cfno"){ CL.confirm=null; showClub(true); return; }
+  if(act==="fac"){ CL.confirm=null; const k=b.dataset.v; if(buildFac(S,k)){ CL.msg=[FAC_INFO[k].name+" を Lv"+S.biz.fac[k]+" にした("+facEffTxt(k,S.biz.fac[k])+")"];  if(typeof paperNews==="function")paperNews(S,{ t:"fac", k, lv:S.biz.fac[k] }); } save(); showClub(true); return; }
   if(act==="tagev"){ const ev=tagEventOf(S), i=+b.dataset.i;
     if(ev&&ev.ch[i]){ const id=S.g.tev.id, rx=tagEvRx(S,ev.k,i);   // 答えとリアクションを残す(→docs/14 §14.165)
       CL.tagDone={ id:rx&&rx.who==="pl"?id:null, q:tagEventText(S,ev), a:ev.ch[i][0], rx:rx?rx.text:"", who:rx&&rx.who==="pl"&&id?CARDS[id].no+" "+nameOf(CARDS[id]):secOf(S).name }; }
