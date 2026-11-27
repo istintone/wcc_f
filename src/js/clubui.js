@@ -178,9 +178,9 @@ function infoBar(lines){
   if(!box){ box=document.createElement("div"); box.id="infoBars"; document.body.appendChild(box); }
   lines.forEach((t,i)=>{
     const el=document.createElement("div");
-    el.className="ibar"+(/^👑/.test(t)?" gold":"");
+    const kind=/個人能力 ★/.test(t)?["is","★ UP"]:/特殊能力 ★/.test(t)?["ss","★ UP"]:/覚醒/.test(t)?["aw","AWAKEN"]:/^🏷/.test(t)?["tag","TAG"]:/^(👑|🏆)|称号/.test(t)?["title",/^🏆/.test(t)?"TROPHY":"TITLE"]:["info","INFO"];   /* 報酬の帯(→docs/33 §33.12) */ el.className="ibar band "+kind[0];
     const m=/^(\p{Extended_Pictographic}\uFE0F?)\s*/u.exec(t);
-    el.innerHTML='<i>'+(m?m[1]:'ℹ')+'</i><span>'+(m?t.slice(m[0].length):t)+'</span>';
+    el.innerHTML='<i>'+kind[1]+'</i><span>'+(m?t.slice(m[0].length):t)+'</span>';
     el.style.animationDelay=(i*0.45)+"s";
     box.appendChild(el);
     setTimeout(()=>el.remove(),4200+i*450);
@@ -1960,19 +1960,27 @@ const trophyKey=t=>t.comp==="LG"?LG_KEY[t.div||1]:t.comp;
 const trophyName=id=>/^LG/.test(id)?"REGULAR LEAGUE "+({ LGP:"PREMIER DIV", LG1:"1ST DIV", LG2:"2ND DIV" })[id]:compNm(id);
 const TROPHY_SHORT={ ICC:"INT'L CC", CT:"CHAMPIONS", JT:"JAPAN", LG:"LEAGUE", CONTI:"CONTINENTAL", CSC:"CONTI SC",
   W4:"W4", KINGS:"KING'S", NSC:"NATIONAL SC", ENT:"ENTERPRISE", PRE:"PRE-SEASON", LGP:"PREMIER", LG1:"1ST DIV", LG2:"2ND DIV" };   // 英字(→docs/14 §14.164)
-/** 格ごとの形(S = 取っ手の大杯 / リーグ = 盾の皿 / A = 脚の長い杯 / B = 星 / C = 小杯 / D・E = メダル)と金属の色 */
+/**
+ * トロフィーの絵(→docs/33 §33.12)。格ごとの形(S = 取っ手の大杯 / リーグ = 盾の皿 / A = 脚の長い杯 / B = 星 / C = 小杯 / D・E = メダル)。
+ * 取ったものは金・銀・銅の金属の照りと刻まれた帯・木の台座。取っていないものは棚に彫られた輪郭だけ
+ */
 function trophyIconSvg(id,won){
-  const g=/^LG/.test(id)?"L":COMPS[id].grade, metal=!won?"":g==="S"||g==="L"||g==="A"?"g":g==="B"||g==="C"?"s":"b";
-  const f=won?'url(#tm-'+metal+')':'currentColor', base='<rect x="11" y="40" width="18" height="6" rx="1" fill="'+(won?'#1a1a1a':'currentColor')+'"/>';
-  let body;
-  if(g==="S")body='<path fill="'+f+'" d="M10 4h20v5c0 10-4 16-8 18v7h4l2 5H12l2-5h4v-7c-4-2-8-8-8-18z"/><path fill="none" stroke="'+f+'" stroke-width="2.6" d="M11 8H4c0 7 3 10 8 11M29 8h7c0 7-3 10-8 11"/>';
-  else if(g==="L")body='<circle cx="20" cy="18" r="15" fill="'+f+'"/><circle cx="20" cy="18" r="10" fill="none" stroke="'+(won?'rgba(0,0,0,.25)':'none')+'" stroke-width="1.4"/><path fill="'+f+'" d="M17 32h6l2 8H15z"/>';
-  else if(g==="A")body='<path fill="'+f+'" d="M11 3h18c0 9-3 14-7 15v14h5v6H13v-6h5V18c-4-1-7-6-7-15z"/>';
-  else if(g==="B")body='<path fill="'+f+'" d="M20 2l3.2 6.6 7.2 1-5.2 5 1.3 7.2L20 18.4l-6.5 3.4 1.3-7.2-5.2-5 7.2-1z"/><path fill="'+f+'" d="M18.5 21h3v13h4l1.5 6h-14l1.5-6h4z"/>';
-  else if(g==="C")body='<path fill="'+f+'" d="M11 9h18c0 9-4 13-8 14v9h5l2 6H12l2-6h5v-9c-4-1-8-5-8-14z"/>';
-  else body='<path fill="'+(won?'#c8102e':'currentColor')+'" d="M13 2h6l3 12h-6zM27 2h-6l-3 12h6z"/><circle cx="20" cy="27" r="11" fill="'+f+'"/><path fill="'+(won?'rgba(0,0,0,.28)':'none')+'" d="M20 20.5l2 4.2 4.5.6-3.3 3.1.8 4.5-4-2.1-4 2.1.8-4.5-3.3-3.1 4.5-.6z"/>';
-  return '<svg class="tro-ic'+(won?'':' off')+'" viewBox="0 0 40 48">'+body+(g==="B"||g==="D"||g==="E"?'':base)+'</svg>';
+  const g=/^LG/.test(id)?"L":COMPS[id].grade, k=g==="S"||g==="L"||g==="A"?"g":g==="B"||g==="C"?"s":"b", gid="tm-"+id+(won?"w":"o");
+  const c=k==="g"?["#fff4c2","#f0cf75","#c9971f","#7a5a10"]:k==="s"?["#ffffff","#dfe3ea","#a7adb8","#5d636e"]:["#ffe2c4","#d79a5c","#a4612a","#5a3014"];
+  const grad='<linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+c[2]+'"/><stop offset=".35" stop-color="'+c[0]+'"/><stop offset=".55" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[3]+'"/></linearGradient>';
+  const f=won?"url(#"+gid+")":"none", st=won?"rgba(0,0,0,.25)":"currentColor", sw=won?0.8:1.4, hl='rgba(255,255,255,.6)';
+  const base='<path d="M14 66h36l3 10H11z" fill="'+(won?"#2a1d12":"none")+'" stroke="'+(won?"none":st)+'" stroke-width="1.4"/><rect x="18" y="60" width="28" height="7" fill="'+(won?"#3d2a18":"none")+'" stroke="'+(won?"none":st)+'" stroke-width="1.4"/>'+
+    (won?'<rect x="22" y="69" width="20" height="4" fill="'+c[1]+'" opacity=".85"/>':'');
+  let b="";
+  if(g==="S")b='<path d="M18 6h28v8c0 15-6 24-12 27v10h6l3 9H21l3-9h6V41c-6-3-12-12-12-27z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/><path d="M19 11H8c0 11 5 16 13 17M45 11h11c0 11-5 16-13 17" fill="none" stroke="'+(won?"url(#"+gid+")":st)+'" stroke-width="4"/>'+(won?'<path d="M22 16h20" stroke="rgba(0,0,0,.2)" stroke-width="2"/><path d="M26 9c-2 8-1 18 4 25" stroke="'+hl+'" stroke-width="2" fill="none"/>':'');
+  else if(g==="L")b='<circle cx="32" cy="28" r="22" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/><circle cx="32" cy="28" r="15" fill="none" stroke="'+(won?"rgba(0,0,0,.22)":st)+'" stroke-width="1.6"/>'+(won?'<path d="M32 18l2.6 5.4 6 .8-4.4 4.2 1 6L32 31.6 26.8 34.4l1-6-4.4-4.2 6-.8z" fill="rgba(0,0,0,.2)"/><path d="M16 20c3-7 9-11 16-11" stroke="'+hl+'" stroke-width="2" fill="none"/>':'')+'<path d="M27 49h10l3 11H24z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/>';
+  else if(g==="A")b='<path d="M17 4h30c0 14-5 22-11 24v20h7v12H21V48h7V28C22 26 17 18 17 4z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/>'+(won?'<path d="M24 8c0 8 2 14 7 17" stroke="'+hl+'" stroke-width="2" fill="none"/><path d="M20 12h24" stroke="rgba(0,0,0,.18)" stroke-width="2"/>':'');
+  else if(g==="B")b='<path d="M32 4l5 10.4 11.4 1.6-8.2 8 2 11.3L32 30l-10.2 5.3 2-11.3-8.2-8L27 14.4z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/><path d="M29.5 34h5v18h6l2 8H21.5l2-8h6z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/>';
+  else if(g==="C")b='<path d="M18 12h28c0 15-6 21-12 23v13h7l3 12H20l3-12h7V35c-6-2-12-8-12-23z" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/>'+(won?'<path d="M25 15c0 8 3 13 7 15" stroke="'+hl+'" stroke-width="2" fill="none"/>':'');
+  else b='<path d="M22 2h9l4 18h-9zM42 2h-9l-4 18h9z" fill="'+(won?"#c8102e":"none")+'" stroke="'+(won?"none":st)+'" stroke-width="1.4"/><circle cx="32" cy="40" r="17" fill="'+f+'" stroke="'+st+'" stroke-width="'+sw+'"/><circle cx="32" cy="40" r="11" fill="none" stroke="'+(won?"rgba(0,0,0,.22)":st)+'" stroke-width="1.5"/>'+(won?'<path d="M32 33l2 4.3 4.6.6-3.3 3.2.8 4.6L32 43.5l-4.1 2.2.8-4.6-3.3-3.2 4.6-.6z" fill="rgba(0,0,0,.25)"/>':'');
+  return '<svg class="tro-ic'+(won?'':' off')+'" viewBox="0 0 64 78"><defs>'+grad+'</defs>'+b+(g==="D"||g==="E"?'':base)+'</svg>';
 }
+
 /** トロフィーの棚。termOnly … CLUB(この任期のクラブのぶんだけ。任期ごとに別のクラブなのでリセット)/ なし … MANAGER(監督の通算。→docs/14 §14.120) */
 function trophyShelfHtml(termOnly){
   const S=CL.S, n={}, now={}, list=termOnly?S.titles.filter(t=>t.term===S.term):S.titles;
