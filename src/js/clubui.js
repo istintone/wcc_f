@@ -1050,6 +1050,7 @@ function termEndHtml(){
     :'<p class="dim">絆を深めた選手がいない(個別指導で呼ぶと絆が深まる)</p>')+
     '<p class="dim">ついてくる選手は★と能力を保ったまま、互いの連携も残る。ほかの選手は初めから。'+
     '次の任期は、届いたオファー(称号と年俸で決まる)からクラブを選ぶ。途中のリーグとカップは任期の終わりで打ち切り</p>'+
+    '<button class="btn btn-sub" data-act="trep">TERM REPORT</button>'+
     '<button class="btn btn-main" data-act="term">次の任期へ</button></section>';
   return h;
 }
@@ -1853,6 +1854,76 @@ function paperPage3(a){
 }
 /** 答えが要る出来事は1つずつ出し、ほかは数だけ(→docs/33 GD1) */
 function oneAtATime(list){ const L=list.filter(Boolean); if(!L.length)return ''; return (L.length>1?'<p class="ev-count">1 / '+L.length+'</p>':'')+L[0]; }
+/* ---- MATCH REPORT(→docs/34 §34.10): 試合のあとのアナリストの1枚。直近の試合だけ ---- */
+function matchReportData(S,M,L,RT){
+  const H=M.home, A=M.away, all=H.st.steps+A.st.steps, nm=id=>CARDS[id]?nameOf(CARDS[id]):"";
+  const shots=M.events.filter(e=>e.type==="shot").map(e=>[e.min,e.side,e.by,e.res,e.sp||""]);
+  const sk={}; for(const e of M.events)if(e.side==="H"&&e.sk)sk[e.sk]=(sk[e.sk]||0)+1;
+  const mine=RT.list.filter(x=>x.side==="H").sort((a,b)=>b.r-a.r);
+  const pr=(T)=>T.st.pass?Math.round(T.st.passOk/T.st.pass*100):0;
+  return { no:S.played, comp:L.comp, label:L.label||"", opp:L.opp, hg:L.hg, ag:L.ag, pso:L.pso||null,
+    poss:all?Math.round(H.st.steps/all*100):50, sh:[H.st.shots,A.st.shots], on:[H.st.onT,A.st.onT], pass:[pr(H),pr(A)],
+    shots:shots.filter(x=>x[3]==="goal").concat(shots.filter(x=>x[3]!=="goal")).slice(0,16).sort((a,b)=>a[0]-b[0]), sk:Object.entries(sk).sort((a,b)=>b[1]-a[1]).slice(0,4), best:mine.slice(0,3).map(x=>[x.id,x.r]), low:mine.length?[mine[mine.length-1].id,mine[mine.length-1].r]:null,
+    kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length };
+}
+function mrepLineHtml(){
+  const S=CL.S, r=S.mrep; if(!r||r.no!==S.played)return "";
+  return '<button class="tile news mrep" data-act="mrep"><i class="nw-tag">MATCH<br>REPORT</i><span class="nw-line">'+(TEAMS[r.opp]?teamNameOf(TEAMS[r.opp]):'')+' 戦 '+r.hg+' - '+r.ag+' ・ アナリストの報告</span><b>›</b></button>';
+}
+/** 次への課題: 数字から1〜2つ */
+function mrepAdvice(r){
+  const out=[];
+  if(r.sh[0]>=8&&r.on[0]<=r.sh[0]*0.35)out.push("シュートは打てているが、枠に飛んでいない。ゴール前の精度を上げたい(攻撃練習・OFE)");
+  if(r.sh[1]>=r.sh[0]+4)out.push("相手にシュートを多く打たれた。守備の厚みを増やしたい(守備練習・DEF)");
+  if(r.poss<=42)out.push("ボールを持てる時間が短かった。つなぎを安定させたい(パス練習・TEC)");
+  if(r.pass[0]&&r.pass[0]<70)out.push("パスの成功が7割を切った。連携を深めたい(ラウンジ)");
+  if(!out.length)out.push(r.hg>r.ag?"狙いどおりの試合。この形を次も続けたい":"内容は悪くない。あとは決め切るだけ");
+  return out.slice(0,2);
+}
+function mrepModalHtml(){
+  const S=CL.S, r=S.mrep, se=secOf(S), t=TEAMS[r.opp]; if(!r||!t)return "";
+  const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>', nm=id=>CARDS[id]?nameOf(CARDS[id]):"";
+  const bar=(l,a,b,u)=>{ const sum=(a+b)||1; return '<tr><th>'+l+'</th><td class="me"><u style="width:'+(a/sum*100).toFixed(0)+'%"></u><b>'+a+(u||'')+'</b></td><td class="mk"></td><td class="op"><u style="width:'+(b/sum*100).toFixed(0)+'%"></u><b>'+b+(u||'')+'</b></td></tr>'; };
+  const resJa={ goal:"ゴール", save:"セーブ", miss:"枠外", block:"ブロック", post:"ポスト" };
+  const shots=r.shots.map(x=>'<li class="'+(x[1]==="H"?'me':'op')+(x[3]==="goal"?' gl':'')+'"><b>'+x[0]+"'</b>"+nm(x[2])+' <small>'+(resJa[x[3]]||x[3]||'')+(x[4]==="pk"?' ・ PK':x[4]==="fk"?' ・ FK':x[4]==="hdr"?' ・ ヘディング':'')+'</small></li>').join("");
+  return '<div class="kmodal" data-act="mrepclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
+    '<button class="km-x sr-x" data-act="mrepclose" aria-label="閉じる">×</button><article class="srep mrep">'+
+    '<header class="sr-top"><small>WCC F ・ ANALYSIS DEPARTMENT</small><h2>MATCH REPORT</h2><i class="sr-stamp">GAME '+r.no+'</i></header>'+
+    '<dl class="sr-meta"><dt>試合</dt><dd>'+compNm(r.comp)+(r.label?' ・ '+r.label:'')+'</dd><dt>結果</dt><dd><b>'+myTeam(S).short+' '+r.hg+' - '+r.ag+' '+t.short+'</b>'+(r.pso?' (PK '+r.pso[0]+'-'+r.pso[1]+')':'')+'</dd><dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
+    no(["01","数字"])+'<table class="sr-ax mr-ax"><thead><tr><th></th><th>'+myTeam(S).short+'</th><th></th><th>'+t.short+'</th></tr></thead><tbody>'+
+      bar("支配率",r.poss,100-r.poss,"%")+bar("シュート",r.sh[0],r.sh[1])+bar("枠内",r.on[0],r.on[1])+bar("パス成功",r.pass[0],r.pass[1],"%")+'</tbody></table>'+
+    no(["02","シュートの記録"])+(shots?'<ol class="mr-shots">'+shots+'</ol>':'<p class="dim">シュートなし</p>')+
+    no(["03","効いたもの"])+'<ul class="sr-key">'+r.best.map((b,i)=>'<li><i>'+(i?'':'MVP')+'</i><b>'+nm(b[0])+'</b><span>採点 '+b[1].toFixed(1)+'</span></li>').join("")+
+      r.sk.map(s=>'<li><i>SK</i><b>'+s[0]+'</b><span>'+s[1]+'回</span></li>').join("")+'</ul>'+
+    no(["04","次への課題"])+'<ol class="sr-notes">'+mrepAdvice(r).map(x=>'<li>'+x+'</li>').join("")+'</ol>'+
+    '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
+    '</article></div></div>';
+}
+/* ---- TERM REPORT(→docs/34 §34.10): 任期の終わりのオーナーからの評価書 ---- */
+const TREP_WORD={ over:["期待を大きく上回る任期だった。来期も君に任せたい。","見事な仕事ぶりだった。クラブの誰もが満足している。"],
+  meet:["求めた水準には届いた。次はさらに上を目指してほしい。","堅実な任期だった。積み上げたものは大きい。"],
+  under:["求めた水準には届かなかった。次の任期で巻き返してほしい。","厳しい任期だった。課題は明らかだ。"] };
+function trepModalHtml(){
+  const S=CL.S, e=S.tend; if(!e)return "";
+  const x=e.facts, t=titleOf(e.title), no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
+  const ttl=S.titles.filter(z=>z.term===S.term).map(z=>compNm(z.comp));
+  const lv=e.ev!=null&&e.req!=null?(e.ev>=e.req*1.25?"over":e.ev>=e.req?"meet":"under"):"meet";
+  const word=TREP_WORD[lv][hashStr("trep:"+S.term)%2];
+  const up=e.pay0!=null&&e.salary>=e.pay0;
+  return '<div class="kmodal" data-act="trepclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
+    '<button class="km-x sr-x" data-act="trepclose" aria-label="閉じる">×</button><article class="srep trep">'+
+    '<header class="sr-top"><small>'+myTeam(S).name+' ・ BOARD OF DIRECTORS</small><h2>TERM REPORT</h2><i class="sr-stamp">'+(lv==="over"?'EXCELLENT':lv==="meet"?'APPROVED':'REVIEW')+'</i></header>'+
+    '<dl class="sr-meta"><dt>任期</dt><dd>第'+e.term+'任期</dd><dt>監督</dt><dd>'+(S.mgr?S.mgr.name:'')+' 監督</dd><dt>監督称号</dt><dd><b>'+t.name+'</b></dd></dl>'+
+    no(["01","成績"])+'<p class="tr-rec"><b>'+x.w+'勝 '+x.d+'分 '+x.l+'敗</b> 勝率 '+Math.round(x.wr*100)+'% ・ 賞金 '+Math.round(x.money)+'億</p>'+
+      (ttl.length?'<p class="tr-ttl">'+ttl.map(z=>'<span>🏆 '+z+'</span>').join("")+'</p>':'<p class="dim">タイトルなし</p>')+
+    (e.ev!=null?no(["02","評価"])+'<div class="sr-ovr"><div><small>評価</small><b>'+Math.round(e.ev*100)+'</b></div><span>VS</span><div><small>求め</small><b>'+Math.round(e.req*100)+'</b></div></div>'+
+      (e.parts?'<ul class="texp tev">'+[["title","監督称号"],["win","勝率"],["cup","優勝"]].map(([k,l])=>'<li><span>'+l+'</span><b>'+(e.parts[k]>=0?'+':'')+Math.round(e.parts[k]*100)+'pt</b></li>').join("")+'</ul>':''):'')+
+    no(["03","目標と指令"])+termExpHtml(e)+
+    no(["04","年俸"])+'<p class="tr-pay"><b>'+(e.pay0!=null?payTxt(e.pay0)+'億 → ':'')+payTxt(e.salary)+'億</b>'+(e.pay0!=null?' <i class="'+(up?'up':'dn')+'">'+(up?'増額':'減額')+'</i>':'')+'</p>'+
+    no(["05","オーナーより"])+'<p class="pr-note">'+word+'</p>'+
+    '<footer class="sr-sign"><div><span>クラブオーナー</span><b>BOARD</b><i class="sr-hanko">理事</i></div></footer>'+
+    '</article></div></div>';
+}
 function homeHtml(){
   const S=CL.S;
   // セーブの異常の知らせは、選ぶ画面より先に出す(秘書の一言の欄が無い画面でも見えるように)
@@ -1865,7 +1936,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -2050,7 +2121,7 @@ function clubHtml(){
   const body=CL.tab==="squad"?squadHtml():CL.tab==="cards"?homeHeadHtml()+collectionHtml():CL.tab==="season"?homeHeadHtml()+seasonHtml()
     :CL.tab==="club"?homeHeadHtml()+clubTabHtml():CL.tab==="mgr"?homeHeadHtml()+managerTabHtml():homeHtml();
   return '<div class="cl-main tab-'+CL.tab+'">'+body+'</div>'+tabbarHtml()+
-    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'');
+    (CL.tab==="cards"&&CL.sel&&CARDS[CL.sel]?cardModalHtml(CL.sel,CL.kList||[]):'')+(CL.tab==="squad"&&CL.ggOpen?ggModalHtml():'')+(CL.tab==="squad"&&CL.kpOpen?kpModalHtml():'')+(CL.tab==="season"?(CL.brView?bracketModalHtml():'')+(CL.oppView?oppViewModalHtml()+(CL.oppSel?oppCardModalHtml():''):''):'')+(CL.tab==="squad"&&CL.sqSel&&!CL.kpOpen&&!CL.ggOpen?sqModalHtml():'')+(CL.mrepOpen&&CL.S.mrep?mrepModalHtml():'')+(CL.trepOpen&&CL.S.tend?trepModalHtml():'');
 }
 
 /** 試合を始める。配置は前の試合の最後のまま */
@@ -2088,6 +2159,7 @@ function finishFixture(M){
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   const L=CL.S.last;
   if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
+  if(L)CL.S.mrep=matchReportData(CL.S,M,L,RT0);   // MATCH REPORT の材料(→docs/34 §34.10)
   persist(CL.S);
   // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
   sceneResult(M,L,RT=>{
@@ -2176,6 +2248,10 @@ function onClubClick(e){
     CL.armPlay=false; CL.scout=true; CL.strat=false; CL.chat=null; CL.pick=[]; showClub(); return;   // コミュニケーションのあとは視察(→docs/18)
   }
   if(act==="scoutback"){ CL.scout=false; CL.scoutRep=false; CL.oppSel=null; showClub(); return; }   // 視察 → 個別指導(→docs/33 §33.10)
+  if(act==="mrep"){ CL.mrepOpen=true; showClub(true); return; }
+  if(act==="mrepclose"){ CL.mrepOpen=false; showClub(true); return; }
+  if(act==="trep"){ CL.trepOpen=true; showClub(true); return; }
+  if(act==="trepclose"){ CL.trepOpen=false; showClub(true); return; }
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }

@@ -433,3 +433,18 @@ body.th-wl #infoBars .ibar.info{background:linear-gradient(100deg,#111,#2b2d35)}
 body.th-wl #club{background:var(--logo-wm,none) right -40px bottom 70px/190px auto no-repeat scroll,
   linear-gradient(118deg,transparent 0 72%,rgba(208,16,47,.05) 72% 76%,transparent 76%) fixed,var(--t-paper)!important}
 @media (prefers-reduced-motion:reduce){body.th-wl #infoBars .ibar.band,body.th-wl #infoBars .ibar.band::after{animation:none}}
+/* MATCH REPORT・TERM REPORT(→docs/34 §34.10)。視察レポートと同じ紙の書類 */
+body.th-wl #club .tile.news.mrep .nw-tag{background:var(--w-ink)}
+body.th-wl #club .srep .mr-ax th{white-space:nowrap}
+body.th-wl #club .srep .mr-shots{margin:4px 0 8px;padding:0;display:grid;gap:2px;font-size:12px}
+body.th-wl #club .srep .mr-shots li{list-style:none;display:flex;gap:6px;align-items:baseline;padding:2px 6px;border-left:3px solid var(--w-red)}
+body.th-wl #club .srep .mr-shots li.op{border-left-color:var(--w-blue)}
+body.th-wl #club .srep .mr-shots li.gl{background:#fff3c4;font-weight:800}
+body.th-wl #club .srep .mr-shots b{font-family:var(--f-num);font-weight:800;width:28px}
+body.th-wl #club .srep .mr-shots small{color:var(--w-mute)}
+body.th-wl #club .srep .tr-rec b{font-family:var(--f-num);font-weight:800;font-size:20px;margin-right:6px}
+body.th-wl #club .srep .tr-ttl{display:flex;flex-wrap:wrap;gap:6px}
+body.th-wl #club .srep .tr-ttl span{background:#fff3c4;padding:2px 8px;font-weight:800;font-size:11.5px}
+body.th-wl #club .srep .tr-pay b{font-family:var(--f-num);font-weight:800;font-size:20px}
+body.th-wl #club .srep .tr-pay i{font-style:normal;font-weight:800;margin-left:6px} body.th-wl #club .srep .tr-pay i.up{color:var(--w-green)} body.th-wl #club .srep .tr-pay i.dn{color:var(--w-loss)}
+body.th-wl #club .tend .btn-sub{margin-bottom:8px}
