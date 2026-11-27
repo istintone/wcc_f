@@ -168,7 +168,10 @@ function oppGrowth(S,teamId){
     for(let s=0;s<Math.min(4,is);s++){ const k=bestStat(card,up); if(card[k]+(up[k]||0)<STAT_MAX)up[k]=Math.min(STAT_MAX-card[k],(up[k]||0)+I.starUp); }
     if(is>=5){ const r=mulberry32((S.seed^hashStr("ogA:"+S.term+":"+id))>>>0), add=awakeSplit(card,up,awakePts(0,r),r); for(const k in add)up[k]=(up[k]||0)+add[k]; }
     const ss=id===T.kp?G.ss[t]:Math.min(4,Math.floor(avg));
-    const c=Object.assign({},card,{ is, ss, up, buffK:1+TUNING.grow.sp.buff*ss });
+    // 調子(→docs/31 §31.3): 試合ごとに段の割合から(1〜4。ケガは無し)。倍率は自分と同じ
+    const rm=mulberry32((S.seed^hashStr("om:"+S.term+":"+S.played+":"+id))>>>0)(), P=G.mot[t];
+    let mot=1, acc=0; for(let i=0;i<4;i++){ acc+=P[i]; if(rm<acc){ mot=i+1; break; } mot=i+1; }
+    const c=Object.assign({},card,{ is, ss, up, buffK:1+TUNING.grow.sp.buff*ss, cond:TUNING.grow.mot.mul[mot], gm:mot });
     for(const k of STATS)c[k]=clamp(card[k]+(up[k]||0),1,STAT_MAX);
     out[id]=c;
   }
