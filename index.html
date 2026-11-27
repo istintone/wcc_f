@@ -4749,6 +4749,10 @@ body.th-wl #club .srep .tr-ttl span{background:#fff3c4;padding:2px 8px;font-weig
 body.th-wl #club .srep .tr-pay b{font-family:var(--f-num);font-weight:800;font-size:20px}
 body.th-wl #club .srep .tr-pay i{font-style:normal;font-weight:800;margin-left:6px} body.th-wl #club .srep .tr-pay i.up{color:var(--w-green)} body.th-wl #club .srep .tr-pay i.dn{color:var(--w-loss)}
 body.th-wl #club .tend .btn-sub{margin-bottom:8px}
+/* 背の低いモーダル(KP 設定・選手のカード・相手チーム・相手の選手・成長グラフ)は画面の中段に出す。下からせり上がる動きはそのまま、つまみは出さない(→docs/33 §33.14) */
+body.th-wl #club .kmodal.mid{align-items:center!important;padding:12px 0!important}
+body.th-wl #club .kmodal.mid .kmod-box::before{display:none}
+body.th-wl #club .kmodal.mid .kmod-box{padding-bottom:10px!important}
 </style>
 </head>
 <body>
@@ -13639,7 +13643,7 @@ function kpModalHtml(){
   const rows=xi.map(id=>{ const c=CARDS[id], st=styleOfCard(c), rk=myStyleRank(S,st,id), g=S.g.pl[id];
     return '<button class="kp-row'+(S.kp===id?' on':'')+'" data-act="kppick" data-id="'+id+'"><i class="no">'+c.no+'</i><span><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ 特★'+(g?g.ss:0)+(rareOn(S,id)?' ・ <em>RARE</em>':'')+'</small></span>'+
       '<span class="st"><b>'+st.name+'</b><small>'+(st.scope==="team"?"全体":"個人")+' ・ '+styleAxes(st).map(a=>AXIS_ABBR[a]).join("・")+'</small></span>'+rankChip(rk)+'</button>'; }).join("");
-  return '<div class="kmodal" data-act="kpclose"><div class="kmod-box kp-box" data-act="none">'+
+  return '<div class="kmodal mid" data-act="kpclose"><div class="kmod-box kp-box" data-act="none">'+
     '<header class="km-head"><span></span><b>KP を選ぶ</b><small>先発 '+xi.length+'人</small><span></span><button class="km-x" data-act="kpclose" aria-label="閉じる">×</button></header>'+
     '<div class="kp-list">'+(rows||'<p class="dim">スタイルを持つ先発の選手がいない</p>')+'</div></div></div>';
 }
@@ -13658,7 +13662,7 @@ function ggModalHtml(){
   const S=CL.S, pw=teamAxisPower(S), pl=teamPower(S), gr=graphOvr(S.g.graph), ovr=pl+gr, G=S.g.graph, R=TUNING.grow.graph;
   const cur={}, gv={}; for(const a in pw){ cur[a]=(pw[a]-8)/9; gv[a]=(G[a]||0)/R.max; }
   const col=teamColor(myTeam(S)), gry="#9aa1ad";
-  return '<div class="kmodal gg" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
+  return '<div class="kmodal gg mid" data-act="ggclose"><div class="kmod-box gg-box" data-act="none">'+
     '<header class="km-head"><span></span><b>OVR</b><small>選手 + 育成</small><span></span><button class="km-x" data-act="ggclose" aria-label="閉じる">×</button></header>'+
     '<div class="gg-radar gg-ovrw">'+radarSvg([{ v:cur, color:gry, fill:gry, op:0.25 },{ v:gv, color:col, fill:col, op:0.2 }],{ vals:pw, cls:"gg-vals", gold:S.g.gold })+
       '<div class="gg-ovr"><small>OVR</small><b>'+ovr.toFixed(1)+'</b><span>(<i style="color:'+gry+'">'+pl.toFixed(1)+'</i> + <i style="color:'+col+'">'+gr.toFixed(1)+'</i>)</span></div>'+
@@ -13885,7 +13889,7 @@ function cardModalHtml(id,list){
   // 前後送りは、交代の相手と同じくカードの左右の縦長のボタン(→docs/14 §14.137)
   const nav=(d,t)=>{ const j=i+d; return '<button class="ko-arw kn" data-act="card" data-id="'+(list[j]||"")+'"'+(i>=0&&list[j]?'':' disabled')+' aria-label="'+(d<0?'前のカード':'次のカード')+'">'+t+'</button>'; };
   // 枠のない窓: 暗くした背景にカードとボタンだけを浮かべる(→docs/14 §14.136)
-  let h='<div class="kmodal kcard" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
+  let h='<div class="kmodal kcard mid" data-act="kclose"><div class="kmod-box'+(CL.kSwap?' cmp':'')+'" data-act="none">'+
     '<header class="km-head"><span></span><b>'+c.no+' '+nameOf(c)+'</b><small>'+(i>=0?(i+1)+' / '+list.length:'')+'</small><span></span>'+
       '<button class="km-x" data-act="kclose" aria-label="閉じる">×</button></header>'+
     '<div class="ko-row">'+nav(-1,"‹")+k3dHtml(id,"kFlip",CL.kSwap&&!inSq?"in":null)+nav(1,"›")+'</div>';
@@ -14427,7 +14431,7 @@ function scoutStepHtml(){
 function oppViewModalHtml(){
   const S=CL.S, id=CL.oppView; if(!id||!TEAMS[id])return "";
   const inLg=S.league&&S.league.clubs.includes(id), def=oppDefOf(S,{ opp:id, kind:inLg?"league":"cup" });
-  return '<div class="kmodal" data-act="oppvclose"><div class="kmod-box opp-vbox" data-act="none">'+
+  return '<div class="kmodal mid" data-act="oppvclose"><div class="kmod-box opp-vbox" data-act="none">'+
     '<header class="km-head"><span></span><b>'+teamNameOf(TEAMS[id])+'</b><small></small><span></span><button class="km-x" data-act="oppvclose" aria-label="閉じる">×</button></header>'+
     '<div class="ov-body">'+oppSquadHtml(S,id,def,false)+'</div></div></div>';
 }
@@ -14498,7 +14502,7 @@ function scoutMoreHtml(S,fx,def,lv,no,red){
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";
-  return '<div class="kmodal" data-act="oppclose"><div class="kmod-box" data-act="none">'+
+  return '<div class="kmodal mid" data-act="oppclose"><div class="kmod-box" data-act="none">'+
     '<header class="km-head"><span></span><b>'+c.no+' '+nameOf(c)+'</b><small>相手</small><span></span><button class="km-x" data-act="oppclose" aria-label="閉じる">×</button></header>'+
     '<div class="kdet back">'+cardBackHtml(c,{ ss:0, front:cardHtml(c.id,"s") })+'</div></div></div>';
 }

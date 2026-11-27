@@ -449,3 +449,7 @@ body.th-wl #club .srep .tr-ttl span{background:#fff3c4;padding:2px 8px;font-weig
 body.th-wl #club .srep .tr-pay b{font-family:var(--f-num);font-weight:800;font-size:20px}
 body.th-wl #club .srep .tr-pay i{font-style:normal;font-weight:800;margin-left:6px} body.th-wl #club .srep .tr-pay i.up{color:var(--w-green)} body.th-wl #club .srep .tr-pay i.dn{color:var(--w-loss)}
 body.th-wl #club .tend .btn-sub{margin-bottom:8px}
+/* 背の低いモーダル(KP 設定・選手のカード・相手チーム・相手の選手・成長グラフ)は画面の中段に出す。下からせり上がる動きはそのまま、つまみは出さない(→docs/33 §33.14) */
+body.th-wl #club .kmodal.mid{align-items:center!important;padding:12px 0!important}
+body.th-wl #club .kmodal.mid .kmod-box::before{display:none}
+body.th-wl #club .kmodal.mid .kmod-box{padding-bottom:10px!important}
