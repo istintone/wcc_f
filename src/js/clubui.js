@@ -1318,7 +1318,7 @@ function scoutReport(S,fx,def){
   const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
   const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length+graphOvr(def.graph), ovM=teamOvr(S);   // OVR = 選手 + 成長
   const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]);
-  const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, kx=def.xi.find(s=>s.card.id===def.kp), rk=st?styleRank({ graph:def.graph },st,kx?kx.card.ss:null):null;
   const pick=(f,g)=>xi.filter(f).sort((a,b)=>g(b)-g(a))[0];
   const atk=pick(c=>c.pos!=="GK"&&c.pos!=="DF",c=>c.off*1.2+c.tec+c.spd), dfn=pick(c=>c.pos==="DF"||c.pos==="GK",c=>c.def*1.2+c.pow);
   const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, nm=c=>c?c.no+" "+nameOf(c):"—";
@@ -1348,7 +1348,10 @@ function oppTokenHtml(c,h,x,OR,on){
   return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
     (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
     '<b class="rl '+aptClass(a)+'">'+c.no+'.'+pos+'</b><span class="bd"><i class="no">'+Math.round(cardTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
-    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'</button>';
+    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+
+    // 相手も育成済み・調子を持つ(→docs/31 §31.5): 自分の札と同じ調子のタグと覚醒の★
+    (c.gm!=null?'<em class="mtg m'+c.gm+'">'+MOT_LABEL[c.gm]+'</em>':'')+
+    (c.is>=5||c.ss>=5?'<span class="ptags"><span class="aws">'+(c.is>=5?'<i class="aw is">★</i>':'')+(c.ss>=5?'<i class="aw ss">★</i>':'')+'</span></span>':'')+'</button>';
 }
 /**
  * 相手の SQUAD(→docs/18 §18.5)。上部(レーダー・名前・★・陣形・監督・OVR・KP)と盤面(先発・控え。札を押すとカードの裏)。
@@ -1356,7 +1359,7 @@ function oppTokenHtml(c,h,x,OR,on){
  */
 function oppSquadHtml(S,oppId,def,rep){
   const t=TEAMS[oppId], OR=oppRoles(def), xi=def.xi.map(x=>x.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
-  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, kx=def.xi.find(s=>s.card.id===def.kp), rk=st?styleRank({ graph:def.graph },st,kx?kx.card.ss:null):null;
   const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, v1={}, v2={};
   for(const a in opw){ v1[a]=opw[a]/STAT_MAX; v2[a]=mpw[a]/STAT_MAX; }
   const team=Object.assign({ id:oppId },t);
@@ -1408,6 +1411,9 @@ function scoutRepModalHtml(){
       '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
         '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
         '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
+        // 相手監督のチームスタイルと熟練度(→docs/31 §31.5)。秘書の親密度で読める数が増える(読めないものは黒塗り)
+        (def.mab&&Object.keys(def.mab).length?'<dt>チームスタイル</dt><dd class="sr-mab">'+Object.keys(def.mab).map((k,i)=>i<Math.min(3,lv+1)?
+          '<b>'+(MAB.find(x=>x.id===k)||{ name:k }).name+'</b>':red(30)).join("")+' <small>'+MAB_RANK[def.mabRank||0]+'</small></dd>':'')+
         '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
       no(["01","総合評価"])+
       '<div class="sr-ovr"><div><small>自チーム</small><b>'+R.ovM.toFixed(1)+'</b></div><span>VS</span><div><small>'+t.short+'</small><b>'+R.ovO.toFixed(1)+'</b></div>'+

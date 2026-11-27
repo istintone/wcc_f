@@ -306,6 +306,11 @@ function startEvent(ev){
     syncBoard(G.M); G.hold=ev.side==="H"?700:300;
     return;
   }
+  if(ev.type==="htPlan"){                    // 相手監督のハーフタイムの指示(→docs/31 §31.4)。自分の指示は選んだときに出している
+    if(ev.side==="H")return;
+    say(tag(ev)+"監督「"+ev.name+"！」",false); G.hold=700;
+    return;
+  }
   if(ev.type==="shape"){                     // 相手監督の陣形の変更(→docs/13)。実況の1行で知らせる
     say(tag(ev)+(ev.shape==="pp"?"パワープレー！ 前線に人数をかけてきた":ev.shape==="shield"?"守備固め。前の選手を下げて逃げ切りを図る":"陣形を元に戻した"),ev.shape!=="none");
     G.hold=ev.shape==="none"?400:800;

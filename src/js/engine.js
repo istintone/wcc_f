@@ -138,7 +138,7 @@ function buildTeam(def,side){
     kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null,
     roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}),
     pers:def.pers||"steady", shape:"none", tacSub:false, aim:{ side:0, counter:false }, graph:def.graph||null, setplay:def.setplay||0,
-    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
+    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{}, htc:def.htc||null,
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -709,6 +709,19 @@ function giveBall(M,T,h,x,holder){
   M.ball={ side:T.side, h, x, holder:holder||nearestTo(T,h,x), assist:null };
 }
 
+/**
+ * 相手監督のハーフタイムの指示(→docs/31 §31.4)。自分と同じ指示(htOf)から、前半の結果と性格で1つ選ぶ。
+ * 負けている・攻撃的 → 攻めの軸(O)を上げる型 / 勝っている・慎重 → 守りの軸(D)を上げる型 / ほか → いちばん強い型。同じ型なら強さ(k)の大きいもの
+ */
+function cpuHtPlan(M,T){
+  const O=T===M.home?M.away:M.home, diff=T.score-O.score;
+  const want=diff<0||T.pers==="attack"&&diff===0?"O":diff>0||T.pers==="careful"&&diff===0?"D":"";
+  const list=T.htc.map(id=>htOf(id)).filter(h=>h&&(!want||h.up.includes(want)&&!h.down.includes(want)));
+  const pool=list.length?list:T.htc.map(id=>htOf(id)).filter(Boolean);
+  if(!pool.length)return;
+  const r=mulberry32((M.seed^hashStr("cht:"+T.side))>>>0)(), top=pool.slice().sort((a,b)=>b.k-a.k).slice(0,3), h=top[Math.floor(r*top.length)];
+  orderMatch(M,T.side,{ type:"htPlan", up:h.up, down:h.down, k:h.k, stam:h.stam, pos:h.pos, name:h.name });
+}
 function stepMatch(M){
   if(M.over)return [];
   const from=M.events.length, total=M.len1+M.len2;
@@ -719,6 +732,7 @@ function stepMatch(M){
       p.stam=clamp(1-p.fat,TUNING.stam.min,1);
     }
     M.events.push({ ix:M.ix, min:45, half:1, type:"halftime", hg:M.home.score, ag:M.away.score });
+    for(const T of [M.home,M.away])if(T.cpu&&T.htc)cpuHtPlan(M,T);   // 相手監督のハーフタイムの指示(→docs/31 §31.4)
     return M.events.slice(from);
   }
   if(M.ix>=total){

@@ -3936,6 +3936,10 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 /* トグルのつまみ: 表示中(オン)は右、消している(オフ)は左(ふつうのスイッチと同じ向き。→docs/14 §14.205) */
 #club .lk-tg i{left:18px} #club .lk-tg.off i{left:2px}
 #club .sq-pitch .lk-tg i{left:15px} #club .sq-pitch .lk-tg.off i{left:2px}
+/* 相手の札の調子のタグ・覚醒の★と、視察レポートの相手監督のチームスタイル(→docs/31 §31.5) */
+#club .sqc.opp .mtg{right:2px;bottom:2px}
+#club .srep .sr-mab{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}
+#club .srep .sr-mab small{font-family:var(--f-num);font-weight:800;color:#b8892c}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -4792,7 +4796,12 @@ const TUNING={
          //   aw0・aw1 … 覚醒している人数(初め・終わり)/ ss … KP の特殊能力の★ / isSpread … ★のばらつき(±)
          oppGrow:{ is0:[0,0.5,1,2,3], is1:[1,1.5,2.5,3.5,4.5], aw0:[0,0,0,1,2], aw1:[0,0,1,3,5], ss:[1,2,3,4,5], isSpread:1,
            // 調子(→docs/31 §31.3)。段ごとの [絶不調, 不調, 好調, 絶好調] の割合。倍率は自分と同じ TUNING.grow.mot.mul。ケガは出さない
-           mot:[[0.15,0.35,0.40,0.10],[0.10,0.30,0.45,0.15],[0.10,0.25,0.45,0.20],[0.05,0.20,0.50,0.25],[0.05,0.15,0.50,0.30]] } },
+           mot:[[0.15,0.35,0.40,0.10],[0.10,0.30,0.45,0.15],[0.10,0.25,0.45,0.20],[0.05,0.20,0.50,0.25],[0.05,0.15,0.50,0.30]],
+           // 相手監督(→docs/31 §31.4)。mabRank … 段ごとのチームスタイルの熟練度(0 = I 〜 3 = マスター)/ mabPers … 性格ごとに選ぶ3つ
+           //   htSpec … この段以上は特殊練習の指示も使う(未満は初めからの3つだけ)
+           mabRank:[0,0,1,2,3], htSpec:3,
+           mabPers:{ steady:["dfc","duel","leader"], quick:["counter","hotline","half"], stubborn:["post","setpiece","morale"],
+                     attack:["center","side","spurt"], careful:["dfc","saving","stamina"] } } },
   // 育成(→docs/05 §5.3〜5.6)
   //   startOff/startKeep … 任期の初めの能力のずれ(2026-11-27 から 0。→docs/14 §14.208)。startKeep 以下の能力は覚醒でも上げない
   //   spChance … 練習の枠が特殊練習に差し替わる率(施設レベル1つごと)
@@ -6271,7 +6280,7 @@ function buildTeam(def,side){
     kp:null, kp0:def.kp||null, links:def.links||[], rareOpp:!!def.rareOpp, rare:null,
     roles:Object.assign({ cap:null, pk:null, fk:null, ck:null },def.roles||{}),
     pers:def.pers||"steady", shape:"none", tacSub:false, aim:{ side:0, counter:false }, graph:def.graph||null, setplay:def.setplay||0,
-    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{},
+    ins:insOf({}), injK:def.injK!=null?def.injK:1, mab:def.mab||{}, htc:def.htc||null,
     style:null, rank:null, axis:0, rk:0, rk0:0, fx:{}, linkSum:0, lineOff:0,
     st:{ steps:0, shots:0, onT:0, pass:0, passOk:0,
       fouls:0, yc:0, rc:0, ck:0, fk:0, pk:0, off:0 } };
@@ -6842,6 +6851,19 @@ function giveBall(M,T,h,x,holder){
   M.ball={ side:T.side, h, x, holder:holder||nearestTo(T,h,x), assist:null };
 }
 
+/**
+ * 相手監督のハーフタイムの指示(→docs/31 §31.4)。自分と同じ指示(htOf)から、前半の結果と性格で1つ選ぶ。
+ * 負けている・攻撃的 → 攻めの軸(O)を上げる型 / 勝っている・慎重 → 守りの軸(D)を上げる型 / ほか → いちばん強い型。同じ型なら強さ(k)の大きいもの
+ */
+function cpuHtPlan(M,T){
+  const O=T===M.home?M.away:M.home, diff=T.score-O.score;
+  const want=diff<0||T.pers==="attack"&&diff===0?"O":diff>0||T.pers==="careful"&&diff===0?"D":"";
+  const list=T.htc.map(id=>htOf(id)).filter(h=>h&&(!want||h.up.includes(want)&&!h.down.includes(want)));
+  const pool=list.length?list:T.htc.map(id=>htOf(id)).filter(Boolean);
+  if(!pool.length)return;
+  const r=mulberry32((M.seed^hashStr("cht:"+T.side))>>>0)(), top=pool.slice().sort((a,b)=>b.k-a.k).slice(0,3), h=top[Math.floor(r*top.length)];
+  orderMatch(M,T.side,{ type:"htPlan", up:h.up, down:h.down, k:h.k, stam:h.stam, pos:h.pos, name:h.name });
+}
 function stepMatch(M){
   if(M.over)return [];
   const from=M.events.length, total=M.len1+M.len2;
@@ -6852,6 +6874,7 @@ function stepMatch(M){
       p.stam=clamp(1-p.fat,TUNING.stam.min,1);
     }
     M.events.push({ ix:M.ix, min:45, half:1, type:"halftime", hg:M.home.score, ag:M.away.score });
+    for(const T of [M.home,M.away])if(T.cpu&&T.htc)cpuHtPlan(M,T);   // 相手監督のハーフタイムの指示(→docs/31 §31.4)
     return M.events.slice(from);
   }
   if(M.ix>=total){
@@ -7483,6 +7506,11 @@ function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
   // 相手も育成済み(→docs/31 §31.2): 選手の★・覚醒・特殊能力の★
   const gr=oppGrowth(S,fx.opp);
+  // 相手監督のチームスタイルとハーフタイムの指示(→docs/31 §31.4)。自分と同じ効き目
+  const G=TUNING.club.oppGrow, ti=Math.max(0,Math.min(4,tierOf(fx.opp)-1)), rk=G.mabRank[ti];
+  d.mab={}; for(const k of G.mabPers[d.pers]||G.mabPers.steady)if(TUNING.mab.base[k]!=null)d.mab[k]=TUNING.mab.base[k]*TUNING.mab.rankK[rk];
+  d.mabRank=rk;
+  d.htc=HT_BASIC.map(b=>b.id).concat(ti+1>=G.htSpec?TRAIN_SP.map((t,i)=>"t"+i).filter(id=>{ const h=htOf(id); return h&&!h.pos; }):[]);
   d.xi=d.xi.map(x=>gr[x.card.id]?Object.assign({},x,{ card:gr[x.card.id] }):x);
   d.bench=d.bench.map(c=>gr[c.id]||c);
   if(fx.kind==="league"&&S.grade>=3){
@@ -13940,7 +13968,7 @@ function scoutReport(S,fx,def){
   const t=TEAMS[fx.opp], tier=tierOf(fx.opp), xi=def.xi.map(s=>s.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
   const ovO=xi.reduce((s,c)=>s+cardTotal(c),0)/xi.length+graphOvr(def.graph), ovM=teamOvr(S);   // OVR = 選手 + 成長
   const ax=Object.keys(opw), hi=ax.slice().sort((a,b)=>opw[b]-opw[a]);
-  const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, kx=def.xi.find(s=>s.card.id===def.kp), rk=st?styleRank({ graph:def.graph },st,kx?kx.card.ss:null):null;
   const pick=(f,g)=>xi.filter(f).sort((a,b)=>g(b)-g(a))[0];
   const atk=pick(c=>c.pos!=="GK"&&c.pos!=="DF",c=>c.off*1.2+c.tec+c.spd), dfn=pick(c=>c.pos==="DF"||c.pos==="GK",c=>c.def*1.2+c.pow);
   const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, nm=c=>c?c.no+" "+nameOf(c):"—";
@@ -13970,7 +13998,10 @@ function oppTokenHtml(c,h,x,OR,on){
   return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
     (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
     '<b class="rl '+aptClass(a)+'">'+c.no+'.'+pos+'</b><span class="bd"><i class="no">'+Math.round(cardTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
-    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+'</button>';
+    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+
+    // 相手も育成済み・調子を持つ(→docs/31 §31.5): 自分の札と同じ調子のタグと覚醒の★
+    (c.gm!=null?'<em class="mtg m'+c.gm+'">'+MOT_LABEL[c.gm]+'</em>':'')+
+    (c.is>=5||c.ss>=5?'<span class="ptags"><span class="aws">'+(c.is>=5?'<i class="aw is">★</i>':'')+(c.ss>=5?'<i class="aw ss">★</i>':'')+'</span></span>':'')+'</button>';
 }
 /**
  * 相手の SQUAD(→docs/18 §18.5)。上部(レーダー・名前・★・陣形・監督・OVR・KP)と盤面(先発・控え。札を押すとカードの裏)。
@@ -13978,7 +14009,7 @@ function oppTokenHtml(c,h,x,OR,on){
  */
 function oppSquadHtml(S,oppId,def,rep){
   const t=TEAMS[oppId], OR=oppRoles(def), xi=def.xi.map(x=>x.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
-  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, rk=st?styleRank({ graph:def.graph },st):null;
+  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, kx=def.xi.find(s=>s.card.id===def.kp), rk=st?styleRank({ graph:def.graph },st,kx?kx.card.ss:null):null;
   const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, v1={}, v2={};
   for(const a in opw){ v1[a]=opw[a]/STAT_MAX; v2[a]=mpw[a]/STAT_MAX; }
   const team=Object.assign({ id:oppId },t);
@@ -14030,6 +14061,9 @@ function scoutRepModalHtml(){
       '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
         '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
         '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
+        // 相手監督のチームスタイルと熟練度(→docs/31 §31.5)。秘書の親密度で読める数が増える(読めないものは黒塗り)
+        (def.mab&&Object.keys(def.mab).length?'<dt>チームスタイル</dt><dd class="sr-mab">'+Object.keys(def.mab).map((k,i)=>i<Math.min(3,lv+1)?
+          '<b>'+(MAB.find(x=>x.id===k)||{ name:k }).name+'</b>':red(30)).join("")+' <small>'+MAB_RANK[def.mabRank||0]+'</small></dd>':'')+
         '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
       no(["01","総合評価"])+
       '<div class="sr-ovr"><div><small>自チーム</small><b>'+R.ovM.toFixed(1)+'</b></div><span>VS</span><div><small>'+t.short+'</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
@@ -15946,6 +15980,11 @@ function startEvent(ev){
   if(ev.type==="tired"){
     say(tag(ev)+nm(ev.by)+"の足が止まった");
     syncBoard(G.M); G.hold=ev.side==="H"?700:300;
+    return;
+  }
+  if(ev.type==="htPlan"){                    // 相手監督のハーフタイムの指示(→docs/31 §31.4)。自分の指示は選んだときに出している
+    if(ev.side==="H")return;
+    say(tag(ev)+"監督「"+ev.name+"！」",false); G.hold=700;
     return;
   }
   if(ev.type==="shape"){                     // 相手監督の陣形の変更(→docs/13)。実況の1行で知らせる

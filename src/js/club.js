@@ -182,6 +182,11 @@ function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
   // 相手も育成済み(→docs/31 §31.2): 選手の★・覚醒・特殊能力の★
   const gr=oppGrowth(S,fx.opp);
+  // 相手監督のチームスタイルとハーフタイムの指示(→docs/31 §31.4)。自分と同じ効き目
+  const G=TUNING.club.oppGrow, ti=Math.max(0,Math.min(4,tierOf(fx.opp)-1)), rk=G.mabRank[ti];
+  d.mab={}; for(const k of G.mabPers[d.pers]||G.mabPers.steady)if(TUNING.mab.base[k]!=null)d.mab[k]=TUNING.mab.base[k]*TUNING.mab.rankK[rk];
+  d.mabRank=rk;
+  d.htc=HT_BASIC.map(b=>b.id).concat(ti+1>=G.htSpec?TRAIN_SP.map((t,i)=>"t"+i).filter(id=>{ const h=htOf(id); return h&&!h.pos; }):[]);
   d.xi=d.xi.map(x=>gr[x.card.id]?Object.assign({},x,{ card:gr[x.card.id] }):x);
   d.bench=d.bench.map(c=>gr[c.id]||c);
   if(fx.kind==="league"&&S.grade>=3){
