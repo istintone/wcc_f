@@ -118,7 +118,7 @@ function commBoardHtml(ids,on,info,stars){
   const S=CL.S, xi=S.sq.slice(0,11), L=fillLayout(S);
   const first=CL.comm==="lounge"&&on.length?on[0]:null;   // ラウンジで1人目を選んだら、その人との線と前兆だけを見せる(→docs/07 §7.14)
   const o=id=>{ const g=S.g.pl[id];
-    return { act:"pick", info:info(g,id), hi:on.includes(id), sign:first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm),
+    return { act:"pick", info:info?info(g,id):"", hi:on.includes(id), sign:first?id!==first&&linkSign(S,first,id):commSign(S,id,CL.comm),
       stars:stars!==undefined?stars:CL.comm==="ind"?"is":CL.comm==="meet"?"ss":null }; };
   const bench=S.sq.slice(11).filter(id=>ids.includes(id));
   return '<div class="cm-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
@@ -152,7 +152,7 @@ const COMM_UI={
     // 動物の印と連携の進み(%)は出さない(→docs/14 §14.78)。いまの線の段だけ
     // 線の名前ではなく、2人の関係の言い方で(→docs/14 §14.88)。信頼(黄金線)は金の文字、黄金線の兆しは「信頼の兆し」
     return l.lv>=3?'<b class="rel-gd">信頼</b>':l.lv===2&&l.gold?'<b class="rel-sg">信頼の兆し</b>':REL_LABEL[l.lv]; } },
-  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)", info:g=>'<b class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</b>' }
+  talk:  { sub:"やる気・ケガ", n:1, hint:"1人を選ぶ(落ちている選手ほど大きく戻る。ケガの選手は手当てで治る)" }   // 調子は札の右下のタグで(→docs/14 §14.200)
 };
 /** 育成で起きたことの帯(手順の上に出す) */
 /**
@@ -390,8 +390,9 @@ function sqTokenHtml(id,i,on,o){
     // ヘッダは「背番号.ポジション」、本体はカードの数値と選手名(盤面はどの画面も同じ並び。→docs/14 §14.189)
     (rl?'<b class="rl '+rl.cls+'">'+c.no+'.'+rl.role+'</b>':'<b class="rl">'+c.no+'.'+c.pos+'</b>')+
     '<span class="bd"><i class="no">'+Math.round(statTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
-    // 調子の丸。休憩の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
-    (g?(()=>{ const to=CL.motTo&&CL.motTo[id]; return to!=null&&to>g.mot?'<em class="mt m'+g.mot+' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')"></em>':'<em class="mt m'+g.mot+'"></em>'; })():'')+
+    // 調子のタグ(札の右下、電池の右。ケガは赤十字。→docs/14 §14.200)。休養の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
+    (g?(()=>{ const to=CL.motTo&&CL.motTo[id], up=to!=null&&to>g.mot;
+      return '<em class="mtg m'+g.mot+(up?' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')':'')+'">'+(g.mot===0?'<u>✚</u>':'')+MOT_LABEL[g.mot]+'</em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
       if(!o)return '';   // SQUAD の札には★を出さない(育成は選手の詳細で。覚醒の兆しはタグに。→docs/14 §14.189)

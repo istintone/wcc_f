@@ -3304,3 +3304,16 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 body :is(#club,#scene) .k3d small{font-size:11.5px}
 /* セットプレーの帯(→docs/29 §29.6) */
 #flash.sp b{font-size:34px!important;letter-spacing:.08em}
+/* 調子のタグ(→docs/14 §14.200): 試合の画面を除くすべての盤面で、丸をやめて「絶好調」などの札に。札の右下、電池の右。ケガは赤十字の「✚ケガ」 */
+#club .sqc .mt{display:none}
+#club .sqc .mtg{position:absolute;right:2px;bottom:2px;z-index:3;display:block;padding:0 3px;font-style:normal;font-size:7.5px;font-weight:900;line-height:10px;letter-spacing:-.02em;color:#fff;border-radius:2px;white-space:nowrap;background:var(--mot2)}
+#club .sqc .mtg.m1{background:var(--mot1)} #club .sqc .mtg.m2{background:var(--mot2)} #club .sqc .mtg.m3{background:var(--mot3)} #club .sqc .mtg.m4{background:var(--mot4)}
+#club .sqc .mtg.m0{background:#fff;color:#333;box-shadow:inset 0 0 0 1px #d0101e}
+#club .sqc .mtg.m0 u{text-decoration:none;color:#d0101e;margin-right:1px}
+#club .sqc .mtg.mup{animation:mtgUp 1.1s ease-in-out infinite}
+@keyframes mtgUp{0%,100%{background:var(--m0)}50%{background:var(--m1);box-shadow:0 0 6px 1px var(--m1)}}
+#club .sqc .bd{bottom:11px}   /* 名前は電池と調子のタグの段の上に */
+#club .sq-bench .sqc .mtg{right:1px;bottom:1px;padding:0 2px;font-size:6.5px;line-height:9px}
+#club .sq-bench .sqc .bat{left:2px;bottom:2px;width:13px;height:6px}
+#club .sqc .sg{bottom:12px!important;right:-8px!important}   /* 吹き出しの印は右の辺の下寄り(右下の角は調子のタグ。→docs/14 §14.200) */
+#club .sqc.cmx.inj{opacity:1}   /* ケガは札の右下の「✚ケガ」で伝える(薄くしない。→docs/14 §14.200) */
