@@ -3333,3 +3333,6 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 .ptags .aw.is{color:#ffe600;text-shadow:0 0 3px #ffd23a,0 0 6px rgba(255,210,58,.8)}
 .ptags .aw.ss{color:#1ab2ff;text-shadow:0 0 3px #4aa8ff,0 0 6px rgba(74,168,255,.8)}
 .ptags .aws{display:flex;flex-direction:column;gap:1px}   /* 個人と特殊の★はタグの下に縦に(横だと札の見出しにかかる) */
+/* トグルのつまみ: 表示中(オン)は右、消している(オフ)は左(ふつうのスイッチと同じ向き。→docs/14 §14.205) */
+#club .lk-tg i{left:18px} #club .lk-tg.off i{left:2px}
+#club .sq-pitch .lk-tg i{left:15px} #club .sq-pitch .lk-tg.off i{left:2px}
