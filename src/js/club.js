@@ -227,7 +227,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -453,12 +453,13 @@ function applyResult(S,W,fx,res){
   let got=0;
   if(fx.kind==="league"){
     const ix=SCHED[fx.slot][1], L=S.league;
+    L.round=[];   // この節の他会場の結果(新聞の2面。→docs/34)
     for(const [h,a] of leagueRound(L.clubs,ix)){
       if(h==="me")addTable(L.table,h,a,hg,ag);
       else if(a==="me")addTable(L.table,h,a,ag,hg);
       else{
         const r=simCpu(h,a,(S.seed^hashStr("lg:"+S.term+":"+S.cyc+":"+ix+":"+h))>>>0);
-        addTable(L.table,h,a,r[0],r[1]);
+        addTable(L.table,h,a,r[0],r[1]); L.round.push([h,a,r[0],r[1]]);
       }
     }
     L.done=ix+1;
@@ -592,6 +593,7 @@ function newTerm(S,W){
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
+  S.tstat={};                                   // この任期の選手ごとの成績(選手の調書。→docs/34 §34.4)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   if(S.ht)S.ht.set=S.ht.set.filter(x=>/^b/.test(x));   // ハーフタイムの指示も任期ごと(→docs/26 §26.5)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
@@ -685,6 +687,7 @@ function migrate(S){
   if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
   if(!S.capHist)S.capHist=[];
   if(!S.tgoals)S.tgoals={};
+  if(!S.tstat)S.tstat={};
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま

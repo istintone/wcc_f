@@ -56,6 +56,46 @@ const PAPER_TOPIC={
     lead:["{me}の次の相手は{nopp}。{nstr}と評されるチームで、注目はKPの{nkp}({nst})。{mgr}監督がどんな対策を打つか、戦術にも注目が集まる。"] }
 };
 const POS_JA={ GK:"ゴールキーパー", DF:"ディフェンダー", MF:"ミッドフィルダー", FW:"フォワード" };
+/* ---- 2面・3面の文の型(→docs/34)。同じ試合なら同じ文 ---- */
+/** 採点の寸評: 役割の群(GK / DF / MF / FW)× 出来 */
+const PAPER_PAG={
+  g2:["{g}得点の大暴れ","ひとりで試合を決めた"], g1:["ゴールで結果を残した","値千金の一撃"], a1:["アシストで勝利に貢献","決定機を演出した"],
+  GK:{ hi:["好セーブを連発","ゴールに鍵をかけた"], lo:["失点に絡んだ","至近距離に反応できず"], mid:["無難にまとめた","落ち着いて守った"] },
+  DF:{ hi:["最終ラインを統率","対人で負けなかった"], lo:["裏を取られた","対応が後手に回った"], mid:["及第点の出来","堅実に守った"] },
+  MF:{ hi:["中盤を支配","攻守に走り回った"], lo:["存在感が薄かった","ボールを失う場面が目立った"], mid:["バランスを取った","及第点の出来"] },
+  FW:{ hi:["前線で起点に","何度も裏を脅かした"], lo:["決定機を逃した","前線で孤立した"], mid:["前線で体を張った","及第点の出来"] }
+};
+/** 秘書のコラム・サポーターの投書(結果ごと) */
+const PAPER_COL={
+  win:["試合のあと、ロッカールームはいつもより賑やかでした。この流れを次につなげたいですね。","練習してきた形が試合で出ると、選手たちの顔つきが変わります。"],
+  draw:["勝ち切れなかった悔しさが、選手たちの表情に出ていました。次はきっと。","内容は悪くありませんでした。あとはゴール前の精度です。"],
+  lose:["監督は試合の夜も遅くまでビデオを見ていました。ここからが本当の勝負です。","選手たちは下を向いていません。次の練習から取り返します。"]
+};
+const PAPER_LETTER={
+  win:["スタジアムの声が日に日に大きくなっている。この勢いで上まで行こう!","{mvp}のプレーに鳥肌が立った。次も見に行く!"],
+  draw:["勝ち点1も大事。でも次は勝つところが見たい!","最後まで攻め続けた姿勢は良かった。"],
+  lose:["負けた日こそ声を出す。それがサポーターだ。","次の試合も必ずスタジアムに行く。顔を上げてくれ!"]
+};
+const PAPER_GRP={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", OMF:"MF", SMF:"MF", WG:"FW", CF:"FW" };
+/** 2面・3面の材料を記事に足す(→docs/34 §34.2) */
+function paperPages(S,M,L,RT,art,pick){
+  const H=M.home, A=M.away, all=H.st.steps+A.st.steps;
+  art.stats={ poss:all?Math.round(H.st.steps/all*100):50, sh:H.st.shots, on:H.st.onT, osh:A.st.shots };
+  art.goals=M.events.filter(e=>e.type==="shot"&&e.res==="goal").map(e=>[e.min,e.by,e.side]);
+  const role={}; for(const p of H.players.concat(H.out||[]))role[p.id]=p.role;
+  art.pag=RT.list.filter(x=>x.side==="H").map(x=>{ const c=CARDS[x.id], g=PAPER_GRP[role[x.id]]||(c.pos==="GK"?"GK":c.pos==="DF"?"DF":c.pos==="FW"?"FW":"MF"), T=PAPER_PAG[g];
+    const t=x.g>=2?pick(PAPER_PAG.g2):x.g===1?pick(PAPER_PAG.g1):x.a>=1?pick(PAPER_PAG.a1):x.r>=7?pick(T.hi):x.r<=5.5?pick(T.lo):pick(T.mid);
+    return [x.id,x.r,paperFill(t,{ g:x.g })]; });
+  if(S.league&&S.league.table&&typeof sortTable==="function"){
+    const ord=sortTable(S.league.table); art.table=ord.slice(0,5).concat(ord.indexOf("me")>=5?["me"]:[]).map(id=>{ const t=S.league.table[id]; return [id,ord.indexOf(id)+1,t.p,t.gf-t.ga,t.pts]; });
+    art.lgName=typeof compNm==="function"?compNm("LG"):"LEAGUE";
+    if(L.comp==="LG"&&S.league.round)art.round=S.league.round.slice(0,3);
+  }
+  const nx=typeof upcoming==="function"?(upcoming(S,1)||[])[0]:null; if(nx&&nx.opp&&TEAMS[nx.opp])art.next={ opp:nx.opp, comp:nx.comp };
+  const k=art.kind==="win"||art.kind==="rout"||art.kind==="pkwin"||art.kind==="title"?"win":art.kind==="draw"?"draw":"lose";
+  art.col=pick(PAPER_COL[k]); art.letter=paperFill(pick(PAPER_LETTER[k]),{ mvp:art.mvp&&CARDS[art.mvp.id]?nameOf(CARDS[art.mvp.id]):"" });
+  if(S.biz&&S.biz.sp)art.ad={ name:S.biz.sp.name, rank:S.biz.sp.rank, ind:S.biz.sp.ind };
+}
 /** 試合の外で起きたこと(新加入・スタジアム・施設)を次の号のために積む */
 function paperNews(S,n){ (S.pnews||(S.pnews=[])).push(n); if(S.pnews.length>8)S.pnews.shift(); }
 
@@ -101,6 +141,7 @@ function makeArticle(S,M,L,RT){
   const art={ no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind, topic:"match",
     head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null };
   paperTopic(S,L,art,v,pick,rng);
+  paperPages(S,M,L,RT,art,pick);   // 2面・3面(→docs/34)
   return art;
 }
 /** 一面の話題を選び、見出し・リード・写真を差し替える(試合の結果は art.brief に残す) */

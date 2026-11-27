@@ -4612,6 +4612,66 @@ body.th-wl #club .kmodal.enter .kmod-box{animation:kmUp .26s cubic-bezier(.2,.8,
 @keyframes kmUp{from{transform:translateY(70px);opacity:.3}to{transform:none;opacity:1}}
 body.th-wl #club .km-x,body.th-wl #club .sr-x{width:36px!important;height:36px!important;background:var(--w-ink)!important;color:#fff!important;font-size:18px!important;border-radius:0!important}
 @media (prefers-reduced-motion:reduce){body.th-wl #club .cl-main.sl-r,body.th-wl #club .cl-main.sl-l,body.th-wl #club .kmodal.enter,body.th-wl #club .kmodal.enter .kmod-box{animation:none}}
+
+/* =========================================================================
+   新聞を1号3面に(→docs/34 §34.2・§34.7)。ピンクの紙(イタリアのスポーツ紙)。書体はゲームと同じ
+   ========================================================================= */
+body.th-wl{ --pp-pink:#f7e3e3; --pp-pink2:#efcfd0; --pp-ink:#2a1416; }
+body.th-wl .paper-wrap .pp-pages{display:flex;transition:transform .28s cubic-bezier(.2,.8,.2,1);align-items:flex-start}
+body.th-wl .paper-wrap .pp-pages>.paper{flex:0 0 100%;min-width:0;margin:0!important}
+body.th-wl .paper-wrap{overflow-x:hidden}
+body.th-wl .paper.v2{background:var(--pp-pink)!important;color:var(--pp-ink)}
+body.th-wl .paper .pp-folio{display:flex;justify-content:space-between;font-family:var(--f-num);font-weight:800;letter-spacing:.12em;font-size:12px;background:var(--pp-ink);color:var(--pp-pink);padding:3px 8px;margin-bottom:8px}
+body.th-wl .paper .pp-k{margin:0 0 4px;font-family:var(--f-num);font-weight:800;letter-spacing:.14em;font-size:12px;color:var(--w-red);border-bottom:1px solid var(--pp-ink);padding-bottom:2px}
+body.th-wl .paper .pp-sec{margin:0 0 10px}
+body.th-wl .paper .pp-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+body.th-wl .paper .pp-two>*{min-width:0}
+body.th-wl .paper .pp-data{margin:10px 0 4px}
+body.th-wl .paper .pp-nums{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center}
+body.th-wl .paper .pp-nums div{background:#fff8f8;padding:6px}
+body.th-wl .paper .pp-nums b{display:block;font-family:var(--f-num);font-weight:800;font-size:20px;line-height:1}
+body.th-wl .paper .pp-nums span{font-size:10.5px;color:var(--w-mute)}
+body.th-wl .paper .pp-goals{margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px}
+body.th-wl .paper .pp-goals li{list-style:none} body.th-wl .paper .pp-goals b{font-family:var(--f-num);margin-right:4px}
+body.th-wl .paper .pp-pag{margin:0;padding:0}
+body.th-wl .paper .pp-pag li{list-style:none;display:grid;grid-template-columns:1fr auto;gap:0 6px;padding:4px 0;border-bottom:1px solid var(--pp-pink2)}
+body.th-wl .paper .pp-pag b{font-weight:800;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.th-wl .paper .pp-pag em{font-style:normal;font-family:var(--f-num);font-weight:800;font-size:18px;line-height:1;grid-row:span 2;align-self:center}
+body.th-wl .paper .pp-pag em.hi{color:var(--w-red)} body.th-wl .paper .pp-pag em.lo{color:var(--w-blue)}
+body.th-wl .paper .pp-pag small{font-size:11px;color:#5a2b2f}
+body.th-wl .paper .pp-tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+body.th-wl .paper .pp-tbl th{font-family:var(--f-num);font-weight:700;font-size:11px;letter-spacing:.08em;text-align:right;border-bottom:2px solid var(--pp-ink);padding:2px 4px}
+body.th-wl .paper .pp-tbl td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--pp-pink2)}
+body.th-wl .paper .pp-tbl th:nth-child(2),body.th-wl .paper .pp-tbl td:nth-child(2){text-align:left}
+body.th-wl .paper .pp-tbl tr.me td{background:#fff8f8;font-weight:800;color:var(--w-red)}
+body.th-wl .paper .pp-round{display:grid;gap:3px;font-size:12px}
+body.th-wl .paper .pp-round div{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+body.th-wl .paper .pp-round div span:last-child{text-align:right}
+body.th-wl .paper .pp-round b{font-family:var(--f-num);font-weight:800}
+body.th-wl .paper .pp-box{background:#fff8f8;padding:8px 10px;margin:0 0 10px}
+body.th-wl .paper .pp-box b{font-weight:800} body.th-wl .paper .pp-box p{margin:4px 0 0;font-size:12.5px}
+body.th-wl .paper .pp-rum{margin:0;padding:0 0 0 16px;font-size:12px}
+body.th-wl .paper .pp-col{display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:start}
+body.th-wl .paper .pp-col p{margin:0;font-size:12px}
+body.th-wl .paper .pp-letter{margin:0 0 10px;font-size:12.5px;border:1px dashed #b9878a;padding:8px}
+body.th-wl .paper .pp-letter small{display:block;text-align:right;color:var(--w-mute)}
+body.th-wl .paper .pp-ad{background:#111;color:#fff;padding:10px;text-align:center;display:grid;gap:2px}
+body.th-wl .paper .pp-ad b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;letter-spacing:.04em}
+body.th-wl .paper .pp-ad small{color:#ccc}
+body.th-wl .pp-pager{display:flex;justify-content:center;gap:8px;margin:8px 0 4px}
+body.th-wl .pp-pager button{min-width:44px;min-height:36px;border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--t-rule);font-family:var(--f-num);font-weight:800;font-size:15px;cursor:pointer}
+body.th-wl .pp-pager button[aria-current="true"]{background:var(--w-red);color:#fff;box-shadow:none}
+@media (prefers-reduced-motion:reduce){body.th-wl .paper-wrap .pp-pages{transition:none}}
+body.th-wl #club .paper-wrap .pp-pages{width:100%;max-width:420px;flex:none}
+/* 新聞: めくる紙面は傾けない(左右が切れないように)。幅は今の新聞と同じ(左右に号の ‹ › の場所)。書体はゲームと同じゴシック(→docs/34 §34.7) */
+body.th-wl #club .paper-wrap .pp-view{width:calc(100% - 84px);max-width:380px;overflow:hidden;flex:none}
+body.th-wl #club .paper-wrap .pp-pages{width:100%!important;max-width:none!important}
+body.th-wl #club .paper-wrap .pp-pages>.paper.v2{transform:none!important;width:100%!important;max-width:none!important;box-sizing:border-box}
+body.th-wl #club .paper.v2,body.th-wl #club .paper.v2 p,body.th-wl #club .paper.v2 li,body.th-wl #club .paper.v2 blockquote,body.th-wl #club .paper.v2 td,body.th-wl #club .paper.v2 small{font-family:var(--f-jp)}
+body.th-wl #club .paper.v2 .pp-folio,body.th-wl #club .paper.v2 .pp-k{margin-left:10px;margin-right:10px}
+body.th-wl #club .paper.v2 .pp-sec,body.th-wl #club .paper.v2 .pp-data,body.th-wl #club .paper.v2 .pp-box,body.th-wl #club .paper.v2 .pp-letter,body.th-wl #club .paper.v2 .pp-two{margin-left:10px;margin-right:10px}
+body.th-wl #club .paper.v2 .pp-two .pp-sec{margin-left:0;margin-right:0}
+body.th-wl #club .paper.v2 .pp-ad{margin:0 10px}
 </style>
 </head>
 <body>
@@ -7712,7 +7772,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, cprof:null, coffers:null, mis:null };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -7938,12 +7998,13 @@ function applyResult(S,W,fx,res){
   let got=0;
   if(fx.kind==="league"){
     const ix=SCHED[fx.slot][1], L=S.league;
+    L.round=[];   // この節の他会場の結果(新聞の2面。→docs/34)
     for(const [h,a] of leagueRound(L.clubs,ix)){
       if(h==="me")addTable(L.table,h,a,hg,ag);
       else if(a==="me")addTable(L.table,h,a,ag,hg);
       else{
         const r=simCpu(h,a,(S.seed^hashStr("lg:"+S.term+":"+S.cyc+":"+ix+":"+h))>>>0);
-        addTable(L.table,h,a,r[0],r[1]);
+        addTable(L.table,h,a,r[0],r[1]); L.round.push([h,a,r[0],r[1]]);
       }
     }
     L.done=ix+1;
@@ -8077,6 +8138,7 @@ function newTerm(S,W){
   S.rec={ w:0, d:0, l:0, gf:0, ga:0 }; S.last=null; S.layout={};
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
+  S.tstat={};                                   // この任期の選手ごとの成績(選手の調書。→docs/34 §34.4)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   if(S.ht)S.ht.set=S.ht.set.filter(x=>/^b/.test(x));   // ハーフタイムの指示も任期ごと(→docs/26 §26.5)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
@@ -8170,6 +8232,7 @@ function migrate(S){
   if(!S.roles)S.roles={ cap:null, pk:null, fk:null, ck:null };
   if(!S.capHist)S.capHist=[];
   if(!S.tgoals)S.tgoals={};
+  if(!S.tstat)S.tstat={};
   if(!S.paper)S.paper=[];
   if(S.mgr===undefined)S.mgr=null;                 // 監督ライセンスは次に開いたときに登録する
   if(S.club===undefined)S.club=S.played>0||S.term>1?defaultClub():null;   // 途中の任期は今までのクラブのまま
@@ -9227,6 +9290,7 @@ function doIndTrain(S,id,choice){
       const card=CARDS[id], room=card[k]+(g.up[k]||0)<STAT_MAX;
       if(room)g.up[k]=(g.up[k]||0)+I.starUp;
       out.push(nameOf(card)+" 個人能力 ★"+g.is+(room?"("+STAT_LABEL[k]+" +"+I.starUp+")":""));
+      plHist(S,id,"個人能力 ★"+g.is+(room?"("+STAT_LABEL[k]+" +"+I.starUp+")":""));
     }else{
       g.ie=Math.floor(g.ie*P.failKeep); res=2;
       if(g.mot>0)g.mot=Math.max(1,g.mot-1);
@@ -9347,7 +9411,7 @@ function doMeeting(S,id,choice){
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
       (S.persSeen||(S.persSeen={}))[id]=true;   // 性格が分かった(カードの裏面に載る。任期をまたいで残る。→docs/24 G3)
-      out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
+      out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss); plHist(S,id,"特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;
       if(g.mot>0)g.mot=Math.max(1,g.mot-1);
@@ -9421,7 +9485,7 @@ function awaken(S,id,rng,out){
   const got=STATS.filter(k=>add[k]).map(k=>{ g.up[k]=(g.up[k]||0)+add[k]; return STAT_LABEL[k]+" +"+add[k]; });
   const sum=STATS.reduce((a,k)=>a+(add[k]||0),0);
   g.is=5; g.q=false; g.ie=0;
-  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")"+GAIN_MARK[sum]);
+  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")"+GAIN_MARK[sum]); plHist(S,id,"覚醒("+got.join("・")+")");
   if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
@@ -9450,7 +9514,7 @@ function afterMatchGrowth(S,fx,res){
     for(const id of played){
       const g=S.g.pl[id];
       if(g.q&&rng()<I.awakeP)awaken(S,id,rng,out);
-      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
+      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; plHist(S,id,"特殊能力 ★5"); out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
     }
     // 黄金線は1試合に1本まで(兆しのある組のうち、たねで1つ選ぶ)
     const cand=Object.keys(S.g.links).filter(k=>{ const l=S.g.links[k], p=k.split("|");
@@ -9952,6 +10016,8 @@ function playerTagK(S,id,key){
 const pTagOn=(S,id,key)=>pTags(S,id).some(t=>TAGS[t.id]&&TAGS[t.id].fx&&TAGS[t.id].fx[key]==="on");
 const pHas=(S,id,tid)=>pTags(S,id).some(t=>t.id===tid);
 /** 選手のタグを付ける。反対のタグは消す・同じは期限を延ばす。汎用は playerMax まで、特性は1つ(付け替え) */
+/** 選手の育成の記録(選手の調書の HISTORY。→docs/34 §34.4)。[試合の番号, 文]。新しいものが後ろで最大 8 件 */
+function plHist(S,id,t){ const g=S.g&&S.g.pl[id]; if(!g)return; const L=g.hist||(g.hist=[]); L.push([S.played,t]); if(L.length>8)L.shift(); }
 function addPlayerTag(S,id,tid,out){
   const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
   const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
@@ -9960,6 +10026,7 @@ function addPlayerTag(S,id,tid,out){
   if(tid==="gossip"&&++pCnt(g).gos>=TUNING.tag.fame.gossipN&&!pHas(S,id,"trouble"))addPlayerTag(S,id,"trouble",out);
   const cur=L.find(t=>t.id===tid);
   if(cur){ cur.n=tagDur(T); return; }
+  if(T.kind!=="fame"||!T.bad)plHist(S,id,"タグ「"+T.name+"」");
   if(T.kind==="trait"){ const j=L.findIndex(t=>TAGS[t.id]&&TAGS[t.id].kind==="trait"); if(j>=0){ out.push("🏷 "+nm+" の特性「"+TAGS[L[j].id].name+"」を付け替えた"); L.splice(j,1); } }
   else if(T.kind==="gen"){
     // 汎用は「任期まで続くもの」と「一過性(期限・条件で消える)」で別の枠。続くものは一過性に押し出されない(→docs/23 §23.1)
@@ -11740,6 +11807,46 @@ const PAPER_TOPIC={
     lead:["{me}の次の相手は{nopp}。{nstr}と評されるチームで、注目はKPの{nkp}({nst})。{mgr}監督がどんな対策を打つか、戦術にも注目が集まる。"] }
 };
 const POS_JA={ GK:"ゴールキーパー", DF:"ディフェンダー", MF:"ミッドフィルダー", FW:"フォワード" };
+/* ---- 2面・3面の文の型(→docs/34)。同じ試合なら同じ文 ---- */
+/** 採点の寸評: 役割の群(GK / DF / MF / FW)× 出来 */
+const PAPER_PAG={
+  g2:["{g}得点の大暴れ","ひとりで試合を決めた"], g1:["ゴールで結果を残した","値千金の一撃"], a1:["アシストで勝利に貢献","決定機を演出した"],
+  GK:{ hi:["好セーブを連発","ゴールに鍵をかけた"], lo:["失点に絡んだ","至近距離に反応できず"], mid:["無難にまとめた","落ち着いて守った"] },
+  DF:{ hi:["最終ラインを統率","対人で負けなかった"], lo:["裏を取られた","対応が後手に回った"], mid:["及第点の出来","堅実に守った"] },
+  MF:{ hi:["中盤を支配","攻守に走り回った"], lo:["存在感が薄かった","ボールを失う場面が目立った"], mid:["バランスを取った","及第点の出来"] },
+  FW:{ hi:["前線で起点に","何度も裏を脅かした"], lo:["決定機を逃した","前線で孤立した"], mid:["前線で体を張った","及第点の出来"] }
+};
+/** 秘書のコラム・サポーターの投書(結果ごと) */
+const PAPER_COL={
+  win:["試合のあと、ロッカールームはいつもより賑やかでした。この流れを次につなげたいですね。","練習してきた形が試合で出ると、選手たちの顔つきが変わります。"],
+  draw:["勝ち切れなかった悔しさが、選手たちの表情に出ていました。次はきっと。","内容は悪くありませんでした。あとはゴール前の精度です。"],
+  lose:["監督は試合の夜も遅くまでビデオを見ていました。ここからが本当の勝負です。","選手たちは下を向いていません。次の練習から取り返します。"]
+};
+const PAPER_LETTER={
+  win:["スタジアムの声が日に日に大きくなっている。この勢いで上まで行こう!","{mvp}のプレーに鳥肌が立った。次も見に行く!"],
+  draw:["勝ち点1も大事。でも次は勝つところが見たい!","最後まで攻め続けた姿勢は良かった。"],
+  lose:["負けた日こそ声を出す。それがサポーターだ。","次の試合も必ずスタジアムに行く。顔を上げてくれ!"]
+};
+const PAPER_GRP={ GK:"GK", CB:"DF", SB:"DF", DMF:"MF", CMF:"MF", OMF:"MF", SMF:"MF", WG:"FW", CF:"FW" };
+/** 2面・3面の材料を記事に足す(→docs/34 §34.2) */
+function paperPages(S,M,L,RT,art,pick){
+  const H=M.home, A=M.away, all=H.st.steps+A.st.steps;
+  art.stats={ poss:all?Math.round(H.st.steps/all*100):50, sh:H.st.shots, on:H.st.onT, osh:A.st.shots };
+  art.goals=M.events.filter(e=>e.type==="shot"&&e.res==="goal").map(e=>[e.min,e.by,e.side]);
+  const role={}; for(const p of H.players.concat(H.out||[]))role[p.id]=p.role;
+  art.pag=RT.list.filter(x=>x.side==="H").map(x=>{ const c=CARDS[x.id], g=PAPER_GRP[role[x.id]]||(c.pos==="GK"?"GK":c.pos==="DF"?"DF":c.pos==="FW"?"FW":"MF"), T=PAPER_PAG[g];
+    const t=x.g>=2?pick(PAPER_PAG.g2):x.g===1?pick(PAPER_PAG.g1):x.a>=1?pick(PAPER_PAG.a1):x.r>=7?pick(T.hi):x.r<=5.5?pick(T.lo):pick(T.mid);
+    return [x.id,x.r,paperFill(t,{ g:x.g })]; });
+  if(S.league&&S.league.table&&typeof sortTable==="function"){
+    const ord=sortTable(S.league.table); art.table=ord.slice(0,5).concat(ord.indexOf("me")>=5?["me"]:[]).map(id=>{ const t=S.league.table[id]; return [id,ord.indexOf(id)+1,t.p,t.gf-t.ga,t.pts]; });
+    art.lgName=typeof compNm==="function"?compNm("LG"):"LEAGUE";
+    if(L.comp==="LG"&&S.league.round)art.round=S.league.round.slice(0,3);
+  }
+  const nx=typeof upcoming==="function"?(upcoming(S,1)||[])[0]:null; if(nx&&nx.opp&&TEAMS[nx.opp])art.next={ opp:nx.opp, comp:nx.comp };
+  const k=art.kind==="win"||art.kind==="rout"||art.kind==="pkwin"||art.kind==="title"?"win":art.kind==="draw"?"draw":"lose";
+  art.col=pick(PAPER_COL[k]); art.letter=paperFill(pick(PAPER_LETTER[k]),{ mvp:art.mvp&&CARDS[art.mvp.id]?nameOf(CARDS[art.mvp.id]):"" });
+  if(S.biz&&S.biz.sp)art.ad={ name:S.biz.sp.name, rank:S.biz.sp.rank, ind:S.biz.sp.ind };
+}
 /** 試合の外で起きたこと(新加入・スタジアム・施設)を次の号のために積む */
 function paperNews(S,n){ (S.pnews||(S.pnews=[])).push(n); if(S.pnews.length>8)S.pnews.shift(); }
 
@@ -11785,6 +11892,7 @@ function makeArticle(S,M,L,RT){
   const art={ no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind, topic:"match",
     head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null };
   paperTopic(S,L,art,v,pick,rng);
+  paperPages(S,M,L,RT,art,pick);   // 2面・3面(→docs/34)
   return art;
 }
 /** 一面の話題を選び、見出し・リード・写真を差し替える(試合の結果は art.brief に残す) */
@@ -12895,6 +13003,10 @@ function showClub(keepScroll){
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
   holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
+  { const pp=el.querySelector(".pp-pages"); if(pp){ let x0=null; const n=pp.children.length;   // 新聞: 横のスワイプで面をめくる(→docs/34)
+      pp.addEventListener("touchstart",e=>{ x0=e.touches[0].clientX; },{ passive:true });
+      pp.addEventListener("touchend",e=>{ if(x0==null)return; const d=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(d)<40)return;
+        const k=Math.max(0,Math.min(n-1,(CL.paperPg||0)+(d<0?1:-1))); const btn=el.querySelector('.pp-pager [data-p="'+k+'"]'); if(btn)btn.click(); }); } }
   // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
   const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
   if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
@@ -14577,7 +14689,9 @@ function paperHtml(i){
   // 写真: 選手(話題の選手・相手の KP)か、スタジアム・施設ならスタジアムの絵(→docs/14 §14.135)
   const heroArt=img?'<img class="pp-ph" src="'+img+'" alt="">':(a.stadLv?'<div class="pp-stad">'+stadiumSvg(a.stadLv)+'</div>':'');
   const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
-  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper v2 k-'+a.kind+'" data-act="none">'+
+  const pg=CL.paperPg||0, p2=paperPage2(a), p3=paperPage3(a), np=1+(p2?1:0)+(p3?1:0);
+  const pager=np>1?'<nav class="pp-pager" data-act="none">'+Array.from({ length:np },(_,k)=>'<button data-act="ppage" data-p="'+k+'"'+(k===pg?' aria-current="true"':'')+'>'+(k+1)+'</button>').join("")+'</nav>':'';
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<div class="pp-view" data-act="none"><div class="pp-pages" data-act="none" style="transform:translateX('+(-100*pg)+'%)"><article class="paper v2 k-'+a.kind+'" data-act="none">'+
     '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
     '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
     '<div class="pp-hero">'+
@@ -14588,8 +14702,41 @@ function paperHtml(i){
     (isM?'':'<div class="pp-res"><b>RISULTATO</b><span>'+compNm(a.comp)+(a.label?' '+compEn(a).round:'')+'</span>'+score.replace('pp-score','pp-score sm')+'</div>')+
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
-    (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
-    '</article></div>';
+    paperMatchBox(a)+
+    (!p3&&a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
+    '</article>'+(p2||'')+(p3||'')+'</div></div>'+pager+'</div>';
+}
+/** 1面の下: 試合のデータ(支配率・シュート・得点の経過。→docs/34 §34.7) */
+function paperMatchBox(a){
+  if(!a.stats)return '';
+  const gl=(a.goals||[]).map(g=>'<li><b>'+g[0]+"'</b>"+(CARDS[g[1]]?nameOf(CARDS[g[1]]):'')+(g[2]==="A"?' <small>('+(a.opp&&TEAMS[a.opp]?TEAMS[a.opp].short:'')+')</small>':'')+'</li>').join("");
+  return '<section class="pp-data"><p class="pp-k">LA PARTITA</p><div class="pp-nums"><div><b>'+a.stats.poss+'%</b><span>支配率</span></div><div><b>'+a.stats.sh+' / '+a.stats.on+'</b><span>シュート / 枠内</span></div></div>'+
+    (gl?'<ol class="pp-goals">'+gl+'</ol>':'')+'</section>';
+}
+/** 2面: 採点(PAGELLE)・順位表・他会場の結果 */
+function paperPage2(a){
+  if(!a.pag||!a.pag.length)return '';
+  const row=x=>'<li><b>'+(CARDS[x[0]]?nameOf(CARDS[x[0]]):'')+'</b><em class="'+(x[1]>=7?'hi':x[1]<=5.5?'lo':'')+'">'+x[1].toFixed(1)+'</em><small>'+x[2]+'</small></li>';
+  const half=Math.ceil(a.pag.length/2);
+  const nm=id=>id==="me"?myTeam(CL.S).name:TEAMS[id]?teamNameOf(TEAMS[id]):id;
+  const tbl=a.table?'<section class="pp-sec"><p class="pp-k">CLASSIFICA ・ '+(a.lgName||'LEAGUE')+'</p><table class="pp-tbl"><tr><th>#</th><th>CLUB</th><th>P</th><th>GD</th><th>PTS</th></tr>'+
+    a.table.map(r=>'<tr'+(r[0]==="me"?' class="me"':'')+'><td>'+r[1]+'</td><td>'+nm(r[0])+'</td><td>'+r[2]+'</td><td>'+(r[3]>0?'+':'')+r[3]+'</td><td>'+r[4]+'</td></tr>').join("")+'</table></section>':'';
+  const rd=a.round&&a.round.length?'<section class="pp-sec"><p class="pp-k">ALTRI RISULTATI ・ 他会場</p><div class="pp-round">'+a.round.map(r=>'<div><span>'+nm(r[0])+'</span><b>'+r[2]+' - '+r[3]+'</b><span>'+nm(r[1])+'</span></div>').join("")+'</div></section>':'';
+  return '<article class="paper v2 pp-p2" data-act="none"><div class="pp-folio"><span>PAGELLE &amp; CAMPIONATO</span><span>2</span></div>'+
+    '<section class="pp-sec"><p class="pp-k">PAGELLE ・ 採点</p><div class="pp-two"><ul class="pp-pag">'+a.pag.slice(0,half).map(row).join("")+'</ul><ul class="pp-pag">'+a.pag.slice(half).map(row).join("")+'</ul></div></section>'+
+    tbl+rd+'</article>';
+}
+/** 3面: 次の相手・ゴシップ・秘書のコラム・サポーターの投書・スポンサーの広告 */
+function paperPage3(a){
+  if(!a.col&&!a.side.length)return '';
+  const S=CL.S, T=a.next&&TEAMS[a.next.opp], kp=T&&T.kp&&CARDS[T.kp], st=kp?styleOfCard(kp):null, pers=T?(TUNING.coach.pers[persOfClub(a.next.opp)]||{}).name:'';
+  const next=T?'<section class="pp-box"><p class="pp-k">PROSSIMA ・ NEXT</p><b>'+teamNameOf(T)+' <small>'+"★".repeat(tierOf(a.next.opp))+'</small></b><p>'+(COMPS[a.next.comp]?compNm(a.next.comp)+'。':'')+(kp?'KP は '+nameOf(kp)+(st?'('+st.name+')':'')+'。':'')+(pers?'相手監督は'+pers+'型。':'')+'</p></section>':'';
+  const ind=a.ad&&typeof SP_IND!=="undefined"?(SP_IND.find(x=>x.id===a.ad.ind)||{}).name:'';
+  return '<article class="paper v2 pp-p3" data-act="none"><div class="pp-folio"><span>PROSSIMA &amp; PETTEGOLEZZI</span><span>3</span></div>'+next+
+    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></section>':'')+
+    (a.col?'<section class="pp-sec"><p class="pp-k">LA RUBRICA ・ コラム</p><div class="pp-col">'+secAv(S)+'<p><b>秘書 '+secOf(S).name+'</b><br>'+a.col+'</p></div></section>':'')+'</div>'+
+    (a.letter?'<p class="pp-letter">「'+a.letter+'」<small>'+(S.club?S.club.town:'')+'・サポーター</small></p>':'')+
+    (a.ad?'<div class="pp-ad"><small>OFFICIAL SPONSOR</small><b>'+a.ad.name+'</b><small>'+ind+' '+"★".repeat(a.ad.rank||1)+'</small></div>':'')+'</article>';
 }
 /** 答えが要る出来事は1つずつ出し、ほかは数だけ(→docs/33 GD1) */
 function oneAtATime(list){ const L=list.filter(Boolean); if(!L.length)return ''; return (L.length>1?'<p class="ev-count">1 / '+L.length+'</p>':'')+L[0]; }
@@ -14811,6 +14958,10 @@ function finishFixture(M){
   const RT0=matchRatings(M), goals={}, rate={};
   for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")goals[e.by]=(goals[e.by]||0)+1;
   for(const x of RT0.list)if(x.side==="H")rate[x.id]=x.r;
+  { const T=CL.S.tstat||(CL.S.tstat={}), st=id=>T[id]||(T[id]={ ap:0, gl:0, as:0, mvp:0, rs:0, rn:0 });   // この任期の成績(→docs/34 §34.4)
+    for(const id of played){ const s=st(id); s.ap++; if(rate[id]!=null){ s.rs+=rate[id]; s.rn++; } }
+    for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"){ st(e.by).gl++; if(e.as)st(e.as).as++; }
+    if(RT0.mvp&&played.includes(RT0.mvp)){ st(RT0.mvp).mvp++; plHist(CL.S,RT0.mvp,"MVP(採点 "+(rate[RT0.mvp]||0).toFixed(1)+")"); } }
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
@@ -14839,8 +14990,10 @@ function onClubClick(e){
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
   if(act==="propick"){ const i=+b.dataset.i, ln=answerProposal(S,i<0?null:i); if(CL.chat)CL.chat.lines=CL.chat.lines.concat(ln); save(); showClub(true); setTimeout(()=>infoBar(ln.filter(x=>/^🏷/.test(x))),0); return; }
   if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
-  if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
-  if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
+  if(act==="ppage"){ CL.paperPg=+b.dataset.p; const box=document.querySelector(".pp-pages"); if(box){ box.style.transform="translateX("+(-100*CL.paperPg)+"%)";
+      document.querySelectorAll(".pp-pager [data-p]").forEach(x=>x.setAttribute("aria-current",+x.dataset.p===CL.paperPg)); } return; }   // 新聞の面をめくる(→docs/34)
+  if(act==="paper"){ CL.paperPg=0; CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
+  if(act==="news"){ CL.paperPg=0; CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }

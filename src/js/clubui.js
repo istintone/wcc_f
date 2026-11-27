@@ -72,6 +72,10 @@ function showClub(keepScroll){
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
   holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
+  { const pp=el.querySelector(".pp-pages"); if(pp){ let x0=null; const n=pp.children.length;   // 新聞: 横のスワイプで面をめくる(→docs/34)
+      pp.addEventListener("touchstart",e=>{ x0=e.touches[0].clientX; },{ passive:true });
+      pp.addEventListener("touchend",e=>{ if(x0==null)return; const d=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(d)<40)return;
+        const k=Math.max(0,Math.min(n-1,(CL.paperPg||0)+(d<0?1:-1))); const btn=el.querySelector('.pp-pager [data-p="'+k+'"]'); if(btn)btn.click(); }); } }
   // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
   const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
   if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
@@ -1754,7 +1758,9 @@ function paperHtml(i){
   // 写真: 選手(話題の選手・相手の KP)か、スタジアム・施設ならスタジアムの絵(→docs/14 §14.135)
   const heroArt=img?'<img class="pp-ph" src="'+img+'" alt="">':(a.stadLv?'<div class="pp-stad">'+stadiumSvg(a.stadLv)+'</div>':'');
   const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
-  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<article class="paper v2 k-'+a.kind+'" data-act="none">'+
+  const pg=CL.paperPg||0, p2=paperPage2(a), p3=paperPage3(a), np=1+(p2?1:0)+(p3?1:0);
+  const pager=np>1?'<nav class="pp-pager" data-act="none">'+Array.from({ length:np },(_,k)=>'<button data-act="ppage" data-p="'+k+'"'+(k===pg?' aria-current="true"':'')+'>'+(k+1)+'</button>').join("")+'</nav>':'';
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<div class="pp-view" data-act="none"><div class="pp-pages" data-act="none" style="transform:translateX('+(-100*pg)+'%)"><article class="paper v2 k-'+a.kind+'" data-act="none">'+
     '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
     '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
     '<div class="pp-hero">'+
@@ -1765,8 +1771,41 @@ function paperHtml(i){
     (isM?'':'<div class="pp-res"><b>RISULTATO</b><span>'+compNm(a.comp)+(a.label?' '+compEn(a).round:'')+'</span>'+score.replace('pp-score','pp-score sm')+'</div>')+
     '<h1 class="pp-h1">'+a.head+'</h1><p class="pp-sub">'+a.sub+'</p>'+
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
-    (a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
-    '</article></div>';
+    paperMatchBox(a)+
+    (!p3&&a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
+    '</article>'+(p2||'')+(p3||'')+'</div></div>'+pager+'</div>';
+}
+/** 1面の下: 試合のデータ(支配率・シュート・得点の経過。→docs/34 §34.7) */
+function paperMatchBox(a){
+  if(!a.stats)return '';
+  const gl=(a.goals||[]).map(g=>'<li><b>'+g[0]+"'</b>"+(CARDS[g[1]]?nameOf(CARDS[g[1]]):'')+(g[2]==="A"?' <small>('+(a.opp&&TEAMS[a.opp]?TEAMS[a.opp].short:'')+')</small>':'')+'</li>').join("");
+  return '<section class="pp-data"><p class="pp-k">LA PARTITA</p><div class="pp-nums"><div><b>'+a.stats.poss+'%</b><span>支配率</span></div><div><b>'+a.stats.sh+' / '+a.stats.on+'</b><span>シュート / 枠内</span></div></div>'+
+    (gl?'<ol class="pp-goals">'+gl+'</ol>':'')+'</section>';
+}
+/** 2面: 採点(PAGELLE)・順位表・他会場の結果 */
+function paperPage2(a){
+  if(!a.pag||!a.pag.length)return '';
+  const row=x=>'<li><b>'+(CARDS[x[0]]?nameOf(CARDS[x[0]]):'')+'</b><em class="'+(x[1]>=7?'hi':x[1]<=5.5?'lo':'')+'">'+x[1].toFixed(1)+'</em><small>'+x[2]+'</small></li>';
+  const half=Math.ceil(a.pag.length/2);
+  const nm=id=>id==="me"?myTeam(CL.S).name:TEAMS[id]?teamNameOf(TEAMS[id]):id;
+  const tbl=a.table?'<section class="pp-sec"><p class="pp-k">CLASSIFICA ・ '+(a.lgName||'LEAGUE')+'</p><table class="pp-tbl"><tr><th>#</th><th>CLUB</th><th>P</th><th>GD</th><th>PTS</th></tr>'+
+    a.table.map(r=>'<tr'+(r[0]==="me"?' class="me"':'')+'><td>'+r[1]+'</td><td>'+nm(r[0])+'</td><td>'+r[2]+'</td><td>'+(r[3]>0?'+':'')+r[3]+'</td><td>'+r[4]+'</td></tr>').join("")+'</table></section>':'';
+  const rd=a.round&&a.round.length?'<section class="pp-sec"><p class="pp-k">ALTRI RISULTATI ・ 他会場</p><div class="pp-round">'+a.round.map(r=>'<div><span>'+nm(r[0])+'</span><b>'+r[2]+' - '+r[3]+'</b><span>'+nm(r[1])+'</span></div>').join("")+'</div></section>':'';
+  return '<article class="paper v2 pp-p2" data-act="none"><div class="pp-folio"><span>PAGELLE &amp; CAMPIONATO</span><span>2</span></div>'+
+    '<section class="pp-sec"><p class="pp-k">PAGELLE ・ 採点</p><div class="pp-two"><ul class="pp-pag">'+a.pag.slice(0,half).map(row).join("")+'</ul><ul class="pp-pag">'+a.pag.slice(half).map(row).join("")+'</ul></div></section>'+
+    tbl+rd+'</article>';
+}
+/** 3面: 次の相手・ゴシップ・秘書のコラム・サポーターの投書・スポンサーの広告 */
+function paperPage3(a){
+  if(!a.col&&!a.side.length)return '';
+  const S=CL.S, T=a.next&&TEAMS[a.next.opp], kp=T&&T.kp&&CARDS[T.kp], st=kp?styleOfCard(kp):null, pers=T?(TUNING.coach.pers[persOfClub(a.next.opp)]||{}).name:'';
+  const next=T?'<section class="pp-box"><p class="pp-k">PROSSIMA ・ NEXT</p><b>'+teamNameOf(T)+' <small>'+"★".repeat(tierOf(a.next.opp))+'</small></b><p>'+(COMPS[a.next.comp]?compNm(a.next.comp)+'。':'')+(kp?'KP は '+nameOf(kp)+(st?'('+st.name+')':'')+'。':'')+(pers?'相手監督は'+pers+'型。':'')+'</p></section>':'';
+  const ind=a.ad&&typeof SP_IND!=="undefined"?(SP_IND.find(x=>x.id===a.ad.ind)||{}).name:'';
+  return '<article class="paper v2 pp-p3" data-act="none"><div class="pp-folio"><span>PROSSIMA &amp; PETTEGOLEZZI</span><span>3</span></div>'+next+
+    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></section>':'')+
+    (a.col?'<section class="pp-sec"><p class="pp-k">LA RUBRICA ・ コラム</p><div class="pp-col">'+secAv(S)+'<p><b>秘書 '+secOf(S).name+'</b><br>'+a.col+'</p></div></section>':'')+'</div>'+
+    (a.letter?'<p class="pp-letter">「'+a.letter+'」<small>'+(S.club?S.club.town:'')+'・サポーター</small></p>':'')+
+    (a.ad?'<div class="pp-ad"><small>OFFICIAL SPONSOR</small><b>'+a.ad.name+'</b><small>'+ind+' '+"★".repeat(a.ad.rank||1)+'</small></div>':'')+'</article>';
 }
 /** 答えが要る出来事は1つずつ出し、ほかは数だけ(→docs/33 GD1) */
 function oneAtATime(list){ const L=list.filter(Boolean); if(!L.length)return ''; return (L.length>1?'<p class="ev-count">1 / '+L.length+'</p>':'')+L[0]; }
@@ -1988,6 +2027,10 @@ function finishFixture(M){
   const RT0=matchRatings(M), goals={}, rate={};
   for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H")goals[e.by]=(goals[e.by]||0)+1;
   for(const x of RT0.list)if(x.side==="H")rate[x.id]=x.r;
+  { const T=CL.S.tstat||(CL.S.tstat={}), st=id=>T[id]||(T[id]={ ap:0, gl:0, as:0, mvp:0, rs:0, rn:0 });   // この任期の成績(→docs/34 §34.4)
+    for(const id of played){ const s=st(id); s.ap++; if(rate[id]!=null){ s.rs+=rate[id]; s.rn++; } }
+    for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"){ st(e.by).gl++; if(e.as)st(e.as).as++; }
+    if(RT0.mvp&&played.includes(RT0.mvp)){ st(RT0.mvp).mvp++; plHist(CL.S,RT0.mvp,"MVP(採点 "+(rate[RT0.mvp]||0).toFixed(1)+")"); } }
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
     starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
@@ -2016,8 +2059,10 @@ function onClubClick(e){
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
   if(act==="propick"){ const i=+b.dataset.i, ln=answerProposal(S,i<0?null:i); if(CL.chat)CL.chat.lines=CL.chat.lines.concat(ln); save(); showClub(true); setTimeout(()=>infoBar(ln.filter(x=>/^🏷/.test(x))),0); return; }
   if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
-  if(act==="paper"){ CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
-  if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
+  if(act==="ppage"){ CL.paperPg=+b.dataset.p; const box=document.querySelector(".pp-pages"); if(box){ box.style.transform="translateX("+(-100*CL.paperPg)+"%)";
+      document.querySelectorAll(".pp-pager [data-p]").forEach(x=>x.setAttribute("aria-current",+x.dataset.p===CL.paperPg)); } return; }   // 新聞の面をめくる(→docs/34)
+  if(act==="paper"){ CL.paperPg=0; CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
+  if(act==="news"){ CL.paperPg=0; CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }

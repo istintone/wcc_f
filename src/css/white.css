@@ -312,3 +312,63 @@ body.th-wl #club .kmodal.enter .kmod-box{animation:kmUp .26s cubic-bezier(.2,.8,
 @keyframes kmUp{from{transform:translateY(70px);opacity:.3}to{transform:none;opacity:1}}
 body.th-wl #club .km-x,body.th-wl #club .sr-x{width:36px!important;height:36px!important;background:var(--w-ink)!important;color:#fff!important;font-size:18px!important;border-radius:0!important}
 @media (prefers-reduced-motion:reduce){body.th-wl #club .cl-main.sl-r,body.th-wl #club .cl-main.sl-l,body.th-wl #club .kmodal.enter,body.th-wl #club .kmodal.enter .kmod-box{animation:none}}
+
+/* =========================================================================
+   新聞を1号3面に(→docs/34 §34.2・§34.7)。ピンクの紙(イタリアのスポーツ紙)。書体はゲームと同じ
+   ========================================================================= */
+body.th-wl{ --pp-pink:#f7e3e3; --pp-pink2:#efcfd0; --pp-ink:#2a1416; }
+body.th-wl .paper-wrap .pp-pages{display:flex;transition:transform .28s cubic-bezier(.2,.8,.2,1);align-items:flex-start}
+body.th-wl .paper-wrap .pp-pages>.paper{flex:0 0 100%;min-width:0;margin:0!important}
+body.th-wl .paper-wrap{overflow-x:hidden}
+body.th-wl .paper.v2{background:var(--pp-pink)!important;color:var(--pp-ink)}
+body.th-wl .paper .pp-folio{display:flex;justify-content:space-between;font-family:var(--f-num);font-weight:800;letter-spacing:.12em;font-size:12px;background:var(--pp-ink);color:var(--pp-pink);padding:3px 8px;margin-bottom:8px}
+body.th-wl .paper .pp-k{margin:0 0 4px;font-family:var(--f-num);font-weight:800;letter-spacing:.14em;font-size:12px;color:var(--w-red);border-bottom:1px solid var(--pp-ink);padding-bottom:2px}
+body.th-wl .paper .pp-sec{margin:0 0 10px}
+body.th-wl .paper .pp-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+body.th-wl .paper .pp-two>*{min-width:0}
+body.th-wl .paper .pp-data{margin:10px 0 4px}
+body.th-wl .paper .pp-nums{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center}
+body.th-wl .paper .pp-nums div{background:#fff8f8;padding:6px}
+body.th-wl .paper .pp-nums b{display:block;font-family:var(--f-num);font-weight:800;font-size:20px;line-height:1}
+body.th-wl .paper .pp-nums span{font-size:10.5px;color:var(--w-mute)}
+body.th-wl .paper .pp-goals{margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px}
+body.th-wl .paper .pp-goals li{list-style:none} body.th-wl .paper .pp-goals b{font-family:var(--f-num);margin-right:4px}
+body.th-wl .paper .pp-pag{margin:0;padding:0}
+body.th-wl .paper .pp-pag li{list-style:none;display:grid;grid-template-columns:1fr auto;gap:0 6px;padding:4px 0;border-bottom:1px solid var(--pp-pink2)}
+body.th-wl .paper .pp-pag b{font-weight:800;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.th-wl .paper .pp-pag em{font-style:normal;font-family:var(--f-num);font-weight:800;font-size:18px;line-height:1;grid-row:span 2;align-self:center}
+body.th-wl .paper .pp-pag em.hi{color:var(--w-red)} body.th-wl .paper .pp-pag em.lo{color:var(--w-blue)}
+body.th-wl .paper .pp-pag small{font-size:11px;color:#5a2b2f}
+body.th-wl .paper .pp-tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+body.th-wl .paper .pp-tbl th{font-family:var(--f-num);font-weight:700;font-size:11px;letter-spacing:.08em;text-align:right;border-bottom:2px solid var(--pp-ink);padding:2px 4px}
+body.th-wl .paper .pp-tbl td{text-align:right;padding:3px 4px;border-bottom:1px solid var(--pp-pink2)}
+body.th-wl .paper .pp-tbl th:nth-child(2),body.th-wl .paper .pp-tbl td:nth-child(2){text-align:left}
+body.th-wl .paper .pp-tbl tr.me td{background:#fff8f8;font-weight:800;color:var(--w-red)}
+body.th-wl .paper .pp-round{display:grid;gap:3px;font-size:12px}
+body.th-wl .paper .pp-round div{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+body.th-wl .paper .pp-round div span:last-child{text-align:right}
+body.th-wl .paper .pp-round b{font-family:var(--f-num);font-weight:800}
+body.th-wl .paper .pp-box{background:#fff8f8;padding:8px 10px;margin:0 0 10px}
+body.th-wl .paper .pp-box b{font-weight:800} body.th-wl .paper .pp-box p{margin:4px 0 0;font-size:12.5px}
+body.th-wl .paper .pp-rum{margin:0;padding:0 0 0 16px;font-size:12px}
+body.th-wl .paper .pp-col{display:grid;grid-template-columns:30px 1fr;gap:6px;align-items:start}
+body.th-wl .paper .pp-col p{margin:0;font-size:12px}
+body.th-wl .paper .pp-letter{margin:0 0 10px;font-size:12.5px;border:1px dashed #b9878a;padding:8px}
+body.th-wl .paper .pp-letter small{display:block;text-align:right;color:var(--w-mute)}
+body.th-wl .paper .pp-ad{background:#111;color:#fff;padding:10px;text-align:center;display:grid;gap:2px}
+body.th-wl .paper .pp-ad b{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:22px;letter-spacing:.04em}
+body.th-wl .paper .pp-ad small{color:#ccc}
+body.th-wl .pp-pager{display:flex;justify-content:center;gap:8px;margin:8px 0 4px}
+body.th-wl .pp-pager button{min-width:44px;min-height:36px;border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--t-rule);font-family:var(--f-num);font-weight:800;font-size:15px;cursor:pointer}
+body.th-wl .pp-pager button[aria-current="true"]{background:var(--w-red);color:#fff;box-shadow:none}
+@media (prefers-reduced-motion:reduce){body.th-wl .paper-wrap .pp-pages{transition:none}}
+body.th-wl #club .paper-wrap .pp-pages{width:100%;max-width:420px;flex:none}
+/* 新聞: めくる紙面は傾けない(左右が切れないように)。幅は今の新聞と同じ(左右に号の ‹ › の場所)。書体はゲームと同じゴシック(→docs/34 §34.7) */
+body.th-wl #club .paper-wrap .pp-view{width:calc(100% - 84px);max-width:380px;overflow:hidden;flex:none}
+body.th-wl #club .paper-wrap .pp-pages{width:100%!important;max-width:none!important}
+body.th-wl #club .paper-wrap .pp-pages>.paper.v2{transform:none!important;width:100%!important;max-width:none!important;box-sizing:border-box}
+body.th-wl #club .paper.v2,body.th-wl #club .paper.v2 p,body.th-wl #club .paper.v2 li,body.th-wl #club .paper.v2 blockquote,body.th-wl #club .paper.v2 td,body.th-wl #club .paper.v2 small{font-family:var(--f-jp)}
+body.th-wl #club .paper.v2 .pp-folio,body.th-wl #club .paper.v2 .pp-k{margin-left:10px;margin-right:10px}
+body.th-wl #club .paper.v2 .pp-sec,body.th-wl #club .paper.v2 .pp-data,body.th-wl #club .paper.v2 .pp-box,body.th-wl #club .paper.v2 .pp-letter,body.th-wl #club .paper.v2 .pp-two{margin-left:10px;margin-right:10px}
+body.th-wl #club .paper.v2 .pp-two .pp-sec{margin-left:0;margin-right:0}
+body.th-wl #club .paper.v2 .pp-ad{margin:0 10px}

@@ -420,6 +420,7 @@ function doIndTrain(S,id,choice){
       const card=CARDS[id], room=card[k]+(g.up[k]||0)<STAT_MAX;
       if(room)g.up[k]=(g.up[k]||0)+I.starUp;
       out.push(nameOf(card)+" 個人能力 ★"+g.is+(room?"("+STAT_LABEL[k]+" +"+I.starUp+")":""));
+      plHist(S,id,"個人能力 ★"+g.is+(room?"("+STAT_LABEL[k]+" +"+I.starUp+")":""));
     }else{
       g.ie=Math.floor(g.ie*P.failKeep); res=2;
       if(g.mot>0)g.mot=Math.max(1,g.mot-1);
@@ -540,7 +541,7 @@ function doMeeting(S,id,choice){
     if(r<p){
       g.se-=P.need[g.ss]; g.ss++; res=0;
       (S.persSeen||(S.persSeen={}))[id]=true;   // 性格が分かった(カードの裏面に載る。任期をまたいで残る。→docs/24 G3)
-      out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss);
+      out.push(nameOf(CARDS[id])+" 特殊能力 ★"+g.ss); plHist(S,id,"特殊能力 ★"+g.ss);
     }else{
       g.se=Math.floor(g.se*P.failKeep); res=2;
       if(g.mot>0)g.mot=Math.max(1,g.mot-1);
@@ -614,7 +615,7 @@ function awaken(S,id,rng,out){
   const got=STATS.filter(k=>add[k]).map(k=>{ g.up[k]=(g.up[k]||0)+add[k]; return STAT_LABEL[k]+" +"+add[k]; });
   const sum=STATS.reduce((a,k)=>a+(add[k]||0),0);
   g.is=5; g.q=false; g.ie=0;
-  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")"+GAIN_MARK[sum]);
+  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")"+GAIN_MARK[sum]); plHist(S,id,"覚醒("+got.join("・")+")");
   if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
@@ -643,7 +644,7 @@ function afterMatchGrowth(S,fx,res){
     for(const id of played){
       const g=S.g.pl[id];
       if(g.q&&rng()<I.awakeP)awaken(S,id,rng,out);
-      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
+      if(g.sq&&rng()<G0.sp.star5P){ g.ss=5; g.sq=false; g.se=0; plHist(S,id,"特殊能力 ★5"); out.push("⭐ "+nameOf(CARDS[id])+" の特殊能力が ★5 に(スタイルが極まる)"); newsOf("star5",[id],out); }
     }
     // 黄金線は1試合に1本まで(兆しのある組のうち、たねで1つ選ぶ)
     const cand=Object.keys(S.g.links).filter(k=>{ const l=S.g.links[k], p=k.split("|");
@@ -1145,6 +1146,8 @@ function playerTagK(S,id,key){
 const pTagOn=(S,id,key)=>pTags(S,id).some(t=>TAGS[t.id]&&TAGS[t.id].fx&&TAGS[t.id].fx[key]==="on");
 const pHas=(S,id,tid)=>pTags(S,id).some(t=>t.id===tid);
 /** 選手のタグを付ける。反対のタグは消す・同じは期限を延ばす。汎用は playerMax まで、特性は1つ(付け替え) */
+/** 選手の育成の記録(選手の調書の HISTORY。→docs/34 §34.4)。[試合の番号, 文]。新しいものが後ろで最大 8 件 */
+function plHist(S,id,t){ const g=S.g&&S.g.pl[id]; if(!g)return; const L=g.hist||(g.hist=[]); L.push([S.played,t]); if(L.length>8)L.shift(); }
 function addPlayerTag(S,id,tid,out){
   const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
   const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
@@ -1153,6 +1156,7 @@ function addPlayerTag(S,id,tid,out){
   if(tid==="gossip"&&++pCnt(g).gos>=TUNING.tag.fame.gossipN&&!pHas(S,id,"trouble"))addPlayerTag(S,id,"trouble",out);
   const cur=L.find(t=>t.id===tid);
   if(cur){ cur.n=tagDur(T); return; }
+  if(T.kind!=="fame"||!T.bad)plHist(S,id,"タグ「"+T.name+"」");
   if(T.kind==="trait"){ const j=L.findIndex(t=>TAGS[t.id]&&TAGS[t.id].kind==="trait"); if(j>=0){ out.push("🏷 "+nm+" の特性「"+TAGS[L[j].id].name+"」を付け替えた"); L.splice(j,1); } }
   else if(T.kind==="gen"){
     // 汎用は「任期まで続くもの」と「一過性(期限・条件で消える)」で別の枠。続くものは一過性に押し出されない(→docs/23 §23.1)
