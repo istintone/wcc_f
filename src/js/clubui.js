@@ -1413,7 +1413,8 @@ function oppSquadHtml(S,oppId,def,rep){
 }
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;
-  return '<div class="step-h one sc-h"><button class="btn btn-sub sc-rep" data-act="screp">SCOUTING REPORT</button></div>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
+  // スカウティングレポートを最初から出す。その下に相手の SQUAD(選手のカードを見る)(→docs/34 §34.11)
+  return scoutRepModalHtml(true)+'<h3 class="sc-sq-h">OPPONENT SQUAD</h3>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
 }
 /** SEASON から見る相手の SQUAD(フロート。視察レポートは出さない)。リーグの相手は、Premier Div なら育成レベル最大で */
 function oppViewModalHtml(){
@@ -1425,7 +1426,7 @@ function oppViewModalHtml(){
 }
 /** 相手の選手のカードの裏(フロート) */
 /** 視察レポート(秘書の報告)のフロート */
-function scoutRepModalHtml(){
+function scoutRepModalHtml(inline){
   // 報告書の書式(→docs/14 §14.166): 題と判子 → 相手・大会・作成者 → 01 総合評価 → 02 戦力比較 → 03 要注意人物 → 04 所見 → 署名
   const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
   const nm=c=>c?c.no+" "+nameOf(c):"—", en=compEn(fx);
@@ -1442,8 +1443,9 @@ function scoutRepModalHtml(){
   const axRow=a=>{ const m=R.mpw[a], o=R.opw[a], d=m-o, mk=d>0.3?'<i class="up">▲</i>':d<-0.3?'<i class="dn">▼</i>':'<i class="ev">＝</i>';
     return '<tr><th>'+AXIS_ABBR[a]+'</th><td class="me"><u style="width:'+bw(m)+'%"></u><b>'+m.toFixed(1)+'</b></td><td class="mk">'+mk+'</td><td class="op"><u style="width:'+bw(o)+'%"></u><b>'+o.toFixed(1)+'</b></td></tr>'; };
   const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
-  return '<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
-    '<button class="km-x sr-x" data-act="screpclose" aria-label="閉じる">×</button>'+
+  // inline … 視察の画面にそのまま置く(→docs/34 §34.11)。モーダルの枠と × は付けない
+  return (inline?'<div class="srep-inline">':'<div class="kmodal" data-act="screpclose"><div class="kmod-box sc-rbox srep-box" data-act="none">'+
+    '<button class="km-x sr-x" data-act="screpclose" aria-label="閉じる">×</button>')+
     '<article class="srep">'+
       '<header class="sr-top"><small>WCC F ・ SCOUTING DEPARTMENT</small><h2>SCOUTING REPORT</h2><i class="sr-stamp">CONFIDENTIAL</i></header>'+
       '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
@@ -1464,7 +1466,7 @@ function scoutRepModalHtml(){
 
       scoutMoreHtml(S,fx,def,lv,no,red)+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
-    '</article></div></div>';
+    '</article>'+(inline?'</div>':'</div></div>');
 }
 /** 視察レポートの続き(→docs/34 §34.3): 05 予想布陣・06 直近の戦績・07 相手監督・秘書の手書きのメモ(親密度が高いとき) */
 function scoutMoreHtml(S,fx,def,lv,no,red){

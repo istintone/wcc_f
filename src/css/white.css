@@ -462,3 +462,7 @@ body.th-wl #club .cf-dl dt{color:var(--w-mute)} body.th-wl #club .cf-dl dd{margi
 body.th-wl #club .cf-dl b{font-family:var(--f-num);font-weight:800;font-size:17px}
 body.th-wl #club .cf-act{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
 body.th-wl #club .cf-act .btn{margin:0;height:46px}
+/* 視察の画面: スカウティングレポートを最初から出す(→docs/34 §34.11)。紙の書類を画面の中にそのまま置く */
+body.th-wl #club .srep-inline{margin:4px 0 14px;background:#fffdf7;box-shadow:var(--w-sh),inset 0 0 0 1px #e1d9c6;padding:0}
+body.th-wl #club .srep-inline .srep{padding:14px 14px 10px}
+body.th-wl #club h3.sc-sq-h{margin:6px 2px 8px}
