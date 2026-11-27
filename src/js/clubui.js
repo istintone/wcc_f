@@ -408,7 +408,7 @@ function sqTokenHtml(id,i,on,o){
     '<span class="bd"><i class="no">'+Math.round(statTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
     // 調子のタグ(札の右下、電池の右。ケガは赤十字。→docs/14 §14.200)。休養の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
     (g?(()=>{ const to=CL.motTo&&CL.motTo[id], up=to!=null&&to>g.mot;
-      return '<em class="mtg m'+g.mot+(up?' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')':'')+'">'+(g.mot===0?'<u>✚</u>':'')+MOT_LABEL[g.mot]+'</em>'; })():'')+
+      return '<em class="mtg m'+g.mot+(up?' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')':'')+'">'+(g.mot===0?'<u>✚</u>負傷':MOT_LABEL[g.mot])+'</em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
       if(!o)return '';   // SQUAD の札には★を出さない(育成は選手の詳細で。覚醒の兆しはタグに。→docs/14 §14.189)

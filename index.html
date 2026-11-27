@@ -3908,8 +3908,8 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 #club .sqc .mt{display:none}
 #club .sqc .mtg{position:absolute;right:2px;bottom:2px;z-index:3;display:block;padding:0 3px;font-style:normal;font-size:7.5px;font-weight:900;line-height:10px;letter-spacing:-.02em;color:#fff;border-radius:2px;white-space:nowrap;background:var(--mot2)}
 #club .sqc .mtg.m1{background:var(--mot1)} #club .sqc .mtg.m2{background:var(--mot2)} #club .sqc .mtg.m3{background:var(--mot3)} #club .sqc .mtg.m4{background:var(--mot4)}
-#club .sqc .mtg.m0{background:#fff;color:#333;box-shadow:inset 0 0 0 1px #d0101e}
-#club .sqc .mtg.m0 u{text-decoration:none;color:#d0101e;margin-right:1px}
+#club .sqc .mtg.m0{background:var(--mot0);color:#fff;box-shadow:none}
+#club .sqc .mtg.m0 u{text-decoration:none;color:#ff2238;font-weight:900;margin-right:2px;text-shadow:0 0 1px #fff}
 #club .sqc .mtg.mup{animation:mtgUp 1.1s ease-in-out infinite}
 @keyframes mtgUp{0%,100%{background:var(--m0)}50%{background:var(--m1);box-shadow:0 0 6px 1px var(--m1)}}
 #club .sqc .bd{bottom:11px}   /* 名前は電池と調子のタグの段の上に */
@@ -13420,7 +13420,7 @@ function sqTokenHtml(id,i,on,o){
     '<span class="bd"><i class="no">'+Math.round(statTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
     // 調子のタグ(札の右下、電池の右。ケガは赤十字。→docs/14 §14.200)。休養の見通しで調子が上がる選手は、今の色とあとの色で光る(→docs/14 §14.86)
     (g?(()=>{ const to=CL.motTo&&CL.motTo[id], up=to!=null&&to>g.mot;
-      return '<em class="mtg m'+g.mot+(up?' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')':'')+'">'+(g.mot===0?'<u>✚</u>':'')+MOT_LABEL[g.mot]+'</em>'; })():'')+
+      return '<em class="mtg m'+g.mot+(up?' mup" style="--m0:var(--mot'+g.mot+');--m1:var(--mot'+to+')':'')+'">'+(g.mot===0?'<u>✚</u>負傷':MOT_LABEL[g.mot])+'</em>'; })():'')+
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
       if(!o)return '';   // SQUAD の札には★を出さない(育成は選手の詳細で。覚醒の兆しはタグに。→docs/14 §14.189)
