@@ -78,6 +78,8 @@ function hideClub(){ document.getElementById("club").classList.remove("on"); }
 const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
 const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
+/** ★の並び。兆し(sign)のときは5つめの★がその色で点滅する(個人 = 黄・特殊 = 青。→docs/14 §14.202) */
+const starsSg=(n,sign,kind)=>sign&&n===4?"★★★★"+'<i class="sg5 '+kind+'">★</i>':stars(n);
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
 /** 国籍と動物(→docs/08 §8.6)。例: イタリア ・ 🦈鮫(海) */
@@ -99,8 +101,6 @@ const foldBtn=(act,open,label)=>'<button class="fold'+(open?' up':'')+'" data-ac
 const xBtn=act=>'<button class="xb" data-act="'+act+'" aria-label="閉じる">×</button>';
 /** 話がある印(前は「！」。分かりにくいので吹き出しの形に。→docs/14 §14.78) */
 const BUB='<svg class="bub" viewBox="0 0 16 16" aria-label="話がある"><path d="M2.5 2.5h11a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.2l-3.2 3v-3H2.5a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z"/></svg>';
-/** 覚醒の兆し(個人の覚醒・特殊の★5 の手前)。フレンドリーマッチに連れていく合図なので、ここだけは見せる */
-const sgnOf=g=>g&&(g.q||g.sq)?'<b class="sgn2">覚醒の兆し</b>':'';
 /** 選手を指名するための札の並び。on = 選択中。info = 札の下段に出す情報。act = 押したときの動き */
 function chipsHtml(ids,on,info,act){
   const S=CL.S;
@@ -144,8 +144,8 @@ function loungeLinksSvg(a,ids,L){
 /** コミュニケーションの種類ごとの、札の見せ方と問いかけ */
 const COMM_UI={
   // 育成度(次の★までの %)は裏の数字なので出さない。フィーリングで感じる程度に(→docs/14 §14.78)。覚醒の兆しだけは見せる
-  ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(★は試合のあとに上がる)", info:g=>sgnOf(g) },
-  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(吹き出し = ★突破の話がある)", info:g=>sgnOf(g) },
+  ind:   { sub:"個人能力", n:1, hint:"1人を選ぶ(吹き出し = ★突破の話がある)" },   // 兆しは5つめの★の点滅で(→docs/14 §14.202)
+  meet:  { sub:"特殊能力", n:1, hint:"1人を選ぶ(吹き出し = ★突破の話がある)" },
   // 相性の組は見せない(→docs/08)。1人目を選んだら、その人との今の連携を出す
   lounge:{ sub:"2人の連携", n:2, hint:"2人を選ぶ(気の合う2人ほど連携が深まる)", info:(g,id)=>{ const a=CL.pick[0];
     if(!a||a===id)return ""; const l=linkOf(CL.S,a,id);
@@ -204,7 +204,7 @@ function trainEffectHtml(part){
   // 盤面: 選んだ練習でよく伸びる選手(個人の進みが平均より大きい)を光らせ、札に伸びを出す
   const vals=pv?Object.values(pv.pl).map(x=>x.ind):[], avg=vals.length?vals.reduce((s,x)=>s+x,0)/vals.length:0;
   const fit=pv?Object.keys(pv.pl).filter(id=>pv.pl[id].ind>avg*1.15):[];
-  const info=g=>sgnOf(g);   // 育成度・伸びの % は出さない(よく伸びる選手が光るだけ。→docs/14 §14.78)
+  const info=()=>"";   // 育成度・伸びの % は出さない(よく伸びる選手が光るだけ。→docs/14 §14.78)。兆しは★の点滅で(§14.202)
   // part="graph" … 練習の候補の左に置くグラフ / それ以外 … 盤面(→docs/14 §14.34)
   const hl={}, delta={}; diff.forEach(x=>{ hl[x.a]=x.d>0?"u":"d"; delta[x.a]=x.d; });
   // part="graph" … 候補の左のグラフ / "chips" … 候補の下の変わる軸と凡例 / それ以外 … 盤面(→docs/14 §14.35)
@@ -374,7 +374,7 @@ function roleTagsHtml(S,id,on){
   return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':'';
 }
 /** 札の下の★の列(→docs/14 §14.50)。kind … "is"(個人・黄)/ "ss"(特殊・青)。★5 は全部をピンク寄りの赤で光らせる */
-const starRow=(n,kind)=>'<span class="srow '+kind+(n>=5?' aw':'')+'">'+[0,1,2,3,4].map(k=>'<i'+(k<n?' class="on"':'')+'>★</i>').join("")+'</span>';
+const starRow=(n,kind,sign)=>'<span class="srow '+kind+(n>=5?' aw':'')+'">'+[0,1,2,3,4].map(k=>'<i'+(k<n?' class="on"':k===4&&sign&&n===4?' class="sg5"':'')+'>★</i>').join("")+'</span>';
 /**
  * 盤面の札(SQUAD の作り)。o を渡すとコミュニケーション・チーム練習の盤面用(→docs/14 §14.38):
  *   o = { act:押したときの動き, info:下の段の小さな情報(HTML), hi:光らせる, sign:「！」を付ける, stars:"both"|"is"|"ss"|null }。引っ張りはしない。
@@ -398,7 +398,7 @@ function sqTokenHtml(id,i,on,o){
     // 星: SQUAD は札の右下に「★1 ★4」と数字で(個人 = 黄・特殊 = 青・★5 はピンク。→docs/14 §14.82)。ほかの盤面は今までどおり札の下に並べる
     (()=>{ if(!g)return '';
       if(!o)return '';   // SQUAD の札には★を出さない(育成は選手の詳細で。覚醒の兆しはタグに。→docs/14 §14.189)
-      const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is"):'')+(m!=="is"?starRow(g.ss,"ss"):'')+'</span>':''; })()+
+      const m=o.stars; return m?'<span class="stars">'+(m!=="ss"?starRow(g.is,"is",g.q):'')+(m!=="is"?starRow(g.ss,"ss",g.sq):'')+'</span>':''; })()+
     roleTagsHtml(S,id,on)+   // KP・CAP・キッカーは左上に縦に積む(→docs/14 §14.56)
     (g?batteryHtml(g,CL.batTo&&CL.batTo[id]):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)。休憩の見通しでは、回復するぶんが点滅
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
@@ -475,8 +475,8 @@ function sqDetailHtml(){
       (RK?'<li><i class="rk2">R</i><b>'+(g.ss>=5?RK.name:'？？？')+'</b><span>レア KP</span></li>':'')+
       '<li><i>ROLE</i><b>CAP '+CAP_MARK[capApt(c)]+' ・ PK '+kg.pk+' ・ FK '+kg.fk+' ・ CK '+kg.ck+'</b><span>キャプテン・キッカー</span></li></ul>'+
     no(["STATS","PERFORMANCE"])+
-    '<dl class="sr-meta pr-team"><dt>個人</dt><dd><b class="st5">'+stars(g.is)+'</b></dd>'+
-      '<dt>特殊</dt><dd><b class="st5">'+stars(g.ss)+'</b>'+(g.q||g.sq?' <span class="sgn">覚醒の兆し</span>':'')+'</dd>'+
+    '<dl class="sr-meta pr-team"><dt>個人</dt><dd><b class="st5">'+starsSg(g.is,g.q,"is")+'</b></dd>'+
+      '<dt>特殊</dt><dd><b class="st5">'+starsSg(g.ss,g.sq,"ss")+'</b></dd>'+
       '<dt>信頼度</dt><dd>'+TRUST_LABEL[trustLv(g)]+'</dd>'+
       '<dt>調子・疲労</dt><dd><span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span> <span class="fat">'+batteryHtml(g)+'</span></dd>'+
       (ps?'<dt>性格</dt><dd>'+PERS_LABEL[persOf(id)]+'</dd>':'')+(an?'<dt>動物</dt><dd>'+an+'</dd>':'')+
@@ -495,8 +495,8 @@ function sqDetailHtmlOld(){
   const need=g.is<4?G0.ind.need[g.is]:G0.ind.awake;
   return '<div class="sq-det"><div class="sd-top"><i class="no">'+c.no+'</i><b>'+nameOf(c)+'</b><small>'+c.pos+' ・ '+c.age+'歳</small>'+
       (on?'<span class="rlx '+c.pos.toLowerCase()+' '+rl.cls+'">'+rl.role+' '+rl.mark+'</span>':'<span class="rlx '+c.pos.toLowerCase()+'">SUB</span>')+'</div>'+
-    '<div class="sd-row"><span>個人 <b class="st5">'+stars(g.is)+'</b></span>'+   // ★の進み(バー)は裏の数字にした(→docs/14 §14.79)
-      '<span>特殊 <b class="st5">'+stars(g.ss)+'</b></span>'+
+    '<div class="sd-row"><span>個人 <b class="st5">'+starsSg(g.is,g.q,"is")+'</b></span>'+   // ★の進み(バー)は裏の数字にした(→docs/14 §14.79)
+      '<span>特殊 <b class="st5">'+starsSg(g.ss,g.sq,"ss")+'</b></span>'+
       (g.q||g.sq?'<span class="sgn">覚醒の兆し</span>':'')+
       '<span>信頼度 '+TRUST_LABEL[trustLv(g)]+'</span>'+
       '<span class="mot m'+g.mot+'">'+MOT_LABEL[g.mot]+'</span><span class="fat">'+batteryHtml(g)+'</span></div>'+

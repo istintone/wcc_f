@@ -3317,3 +3317,9 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 #club .sq-bench .sqc .bat{left:2px;bottom:2px;width:13px;height:6px}
 #club .sqc .sg{bottom:12px!important;right:-8px!important}   /* 吹き出しの印は右の辺の下寄り(右下の角は調子のタグ。→docs/14 §14.200) */
 #club .sqc.cmx.inj{opacity:1}   /* ケガは札の右下の「✚ケガ」で伝える(薄くしない。→docs/14 §14.200) */
+/* 覚醒の兆し(→docs/14 §14.202): タグをやめ、5つめの★をその色で点滅(個人 = 黄・特殊 = 青) */
+#club .sqc .srow i.sg5{animation:sg5Blink .9s ease-in-out infinite}
+#club .sqc .srow.is i.sg5{color:#ffd23a;--sgc:#ffd23a} #club .sqc .srow.ss i.sg5{color:#4aa8ff;--sgc:#4aa8ff}
+#club .st5 i.sg5{font-style:normal;animation:sg5Blink .9s ease-in-out infinite}
+#club .st5 i.sg5.is{color:#e0a800;--sgc:#ffd23a} #club .st5 i.sg5.ss{color:#2a7bd6;--sgc:#4aa8ff}
+@keyframes sg5Blink{0%,100%{opacity:1;text-shadow:0 0 4px var(--sgc),0 0 1px #fff}50%{opacity:.2;text-shadow:none}}

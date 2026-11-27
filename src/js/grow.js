@@ -1082,8 +1082,7 @@ function playerTagsView(S,id){
   const cb=((S.g&&S.g.combos)||[]).filter(c=>c.ids.includes(id)&&COMBOS[c.id]).map(c=>({ id:"cb:"+c.id, name:COMBOS[c.id].name, pol:1, combo:true,
     desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]), left:"" }));
   const U=TAGS["u_"+id], uq=U?[{ id:"u_"+id, name:U.name, pol:1, unique:true, desc:U.desc, left:"" }]:[];
-  // 覚醒の兆し(→docs/14 §14.189): 覚醒を待っている状態を選手のタグとして見せる(前は札の★の欄で見せていた)
-  if(g.q||g.sq)uq.push({ id:"omen", name:"覚醒の兆し", pol:1, omen:true, desc:"フレンドリーマッチで勝つと、"+(g.q&&g.sq?"個人・特殊":g.q?"個人":"特殊")+"の力が開花するかもしれない", left:"" });
+  // 覚醒の兆しはタグにしない。5つめの★の点滅で見せる(どちらの兆しか分かるように。→docs/14 §14.202)
   return uq.concat(cb,(g.tags||[]).filter(t=>TAGS[t.id]).map(t=>({ id:t.id, name:TAGS[t.id].name, pol:TAGS[t.id].pol, unique:TAGS[t.id].kind==="unique", desc:TAGS[t.id].desc, left:t.n!=null?t.n+"試合":"", fame:TAGS[t.id].kind==="fame", bad:!!TAGS[t.id].bad })));
 }
 
