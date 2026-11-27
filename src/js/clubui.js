@@ -919,7 +919,15 @@ function holdBind(){
 }
 /** 大きなカードの操作: ドラッグで傾き(輝きと光沢が指に付いてくる)、速く横にはじくと裏返る */
 function k3dBind(){ document.querySelectorAll("#club .k3d").forEach(k3dBindOne); }
+/** 大きなカードの倍率(→docs/14 §14.199)。表と裏は 230 × 322 で描き、置き場所の幅に合わせる(CARDS は列の 86%・最大 230、排出の画面は囲みの幅) */
+const K3D_W=230;
+function k3dFit(st){
+  const box=st.closest(".pk-cardin"), w=box?box.clientWidth:Math.min(K3D_W,st.clientWidth*0.86);
+  if(w>0)st.style.setProperty("--kz",(w/K3D_W).toFixed(4));
+}
+window.addEventListener("resize",()=>document.querySelectorAll(".k3d").forEach(k3dFit));
 function k3dBindOne(st){
+  k3dFit(st);
   const fk=st.dataset.fk||"kFlip";
   const inner=st.querySelector(".k3d-in"), face=()=>st.querySelector(CL[fk]?".k3d-b .kb":".k3d-f .kc");   // 見えている面に光沢
   let d=null;

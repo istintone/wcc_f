@@ -3294,11 +3294,13 @@ body[class] #club .pr-box .km-head{background:#1a1a1a!important;color:#fff!impor
 /* 任期の評価の内訳(→docs/28 §28.5) */
 #club .tend .tev li{display:flex;justify-content:space-between}
 #club .tend .sal i.dn{color:#1d5fbf}
-/* カードの排出の画面のカードの裏は、CARDS と同じ幅 230px の裏をそのまま縮めて出す(囲み 198 × 292。→docs/14 §14.198) */
-.pk-cardin .kb{zoom:.861;inset:0 auto auto 0!important;width:230px!important;height:339px!important}
-/* CARDS の裏に外側から効いている決まり(#club p・#club small・行の間)を、排出の画面の裏にも同じく */
-#scene .pk-cardin .kb{line-height:1.55}
-#scene .pk-cardin .kb p{font-size:12.5px}
-body.th-wl #scene .pk-cardin .kb small{font-size:var(--fs-s)}
+/* 大きなカード(表と裏)は、どの画面でも 230 × 322 の1枚に固定して描き、置き場所の幅に合わせて丸ごと縮める・広げる(--kz は k3dFit が入れる。→docs/14 §14.199)
+   字の大きさ・行の間は外側の画面の決まりに頼らず、ここで決める(CARDS と排出の画面で必ず同じになるように) */
+:is(#club,#scene) .k3d-f .kc,:is(#club,#scene) .k3d-b .kb{width:230px!important;height:322px!important;max-width:none!important;aspect-ratio:auto!important;zoom:var(--kz,1)}
+.pk-cardin .k3d-f .kc,.pk-cardin .k3d-b .kb{inset:0 auto auto 0!important}
+.pk-cardin{bottom:auto!important;aspect-ratio:5/7}
+:is(#club,#scene) .k3d{font-size:13px;line-height:1.55;color:#eef0f4}
+:is(#club,#scene) .k3d .kb p{font-size:12.5px}
+body :is(#club,#scene) .k3d small{font-size:11.5px}
 /* セットプレーの帯(→docs/29 §29.6) */
 #flash.sp b{font-size:34px!important;letter-spacing:.08em}
