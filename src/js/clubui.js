@@ -72,6 +72,13 @@ function showClub(keepScroll){
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
   holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
+  // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
+  const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
+  if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
+  CL._vk=vk;
+  // モーダルは開いたときだけ下から出る(中を操作して描き直すたびには動かさない)
+  if(kb2&&!CL._modal)kb2.closest(".kmodal").classList.add("enter");
+  CL._modal=!!kb2;
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); }
 
@@ -339,14 +346,16 @@ function prepHtml(){
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+compNm(fx.comp)+'</b> '+compEn(fx).round+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
     '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():CL.scout?scoutStepHtml():commStepHtml())+'</div>'+
-    '<footer class="prep-bot">'+
+    '<footer class="prep-bot'+(CL.scout||CL.strat?' has-back':'')+'">'+
+      // 戻る: 視察 → 個別指導、戦略方針 → 視察(チーム練習は済ませたら戻れない。→docs/33 §33.10)
+      (CL.strat?'<button class="btn pb-back" data-act="stratback">‹ SCOUT</button>':CL.scout?'<button class="btn pb-back" data-act="scoutback">‹ COACHING</button>':'')+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
-        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
+        :CL.strat?'<button class="btn btn-main" data-act="play">KICK OFF</button>'
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">TACTICS</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
+            :'<button class="btn btn-sub go-soft" data-act="strat">SCOUT</button>'):'<button class="btn btn-main" data-act="strat">SCOUT</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
@@ -1437,7 +1446,7 @@ function oppCardModalHtml(){
 }
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
-  return '<div class="step-h one sc-h"><button class="bk" data-act="stratback">‹ SCOUT</button></div>'+   // 戻るは見出しの右端(→docs/14 §14.148)
+  return ''+   // 戻るは見出しの右端(→docs/14 §14.148)
     cmSayHtml(secStratLine(CL.S,CL.fx&&TEAMS[CL.fx.opp]?teamNameOf(TEAMS[CL.fx.opp]):""))+   // 秘書の呼びかけ(個別指導と同じ形。→docs/14 §14.176)
     mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
@@ -2069,6 +2078,7 @@ function onClubClick(e){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
     CL.armPlay=false; CL.scout=true; CL.strat=false; CL.chat=null; CL.pick=[]; showClub(); return;   // コミュニケーションのあとは視察(→docs/18)
   }
+  if(act==="scoutback"){ CL.scout=false; CL.scoutRep=false; CL.oppSel=null; showClub(); return; }   // 視察 → 個別指導(→docs/33 §33.10)
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }

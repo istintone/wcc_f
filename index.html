@@ -4589,6 +4589,29 @@ body.th-wl #club .prep-top .steps span{font-family:var(--f-num);font-weight:800;
 /* 出来事の残りの数(1 / N) */
 body.th-wl #club .ev-count{margin:6px 2px -4px;text-align:right;font-family:var(--f-num);font-weight:700;letter-spacing:.12em;font-size:12px;color:var(--w-mute)}
 body.th-wl #club .step-h.cm-h,body.th-wl #club .step-h.sc-h{justify-content:flex-end}
+
+/* =========================================================================
+   デザインのブラッシュアップ第2段(→docs/33 §33.10)。画面の骨組み・モーダルを下から出るシートに・画面の切り替えの向き
+   ========================================================================= */
+/* 準備の下の帯: 左に戻る・右に次へ(いつも同じ場所) */
+body.th-wl #club .prep-bot.has-back{flex-direction:row;align-items:center}
+body.th-wl #club .prep-bot.has-back .btn-main{flex:1;min-width:0}
+body.th-wl #club .prep-bot .pb-back{flex:none;height:50px;padding:0 10px;background:none;border:0;color:var(--w-ink2);font-family:var(--f-num);font-weight:800;font-size:14px;letter-spacing:.06em;cursor:pointer}
+/* 画面の切り替え: 右から入る / 左から入る */
+body.th-wl #club .cl-main.sl-r{animation:clSlR .24s cubic-bezier(.2,.8,.2,1)}
+body.th-wl #club .cl-main.sl-l{animation:clSlL .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes clSlR{from{transform:translateX(18%);opacity:.3}to{transform:none;opacity:1}}
+@keyframes clSlL{from{transform:translateX(-18%);opacity:.3}to{transform:none;opacity:1}}
+/* モーダル: 下から出るシート。そろえるのは出方・つまみ・閉じる(右上の ×)だけで、中の雰囲気(紙のレポート・暗い台のカード)はそれぞれ */
+body.th-wl #club .kmodal{align-items:flex-end;padding:0!important}
+body.th-wl #club .kmod-box{max-width:520px;max-height:calc(100dvh - 24px)!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
+body.th-wl #club .kmod-box::before{content:"";display:block;width:44px;height:4px;margin:8px auto 4px;background:rgba(127,127,127,.4)}
+body.th-wl #club .kmodal.enter{animation:kmFade .18s ease}
+body.th-wl #club .kmodal.enter .kmod-box{animation:kmUp .26s cubic-bezier(.2,.8,.2,1)}
+@keyframes kmFade{from{background:rgba(8,10,16,0)}}
+@keyframes kmUp{from{transform:translateY(70px);opacity:.3}to{transform:none;opacity:1}}
+body.th-wl #club .km-x,body.th-wl #club .sr-x{width:36px!important;height:36px!important;background:var(--w-ink)!important;color:#fff!important;font-size:18px!important;border-radius:0!important}
+@media (prefers-reduced-motion:reduce){body.th-wl #club .cl-main.sl-r,body.th-wl #club .cl-main.sl-l,body.th-wl #club .kmodal.enter,body.th-wl #club .kmodal.enter .kmod-box{animation:none}}
 </style>
 </head>
 <body>
@@ -12872,6 +12895,13 @@ function showClub(keepScroll){
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
   holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
+  // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
+  const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
+  if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
+  CL._vk=vk;
+  // モーダルは開いたときだけ下から出る(中を操作して描き直すたびには動かさない)
+  if(kb2&&!CL._modal)kb2.closest(".kmodal").classList.add("enter");
+  CL._modal=!!kb2;
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); }
 
@@ -13139,14 +13169,16 @@ function prepHtml(){
     '<div class="prep-vs">'+gradeTag(comp.grade)+'<b>'+compNm(fx.comp)+'</b> '+compEn(fx).round+
       ' <span>vs '+teamNameOf(TEAMS[fx.opp])+'</span></div>'+
     '<div class="cl-main prep">'+(st==="train"?msgHtml():'')+(st==="train"?trainStepHtml():CL.strat?stratStepHtml():CL.scout?scoutStepHtml():commStepHtml())+'</div>'+
-    '<footer class="prep-bot">'+
+    '<footer class="prep-bot'+(CL.scout||CL.strat?' has-back':'')+'">'+
+      // 戻る: 視察 → 個別指導、戦略方針 → 視察(チーム練習は済ませたら戻れない。→docs/33 §33.10)
+      (CL.strat?'<button class="btn pb-back" data-act="stratback">‹ SCOUT</button>':CL.scout?'<button class="btn pb-back" data-act="scoutback">‹ COACHING</button>':'')+
       (st==="train"?(CL.trSel!=null&&CL.int!==-1&&trainOptions(S)[CL.trSel]
           ?'<button class="btn btn-main" data-act="trgo">この練習で決定 <small>'+trainLabel(trainOptions(S)[CL.trSel])+' ・ '+INT_LABEL[CL.int]+'</small></button>'
           :'<button class="btn btn-main" disabled>この練習で決定</button>')   // 説明文の代わりに押せないボタン(→docs/24 U2)
-        :CL.strat?'<button class="btn btn-main" data-act="play">キックオフ</button>'
-        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">戦略方針へ</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
+        :CL.strat?'<button class="btn btn-main" data-act="play">KICK OFF</button>'
+        :CL.scout?'<button class="btn btn-main" data-act="scoutgo">TACTICS</button>'   // 個別指導へ戻るボタンは置かない(視察へ進む前に確かめているため。→docs/14 §14.166)
         :(commLeft(CL.S)?(CL.armPlay?'<button class="btn btn-main warn" data-act="strat">残り '+commLeft(CL.S)+' 回を使わずに視察へ(もう一度押す)</button>'
-            :'<button class="btn btn-sub go-soft" data-act="strat">視察へ</button>'):'<button class="btn btn-main" data-act="strat">視察へ</button>'))+
+            :'<button class="btn btn-sub go-soft" data-act="strat">SCOUT</button>'):'<button class="btn btn-main" data-act="strat">SCOUT</button>'))+
     '</footer>'+(CL.scout&&CL.oppSel?oppCardModalHtml():'')+(CL.scout&&CL.scoutRep?scoutRepModalHtml():'');
   return h;
 }
@@ -14237,7 +14269,7 @@ function oppCardModalHtml(){
 }
 /** ④ 戦略方針: 監督能力を選ぶ(→docs/14) */
 function stratStepHtml(){
-  return '<div class="step-h one sc-h"><button class="bk" data-act="stratback">‹ SCOUT</button></div>'+   // 戻るは見出しの右端(→docs/14 §14.148)
+  return ''+   // 戻るは見出しの右端(→docs/14 §14.148)
     cmSayHtml(secStratLine(CL.S,CL.fx&&TEAMS[CL.fx.opp]?teamNameOf(TEAMS[CL.fx.opp]):""))+   // 秘書の呼びかけ(個別指導と同じ形。→docs/14 §14.176)
     mabHtml()+htSetHtml();   // 監督能力は閉じた状態から。ハーフタイムの指示は SQUAD から移した(→docs/14 §14.31)
 }
@@ -14869,6 +14901,7 @@ function onClubClick(e){
     if(commLeft(S)>0&&!CL.armPlay){ CL.armPlay=true; showClub(true); return; }   // 残りがあるときは2度押しで確かめる(→docs/14)
     CL.armPlay=false; CL.scout=true; CL.strat=false; CL.chat=null; CL.pick=[]; showClub(); return;   // コミュニケーションのあとは視察(→docs/18)
   }
+  if(act==="scoutback"){ CL.scout=false; CL.scoutRep=false; CL.oppSel=null; showClub(); return; }   // 視察 → 個別指導(→docs/33 §33.10)
   if(act==="scoutgo"){ CL.scoutRep=false; CL.scout=false; CL.strat=true; CL.mabOpen=false; CL.oppSel=null; showClub(); return; }
   if(act==="scoutback"){ CL.scout=false; CL.oppSel=null; showClub(); return; }
   if(act==="oppcard"){ CL.oppSel=b.dataset.id; showClub(true); return; }

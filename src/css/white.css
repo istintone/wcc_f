@@ -289,3 +289,26 @@ body.th-wl #club .prep-top .steps span{font-family:var(--f-num);font-weight:800;
 /* 出来事の残りの数(1 / N) */
 body.th-wl #club .ev-count{margin:6px 2px -4px;text-align:right;font-family:var(--f-num);font-weight:700;letter-spacing:.12em;font-size:12px;color:var(--w-mute)}
 body.th-wl #club .step-h.cm-h,body.th-wl #club .step-h.sc-h{justify-content:flex-end}
+
+/* =========================================================================
+   デザインのブラッシュアップ第2段(→docs/33 §33.10)。画面の骨組み・モーダルを下から出るシートに・画面の切り替えの向き
+   ========================================================================= */
+/* 準備の下の帯: 左に戻る・右に次へ(いつも同じ場所) */
+body.th-wl #club .prep-bot.has-back{flex-direction:row;align-items:center}
+body.th-wl #club .prep-bot.has-back .btn-main{flex:1;min-width:0}
+body.th-wl #club .prep-bot .pb-back{flex:none;height:50px;padding:0 10px;background:none;border:0;color:var(--w-ink2);font-family:var(--f-num);font-weight:800;font-size:14px;letter-spacing:.06em;cursor:pointer}
+/* 画面の切り替え: 右から入る / 左から入る */
+body.th-wl #club .cl-main.sl-r{animation:clSlR .24s cubic-bezier(.2,.8,.2,1)}
+body.th-wl #club .cl-main.sl-l{animation:clSlL .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes clSlR{from{transform:translateX(18%);opacity:.3}to{transform:none;opacity:1}}
+@keyframes clSlL{from{transform:translateX(-18%);opacity:.3}to{transform:none;opacity:1}}
+/* モーダル: 下から出るシート。そろえるのは出方・つまみ・閉じる(右上の ×)だけで、中の雰囲気(紙のレポート・暗い台のカード)はそれぞれ */
+body.th-wl #club .kmodal{align-items:flex-end;padding:0!important}
+body.th-wl #club .kmod-box{max-width:520px;max-height:calc(100dvh - 24px)!important;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
+body.th-wl #club .kmod-box::before{content:"";display:block;width:44px;height:4px;margin:8px auto 4px;background:rgba(127,127,127,.4)}
+body.th-wl #club .kmodal.enter{animation:kmFade .18s ease}
+body.th-wl #club .kmodal.enter .kmod-box{animation:kmUp .26s cubic-bezier(.2,.8,.2,1)}
+@keyframes kmFade{from{background:rgba(8,10,16,0)}}
+@keyframes kmUp{from{transform:translateY(70px);opacity:.3}to{transform:none;opacity:1}}
+body.th-wl #club .km-x,body.th-wl #club .sr-x{width:36px!important;height:36px!important;background:var(--w-ink)!important;color:#fff!important;font-size:18px!important;border-radius:0!important}
+@media (prefers-reduced-motion:reduce){body.th-wl #club .cl-main.sl-r,body.th-wl #club .cl-main.sl-l,body.th-wl #club .kmodal.enter,body.th-wl #club .kmodal.enter .kmod-box{animation:none}}
