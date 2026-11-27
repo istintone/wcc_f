@@ -501,6 +501,13 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
       for(let i=0;i<4000;i++)s+=E.awakeGain(T,"h10",r); return s/4000; };
     const a0=avg(0), a5=avg(5);
     check("覚醒の上がり幅は、重なりなしで平均1.35前後、5枚で2前後",Math.abs(a0-1.35)<0.06&&Math.abs(a5-2.0)<0.08,a0.toFixed(2)+" → "+a5.toFixed(2));
+    // 覚醒(→docs/14 §14.207): ポイント 1〜3 を1〜3つの能力に割り振る。合計はポイントと同じ(最大 +3)
+    { const r=(()=>{ let a=777; return ()=>{ a=(a*1103515245+12345)%2147483648; return a/2147483648; }; })(), pat={}; let bad=0, mx=0;
+      for(let i=0;i<3000;i++){ const T=E.newCareer(93); T.coll.h10=1+(i%6); const g=T.g.pl.h10, u0=Object.assign({},g.up), out=[]; E.awaken(T,"h10",r,out);
+        const d=E.STATS.map(k=>(g.up[k]||0)-(u0[k]||0)).filter(v=>v>0).sort((x,y)=>y-x), s=d.reduce((x,y)=>x+y,0); mx=Math.max(mx,s);
+        if(!d.length||s>3||d.length>3||d.some(v=>v!==Math.round(v)))bad++; pat[d.join("+")]=(pat[d.join("+")]||0)+1; }
+      console.log("    覚醒の割り振り "+Object.keys(pat).sort().map(k=>k+" "+(pat[k]/30).toFixed(0)+"%").join(" / "));
+      check("覚醒はポイント 1〜3 を1〜3つの能力に割り振る(合計は最大 +3)",bad===0&&mx===3&&pat["3"]&&pat["2+1"]&&pat["1+1+1"]&&pat["2"]&&pat["1+1"]&&pat["1"]); }
   }
   { // スポンサーとミッション(→docs/05 §5.14・docs/08 §8.9): マスタ = 業種 × ☆1〜5
     check("マスタは11業種 × ☆5(報酬の名前が5つずつ)",E.SP_IND.length===11&&E.SP_IND.every(x=>x.items.length===5));

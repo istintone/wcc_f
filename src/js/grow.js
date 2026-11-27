@@ -591,17 +591,25 @@ function awakeGain(S,id,rng){
 }
 const GAIN_MARK=["","","＋","＋＋"];
 /** 覚醒。能力が最大3項目、各+1〜3(どれが上がるか・いくつ上がるかは不定。1つは必ず上がる。重なりで大きくなりやすい) */
+/**
+ * 個人能力の覚醒(→docs/14 §14.207)。まず上がるポイント 1〜3 を決め(重なりが多いほど大きい)、それを1〜3つの能力に割り振る。
+ * 1つ目のポイントで能力を1つ選び、2つ目からは awakeNew の率で新しい能力に、それ以外はもう選んだ能力に足す
+ * 例: 3ポイント → TEC +3 / POW +1・TEC +2 / OFE +1・POW +1・TEC +1
+ */
 function awaken(S,id,rng,out){
-  const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], got=[];
-  const pool=STATS.filter(k=>card[k]+(g.up[k]||0)<STAT_MAX&&card[k]>TUNING.grow.startKeep);
-  for(let n=0;n<3&&pool.length;n++){
-    if(n>0&&rng()>=I.awakeUp[n])break;
-    const k=pool.splice(Math.floor(rng()*pool.length),1)[0];
-    const v=Math.min(awakeGain(S,id,rng),STAT_MAX-card[k]-(g.up[k]||0));
-    g.up[k]=(g.up[k]||0)+v; got.push(STAT_LABEL[k]+" +"+v+GAIN_MARK[v]);
+  const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], add={};
+  const room=k=>STAT_MAX-card[k]-(g.up[k]||0)-(add[k]||0);
+  const pts=awakeGain(S,id,rng);
+  for(let n=0;n<pts;n++){
+    const chosen=Object.keys(add).filter(k=>room(k)>=1), fresh=STATS.filter(k=>!add[k]&&room(k)>=1&&card[k]>TUNING.grow.startKeep);
+    const pickNew=!chosen.length||(fresh.length&&rng()<I.awakeNew);
+    const list=pickNew?fresh:chosen; if(!list.length)break;
+    const k=list[Math.floor(rng()*list.length)]; add[k]=(add[k]||0)+1;
   }
+  const got=STATS.filter(k=>add[k]).map(k=>{ g.up[k]=(g.up[k]||0)+add[k]; return STAT_LABEL[k]+" +"+add[k]; });
+  const sum=STATS.reduce((a,k)=>a+(add[k]||0),0);
   g.is=5; g.q=false; g.ie=0;
-  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")");
+  out.push("⭐ "+nameOf(card)+" が覚醒！("+got.join("・")+")"+GAIN_MARK[sum]);
   if(S.ts&&S.ts.awake!=null)S.ts.awake++;
   newsOf("awake",[id],out);
 }
