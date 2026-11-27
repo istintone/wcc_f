@@ -14662,11 +14662,9 @@ function playerVoiceHtml(){
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
   const S=CL.S, ev=tagEventOf(S);
-  if(!ev&&CL.tagDone&&!S.termOver){ const d=CL.tagDone, a=d.id?artSrc(CARDS[d.id],"stand"):null;
-    return talkDoneHtml(d,d.id?'<i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>':secAv(S),secOf(S).name,"EVENT"); }
+  if(!ev&&CL.tagDone&&!S.termOver)return talkDoneHtml(CL.tagDone,secAv(S),secOf(S).name,"EVENT");   // 話しているのは秘書なので、顔も秘書(→docs/14 §14.213)
   if(!ev||S.termOver)return "";
-  const id=S.g.tev.id;
-  return '<section class="sec sec-ev tag-ev">'+(id?'<i class="sec-av pl-av">'+(artSrc(CARDS[id],"stand")?'<img src="'+artSrc(CARDS[id],"stand")+'" alt="">':'')+'</i>':secAv(S))+
+  return '<section class="sec sec-ev tag-ev">'+secAv(S)+
     '<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">EVENT</em></b><p>'+tagEventText(S,ev)+'</p>'+
     '<div class="sec-ch">'+ev.ch.map((c,i)=>'<button class="btn ch" data-act="tagev" data-i="'+i+'">'+c[0]+'</button>').join("")+'</div></div></section>';
 }
