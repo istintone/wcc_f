@@ -3923,6 +3923,11 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 #club .st5 i.sg5{font-style:normal;animation:sg5Blink .9s ease-in-out infinite}
 #club .st5 i.sg5.is{color:#e0a800;--sgc:#ffd23a} #club .st5 i.sg5.ss{color:#2a7bd6;--sgc:#4aa8ff}
 @keyframes sg5Blink{0%,100%{opacity:1;text-shadow:0 0 4px var(--sgc),0 0 1px #fff}50%{opacity:.2;text-shadow:none}}
+/* 覚醒後(★5)の★は、ピンク赤をやめて元の色(個人 = 黄・特殊 = 青)のまま5つとも光る(→docs/14 §14.203) */
+#club .sqc .srow.is.aw i,#club .sqc .srow.is.aw i.on{color:#ffe600;text-shadow:0 0 1px #5a4300,0 0 4px #ffd23a,0 0 7px rgba(255,210,58,.85)}
+#club .sqc .srow.ss.aw i,#club .sqc .srow.ss.aw i.on{color:#1ab2ff;text-shadow:0 0 1px #003a5c,0 0 4px #4aa8ff,0 0 7px rgba(74,168,255,.85)}
+#club .st5 i.aw5{font-style:normal;animation:srowGlow 1.4s ease-in-out infinite alternate}
+#club .st5 i.aw5.is{color:#e0a800;text-shadow:0 0 4px #ffd23a,0 0 1px #fff} #club .st5 i.aw5.ss{color:#2a7bd6;text-shadow:0 0 4px #4aa8ff,0 0 1px #fff}
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12639,7 +12644,7 @@ const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
 const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 /** ★の並び。兆し(sign)のときは5つめの★がその色で点滅する(個人 = 黄・特殊 = 青。→docs/14 §14.202) */
-const starsSg=(n,sign,kind)=>sign&&n===4?"★★★★"+'<i class="sg5 '+kind+'">★</i>':stars(n);
+const starsSg=(n,sign,kind)=>n>=5?'<i class="aw5 '+kind+'">★★★★★</i>':sign&&n===4?"★★★★"+'<i class="sg5 '+kind+'">★</i>':stars(n);   // ★5 は5つとも光る(§14.203)
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
 /** 国籍と動物(→docs/08 §8.6)。例: イタリア ・ 🦈鮫(海) */

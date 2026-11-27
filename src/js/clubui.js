@@ -79,7 +79,7 @@ const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
 const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
 const stars=n=>"★".repeat(n)+"☆".repeat(5-n);
 /** ★の並び。兆し(sign)のときは5つめの★がその色で点滅する(個人 = 黄・特殊 = 青。→docs/14 §14.202) */
-const starsSg=(n,sign,kind)=>sign&&n===4?"★★★★"+'<i class="sg5 '+kind+'">★</i>':stars(n);
+const starsSg=(n,sign,kind)=>n>=5?'<i class="aw5 '+kind+'">★★★★★</i>':sign&&n===4?"★★★★"+'<i class="sg5 '+kind+'">★</i>':stars(n);   // ★5 は5つとも光る(§14.203)
 const gradeTag=g=>g==="-"?"":'<b class="gr gr'+g+'">'+g+'</b>';
 const cname=id=>nameOf(CARDS[id]);
 /** 国籍と動物(→docs/08 §8.6)。例: イタリア ・ 🦈鮫(海) */
