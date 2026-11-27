@@ -459,7 +459,9 @@ function sqDetailHtml(){
   const sk=c.skill?SKILLS[c.skill]:null, st=styleOfCard(c), RK=rareOfCard(c), kg=kickGrades(c), se=secOf(S);
   const rl=on?sqRole(id,i,S.layout[id][0],S.layout[id][1]):null;
   const no=n=>'<h4><i>'+n[0]+'</i>'+n[1]+'</h4>';
-  const stRow=k=>{ const b=c[k], v=cc[k], d=v-b;
+  // 能力の行(→docs/14 §14.206): 土台はカードの値、伸びは育成と覚醒で上がった分(g.up)。知らせの「+2」とそろう
+  const upOf=k=>g?Math.min(g.up[k]||0,STAT_MAX-c[k]):0;
+  const stRow=k=>{ const b=c[k], d=upOf(k);
     return '<tr><th>'+STAT_LABEL[k]+'</th><td class="bar"><u style="width:'+(b/STAT_MAX*100).toFixed(0)+'%"></u>'+(d>0.05?'<u class="gr" style="left:'+(b/STAT_MAX*100).toFixed(1)+'%;width:'+(d/STAT_MAX*100).toFixed(1)+'%"></u>':'')+'</td>'+
       '<td class="v">'+b.toFixed(1)+(d>0.05?'<em>+'+d.toFixed(1)+'</em>':'')+'</td></tr>'; };
   const ps=S.persSeen&&S.persSeen[id], an=S.aniSeen&&S.aniSeen[id]&&aniTxt(c);
@@ -472,7 +474,7 @@ function sqDetailHtml(){
     no(["SPEC","INFORMATION"])+
     '<div class="pr-card"><div class="pr-front">'+cardHtml(id,"s")+'</div><div class="pr-map">'+aptMapSvg(cc)+'<small>'+c.roles.join(" / ")+'</small></div>'+
     '<table class="pr-st">'+STATS.map(stRow).join("")+'<tr class="tot"><th>合計</th><td></td><td class="v">'+Math.round(STATS.reduce((a,k)=>a+c[k],0))+
-      (STATS.reduce((a,k)=>a+cc[k]-c[k],0)>0.05?'<em>+'+STATS.reduce((a,k)=>a+cc[k]-c[k],0).toFixed(1)+'</em>':'')+'</td></tr></table></div>'+
+      (STATS.reduce((a,k)=>a+upOf(k),0)>0.05?'<em>+'+STATS.reduce((a,k)=>a+upOf(k),0).toFixed(1)+'</em>':'')+'</td></tr></table></div>'+
     '<ul class="sr-key pr-key">'+(sk?'<li><i>SKILL</i><b>'+sk.label+'</b><span>'+sk.desc+'</span></li>':'')+
       (st?'<li><i class="kp">KP</i>'+rankChip(myStyleRank(S,st,id))+'<b>'+st.name+'</b><span>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</span></li>':'')+   // ランクは KP のすぐ横(→docs/14 §14.187)
       (RK?'<li><i class="rk2">R</i><b>'+(g.ss>=5?RK.name:'？？？')+'</b><span>レア KP</span></li>':'')+
