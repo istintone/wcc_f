@@ -76,7 +76,7 @@ function saveText(name,text){
 function settingsHtml(){
   if(!CL.set)return '<footer class="cft"><button class="btn btn-sub" data-act="set">設定・データ</button></footer>';
   const S=CL.S, kb=(JSON.stringify(S).length/1024).toFixed(1);
-  return '<section class="card set"><h3>設定・データ <button class="xb" data-act="set" aria-label="閉じる">×</button></h3>'+
+  return '<section class="card set"><h3>SETTINGS <button class="xb" data-act="set" aria-label="閉じる">×</button></h3>'+
     // 音: 効果音と BGM を別々に(→docs/14 第4弾)
     '<h4>音</h4><div class="tabs"><button class="tab'+(SND.on?' on':'')+'" data-act="sndtoggle">効果音 '+(SND.on?'あり':'なし')+'</button>'+
       '<button class="tab'+(BGM.on?' on':'')+'" data-act="bgmtoggle">BGM '+(BGM.on?'あり':'なし')+'</button></div>'+

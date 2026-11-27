@@ -264,3 +264,28 @@ body.th-wl #cap .htb{border-radius:0;clip-path:polygon(6px 0,100% 0,100% calc(10
 body.th-wl #cap .cap-bar{border-radius:0} body.th-wl #cap .cap-bar u{background:var(--w-red)}
 body.th-wl #ovBox{border-radius:0;border:0;border-top:4px solid var(--w-red);box-shadow:0 -2px 0 var(--w-black) inset,0 20px 50px rgba(0,0,0,.35)}
 body.th-wl #ovTitle{font-size:32px;letter-spacing:.1em}
+
+/* =========================================================================
+   デザインのブラッシュアップ第1段(→docs/33 §33.9)。単一のテーマ(白 × 赤)・英字の見出し・ボタンの体系・押したときの振る舞い・色の意味
+   ========================================================================= */
+body.th-wl{ --w-loss:#6e1020; --w-blue:#1d5fbf; --w-green:#1f8a4c; --w-gray:#9aa0aa; }
+/* 見出し: 赤い斜めの棒 + 英字(太い斜体)。横の補足は出さない */
+body.th-wl #club h3{font-family:var(--f-num);font-style:italic;font-weight:800;font-size:20px;line-height:1.1;letter-spacing:.02em;text-transform:uppercase}
+body.th-wl #club h3>small{display:none}
+/* ボタンの体系: 主 = 赤の斜めの帯 / 副 = 白に赤の枠 / 無効 = うすい紙色(読める濃さ) */
+body.th-wl #club .btn-sub,body.th-wl #club .nx-go2 .sk,body.th-wl #club .prep-bot .go-soft{background:#fff!important;color:var(--w-red)!important;box-shadow:inset 0 0 0 1.5px var(--w-red)!important;border:0!important;font-weight:800}
+body.th-wl #club .nx-go2 .sk{font-family:var(--f-num);font-size:17px;letter-spacing:.12em}
+body.th-wl #club .btn-main:disabled,body.th-wl #club .btn-main[disabled]{background:var(--t-paper2)!important;color:var(--w-mute)!important;box-shadow:none!important;opacity:1}
+/* 押したときの振る舞い: 沈んで少し暗く(scale は既存の transform と重ねられる) */
+body.th-wl button:not(:disabled):active,body.th-wl .tab:active,body.th-wl [data-act]:not(section):active{scale:.97;filter:brightness(.92)}
+/* 色の意味: 負けは暗い赤(赤は操作と自チーム) */
+body.th-wl #club .sched .sd-res.L{background:var(--w-loss)}
+/* 次の試合の札の帯は赤(自チームの次の一手) */
+body.th-wl #club .nx-band{background:linear-gradient(100deg,var(--w-red3),var(--w-red) 55%,var(--w-red2));border-bottom:0}
+body.th-wl #club .nx-band b{color:#fff}
+body.th-wl #club .nx-band i{color:rgba(255,255,255,.85)}
+/* 準備のパンくずの英字 */
+body.th-wl #club .prep-top .steps span{font-family:var(--f-num);font-weight:800;letter-spacing:.06em}
+/* 出来事の残りの数(1 / N) */
+body.th-wl #club .ev-count{margin:6px 2px -4px;text-align:right;font-family:var(--f-num);font-weight:700;letter-spacing:.12em;font-size:12px;color:var(--w-mute)}
+body.th-wl #club .step-h.cm-h,body.th-wl #club .step-h.sc-h{justify-content:flex-end}
