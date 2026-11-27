@@ -4766,6 +4766,25 @@ body.th-wl #club .cf-act .btn{margin:0;height:46px}
 body.th-wl #club .srep-inline{margin:4px 0 14px;background:#fffdf7;box-shadow:var(--w-sh),inset 0 0 0 1px #e1d9c6;padding:0}
 body.th-wl #club .srep-inline .srep{padding:14px 14px 10px}
 body.th-wl #club h3.sc-sq-h{margin:6px 2px 8px}
+/* 視察レポートの予想布陣(押せる・名前付き)とメンバー(→docs/34 §34.12) */
+body.th-wl #club .srep .sr-pitch{height:320px}
+body.th-wl #club .srep .sr-dot{border:0;padding:0;cursor:pointer;width:30px;height:30px;font:inherit;color:var(--w-ink)}
+body.th-wl #club .srep .sr-dot b{font-family:var(--f-num);font-weight:800;font-size:13px}
+body.th-wl #club .srep .sr-dot em{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-style:normal;font-size:10.5px;font-weight:800;
+  background:rgba(255,255,255,.88);padding:0 4px;line-height:1.4;max-width:86px;overflow:hidden;text-overflow:ellipsis}
+body.th-wl #club .srep .sr-mem{width:100%;border-collapse:collapse;margin:2px 0 10px;font-size:12px}
+body.th-wl #club .srep .sr-mem tr{cursor:pointer}
+body.th-wl #club .srep .sr-mem td{padding:4px 4px;border-bottom:1px solid #ebe4d4;vertical-align:middle}
+body.th-wl #club .srep .sr-mem td.no{width:24px;font-family:var(--f-num);font-weight:800;text-align:right;color:var(--w-mute)}
+body.th-wl #club .srep .sr-mem td.ps{width:40px;font-family:var(--f-num);font-weight:800;color:var(--w-blue)}
+body.th-wl #club .srep .sr-mem td.nm{font-weight:800}
+body.th-wl #club .srep .sr-mem td.nm small{color:var(--w-mute);font-family:var(--f-num);font-weight:700;margin-left:4px}
+body.th-wl #club .srep .sr-mem .kpb{font-family:var(--f-num);font-size:10.5px;background:var(--w-gold);color:#fff;padding:0 4px}
+body.th-wl #club .srep .sr-mem td.ov{width:30px;font-family:var(--f-num);font-weight:800;font-size:14px;text-align:right}
+body.th-wl #club .srep .sr-mem td:last-child{width:52px;text-align:right}
+body.th-wl #club .srep .sr-mem .mtg{position:static;display:inline-block;padding:0 4px;font-style:normal;font-size:10.5px;font-weight:900;line-height:16px;color:#fff;background:var(--mot2)}
+body.th-wl #club .srep .sr-mem .mtg.m1{background:var(--mot1)} body.th-wl #club .srep .sr-mem .mtg.m3{background:var(--mot3)} body.th-wl #club .srep .sr-mem .mtg.m4{background:var(--mot4)}
+body.th-wl #club .srep .sr-mem tr.sub td{font-family:var(--f-num);font-weight:800;letter-spacing:.14em;color:var(--w-mute);padding-top:8px;cursor:default}
 </style>
 </head>
 <body>
@@ -14439,7 +14458,7 @@ function oppSquadHtml(S,oppId,def,rep){
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;
   // スカウティングレポートを最初から出す。その下に相手の SQUAD(選手のカードを見る)(→docs/34 §34.11)
-  return scoutRepModalHtml(true)+'<h3 class="sc-sq-h">OPPONENT SQUAD</h3>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
+  return scoutRepModalHtml(true);   // 相手の SQUAD はレポートの 05 予想布陣とメンバーに吸収(→docs/34 §34.12)
 }
 /** SEASON から見る相手の SQUAD(フロート。視察レポートは出さない)。リーグの相手は、Premier Div なら育成レベル最大で */
 function oppViewModalHtml(){
@@ -14496,10 +14515,15 @@ function scoutRepModalHtml(inline){
 /** 視察レポートの続き(→docs/34 §34.3): 05 予想布陣・06 直近の戦績・07 相手監督・秘書の手書きのメモ(親密度が高いとき) */
 function scoutMoreHtml(S,fx,def,lv,no,red){
   const xi=def.xi, kpId=def.kp;
-  // 05 予想布陣: 相手の陣形(上がゴール。こちらへ攻めてくる向き)に KP と好調(絶好調)の印
-  const dots=xi.map(x=>{ const c=x.card, top=4+x.h*88, left=100-x.x;
-    return '<span class="sr-dot'+(c.id===kpId?' kp':'')+(c.gm===4?' hot':'')+'" style="left:'+left.toFixed(1)+'%;top:'+top.toFixed(1)+'%">'+c.no+'</span>'; }).join("");
+  // 05 予想布陣: 相手の陣形(相手の GK が下。相手の SQUAD と同じ向き)に背番号・ポジション・名前と、KP と好調(絶好調)の印。押すと相手の選手のカード
+  const OR=oppRoles(def), posOf=(x,i)=>i===0?"GK":posAt(x.h,x.x);
+  const dots=xi.map((x,i)=>{ const c=x.card, top=84-x.h*74, left=x.x;
+    return '<button class="sr-dot'+(c.id===kpId?' kp':'')+(c.gm===4?' hot':'')+'" data-act="oppcard" data-id="'+c.id+'" style="left:'+left.toFixed(1)+'%;top:'+top.toFixed(1)+'%"><b>'+c.no+'</b><em>'+posOf(x,i)+' '+nameOf(c)+'</em></button>'; }).join("");
   const pitch='<div class="sr-pitch">'+dots+'</div><div class="sr-leg"><span><i class="kp"></i>KP</span><span><i class="hot"></i>好調</span></div>';
+  // メンバー: 先発11人と控え5人(背番号・ポジション・名前・カードの数字・調子・役)
+  const role=id=>[["cap","CAP"],["pk","PK"],["fk","FK"],["ck","CK"]].filter(([k])=>OR[k]===id).map(r=>r[1]).join(" ");
+  const mrow=(c,pos)=>'<tr data-act="oppcard" data-id="'+c.id+'"><td class="no">'+c.no+'</td><td class="ps">'+pos+'</td><td class="nm">'+nameOf(c)+(c.id===kpId?' <b class="kpb">KP</b>':'')+(role(c.id)?' <small>'+role(c.id)+'</small>':'')+'</td><td class="ov">'+Math.round(cardTotal(c))+'</td><td>'+(c.gm!=null?'<em class="mtg m'+c.gm+'">'+MOT_LABEL[c.gm]+'</em>':'')+'</td></tr>';
+  const members='<table class="sr-mem"><tbody>'+xi.map((x,i)=>mrow(x.card,posOf(x,i))).join("")+'<tr class="sub"><td colspan="5">SUB</td></tr>'+(def.bench||[]).map(c=>mrow(c,c.roles[0])).join("")+'</tbody></table>';
   // 06 直近の戦績: 同じリーグなら順位と勝ち負け
   const L=S.league, row=L&&L.table&&L.table[fx.opp];
   const form=row?(()=>{ const ord=sortTable(L.table); return '<p class="sr-form"><b>'+(ord.indexOf(fx.opp)+1)+'位</b> '+row.w+'勝 '+row.d+'分 '+row.l+'敗 ・ 得失点 '+(row.gf-row.ga>0?'+':'')+(row.gf-row.ga)+'</p>'; })()
@@ -14513,7 +14537,7 @@ function scoutMoreHtml(S,fx,def,lv,no,red){
   if(lv>=2){ const slow=xi.map(x=>x.card).filter(c=>c.pos==="DF").sort((a,b)=>a.spd-b.spd)[0];
     const mine=S.sq.slice(0,11).map(id=>CARDS[id]).filter(c=>c&&(c.pos==="FW"||c.pos==="MF")).sort((a,b)=>b.spd-a.spd)[0];
     if(slow&&mine)memo='<div class="sr-memo">'+slow.no+'番の'+nameOf(slow)+'は足が遅めです。'+nameOf(mine)+'で裏を狙いましょう!<small>― '+secOf(S).name.split(" ").pop()+'</small></div>'; }
-  return no(["05","予想布陣"])+pitch+no(["06","直近の戦績"])+form+no(["07","相手監督"])+coach+memo;
+  return no(["05","予想布陣"])+pitch+members+no(["06","直近の戦績"])+form+no(["07","相手監督"])+coach+memo;
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";

@@ -1414,7 +1414,7 @@ function oppSquadHtml(S,oppId,def,rep){
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;
   // スカウティングレポートを最初から出す。その下に相手の SQUAD(選手のカードを見る)(→docs/34 §34.11)
-  return scoutRepModalHtml(true)+'<h3 class="sc-sq-h">OPPONENT SQUAD</h3>'+oppSquadHtml(S,fx.opp,oppDefOf(S,fx),true);
+  return scoutRepModalHtml(true);   // 相手の SQUAD はレポートの 05 予想布陣とメンバーに吸収(→docs/34 §34.12)
 }
 /** SEASON から見る相手の SQUAD(フロート。視察レポートは出さない)。リーグの相手は、Premier Div なら育成レベル最大で */
 function oppViewModalHtml(){
@@ -1471,10 +1471,15 @@ function scoutRepModalHtml(inline){
 /** 視察レポートの続き(→docs/34 §34.3): 05 予想布陣・06 直近の戦績・07 相手監督・秘書の手書きのメモ(親密度が高いとき) */
 function scoutMoreHtml(S,fx,def,lv,no,red){
   const xi=def.xi, kpId=def.kp;
-  // 05 予想布陣: 相手の陣形(上がゴール。こちらへ攻めてくる向き)に KP と好調(絶好調)の印
-  const dots=xi.map(x=>{ const c=x.card, top=4+x.h*88, left=100-x.x;
-    return '<span class="sr-dot'+(c.id===kpId?' kp':'')+(c.gm===4?' hot':'')+'" style="left:'+left.toFixed(1)+'%;top:'+top.toFixed(1)+'%">'+c.no+'</span>'; }).join("");
+  // 05 予想布陣: 相手の陣形(相手の GK が下。相手の SQUAD と同じ向き)に背番号・ポジション・名前と、KP と好調(絶好調)の印。押すと相手の選手のカード
+  const OR=oppRoles(def), posOf=(x,i)=>i===0?"GK":posAt(x.h,x.x);
+  const dots=xi.map((x,i)=>{ const c=x.card, top=84-x.h*74, left=x.x;
+    return '<button class="sr-dot'+(c.id===kpId?' kp':'')+(c.gm===4?' hot':'')+'" data-act="oppcard" data-id="'+c.id+'" style="left:'+left.toFixed(1)+'%;top:'+top.toFixed(1)+'%"><b>'+c.no+'</b><em>'+posOf(x,i)+' '+nameOf(c)+'</em></button>'; }).join("");
   const pitch='<div class="sr-pitch">'+dots+'</div><div class="sr-leg"><span><i class="kp"></i>KP</span><span><i class="hot"></i>好調</span></div>';
+  // メンバー: 先発11人と控え5人(背番号・ポジション・名前・カードの数字・調子・役)
+  const role=id=>[["cap","CAP"],["pk","PK"],["fk","FK"],["ck","CK"]].filter(([k])=>OR[k]===id).map(r=>r[1]).join(" ");
+  const mrow=(c,pos)=>'<tr data-act="oppcard" data-id="'+c.id+'"><td class="no">'+c.no+'</td><td class="ps">'+pos+'</td><td class="nm">'+nameOf(c)+(c.id===kpId?' <b class="kpb">KP</b>':'')+(role(c.id)?' <small>'+role(c.id)+'</small>':'')+'</td><td class="ov">'+Math.round(cardTotal(c))+'</td><td>'+(c.gm!=null?'<em class="mtg m'+c.gm+'">'+MOT_LABEL[c.gm]+'</em>':'')+'</td></tr>';
+  const members='<table class="sr-mem"><tbody>'+xi.map((x,i)=>mrow(x.card,posOf(x,i))).join("")+'<tr class="sub"><td colspan="5">SUB</td></tr>'+(def.bench||[]).map(c=>mrow(c,c.roles[0])).join("")+'</tbody></table>';
   // 06 直近の戦績: 同じリーグなら順位と勝ち負け
   const L=S.league, row=L&&L.table&&L.table[fx.opp];
   const form=row?(()=>{ const ord=sortTable(L.table); return '<p class="sr-form"><b>'+(ord.indexOf(fx.opp)+1)+'位</b> '+row.w+'勝 '+row.d+'分 '+row.l+'敗 ・ 得失点 '+(row.gf-row.ga>0?'+':'')+(row.gf-row.ga)+'</p>'; })()
@@ -1488,7 +1493,7 @@ function scoutMoreHtml(S,fx,def,lv,no,red){
   if(lv>=2){ const slow=xi.map(x=>x.card).filter(c=>c.pos==="DF").sort((a,b)=>a.spd-b.spd)[0];
     const mine=S.sq.slice(0,11).map(id=>CARDS[id]).filter(c=>c&&(c.pos==="FW"||c.pos==="MF")).sort((a,b)=>b.spd-a.spd)[0];
     if(slow&&mine)memo='<div class="sr-memo">'+slow.no+'番の'+nameOf(slow)+'は足が遅めです。'+nameOf(mine)+'で裏を狙いましょう!<small>― '+secOf(S).name.split(" ").pop()+'</small></div>'; }
-  return no(["05","予想布陣"])+pitch+no(["06","直近の戦績"])+form+no(["07","相手監督"])+coach+memo;
+  return no(["05","予想布陣"])+pitch+members+no(["06","直近の戦績"])+form+no(["07","相手監督"])+coach+memo;
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";

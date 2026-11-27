@@ -466,3 +466,22 @@ body.th-wl #club .cf-act .btn{margin:0;height:46px}
 body.th-wl #club .srep-inline{margin:4px 0 14px;background:#fffdf7;box-shadow:var(--w-sh),inset 0 0 0 1px #e1d9c6;padding:0}
 body.th-wl #club .srep-inline .srep{padding:14px 14px 10px}
 body.th-wl #club h3.sc-sq-h{margin:6px 2px 8px}
+/* 視察レポートの予想布陣(押せる・名前付き)とメンバー(→docs/34 §34.12) */
+body.th-wl #club .srep .sr-pitch{height:320px}
+body.th-wl #club .srep .sr-dot{border:0;padding:0;cursor:pointer;width:30px;height:30px;font:inherit;color:var(--w-ink)}
+body.th-wl #club .srep .sr-dot b{font-family:var(--f-num);font-weight:800;font-size:13px}
+body.th-wl #club .srep .sr-dot em{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;white-space:nowrap;font-style:normal;font-size:10.5px;font-weight:800;
+  background:rgba(255,255,255,.88);padding:0 4px;line-height:1.4;max-width:86px;overflow:hidden;text-overflow:ellipsis}
+body.th-wl #club .srep .sr-mem{width:100%;border-collapse:collapse;margin:2px 0 10px;font-size:12px}
+body.th-wl #club .srep .sr-mem tr{cursor:pointer}
+body.th-wl #club .srep .sr-mem td{padding:4px 4px;border-bottom:1px solid #ebe4d4;vertical-align:middle}
+body.th-wl #club .srep .sr-mem td.no{width:24px;font-family:var(--f-num);font-weight:800;text-align:right;color:var(--w-mute)}
+body.th-wl #club .srep .sr-mem td.ps{width:40px;font-family:var(--f-num);font-weight:800;color:var(--w-blue)}
+body.th-wl #club .srep .sr-mem td.nm{font-weight:800}
+body.th-wl #club .srep .sr-mem td.nm small{color:var(--w-mute);font-family:var(--f-num);font-weight:700;margin-left:4px}
+body.th-wl #club .srep .sr-mem .kpb{font-family:var(--f-num);font-size:10.5px;background:var(--w-gold);color:#fff;padding:0 4px}
+body.th-wl #club .srep .sr-mem td.ov{width:30px;font-family:var(--f-num);font-weight:800;font-size:14px;text-align:right}
+body.th-wl #club .srep .sr-mem td:last-child{width:52px;text-align:right}
+body.th-wl #club .srep .sr-mem .mtg{position:static;display:inline-block;padding:0 4px;font-style:normal;font-size:10.5px;font-weight:900;line-height:16px;color:#fff;background:var(--mot2)}
+body.th-wl #club .srep .sr-mem .mtg.m1{background:var(--mot1)} body.th-wl #club .srep .sr-mem .mtg.m3{background:var(--mot3)} body.th-wl #club .srep .sr-mem .mtg.m4{background:var(--mot4)}
+body.th-wl #club .srep .sr-mem tr.sub td{font-family:var(--f-num);font-weight:800;letter-spacing:.14em;color:var(--w-mute);padding-top:8px;cursor:default}
