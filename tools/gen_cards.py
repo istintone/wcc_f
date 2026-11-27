@@ -20,6 +20,7 @@ import hashlib
 import json
 import random
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).parent.parent
@@ -108,11 +109,14 @@ def main():
         no, rname, roles, age, r, traits, skill = f[:7]
         nat = f[7].strip() if len(f) > 7 else ""
         birth = f[8].strip() if len(f) > 8 else ""
+        ptype = f[9].strip() if len(f) > 9 else ""      # 型(→docs/32 §32.8)
+        kpst = f[10].strip() if len(f) > 10 else ""     # KP の型(空欄ならスキルから)
+        assert re.fullmatch(r"(?:[odtpsa](?:\+{1,3}|-{1,2})){0,4}", traits), (ln, traits)
         rl = roles.split("/")
         assert all(x in ROLES for x in rl), (ln, roles)
         assert nat == "" or (len(nat) == 3 and nat.isupper()), (ln, nat)
         cur["pl"].append({"no": int(no), "rname": rname, "roles": rl, "age": int(age), "r": float(r),
-                          "traits": traits, "skill": skill, "nat": nat,
+                          "traits": traits, "skill": skill, "nat": nat, "ptype": ptype, "kp": kpst,
                           "birth": datetime.date.fromisoformat(birth) if birth else None})
     names, teams, rows, seen, births, n_pb = {}, {}, [], set(), {}, 0
     for ci, c in enumerate(clubs):
@@ -132,15 +136,15 @@ def main():
                 births[pid] = b.isoformat()
             else:
                 b = pseudo_birth(pid, p["age"]); n_pb += 1
-            rows.append('  ["%s",%d,%d,"%s","%s",%d,%s,"%s","%s","%s",%d]' % (
+            rows.append('  ["%s",%d,%d,"%s","%s",%d,%s,"%s","%s","%s",%d,"%s","%s"]' % (
                 pid, ci, p["no"], pn, "/".join(p["roles"]), p["age"], p["r"], p["traits"], p["skill"],
-                p["nat"], ani_of(b)))
+                p["nat"], ani_of(b), p["ptype"], p["kp"]))
     js = ["/* 生成物。手で編集しない。 python tools/gen_cards.py が tools/squads.local.txt から書き出す。",
           "   実在クラブの選手(→docs/06)。**名前は偽名**。実名は packs/real.local.json(Git管理外)。",
           "   REAL_CLUBS: [id, 偽名クラブ, 略称, 色, 陣形, KPの並び位置(1〜16)]",
-          "   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物]",
+          "   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物, 型, KPの型]",
           "     動物は生年月日から出した番号(→data.js の ANIMALS)。生年月日そのものは本体に載せない",
-          "     並びは陣形の枠の順に先発11人 → 控え5人。能力は役割のひな形 + 格 + 特徴から pool.js が作る */",
+          "     並びは陣形の枠の順に先発11人 → 控え5人。能力は型のひな形 + 格 + 特徴から pool.js が作る(→docs/32) */",
           "const REAL_CLUBS=["]
     js.append(",\n".join('  ["%s","%s","%s","%s","%s",%d]' % (c["id"], c["pname"], c["short"], c["color"], c["form"], c["kp"])
                          for c in clubs))

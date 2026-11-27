@@ -102,13 +102,14 @@ function genWorld(seed){
     const cards=roles.map((role,i)=>{
       const g=GEN_ROLE[baseRole(role)], off=C.tierStat[tier-1];
       const age=18+Math.floor(rng()*17), ageOff=age<=21?-0.8:age>=31?0.4:0;
-      const st=g.st.map((v,k)=>clamp(Math.round(v+(v<=6?off*0.3:off+ageOff)+(rng()*2-1)*C.statNoise),1,STAT_MAX));
+      const tys=ptypesOf(role), ptype=tys[Math.floor(rng()*tys.length)];   // 型(→docs/32 §32.8)。ひな形は型から
+      const st=ptypeSt(ptype).map((v,k)=>clamp(Math.round(v+(v<=6?off*0.3:off+ageOff)+(rng()*2-1)*C.statNoise),1,STAT_MAX));
       const cid=id+"p"+String(i+1).padStart(2,"0");
       const sd=/^L/.test(role)?"L":"R";
       const two=role==="CMF"?["CMF",rng()<0.5?"DMF":"OMF"]:baseRole(role)==="SMF"?[role,sd+"WG"]:baseRole(role)==="WG"?[role,sd+"MF"]
         :role==="OMF"?["OMF","CMF"]:role==="DMF"?["DMF","CMF"]:role==="ST"?["ST","CF"]:role==="CF"?["CF","ST"]:[role];
       CARDS[cid]={ id:cid, no:GEN_NO[i], name:name(), pos:g.pos, roles:two,
-        off:st[0], def:st[1], tec:st[2], pow:st[3], spd:st[4], sta:st[5], skill:pick(g.sk), age };
+        off:st[0], def:st[1], tec:st[2], pow:st[3], spd:st[4], sta:st[5], skill:pick(g.sk), age, ptype };
       return cid;
     });
     const xi=cards.slice(0,11), links=[], nLink=C.linkBase+C.linkTier*tier;
@@ -428,7 +429,7 @@ function playerDef(S,fx){
 function fixtureMatch(S,fx){
   return { home:playerDef(S,fx), away:oppDefOf(S,fx),
     seed:(S.seed^hashStr("m:"+S.term+":"+S.played))>>>0,
-    opts:{ ko:fx.ko, agg:fx.agg } };
+    opts:{ ko:fx.ko, agg:fx.agg, final:fx.label==="決勝" } };   // 決勝はビッグマッチ(→docs/32)
 }
 
 /* ---------- 結果の反映 ---------- */

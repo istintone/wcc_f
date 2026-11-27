@@ -4628,6 +4628,46 @@ const UNIQUE_CARDS={"mcb10": {"name": "北の巨神", "kind": "striker"}, "mdb10
 
 const STAT_MAX=20;
 const STATS=["off","def","tec","pow","spd","sta"];
+/**
+ * 選手の型(→docs/32 §32.8)。役割の群(grp)ごとに3〜5つ。st … 6能力のひな形 [OFE, DEF, TEC, POW, SPE, STA](**合計はどれも 73**)。
+ * 型は能力の配分と、試合の振る舞い(TUNING.ptype。特性タグと同じ語彙。→docs/30)を決める。
+ * GK の OFE は「攻撃の起点(フィード)」: ロングキックの判定に使う(GK も6能力すべてを使う)
+ */
+const PTYPES={
+  gk_stop:   { grp:"GK",  name:"ショットストッパー",       st:[8,17,11,15,10,12] },
+  gk_sweep:  { grp:"GK",  name:"スイーパー",               st:[9,15,13,12,13,11] },
+  gk_feed:   { grp:"GK",  name:"フィード",                 st:[13,15,13,12,9,11] },
+  cb_stop:   { grp:"CB",  name:"ストッパー",               st:[6,17,9,16,12,13] },
+  cb_build:  { grp:"CB",  name:"ビルドアップ",             st:[7,15,14,12,12,13] },
+  cb_air:    { grp:"CB",  name:"空中戦",                   st:[7,16,9,18,10,13] },
+  cb_cover:  { grp:"CB",  name:"カバー",                   st:[6,16,10,13,15,13] },
+  sb_atk:    { grp:"SB",  name:"攻撃型",                   st:[11,11,12,9,16,14] },
+  sb_def:    { grp:"SB",  name:"守備型",                   st:[7,15,11,12,14,14] },
+  sb_in:     { grp:"SB",  name:"インサイド",               st:[9,12,15,10,13,14] },
+  dm_anchor: { grp:"DMF", name:"アンカー",                 st:[8,15,14,13,10,13] },
+  dm_destroy:{ grp:"DMF", name:"潰し屋",                   st:[7,16,11,14,11,14] },
+  dm_regista:{ grp:"DMF", name:"レジスタ",                 st:[9,12,16,10,11,15] },
+  cm_b2b:    { grp:"CMF", name:"ボックス・トゥ・ボックス", st:[12,12,12,12,11,14] },
+  cm_maker:  { grp:"CMF", name:"司令塔",                   st:[11,10,16,10,12,14] },
+  cm_runner: { grp:"CMF", name:"飛び出し",                 st:[14,9,13,12,13,12] },
+  om_10:     { grp:"OMF", name:"10番",                     st:[14,7,17,10,13,12] },
+  om_shadow: { grp:"OMF", name:"シャドー",                 st:[16,7,13,11,15,11] },
+  om_creator:{ grp:"OMF", name:"チャンスメイカー",         st:[13,7,17,9,15,12] },
+  w_drib:    { grp:"W",   name:"突破",                     st:[13,6,15,9,18,12] },
+  w_cutin:   { grp:"W",   name:"カットイン",               st:[16,6,15,10,15,11] },
+  w_cross:   { grp:"W",   name:"クロッサー",               st:[12,8,15,10,14,14] },
+  w_play:    { grp:"W",   name:"ワイドの司令塔",           st:[14,7,16,9,14,13] },
+  cf_poach:  { grp:"CF",  name:"点取り屋",                 st:[18,5,13,14,13,10] },
+  cf_target: { grp:"CF",  name:"ターゲット",               st:[15,6,12,18,10,12] },
+  cf_false9: { grp:"CF",  name:"偽9番",                    st:[15,6,16,11,13,12] },
+  cf_speed:  { grp:"CF",  name:"スピード型",               st:[16,5,13,11,18,10] },
+  cf_all:    { grp:"CF",  name:"万能型",                   st:[16,6,14,14,13,10] }
+};
+/** 役割(細かいポジション)→ 型の群 */
+const PTYPE_GRP={ GK:"GK", CB:"CB", LSB:"SB", RSB:"SB", SB:"SB", DMF:"DMF", CMF:"CMF", OMF:"OMF", LMF:"W", RMF:"W", SMF:"W", LWG:"W", RWG:"W", WG:"W", CF:"CF", ST:"CF" };
+const ptypesOf=role=>Object.keys(PTYPES).filter(k=>PTYPES[k].grp===PTYPE_GRP[role]);
+/** 型のひな形(山と谷を tplK だけ平均へ寄せたもの。合計は変わらない) */
+const ptypeSt=ty=>{ const t=PTYPES[ty].st, m=t.reduce((a,b)=>a+b,0)/t.length, k=TUNING.pack.tplK; return t.map(v=>m+(v-m)*k); };
 // 能力の表記は本家に合わせた略号(→docs/06)
 const STAT_LABEL={ off:"OFE", def:"DEF", tec:"TEC", pow:"POW", spd:"SPE", sta:"STA" };
 
@@ -4881,7 +4921,11 @@ const TUNING={
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
   pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, oilK:2,   // oilK … オイルマネー(レアスポンサー)のときの金パック(K・L)の率の倍率(→docs/23)
-    trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+    trait:1.5, lowK:0.5, gradeBase:1.4, gradeK:0.8,
+    // 選手のブラッシュアップ(→docs/32 §32.8): 特徴は + / − 1つで traitU。格は平均 gradeMid を境に gradeK2 で広げ、
+    // 上がる分は強い能力から gradeW の比で厚く乗せる(下がる分は均等)
+    //   tplK … 型のひな形の山と谷を、平均へ寄せる割合(1 = そのまま)。平均の合計と 20 の数で合わせた(→docs/32 §32.9)
+    traitU:0.7, gradeMid:1.7, gradeK2:1.8, gradeW:[1.6,1.3,1.0,0.7,0.5,0.4], tplK:0.75,
     // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
     promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
   // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
@@ -4946,6 +4990,24 @@ const TUNING={
   //   quick … アンカー: 奪って quickN 手目までパスを pass 倍・持ち運びを carry 倍 / h … 隊列の高さのずれ / xIn・xOut … 中央へ寄せる・外へ開く割合
   //   ch … 選ぶ手の重み / recv … [下, 上, 倍率] この高さの範囲で受けやすい / recvLong … ロングボールの受け手 / mark … 守備で競りに行く重み
   //   sweep … GK の飛び出し / lob … 前に出たときの頭越しへの弱さ / save … セーブの上乗せ(壁は至近距離 wallH より奥のシュートだけ)/ amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役の選ばれやすさ
+  // 新しいスキルの場面(→docs/32 §32.8 E)。bigGap … 相手の先発の能力(6つの合計)の平均がこれだけ上ならビッグマッチ /
+  //   clutchMin … クラッチが効く分 / angleX … カットインシュートが効く、中央からの横のずれ
+  skill2:{ bigGap:2, clutchMin:70, angleX:14 },
+  // 型の振る舞い(→docs/32 §32.8 B)。語彙は trait と同じ: h … 高さのずれ / xIn・xOut … 中へ寄る・外へ開く / ch … 選ぶ手の重み /
+  //   recv … [下, 上, 倍率] の高さで受けやすい / recvLong … ロングボールの受け手 / mark … 競りに行く / sweep・lob … GK の飛び出し・頭越し /
+  //   save … セーブの上乗せ(near … 至近距離だけ)/ quick … 奪ってすぐパス / amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役 /
+  //   fx … 効果の入れ物への小さな上乗せ(FX0 の語彙)。特性タグを持つと、同じ語彙が掛け合わさって強まる
+  ptype:{
+    gk_stop:{ save:0.03, near:true }, gk_sweep:{ h:0.015, sweep:1.6, lob:0.6 }, gk_feed:{ ch:{ gkLong:1.6, gkShort:0.8 } },
+    cb_stop:{ mark:1.25, press:0.8, h:0.01 }, cb_build:{ ch:{ cbVert:1.4, cbCarry:1.3, cbFeed:0.8 } }, cb_air:{ fx:{ aerial:1.06 }, ch:{ cbFeed:1.2 } }, cb_cover:{ h:-0.02 },
+    sb_atk:{ h:0.04, xOut:0.1, ch:{ sbOver:1.4, sbEarly:1.2 } }, sb_def:{ h:-0.03, ch:{ sbOver:0.7, sbInner:0.8 } }, sb_in:{ xIn:0.25, ch:{ sbInner:1.5, sbOver:0.8 } },
+    dm_anchor:{ xIn:0.25, h:-0.02, quick:true }, dm_destroy:{ mark:1.3, press:0.7 }, dm_regista:{ h:-0.03, ch:{ dmSwitch:1.4, dmSpray:1.2, dmCarry:0.8 } },
+    cm_b2b:{ amp:1.4, ch:{ cmDrib:1.2 }, recv:[0.75,1,1.3] }, cm_maker:{ ch:{ cmWide:1.3, cmThru:1.1 } }, cm_runner:{ h:0.04, recv:[0.8,1,1.4] },
+    om_10:{ xIn:0.1, recv:[0.62,0.82,1.5] }, om_shadow:{ h:0.04, recv:[0.8,1,1.4], ch:{ omDrib:1.2 } }, om_creator:{ ch:{ omLast:1.4 } },
+    w_drib:{ xOut:0.2, ch:{ wgRun:1.4, smRun:1.4 }, drift:1.3 }, w_cutin:{ ch:{ wgCut:1.5, smCut:1.5 } }, w_cross:{ xOut:0.2, ch:{ wgCross:1.5, smCross:1.5 } },
+    w_play:{ xIn:0.15, ch:{ smCut:1.2, wgCut:1.2 }, fx:{ assist:1.05 } },
+    cf_poach:{ recv:[0.85,1,1.4], fx:{ reb:1.1 } }, cf_target:{ xIn:0.3, recvLong:1.8, ch:{ cfLay:1.3 } }, cf_false9:{ h:-0.06, recv:[0.45,0.7,1.4], ch:{ cfLay:1.4, cfTurn:1.2 } },
+    cf_speed:{ ch:{ cfRun:1.5 } }, cf_all:{} },
   trait:{ quickN:1, quick:{ pass:2.2, carry:0.3 },
     h:{ no95:-0.05, no10:0, sweeper:-0.02, libero:0.03, wingback:0.04, target:0.02, anchor:-0.02, gkSweep:0.015 },
     xIn:{ target:0.3, anchor:0.3, no10:0.08 }, xOut:{ dribbler:0.15, crosser:0.2, wingback:0.15 },
@@ -5015,7 +5077,7 @@ const sidedRoles=(roles,side)=>roles.map(r=>LR_ROLE[r]?LR_ROLE[r][side==="R"?1:0
  *   lane … 左右の行き先
  */
 const CHANNELS={
-  GK: [{id:"gkLong",  label:"ロングキック",   kind:"pass",  stat:"pow", risk:0.62, gain:0.50, to:0.58, lane:"any"},
+  GK: [{id:"gkLong",  label:"ロングキック",   kind:"pass",  stat:"off", risk:0.62, gain:0.50, to:0.58, lane:"any"},   // GK の OFE = フィード(→docs/32 §32.8)
        {id:"gkThrow", label:"スロー",         kind:"pass",  stat:"spd", risk:1.00, gain:0.24, lane:"out"},
        {id:"gkShort", label:"短い繋ぎ",       kind:"pass",  stat:"tec", risk:1.10, gain:0.14, lane:"same"}],
   CB: [{id:"cbCarry", label:"持ち上がり",     kind:"carry", stat:"spd", risk:0.90, gain:0.20, lane:"same"},
@@ -5225,7 +5287,7 @@ const SKILLS={
   maker:   { label:"ゲームメイカー",       style:"K11", desc:"散らしと展開が正確", buff:{ ch:["dmSpray","dmSwitch","cmWide"], w:1.1, s:1.08 } },
   passer:  { label:"パスマスター",         style:"T01", desc:"短いパスが正確", buff:{ ch:["dmSpray","cmWide","cbVert"], w:1.1, s:1.06 } },
   thru:    { label:"スルーパサー",         style:"T05", desc:"スルーパスが通りやすい", buff:{ ch:["cmThru","omLast"], w:1.2, s:1.07 } },
-  longp:   { label:"ロングパサー",         style:"T02", desc:"長いボールが正確", buff:{ ch:["cbFeed","dmSwitch","gkLong"], w:1.2, s:1.10 } },
+  longp:   { label:"レジスタ",             style:"K11", desc:"低い位置からの散らし・ロングパスが通る", buff:{ ch:["dmSwitch","dmSpray","cmWide","cbFeed"], w:1.2, s:1.10 } },   // ロングパサーを作り直した(→docs/32)
   counter: { label:"カウンターの起点",     style:"T03", desc:"スルーパスが通りやすい", buff:{ ch:["cmThru"], w:1.1, s:1.06 } },
   sprint:  { label:"快速アタッカー",       style:"T04", desc:"最終ラインの裏へ抜け出す", buff:{ ch:["cfRun","wgRun"], w:1.2, s:1.07 } },
   combo:   { label:"コンビネーション",     style:"T09", desc:"短いパスが正確", buff:{ ch:["dmSpray","cmWide"], w:1.1, s:1.05 } },
@@ -5250,7 +5312,24 @@ const SKILLS={
   stopper: { label:"ショットストッパー",   style:"K21", desc:"枠内のシュートを止める", buff:{ gk:1.05 } },
   pkstop:  { label:"PKストッパー",         style:"K22", desc:"PKを止める", buff:{ pk:1.12 } },
   sweeper: { label:"スイーパーキーパー",   style:"K23", desc:"前に出たときの守備範囲が広い", buff:{ sweep:1.3, lob:0.7 } },
-  feeder:  { label:"フィードの名手",       style:"K24", desc:"GKからのボールが味方に届く", buff:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.12 } }
+  feeder:  { label:"フィードの名手",       style:"K24", desc:"GKからのボールが味方に届く", buff:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.12 } },
+  // 新しいスキル(→docs/32 §32.8 E)。KP の型はカードが別に持つ(style はカードに KP の型が無いときの既定)
+  cutin:    { label:"カットインシュート", style:"K05", desc:"中へ切れ込み、角度のある所から巻いて撃つ", buff:{ ch:["wgCut","smCut"], w:1.3, s:1.06, angle:1.12 } },
+  false9:   { label:"偽9番",             style:"K10", desc:"中盤へ降りて受け、2列目の飛び出しを生む", buff:{ ch:["cfLay","cfTurn"], w:1.2, s:1.06, recvDeep:1.3, assist:1.08 } },
+  jackal:   { label:"ジャッカル",         style:"K08", desc:"こぼれ球・ゴール前の混戦に強い", buff:{ reb:1.35, shot:1.03 } },
+  gegen:    { label:"ゲーゲンプレス",     style:"T11", desc:"奪われた直後に奪い返しやすい", buff:{ gegen:1.18 } },
+  bigmatch: { label:"ビッグマッチ",       style:"T17", desc:"決勝・格上との試合で力が上がる", buff:{ big:1.05 } },
+  pkace:    { label:"PK の名手",          style:"K14", desc:"PK が決まりやすい", buff:{ pkK:1.15 } },
+  oneone:   { label:"1対1の名手",         style:"K21", desc:"至近距離・1対1のシュートを止める", buff:{ gkNear:1.10 } },
+  touch:    { label:"ファーストタッチ",   style:"K10", desc:"受けてすぐ前を向き、次の手が速い", buff:{ ch:["cmDrib","omDrib","omKeep","cfTurn"], w:1.05, s:1.07 } },
+  iron:     { label:"鉄人",               style:"K19", desc:"終盤も力が落ちにくい", buff:{ sta:0.88 } },
+  intercept:{ label:"インターセプター",   style:"K16", desc:"パスの受け手に先回りして奪う", buff:{ def:1.09, on:"pass" } },
+  block:    { label:"シュートブロック",   style:"T12", desc:"身体を投げ出してシュートを防ぐ", buff:{ blk:1.18 } },
+  aerial:   { label:"空中戦の守備者",     style:"K13", desc:"守備のときの空中戦に強い", buff:{ aerial:1.12 } },
+  clutch:   { label:"クラッチ",           style:"T08", desc:"終盤・1点差以内の場面のシュートが強い", buff:{ clutch:1.12 } },
+  innerlap: { label:"インナーラップ",     style:"K12", desc:"内側を駆け上がる", buff:{ ch:["sbInner"], w:1.3, s:1.08 } },
+  carrier:  { label:"運ぶドリブル",       style:"K18", desc:"持ち運んで前進する", buff:{ ch:["cbCarry","dmCarry","cmDrib"], w:1.25, s:1.07 } },
+  inswing:  { label:"逆足のクロス",       style:"K06", desc:"巻いて入るクロスとCKが合いやすい", buff:{ ch:["smCross","wgCross","sbEarly"], w:1.1, s:1.10, ck:1.10 } }
 };
 
 /** 陣形の初期配置。[h, x] を GK から順に11人ぶん。試合中はカードを自由に動かせる */
@@ -5280,8 +5359,9 @@ const FORMS={
  * [id, 背番号, 表示名, ポジション, 得意な役割, off, def, tec, pow, spd, sta, スキル]
  * 表示名は差し替え層(PACK)で上書きできる(→docs/01 §1.4)。
  */
+// GK の OFE はフィード(ロングキックの判定。→docs/32 §32.8)。もとはロングキックに使っていた POW と同じ値
 const CARD_ROWS=[
-  ["h01", 1,"マレーニ","GK",["GK"],        3,17,11,14,10,10,"stopper"],
+  ["h01", 1,"マレーニ","GK",["GK"],       14,17,11,14,10,10,"stopper"],
   ["h02", 2,"ダルコ",  "DF",["SB"],        9,14,12,11,16,15,"over"],
   ["h03", 4,"ベルグ",  "DF",["CB"],        6,17,10,16,11,12,"leader"],
   ["h04", 5,"ソウザ",  "DF",["CB"],        7,16,12,15,12,12,"cover"],
@@ -5292,13 +5372,13 @@ const CARD_ROWS=[
   ["h09", 7,"サリフ",  "FW",["WG","SMF"], 15, 6,15, 9,17,12,"wing"],
   ["h10", 9,"グラーフ","FW",["CF"],       18, 5,13,16,14,11,"hunter"],
   ["h11",11,"ニコ",    "FW",["WG"],       15, 6,16, 8,16,12,"fanta"],
-  ["h12",12,"オルソ",  "GK",["GK"],        2,15,10,13, 9,10,"pkstop"],
+  ["h12",12,"オルソ",  "GK",["GK"],       13,15,10,13, 9,10,"pkstop"],
   ["h13",15,"パヴェル","DF",["CB","SB"],   6,15,10,14,12,12,"wall"],
   ["h14",14,"ジョアン","MF",["CMF","DMF"],11,12,14,12,12,15,"dynamo"],
   ["h15",17,"ティモ",  "MF",["SMF","WG"], 13, 8,14, 9,16,13,"counter"],
   ["h16",19,"ブルーノ","FW",["CF"],       16, 5,12,15,13,11,"tower"],
 
-  ["a01", 1,"ケーラー","GK",["GK"],        3,17,10,15, 9,10,"stopper"],
+  ["a01", 1,"ケーラー","GK",["GK"],       15,17,10,15, 9,10,"stopper"],
   ["a02", 2,"ハキム",  "DF",["SB"],       10,13,13,10,16,15,"over"],
   ["a03", 4,"ヴァルガ","DF",["CB"],        6,17,11,16,10,12,"line"],
   ["a04", 5,"ドミンゴ","DF",["CB"],        7,16,11,15,12,13,"mark"],
@@ -5309,7 +5389,7 @@ const CARD_ROWS=[
   ["a09",11,"ヴィニ",  "MF",["SMF","WG"], 14, 7,15, 9,17,13,"wing"],
   ["a10", 9,"レヴァン","FW",["CF"],       17, 5,14,15,12,11,"target"],
   ["a11",10,"ムバレ",  "FW",["CF","WG"],  17, 5,15,11,18,12,"runner"],
-  ["a12",13,"ノイマン","GK",["GK"],        2,15,10,13, 9,10,"sweeper"],
+  ["a12",13,"ノイマン","GK",["GK"],       13,15,10,13, 9,10,"sweeper"],
   ["a13",15,"ルカシュ","DF",["CB","SB"],   6,15,10,14,12,12,"killer"],
   ["a14",14,"カミロ",  "MF",["CMF","DMF"],11,12,14,12,12,15,"captain"],
   ["a15",17,"ジェイ",  "MF",["SMF","WG"], 13, 8,14, 9,16,13,"longp"],
@@ -5791,9 +5871,9 @@ const TRAIN_SP=[
 /* 生成物。手で編集しない。 python tools/gen_cards.py が tools/squads.local.txt から書き出す。
    実在クラブの選手(→docs/06)。**名前は偽名**。実名は packs/real.local.json(Git管理外)。
    REAL_CLUBS: [id, 偽名クラブ, 略称, 色, 陣形, KPの並び位置(1〜16)]
-   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物]
+   REAL_ROWS : [カードid, クラブの番号, 背番号, 偽名, 役割, 年齢, 格, 特徴, スキル, 国籍, 動物, 型, KPの型]
      動物は生年月日から出した番号(→data.js の ANIMALS)。生年月日そのものは本体に載せない
-     並びは陣形の枠の順に先発11人 → 控え5人。能力は役割のひな形 + 格 + 特徴から pool.js が作る */
+     並びは陣形の枠の順に先発11人 → 控え5人。能力は型のひな形 + 格 + 特徴から pool.js が作る(→docs/32) */
 const REAL_CLUBS=[
   ["MCB","マンチェスター・ブルー","MCB","#6cabdd","4-3-3",10],
   ["MCR","マンチェスター・レッド","MCR","#da291c","4-2-3-1",9],
@@ -5813,262 +5893,262 @@ const REAL_CLUBS=[
   ["DOG","ドルトムント・ゲルプ","DOG","#fde100","3-5-2",10]
 ];
 const REAL_ROWS=[
-  ["mcb01",0,25,"G.ドシトルンマ","GK",27,2.6,"p+","stopper","ITA",10],
-  ["mcb02",0,27,"M.キネス","RSB/CMF",28,1.4,"s+","over","POR",8],
-  ["mcb03",0,3,"R.ディジス","CB",29,2.2,"d+","leader","POR",6],
-  ["mcb04",0,24,"J.グヴァルディナル","CB/LSB",24,2.3,"t+","libero","CRO",5],
-  ["mcb05",0,21,"R.アイト=ヌール","LSB/LMF",25,1.6,"s+t+","allout","ALG",2],
-  ["mcb06",0,16,"デドリ","DMF/CMF",30,2.6,"t+","maker","ESP",4],
-  ["mcb07",0,4,"T.ライヤンデルス","CMF/OMF",28,2.1,"o+","middle","NED",3],
-  ["mcb08",0,47,"P.フォーデマ","OMF/RWG",26,2.3,"t+","fanta","ENG",0],
-  ["mcb09",0,26,"ボヴィーギョ","RWG/RMF",22,1.7,"s+","wing","BRA",9],
-  ["mcb10",0,9,"E.ハーラネド","CF",26,3.4,"o+p+","hunter","NOR",6],
-  ["mcb11",0,11,"J.ドネ","LWG/LMF",24,1.9,"s+","drib","BEL",9],
-  ["mcb12",0,1,"J.トスムォード","GK",24,1.2,"","feeder","ENG",1],
-  ["mcb13",0,45,"A.シルノフ","CB",22,1.1,"s+","mark","UZB",4],
-  ["mcb14",0,20,"ベボナルド・ナルヴァ","CMF/RMF",32,1.9,"a+","team","POR",6],
-  ["mcb15",0,10,"R.グェキキ","OMF/RWG",23,1.8,"t+","chance","FRA",0],
-  ["mcb16",0,7,"O.マチムーシュ","CF/LWG",27,1.8,"s+","runner","EGY",4],
-  ["mcr01",1,31,"S.ラノンス","GK",24,1.3,"","stopper","BEL",6],
-  ["mcr02",1,2,"D.ユワト","RSB",27,1.3,"a+","over","POR",7],
-  ["mcr03",1,4,"M.デペリフト","CB",27,1.6,"p+","leader","NED",10],
-  ["mcr04",1,6,"L.マヤズィネス","CB/LSB",28,1.7,"t+","libero","ARG",3],
-  ["mcr05",1,23,"L.ギョー","LSB",31,1.2,"t+","cross","ENG",6],
-  ["mcr06",1,18,"カゼミーデ","DMF",34,1.4,"d+p+","hunt","BRA",7],
-  ["mcr07",1,37,"K.プイヌー","CMF/DMF",21,1.3,"t+","passer","ENG",11],
-  ["mcr08",1,19,"B.ペンベウタ","RMF/RWG",27,1.9,"o+","wing","CMR",5],
-  ["mcr09",1,8,"B.クェルナンデス","OMF/CMF",32,2.4,"t+o+","chance","POR",11],
-  ["mcr10",1,10,"M.シーニャ","LMF/CF",27,1.9,"t+","fanta","BRA",3],
-  ["mcr11",1,30,"B.プェミュコ","CF",23,1.7,"p+","tower","SVN",6],
-  ["mcr12",1,1,"A.バユトムゥル","GK",28,0.8,"","pkstop","TUR",11],
-  ["mcr13",1,5,"H.マメワイア","CB",33,1.0,"p+","wall","ENG",11],
-  ["mcr14",1,15,"L.ヨア","CB",20,1.0,"s+","cover","FRA",3],
-  ["mcr15",1,16,"A.ディアト","RSB/RWG",24,1.5,"s+","sprint","CIV",6],
-  ["mcr16",1,7,"M.マムプト","OMF/CMF",27,1.2,"a+","team","ENG",0],
-  ["nld01",2,1,"D.ジス","GK",31,2.3,"","feeder","ESP",11],
-  ["nld02",2,12,"J.ティヨバー","RSB/CB",25,1.9,"d+","over","NED",1],
-  ["nld03",2,2,"W.サソイ","CB",25,2.6,"d+s+","leader","FRA",0],
-  ["nld04",2,6,"ガツリゾウ","CB",28,2.3,"p+","tower","BRA",9],
-  ["nld05",2,5,"P.イポカスエ","LSB/CB",24,1.6,"s+","cover","ECU",3],
-  ["nld06",2,36,"M.マビメウディ","DMF",27,2.2,"t+","maker","ESP",11],
-  ["nld07",2,41,"D.テザス","CMF/DMF",27,2.6,"a+","captain","ENG",4],
-  ["nld08",2,8,"M.ウーデゴーマ","OMF",27,2.3,"t+","chance","NOR",0],
-  ["nld09",2,7,"B.クナ","RWG/RMF",25,2.8,"t+o+","wing","ENG",9],
-  ["nld10",2,14,"V.ユェケゼシュ","CF",28,2.4,"p+o+","hunter","SWE",8],
-  ["nld11",2,11,"G.マルユィザッリ","LWG",25,1.7,"s+","sprint","BRA",2],
-  ["nld12",2,13,"ケロ","GK",32,1.0,"","stopper","ESP",0],
-  ["nld13",2,33,"R.カラフィデーリ","LSB/CB",24,1.5,"t+","allout","ITA",1],
-  ["nld14",2,23,"M.メリーピ","CMF/CF",30,1.6,"p+","tower","ESP",4],
-  ["nld15",2,10,"E.コウ","OMF/LWG",28,2.1,"t+","fanta","ENG",9],
-  ["nld16",2,20,"N.マドゥエノ","RWG",24,1.5,"s+","drib","ENG",3],
-  ["msd01",3,1,"アリゼヒ","GK",34,2.5,"d+","stopper","BRA",1],
-  ["msd02",3,30,"J.デリンポン","RSB/RMF",25,1.8,"s+","over","NED",4],
-  ["msd03",3,4,"V.ファン・ダトク","CB",35,2.6,"p+d+","leader","NED",5],
-  ["msd04",3,5,"I.スプテ","CB",27,2.0,"p+s+","wall","FRA",3],
-  ["msd05",3,6,"M.ケルラポ","LSB",23,1.5,"s+","cross","HUN",4],
-  ["msd06",3,38,"R.フラーフェンベルワ","DMF/CMF",24,2.3,"t+","maker","NED",10],
-  ["msd07",3,10,"A.マク・アリスゲー","CMF/DMF",27,2.3,"t+","passer","ARG",7],
-  ["msd08",3,11,"M.オメー","RMF/RWG",34,2.9,"o+","ace","EGY",0],
-  ["msd09",3,7,"F.ヴィナナ","OMF",23,2.6,"t+","fanta","GER",2],
-  ["msd10",3,18,"C.ガシポ","LMF/LWG",27,1.9,"o+","wing","NED",9],
-  ["msd11",3,9,"A.イピア","CF",27,2.6,"t+o+","runner","SWE",2],
-  ["msd12",3,25,"G.イマルダシュヴィリ","GK",26,1.4,"","sweeper","GEO",4],
-  ["msd13",3,26,"A.タバートソン","LSB",32,1.4,"a+","cross","SCO",10],
-  ["msd14",3,8,"D.ソボスベイ","CMF/OMF",26,2.2,"a+p+","middle","HUN",6],
-  ["msd15",3,17,"C.ニョーンヘ","CMF",25,1.2,"t+","combo","ENG",7],
-  ["msd16",3,22,"H.エキティヅ","CF/LWG",24,2.0,"s+","sprint","FRA",9],
-  ["ldb01",4,1,"R.サベチェス","GK",29,1.5,"","feeder","ESP",2],
-  ["ldb02",4,24,"R.グェージズ","RSB",26,2.0,"t+","cross","ENG",8],
-  ["ldb03",4,23,"T.チャタリー","CB",27,1.5,"p+","cover","ENG",8],
-  ["ldb04",4,6,"L.ユルウィキ","CB",23,1.7,"t+","libero","ENG",10],
-  ["ldb05",4,3,"M.ヘテレジャ","LSB",28,1.8,"a+","over","ESP",8],
-  ["ldb06",4,25,"M.カイザド","DMF",25,2.6,"d+a+","hunt","ECU",7],
-  ["ldb07",4,8,"E.ヌェルナンデス","CMF",25,2.2,"t+","thru","ARG",6],
-  ["ldb08",4,41,"エスプヴァン","RMF/RWG",19,2.0,"t+s+","drib","BRA",2],
-  ["ldb09",4,10,"C.ザーマー","OMF/RWG",24,2.7,"t+o+","kicker","ENG",0],
-  ["ldb10",4,7,"サドロ・ギト","LMF/LWG",26,1.8,"s+","wing","POR",4],
-  ["ldb11",4,20,"ジョアス・ペドロ","CF/OMF",25,2.0,"t+","post","BRA",6],
-  ["ldb12",4,12,"F.ヨマゲンセン","GK",24,0.9,"","stopper","DEN",9],
-  ["ldb13",4,29,"W.ズォプァナ","CB",25,1.3,"p+","mark","FRA",10],
-  ["ldb14",4,45,"R.クヴィサ","DMF",22,1.4,"t+","cover","BEL",3],
-  ["ldb15",4,49,"A.ガルレピョ","LWG",22,1.5,"s+","sprint","ARG",7],
-  ["ldb16",4,9,"L.フシップ","CF",23,1.4,"p+","target","ENG",3],
-  ["cat01",5,13,"J.ガウシゾ","GK",25,1.9,"","sweeper","ESP",3],
-  ["cat02",5,23,"J.アンザ","RSB/CB",28,2.2,"s+","over","FRA",1],
-  ["cat03",5,2,"P.ヒバルシ","CB",19,2.1,"t+","libero","ESP",6],
-  ["cat04",5,4,"R.メラウホ","CB",27,1.8,"p+s+","mark","URU",8],
-  ["cat05",5,3,"A.バルテ","LSB",23,1.7,"s+","sprint","ESP",2],
-  ["cat06",5,21,"F.ビ・テング","DMF/CMF",29,2.3,"t+","maker","NED",4],
-  ["cat07",5,8,"ガヅリ","CMF/OMF",23,2.9,"t+","passer","ESP",11],
-  ["cat08",5,6,"ベビ","CMF/OMF",22,1.9,"a+","captain","ESP",6],
-  ["cat09",5,10,"L.ミマグ","RWG/RMF",19,3.0,"t+s+","fanta","ESP",10],
-  ["cat10",5,9,"R.フヴァウドフスキ","CF",38,2.2,"o+","hunter","POL",10],
-  ["cat11",5,11,"ハフィーキャ","LWG/LMF",29,2.8,"o+","wing","BRA",11],
-  ["cat12",5,25,"W.ヒュチェヌニー","GK",36,1.3,"","stopper","POL",3],
-  ["cat13",5,5,"E.ゼルレア","CB/DMF",25,1.3,"t+","cover","ESP",10],
-  ["cat14",5,16,"ズェルミレ","OMF/CMF",23,1.8,"o+","middle","ESP",10],
-  ["cat15",5,20,"D.ゼルモ","OMF/LWG",28,1.9,"t+","chance","ESP",4],
-  ["cat16",5,14,"M.ラッシュユォード","LWG/CF",29,1.8,"s+","runner","ENG",8],
-  ["mdb01",6,1,"T.クヂトワ","GK",34,2.6,"p+","stopper","BEL",1],
-  ["mdb02",6,12,"T.アレクサンダー=ドーノルド","RSB",28,2.1,"t+","cross","ENG",1],
-  ["mdb03",6,3,"E.ミミトン","CB",28,2.0,"s+","cover","BRA",3],
-  ["mdb04",6,24,"D.ハイセハ","CB",21,1.9,"t+","libero","ESP",6],
-  ["mdb05",6,18,"A.カレーモセ","LSB",23,1.6,"s+","over","ESP",4],
-  ["mdb06",6,14,"A.チュソメニ","DMF",26,2.2,"d+p+","hunt","FRA",10],
-  ["mdb07",6,8,"F.バルゼルデ","CMF/RMF",28,2.6,"a+","dynamo","URU",8],
-  ["mdb08",6,5,"J.ベリフガシ","OMF/CMF",23,2.8,"o+","ace","ENG",11],
-  ["mdb09",6,11,"ロドソゴ","RWG/CF",25,1.9,"t+","drib","BRA",10],
-  ["mdb10",6,10,"K.フベッペ","LWG/CF",27,3.4,"s+o+","hunter","FRA",3],
-  ["mdb11",6,7,"ヴィニシウソ","LWG",26,2.9,"s+t+","wing","BRA",9],
-  ["mdb12",6,13,"A.ルキヤ","GK",27,1.1,"","pkstop","UKR",8],
-  ["mdb13",6,22,"A.ニュディロー","CB",33,1.7,"p+","wall","GER",9],
-  ["mdb14",6,6,"E.ヨマヴィンユ","CMF/DMF",24,1.9,"a+","counter","FRA",8],
-  ["mdb15",6,15,"A.ギュガル","OMF/RWG",21,2.0,"t+","kicker","TUR",6],
-  ["mdb16",6,30,"F.ウスタントゥオーコ","RWG/OMF",19,1.5,"t+","fanta","ARG",6],
-  ["mdr01",7,13,"J.シブラネ","GK",33,2.2,"d+","stopper","SVN",2],
-  ["mdr02",7,14,"M.ジョレメテ","RSB/RMF",31,1.7,"a+s+","over","ESP",11],
-  ["mdr03",7,24,"R.ルモノグマン","CB",30,1.3,"p+","leader","ESP",6],
-  ["mdr04",7,2,"J.M.ヒフソス","CB",31,1.4,"p+","wall","URU",1],
-  ["mdr05",7,17,"D.ポンムコ","LSB/CB",29,1.4,"t+","cover","SVK",3],
-  ["mdr06",7,20,"G.ガメオラ","RMF/RWG",24,1.5,"a+","dynamo","ARG",10],
-  ["mdr07",7,8,"P.バボオチ","CMF/DMF",23,1.8,"t+","maker","ESP",6],
-  ["mdr08",7,4,"C.ギャパボー","CMF",26,1.7,"a+","hunt","ENG",2],
-  ["mdr09",7,10,"A.ウエオ","LMF/OMF",25,1.9,"t+","kicker","ESP",6],
-  ["mdr10",7,19,"J.アルバレサ","CF",26,2.5,"o+a+","chase","ARG",2],
-  ["mdr11",7,7,"A.グマーズマン","ST/OMF/CF",35,2.2,"t+","fanta","FRA",4],
-  ["mdr12",7,1,"J.アッア","GK",32,0.8,"","pkstop","ARG",6],
-  ["mdr13",7,3,"M.ヌッルェーリ","LSB",24,1.0,"s+","cross","ITA",4],
-  ["mdr14",7,6,"コク","CMF/DMF",34,1.3,"t+","captain","ESP",9],
-  ["mdr15",7,5,"J.カルニーゾ","DMF",25,1.3,"d+","manmark","USA",7],
-  ["mdr16",7,9,"A.セルルート","CF",31,1.7,"p+","tower","NOR",8],
-  ["mir01",8,16,"M.ハニャン","GK",31,2.3,"s+","sweeper","FRA",9],
-  ["mir02",8,23,"F.トギス","CB",28,1.4,"s+","mark","ENG",9],
-  ["mir03",8,46,"M.ガッブツ","CB",27,1.3,"p+","leader","ITA",3],
-  ["mir04",8,31,"S.パヴツヴィッチ","CB",25,1.5,"p+","tower","SRB",6],
-  ["mir05",8,14,"L.ガドリッチ","DMF/CMF",41,1.9,"t+a-","maker","CRO",1],
-  ["mir06",8,8,"R.ロフタス=チーワ","CMF/OMF",30,1.3,"p+","post","ENG",9],
-  ["mir07",8,12,"A.スソオ","CMF",31,1.8,"a+","team","FRA",2],
-  ["mir08",8,56,"A.サーレマーハルス","RMF/RSB",27,1.4,"a+","over","BEL",0],
-  ["mir09",8,2,"P.フストゥピビャン","LMF/LSB",28,1.3,"s+","cross","ECU",6],
-  ["mir10",8,11,"C.プリポッシ","CF/RWG",28,2.3,"o+t+","ace","USA",6],
-  ["mir11",8,10,"R.ポオン","ST/LWG/CF",27,2.3,"s+","drib","POR",7],
-  ["mir12",8,1,"M.チッラッチャーノ","GK",36,0.6,"","stopper","ITA",9],
-  ["mir13",8,29,"Y.ヅォファヨ","DMF/CMF",27,1.5,"d+","hunt","FRA",6],
-  ["mir14",8,4,"S.ブッリ","DMF",25,1.1,"t+","cover","ITA",4],
-  ["mir15",8,18,"C.エンクンソ","CF/OMF",29,1.6,"t+","fanta","FRA",10],
-  ["mir16",8,7,"S.ヒネネペ","CF",25,1.4,"o+","hunter","MEX",1],
-  ["mib01",9,1,"Y.ホメー","GK",37,1.7,"","stopper","SUI",8],
-  ["mib02",9,25,"M.ポパンジ","CB",31,1.7,"t+","libero","SUI",1],
-  ["mib03",9,15,"F.ドヌェルビ","CB",38,1.3,"p+","leader","ITA",9],
-  ["mib04",9,95,"A.ロストーニ","CB",27,2.4,"t+","cover","ITA",9],
-  ["mib05",9,20,"H.チャルゴギール","DMF",32,2.2,"t+","kicker","TUR",3],
-  ["mib06",9,23,"N.サネッラ","CMF",29,2.5,"a+","dynamo","ITA",6],
-  ["mib07",9,22,"H.ムミタリアン","CMF/OMF",37,1.6,"t+a-","passer","ARM",7],
-  ["mib08",9,2,"D.ドゥヌユリース","RMF/RSB",30,1.8,"p+s+","allout","NED",11],
-  ["mib09",9,32,"F.プィマモコ","LMF/LSB",29,2.3,"t+","cross","ITA",6],
-  ["mib10",9,10,"L.マヤズィネスス","CF",29,2.7,"o+","hunter","ARG",10],
-  ["mib11",9,9,"M.ピュスム","ST/CF",29,2.1,"p+s+","post","FRA",6],
-  ["mib12",9,13,"J.マコティネス","GK",28,1.1,"","pkstop","ESP",6],
-  ["mib13",9,31,"Y.シセッジ","CB",25,1.3,"p+","wall","GER",9],
-  ["mib14",9,16,"D.ブザッテージ","CMF/OMF",27,1.6,"o+","runner","ITA",3],
-  ["mib15",9,8,"P.ササッチ","CMF/OMF",23,1.4,"t+","thru","CRO",8],
-  ["mib16",9,14,"A.ワニー","CF",23,1.3,"s+","sprint","FRA",4],
-  ["toz01",10,29,"M.ディ・ヘグゴリオ","GK",29,1.7,"","stopper","ITA",6],
-  ["toz02",10,15,"P.イレル","CB/RSB",26,1.4,"s+","cover","FRA",8],
-  ["toz03",10,3,"ブポーメペ","CB",29,2.0,"p+d+","leader","BRA",9],
-  ["toz04",10,4,"F.ゼッティ","CB",28,1.3,"p+","wall","ITA",5],
-  ["toz05",10,5,"M.ロカヒッリ","DMF",28,1.7,"t+","maker","ITA",5],
-  ["toz06",10,19,"K.ミュラタ","CMF",25,1.6,"p+","counter","FRA",2],
-  ["toz07",10,8,"T.コープマイネグス","CMF/OMF",28,1.5,"o+","middle","NED",8],
-  ["toz08",10,11,"E.ジェグギヴァ","RMF/RWG",27,1.6,"t+","drib","KOS",6],
-  ["toz09",10,27,"A.カカエアーゾ","LMF/LSB",26,1.7,"t+","over","ITA",10],
-  ["toz10",10,10,"K.ズルドゥズ","CF/LWG",21,2.4,"t+","fanta","TUR",2],
-  ["toz11",10,30,"J.アイヴィッド","ST/CF",26,1.8,"o+","hunter","CAN",9],
-  ["toz12",10,1,"M.アリン","GK",34,0.9,"","pkstop","ITA",4],
-  ["toz13",10,6,"L.ジアー","CB",27,1.1,"p+","tower","ENG",9],
-  ["toz14",10,16,"W.パッケセー","CMF/RSB",28,1.3,"a+","team","USA",9],
-  ["toz15",10,7,"F.コンギバソン","RWG",24,1.6,"s+","wing","POR",6],
-  ["toz16",10,9,"D.ヴドメヴィッチ","CF",26,1.8,"p+","target","SRB",11],
-  ["rmc01",11,94,"I.ロロヴェデプ","GK",32,1.4,"","feeder","ITA",6],
-  ["rmc02",11,77,"A.ジルシッチ","RSB",34,1.0,"a+","over","MNE",7],
-  ["rmc03",11,34,"M.プジ","CB",26,1.5,"s+","cover","ESP",7],
-  ["rmc04",11,13,"A.ロマニョーニ","CB",31,1.4,"p+","leader","ITA",5],
-  ["rmc05",11,17,"N.タヴァラテ","LSB",26,1.3,"s+","cross","POR",1],
-  ["rmc06",11,6,"N.ノヴェッヘ","DMF",25,1.5,"t+","maker","ITA",7],
-  ["rmc07",11,8,"M.グロンフゥージ","CMF",27,1.6,"a+","dynamo","FRA",10],
-  ["rmc08",11,7,"F.デプ=ドシル","CMF/OMF",25,1.0,"p+","counter","NGA",4],
-  ["rmc09",11,18,"G.イサゲドン","RWG/RMF",25,1.3,"s+","drib","DEN",2],
-  ["rmc10",11,11,"T.カステジャーモス","CF",28,1.5,"o+","post","ARG",8],
-  ["rmc11",11,10,"M.ヨッカーニ","LWG/LMF",31,1.7,"t+","wing","ITA",4],
-  ["rmc12",11,35,"C.レクダス","GK",25,1.0,"","sweeper","GRE",10],
-  ["rmc13",11,29,"M.リッツァーガ","RSB/RMF",33,0.9,"s+","allout","ITA",4],
-  ["rmc14",11,5,"M.カシーシ","CMF/DMF",35,1.0,"p+","area","URU",4],
-  ["rmc15",11,9,"ペドカ","RWG/CF",39,1.3,"t+a-","chance","ESP",4],
-  ["rmc16",11,19,"B.ムィグ","CF",30,1.2,"o+","hunter","SEN",3],
-  ["rmg01",12,99,"M.コヴィラロ","GK",27,2.0,"d+","stopper","SRB",7],
-  ["rmg02",12,23,"G.マポチーニ","CB",30,1.4,"p+","manmark","ITA",10],
-  ["rmg03",12,5,"E.ンディヌ","CB",27,1.6,"s+","leader","CIV",8],
-  ["rmg04",12,22,"M.ゲルモソ","CB",31,1.2,"t+","libero","ESP",6],
-  ["rmg05",12,4,"B.クアスタンテ","DMF/CMF",31,1.3,"p+","wall","ITA",7],
-  ["rmg06",12,17,"M.ヅラ","CMF",25,1.7,"a+","hunt","FRA",6],
-  ["rmg07",12,8,"N.プル・アイブウイ","CMF",25,1.2,"p+","counter","MAR",4],
-  ["rmg08",12,43,"ムェズレイ","RMF/RSB",23,1.5,"s+","over","BRA",10],
-  ["rmg09",12,12,"K.クィミカス","LMF/LSB",30,1.1,"t+","cross","GRE",11],
-  ["rmg10",12,18,"M.オラ","CF/OMF",23,1.8,"t+","drib","ARG",8],
-  ["rmg11",12,21,"P.ディゲワ","ST/OMF/CF",33,1.9,"t+","kicker","ARG",2],
-  ["rmg12",12,95,"P.ペッブーニ","GK",31,0.7,"","pkstop","ITA",10],
-  ["rmg13",12,19,"Z.チェメニ","RSB/CB",29,1.0,"a+","cover","TUR",10],
-  ["rmg14",12,7,"L.ペッテグリール","OMF/CMF",30,1.4,"t+","chance","ITA",1],
-  ["rmg15",12,16,"L.ベイユー","RWG",29,1.3,"s+","sprint","JAM",9],
-  ["rmg16",12,11,"E.クァーガソザ","CF",22,1.2,"p+","target","IRL",9],
-  ["par01",13,30,"L.シュヴァリテ","GK",25,1.9,"","sweeper","FRA",7],
-  ["par02",13,2,"A.ハキド","RSB/RMF",28,2.8,"s+o+","over","MAR",5],
-  ["par03",13,5,"マルゲーニョス","CB",32,2.1,"d+","leader","BRA",2],
-  ["par04",13,51,"W.オチョ","CB",25,2.0,"p+","wall","ECU",7],
-  ["par05",13,25,"N.ポンデス","LSB",24,2.6,"s+t+","allout","POR",8],
-  ["par06",13,17,"ヴィティーミャ","DMF/CMF",26,2.8,"t+","maker","POR",3],
-  ["par07",13,87,"J.レヴェス","CMF",22,2.5,"a+","hunt","POR",11],
-  ["par08",13,8,"F.ネイス","CMF/OMF",30,2.0,"t+","passer","ESP",8],
-  ["par09",13,14,"D.ツゥエ","RWG/OMF",21,2.4,"t+s+","drib","FRA",8],
-  ["par10",13,10,"O.デチベレ","CF/RWG",29,3.0,"t+s+","ace","FRA",7],
-  ["par11",13,7,"K.ズヴァラツヘリア","LWG",25,2.8,"t+","fanta","GEO",8],
-  ["par12",13,39,"M.サグォノフ","GK",27,1.3,"","pkstop","RUS",8],
-  ["par13",13,33,"W.ザプール=エメリ","CMF/RSB",20,1.7,"a+","team","FRA",10],
-  ["par14",13,19,"イエキンイン","OMF/RWG",25,1.6,"t+","kicker","KOR",3],
-  ["par15",13,29,"B.バチコベ","LWG",24,1.9,"s+","sprint","FRA",11],
-  ["par16",13,9,"G.ラモレ","CF",25,1.6,"o+","hunter","POR",4],
-  ["mur01",14,1,"M.ニオアー","GK",40,1.9,"t+s-","sweeper","GER",8],
-  ["mur02",14,27,"K.ヒイムー","RSB/CMF",29,1.6,"a+","dynamo","AUT",7],
-  ["mur03",14,2,"D.ワパメカル","CB",28,2.1,"s+p+","cover","FRA",9],
-  ["mur04",14,4,"J.ケー","CB",30,2.0,"p+","leader","GER",4],
-  ["mur05",14,19,"A.デネヴィム","LSB",26,1.9,"s+","over","CAN",2],
-  ["mur06",14,6,"J.ホミッヒ","DMF/RSB",31,2.6,"t+","maker","GER",8],
-  ["mur07",14,45,"A.ヤヴマヴィッチ","DMF/CMF",22,1.8,"t+","passer","GER",7],
-  ["mur08",14,17,"M.オセーズ","RMF/RWG",24,2.8,"t+o+","chance","FRA",11],
-  ["mur09",14,42,"J.ムシアナ","OMF",23,2.8,"t+s+","fanta","GER",8],
-  ["mur10",14,14,"L.ディアヌ","LMF/LWG",29,2.4,"s+","wing","COL",5],
-  ["mur11",14,9,"H.ライン","CF",33,3.1,"o+t+","ace","ENG",0],
-  ["mur12",14,40,"J.ウデビノ","GK",23,1.0,"","stopper","GER",3],
-  ["mur13",14,3,"ヤム・シンジェ","CB",29,1.8,"p+","wall","KOR",6],
-  ["mur14",14,44,"J.キタニネッチ","RSB/CB",26,1.2,"d+","mark","CRO",11],
-  ["mur15",14,8,"L.ゴハクカ","CMF",31,1.5,"p+","post","GER",6],
-  ["mur16",14,7,"S.ミャキリ","RWG/OMF",31,1.6,"o+","middle","GER",8],
-  ["dog01",15,1,"G.コベア","GK",28,2.2,"d+","stopper","SUI",8],
-  ["dog02",15,3,"W.アンマア","CB",30,1.4,"p+","leader","GER",5],
-  ["dog03",15,4,"N.シュロッケーベック","CB",26,1.9,"t+","libero","GER",1],
-  ["dog04",15,25,"N.エーツ","CB",31,1.2,"p+","wall","GER",11],
-  ["dog05",15,8,"F.メメチャ","DMF/CMF",26,1.5,"p+","post","GER",1],
-  ["dog06",15,13,"P.グリス","CMF/DMF",35,1.5,"t+","kicker","GER",2],
-  ["dog07",15,20,"M.ガダッツァー","CMF",32,1.3,"o+","middle","AUT",4],
-  ["dog08",15,26,"J.ルイネソン","RMF/RSB",28,1.4,"a+","over","NOR",3],
-  ["dog09",15,24,"D.シヴェンニン","LMF/LSB",24,1.4,"s+","cross","SWE",5],
-  ["dog10",15,9,"S.ムラト","CF",30,2.3,"o+p+","hunter","GUI",10],
-  ["dog11",15,27,"K.ガデイェカ","ST/LWG/CF",24,1.7,"s+","sprint","GER",0],
-  ["dog12",15,33,"A.コイコー","GK",31,0.7,"","pkstop","GER",8],
-  ["dog13",15,5,"R.ベブセバイニ","CB/LSB",31,1.0,"p+","mark","ALG",3],
-  ["dog14",15,7,"J.ベリフガシス","CMF/OMF",21,1.3,"a+","counter","ENG",0],
-  ["dog15",15,10,"J.ブズコト","OMF",30,1.5,"t+","chance","GER",1],
-  ["dog16",15,14,"M.バヌペー","CF/LWG",24,1.4,"o+","runner","GER",2]
+  ["mcb01",0,25,"G.ドシトルンマ","GK",27,2.6,"d++p++o-","stopper","ITA",10,"gk_stop","K21"],
+  ["mcb02",0,27,"M.キネス","RSB/CMF",28,1.4,"t++a+s+","innerlap","POR",8,"sb_in","K11"],
+  ["mcb03",0,3,"R.ディジス","CB",29,2.2,"d+++p+","leader","POR",6,"cb_stop","T14"],
+  ["mcb04",0,24,"J.グヴァルディナル","CB/LSB",24,2.3,"t++s+p+","carrier","CRO",5,"cb_build","K18"],
+  ["mcb05",0,21,"R.アイト=ヌール","LSB/LMF",25,1.6,"s++t++d-","allout","ALG",2,"sb_atk","K05"],
+  ["mcb06",0,16,"デドリ","DMF/CMF",30,2.6,"t+++d++a+s-","longp","ESP",4,"dm_anchor","K11"],
+  ["mcb07",0,4,"T.ライヤンデルス","CMF/OMF",28,2.1,"o++t+a+","middle","NED",3,"cm_runner","K09"],
+  ["mcb08",0,47,"P.フォーデマ","OMF/RWG",26,2.3,"t+++o++p-","fanta","ENG",0,"om_10","K02"],
+  ["mcb09",0,26,"ボヴィーギョ","RWG/RMF",22,1.7,"s+++t++p-","wing","BRA",9,"w_drib","K04"],
+  ["mcb10",0,9,"E.ハーラネド","CF",26,3.4,"o+++p+++t-","jackal","NOR",6,"cf_poach","K08"],
+  ["mcb11",0,11,"J.ドネ","LWG/LMF",24,1.9,"s+++t++o-","drib","BEL",9,"w_drib","K04"],
+  ["mcb12",0,1,"J.トスムォード","GK",24,1.2,"o++t+","feeder","ENG",1,"gk_feed","K24"],
+  ["mcb13",0,45,"A.シルノフ","CB",22,1.1,"s+++p+t-","cover","UZB",4,"cb_cover","K16"],
+  ["mcb14",0,20,"ベボナルド・ナルヴァ","CMF/RMF",32,1.9,"t+++a++p-","touch","POR",6,"cm_maker","T01"],
+  ["mcb15",0,10,"R.グェキキ","OMF/RWG",23,1.8,"t+++o+d-","chance","FRA",0,"om_creator","K07"],
+  ["mcb16",0,7,"O.マチムーシュ","CF/LWG",27,1.8,"s++o++","runner","EGY",4,"cf_speed","K03"],
+  ["mcr01",1,31,"S.ラノンス","GK",24,1.3,"p++s-","stopper","BEL",6,"gk_stop","K21"],
+  ["mcr02",1,2,"D.ユワト","RSB",27,1.3,"a++s+","over","POR",7,"sb_atk","K12"],
+  ["mcr03",1,4,"M.デペリフト","CB",27,1.6,"p+++d+s-","aerial","NED",10,"cb_air","K13"],
+  ["mcr04",1,6,"L.マヤズィネス","CB/LSB",28,1.7,"t++d+p+","libero","ARG",3,"cb_build","K18"],
+  ["mcr05",1,23,"L.ギョー","LSB",31,1.2,"t++","cross","ENG",6,"sb_atk","K06"],
+  ["mcr06",1,18,"カゼミーデ","DMF",34,1.4,"d++p++s--","hunt","BRA",7,"dm_destroy","K15"],
+  ["mcr07",1,37,"K.プイヌー","CMF/DMF",21,1.3,"t++p+","touch","ENG",11,"cm_maker","K10"],
+  ["mcr08",1,19,"B.ペンベウタ","RMF/RWG",27,1.9,"o++t+","cutin","CMR",5,"w_cutin","K09"],
+  ["mcr09",1,8,"B.クェルナンデス","OMF/CMF",32,2.4,"t++o++a+","chance","POR",11,"om_creator","K07"],
+  ["mcr10",1,10,"M.シーニャ","LMF/CF",27,1.9,"t++o+p+","drib","BRA",3,"w_play","K04"],
+  ["mcr11",1,30,"B.プェミュコ","CF",23,1.7,"p++s++t-","tower","SVN",6,"cf_target","T07"],
+  ["mcr12",1,1,"A.バユトムゥル","GK",28,0.8,"d+","pkstop","TUR",11,"gk_stop","K22"],
+  ["mcr13",1,5,"H.マメワイア","CB",33,1.0,"p+++s--","aerial","ENG",11,"cb_air","K13"],
+  ["mcr14",1,15,"L.ヨア","CB",20,1.0,"s++t+","intercept","FRA",3,"cb_cover","K16"],
+  ["mcr15",1,16,"A.ディアト","RSB/RWG",24,1.5,"t++s+d-","drib","CIV",6,"sb_atk","K04"],
+  ["mcr16",1,7,"M.マムプト","OMF/CMF",27,1.2,"a++o+","gegen","ENG",0,"om_shadow","T11"],
+  ["nld01",2,1,"D.ジス","GK",31,2.3,"o++t+","feeder","ESP",11,"gk_feed","K24"],
+  ["nld02",2,12,"J.ティヨバー","RSB/CB",25,1.9,"d++s+","mark","NED",1,"sb_in","K15"],
+  ["nld03",2,2,"W.サソイ","CB",25,2.6,"d+++s++","intercept","FRA",0,"cb_cover","T13"],
+  ["nld04",2,6,"ガツリゾウ","CB",28,2.3,"p+++d+","tower","BRA",9,"cb_air","T07"],
+  ["nld05",2,5,"P.イポカスエ","LSB/CB",24,1.6,"s++d+","cover","ECU",3,"sb_def","K15"],
+  ["nld06",2,36,"M.マビメウディ","DMF",27,2.2,"t++d+","maker","ESP",11,"dm_anchor","K11"],
+  ["nld07",2,41,"D.テザス","CMF/DMF",27,2.6,"a++d+p+","iron","ENG",4,"cm_b2b","K20"],
+  ["nld08",2,8,"M.ウーデゴーマ","OMF",27,2.3,"t+++s-","thru","NOR",0,"om_creator","T05"],
+  ["nld09",2,7,"B.クナ","RWG/RMF",25,2.8,"t++o++","cutin","ENG",9,"w_cutin","K05"],
+  ["nld10",2,14,"V.ユェケゼシュ","CF",28,2.4,"p+++o++","hunter","SWE",8,"cf_all","K08"],
+  ["nld11",2,11,"G.マルユィザッリ","LWG",25,1.7,"s+++a+","sprint","BRA",2,"w_drib","K03"],
+  ["nld12",2,13,"ケロ","GK",32,1.0,"d+","stopper","ESP",0,"gk_stop","K21"],
+  ["nld13",2,33,"R.カラフィデーリ","LSB/CB",24,1.5,"t++p+","innerlap","ITA",1,"sb_in","K18"],
+  ["nld14",2,23,"M.メリーピ","CMF/CF",30,1.6,"p++o+","tower","ESP",4,"cm_runner","K13"],
+  ["nld15",2,10,"E.コウ","OMF/LWG",28,2.1,"t+++o++","touch","ENG",9,"om_10","K02"],
+  ["nld16",2,20,"N.マドゥエノ","RWG",24,1.5,"s++t+","drib","ENG",3,"w_drib","K04"],
+  ["msd01",3,1,"アリゼヒ","GK",34,2.5,"d+++o+","oneone","BRA",1,"gk_stop","K21"],
+  ["msd02",3,30,"J.デリンポン","RSB/RMF",25,1.8,"s+++o+d-","over","NED",4,"sb_atk","K12"],
+  ["msd03",3,4,"V.ファン・ダトク","CB",35,2.6,"p++d++t+","leader","NED",5,"cb_air","T14"],
+  ["msd04",3,5,"I.スプテ","CB",27,2.0,"p++s++","block","FRA",3,"cb_stop","K15"],
+  ["msd05",3,6,"M.ケルラポ","LSB",23,1.5,"s++a+","cross","HUN",4,"sb_atk","K06"],
+  ["msd06",3,38,"R.フラーフェンベルワ","DMF/CMF",24,2.3,"t++s+","carrier","NED",10,"dm_anchor","K10"],
+  ["msd07",3,10,"A.マク・アリスゲー","CMF/DMF",27,2.3,"t++a+","passer","ARG",7,"cm_maker","T01"],
+  ["msd08",3,11,"M.オメー","RMF/RWG",34,2.9,"o+++s+","cutin","EGY",0,"w_cutin","T08"],
+  ["msd09",3,7,"F.ヴィナナ","OMF",23,2.6,"t+++o+","touch","GER",2,"om_10","K02"],
+  ["msd10",3,18,"C.ガシポ","LMF/LWG",27,1.9,"o++t+","middle","NED",9,"w_cutin","K09"],
+  ["msd11",3,9,"A.イピア","CF",27,2.6,"t++o++s+","runner","SWE",2,"cf_all","K03"],
+  ["msd12",3,25,"G.イマルダシュヴィリ","GK",26,1.4,"p++","stopper","GEO",4,"gk_stop","K21"],
+  ["msd13",3,26,"A.タバートソン","LSB",32,1.4,"a++t+","cross","SCO",10,"sb_atk","K06"],
+  ["msd14",3,8,"D.ソボスベイ","CMF/OMF",26,2.2,"a++p+o+","kicker","HUN",6,"cm_b2b","K14"],
+  ["msd15",3,17,"C.ニョーンヘ","CMF",25,1.2,"t++","combo","ENG",7,"cm_maker","T09"],
+  ["msd16",3,22,"H.エキティヅ","CF/LWG",24,2.0,"t++s++","drib","FRA",9,"cf_speed","K03"],
+  ["ldb01",4,1,"R.サベチェス","GK",29,1.5,"o++","feeder","ESP",2,"gk_feed","K24"],
+  ["ldb02",4,24,"R.グェージズ","RSB",26,2.0,"t++p+o+","inswing","ENG",8,"sb_atk","K14"],
+  ["ldb03",4,23,"T.チャタリー","CB",27,1.5,"p++","block","ENG",8,"cb_stop","K15"],
+  ["ldb04",4,6,"L.ユルウィキ","CB",23,1.7,"t++","carrier","ENG",10,"cb_build","K18"],
+  ["ldb05",4,3,"M.ヘテレジャ","LSB",28,1.8,"a++d+","iron","ESP",8,"sb_def","K19"],
+  ["ldb06",4,25,"M.カイザド","DMF",25,2.6,"d+++a++","intercept","ECU",7,"dm_destroy","T11"],
+  ["ldb07",4,8,"E.ヌェルナンデス","CMF",25,2.2,"t++o+","thru","ARG",6,"cm_maker","T05"],
+  ["ldb08",4,41,"エスプヴァン","RMF/RWG",19,2.0,"t++s++","cutin","BRA",2,"w_cutin","K05"],
+  ["ldb09",4,10,"C.ザーマー","OMF/RWG",24,2.7,"t+++o++s-","pkace","ENG",0,"om_10","T08"],
+  ["ldb10",4,7,"サドロ・ギト","LMF/LWG",26,1.8,"s+++","sprint","POR",4,"w_drib","K05"],
+  ["ldb11",4,20,"ジョアス・ペドロ","CF/OMF",25,2.0,"t++o+","false9","BRA",6,"cf_false9","K10"],
+  ["ldb12",4,12,"F.ヨマゲンセン","GK",24,0.9,"d+","stopper","DEN",9,"gk_stop","K21"],
+  ["ldb13",4,29,"W.ズォプァナ","CB",25,1.3,"p++s+","mark","FRA",10,"cb_stop","K15"],
+  ["ldb14",4,45,"R.クヴィサ","DMF",22,1.4,"t++d+","intercept","BEL",3,"dm_anchor","K16"],
+  ["ldb15",4,49,"A.ガルレピョ","LWG",22,1.5,"s++o+","sprint","ARG",7,"w_drib","K04"],
+  ["ldb16",4,9,"L.フシップ","CF",23,1.4,"p+++s+","target","ENG",3,"cf_target","T06"],
+  ["cat01",5,13,"J.ガウシゾ","GK",25,1.9,"s+d++","oneone","ESP",3,"gk_stop","K21"],
+  ["cat02",5,23,"J.アンザ","RSB/CB",28,2.2,"s++d+","intercept","FRA",1,"sb_def","K15"],
+  ["cat03",5,2,"P.ヒバルシ","CB",19,2.1,"t+++","carrier","ESP",6,"cb_build","K18"],
+  ["cat04",5,4,"R.メラウホ","CB",27,1.8,"p++s++","mark","URU",8,"cb_stop","K15"],
+  ["cat05",5,3,"A.バルテ","LSB",23,1.7,"s+++","over","ESP",2,"sb_atk","K12"],
+  ["cat06",5,21,"F.ビ・テング","DMF/CMF",29,2.3,"t++a+","carrier","NED",4,"dm_regista","K11"],
+  ["cat07",5,8,"ガヅリ","CMF/OMF",23,2.9,"t+++a+","touch","ESP",11,"cm_maker","T01"],
+  ["cat08",5,6,"ベビ","CMF/OMF",22,1.9,"a++d+","gegen","ESP",6,"cm_b2b","T17"],
+  ["cat09",5,10,"L.ミマグ","RWG/RMF",19,3.0,"t+++s++","cutin","ESP",10,"w_cutin","K02"],
+  ["cat10",5,9,"R.フヴァウドフスキ","CF",38,2.2,"o+++s-","jackal","POL",10,"cf_poach","K08"],
+  ["cat11",5,11,"ハフィーキャ","LWG/LMF",29,2.8,"o++s+","kicker","BRA",11,"w_cutin","T08"],
+  ["cat12",5,25,"W.ヒュチェヌニー","GK",36,1.3,"d+","stopper","POL",3,"gk_stop","K21"],
+  ["cat13",5,5,"E.ゼルレア","CB/DMF",25,1.3,"t++","passer","ESP",10,"cb_build","K11"],
+  ["cat14",5,16,"ズェルミレ","OMF/CMF",23,1.8,"o++a+","middle","ESP",10,"om_shadow","K09"],
+  ["cat15",5,20,"D.ゼルモ","OMF/LWG",28,1.9,"t++","touch","ESP",4,"om_10","K07"],
+  ["cat16",5,14,"M.ラッシュユォード","LWG/CF",29,1.8,"s++o+","sprint","ENG",8,"w_drib","K03"],
+  ["mdb01",6,1,"T.クヂトワ","GK",34,2.6,"p++d+","oneone","BEL",1,"gk_stop","K21"],
+  ["mdb02",6,12,"T.アレクサンダー=ドーノルド","RSB",28,2.1,"t+++d--","longp","ENG",1,"sb_in","K11"],
+  ["mdb03",6,3,"E.ミミトン","CB",28,2.0,"s++p+","block","BRA",3,"cb_stop","K15"],
+  ["mdb04",6,24,"D.ハイセハ","CB",21,1.9,"t++p+","carrier","ESP",6,"cb_build","K18"],
+  ["mdb05",6,18,"A.カレーモセ","LSB",23,1.6,"s++","over","ESP",4,"sb_atk","K12"],
+  ["mdb06",6,14,"A.チュソメニ","DMF",26,2.2,"d++p++","intercept","FRA",10,"dm_destroy","K16"],
+  ["mdb07",6,8,"F.バルゼルデ","CMF/RMF",28,2.6,"a+++o+","iron","URU",8,"cm_b2b","K19"],
+  ["mdb08",6,5,"J.ベリフガシ","OMF/CMF",23,2.8,"o++p+a+","clutch","ENG",11,"om_shadow","T08"],
+  ["mdb09",6,11,"ロドソゴ","RWG/CF",25,1.9,"t++s+","drib","BRA",10,"w_cutin","K04"],
+  ["mdb10",6,10,"K.フベッペ","LWG/CF",27,3.4,"s+++o+++","hunter","FRA",3,"cf_speed","K03"],
+  ["mdb11",6,7,"ヴィニシウソ","LWG",26,2.9,"s+++t++","bigmatch","BRA",9,"w_drib","K05"],
+  ["mdb12",6,13,"A.ルキヤ","GK",27,1.1,"d+","pkstop","UKR",8,"gk_stop","K22"],
+  ["mdb13",6,22,"A.ニュディロー","CB",33,1.7,"p+++","mark","GER",9,"cb_stop","T15"],
+  ["mdb14",6,6,"E.ヨマヴィンユ","CMF/DMF",24,1.9,"a++d+s+","carrier","FRA",8,"cm_b2b","K10"],
+  ["mdb15",6,15,"A.ギュガル","OMF/RWG",21,2.0,"t+++","kicker","TUR",6,"om_10","K14"],
+  ["mdb16",6,30,"F.ウスタントゥオーコ","RWG/OMF",19,1.5,"t++","fanta","ARG",6,"w_cutin","K02"],
+  ["mdr01",7,13,"J.シブラネ","GK",33,2.2,"d+++o-","stopper","SVN",2,"gk_stop","K21"],
+  ["mdr02",7,14,"M.ジョレメテ","RSB/RMF",31,1.7,"a++s++","over","ESP",11,"sb_atk","K12"],
+  ["mdr03",7,24,"R.ルモノグマン","CB",30,1.3,"p++","leader","ESP",6,"cb_stop","T12"],
+  ["mdr04",7,2,"J.M.ヒフソス","CB",31,1.4,"p++","aerial","URU",1,"cb_air","K13"],
+  ["mdr05",7,17,"D.ポンムコ","LSB/CB",29,1.4,"t+d+","cover","SVK",3,"sb_def","K16"],
+  ["mdr06",7,20,"G.ガメオラ","RMF/RWG",24,1.5,"a++","gegen","ARG",10,"w_play","K19"],
+  ["mdr07",7,8,"P.バボオチ","CMF/DMF",23,1.8,"t++a+","passer","ESP",6,"cm_maker","K11"],
+  ["mdr08",7,4,"C.ギャパボー","CMF",26,1.7,"a+++","gegen","ENG",2,"cm_b2b","T03"],
+  ["mdr09",7,10,"A.ウエオ","LMF/OMF",25,1.9,"t++","inswing","ESP",6,"w_play","K07"],
+  ["mdr10",7,19,"J.アルバレサ","CF",26,2.5,"o++a+","chase","ARG",2,"cf_all","K17"],
+  ["mdr11",7,7,"A.グマーズマン","ST/OMF/CF",35,2.2,"t++a+","false9","FRA",4,"cf_false9","K07"],
+  ["mdr12",7,1,"J.アッア","GK",32,0.8,"d+","pkstop","ARG",6,"gk_stop","K22"],
+  ["mdr13",7,3,"M.ヌッルェーリ","LSB",24,1.0,"s+","cross","ITA",4,"sb_atk","K06"],
+  ["mdr14",7,6,"コク","CMF/DMF",34,1.3,"t++s-","longp","ESP",9,"cm_maker","K11"],
+  ["mdr15",7,5,"J.カルニーゾ","DMF",25,1.3,"d++","mark","USA",7,"dm_destroy","K15"],
+  ["mdr16",7,9,"A.セルルート","CF",31,1.7,"p+++s-","tower","NOR",8,"cf_target","T02"],
+  ["mir01",8,16,"M.ハニャン","GK",31,2.3,"s+o++","sweeper","FRA",9,"gk_sweep","K23"],
+  ["mir02",8,23,"F.トギス","CB",28,1.4,"s++","cover","ENG",9,"cb_cover","K16"],
+  ["mir03",8,46,"M.ガッブツ","CB",27,1.3,"p++","aerial","ITA",3,"cb_air","K13"],
+  ["mir04",8,31,"S.パヴツヴィッチ","CB",25,1.5,"p+++t-","block","SRB",6,"cb_air","K15"],
+  ["mir05",8,14,"L.ガドリッチ","DMF/CMF",41,1.9,"t+++a+p--d-","longp","CRO",1,"dm_regista","K11"],
+  ["mir06",8,8,"R.ロフタス=チーワ","CMF/OMF",30,1.3,"p++","carrier","ENG",9,"cm_runner","K10"],
+  ["mir07",8,12,"A.スソオ","CMF",31,1.8,"a++p+","iron","FRA",2,"cm_b2b","K19"],
+  ["mir08",8,56,"A.サーレマーハルス","RMF/RSB",27,1.4,"a++t+","over","BEL",0,"w_cross","K12"],
+  ["mir09",8,2,"P.フストゥピビャン","LMF/LSB",28,1.3,"s++","cross","ECU",6,"w_cross","K06"],
+  ["mir10",8,11,"C.プリポッシ","CF/RWG",28,2.3,"t++o++","clutch","USA",6,"cf_all","T08"],
+  ["mir11",8,10,"R.ポオン","ST/LWG/CF",27,2.3,"s+++t++a-","drib","POR",7,"cf_speed","K04"],
+  ["mir12",8,1,"M.チッラッチャーノ","GK",36,0.6,"d+","stopper","ITA",9,"gk_stop","K21"],
+  ["mir13",8,29,"Y.ヅォファヨ","DMF/CMF",27,1.5,"d++a+","intercept","FRA",6,"dm_destroy","K16"],
+  ["mir14",8,4,"S.ブッリ","DMF",25,1.1,"t+","cover","ITA",4,"dm_anchor","K16"],
+  ["mir15",8,18,"C.エンクンソ","CF/OMF",29,1.6,"t++o+","false9","FRA",10,"cf_false9","K02"],
+  ["mir16",8,7,"S.ヒネネペ","CF",25,1.4,"o++p+","jackal","MEX",1,"cf_poach","K08"],
+  ["mib01",9,1,"Y.ホメー","GK",37,1.7,"d++p--","stopper","SUI",8,"gk_stop","K21"],
+  ["mib02",9,25,"M.ポパンジ","CB",31,1.7,"t++s+","carrier","SUI",1,"cb_build","K18"],
+  ["mib03",9,15,"F.ドヌェルビ","CB",38,1.3,"p++s-","leader","ITA",9,"cb_stop","T14"],
+  ["mib04",9,95,"A.ロストーニ","CB",27,2.4,"t+++","innerlap","ITA",9,"cb_build","T09"],
+  ["mib05",9,20,"H.チャルゴギール","DMF",32,2.2,"t+++o+","pkace","TUR",3,"dm_regista","K14"],
+  ["mib06",9,23,"N.サネッラ","CMF",29,2.5,"a+++t+","gegen","ITA",6,"cm_b2b","K19"],
+  ["mib07",9,22,"H.ムミタリアン","CMF/OMF",37,1.6,"t++a-","touch","ARM",7,"cm_runner","K07"],
+  ["mib08",9,2,"D.ドゥヌユリース","RMF/RSB",30,1.8,"s++p++","over","NED",11,"w_cross","K12"],
+  ["mib09",9,32,"F.プィマモコ","LMF/LSB",29,2.3,"t+++","inswing","ITA",6,"w_cross","K06"],
+  ["mib10",9,10,"L.マヤズィネスス","CF",29,2.7,"o+++a+","jackal","ARG",10,"cf_poach","T08"],
+  ["mib11",9,9,"M.ピュスム","ST/CF",29,2.1,"p++s++","post","FRA",6,"cf_all","T06"],
+  ["mib12",9,13,"J.マコティネス","GK",28,1.1,"d+","pkstop","ESP",6,"gk_stop","K22"],
+  ["mib13",9,31,"Y.シセッジ","CB",25,1.3,"p++","aerial","GER",9,"cb_air","K13"],
+  ["mib14",9,16,"D.ブザッテージ","CMF/OMF",27,1.6,"o++a+","runner","ITA",3,"cm_runner","K03"],
+  ["mib15",9,8,"P.ササッチ","CMF/OMF",23,1.4,"t++","thru","CRO",8,"cm_maker","T05"],
+  ["mib16",9,14,"A.ワニー","CF",23,1.3,"s++","sprint","FRA",4,"cf_speed","K03"],
+  ["toz01",10,29,"M.ディ・ヘグゴリオ","GK",29,1.7,"d++","stopper","ITA",6,"gk_stop","K21"],
+  ["toz02",10,15,"P.イレル","CB/RSB",26,1.4,"s++","cover","FRA",8,"cb_cover","K16"],
+  ["toz03",10,3,"ブポーメペ","CB",29,2.0,"d++p++","mark","BRA",9,"cb_stop","T16"],
+  ["toz04",10,4,"F.ゼッティ","CB",28,1.3,"p++","aerial","ITA",5,"cb_air","T07"],
+  ["toz05",10,5,"M.ロカヒッリ","DMF",28,1.7,"t++","longp","ITA",5,"dm_regista","K11"],
+  ["toz06",10,19,"K.ミュラタ","CMF",25,1.6,"p++s+","carrier","FRA",2,"cm_b2b","K10"],
+  ["toz07",10,8,"T.コープマイネグス","CMF/OMF",28,1.5,"o++t+","middle","NED",8,"cm_runner","K09"],
+  ["toz08",10,11,"E.ジェグギヴァ","RMF/RWG",27,1.6,"t+++s+d-","drib","KOS",6,"w_cutin","K04"],
+  ["toz09",10,27,"A.カカエアーゾ","LMF/LSB",26,1.7,"t++a+","touch","ITA",10,"w_play","T01"],
+  ["toz10",10,10,"K.ズルドゥズ","CF/LWG",21,2.4,"t+++s+","cutin","TUR",2,"cf_all","K02"],
+  ["toz11",10,30,"J.アイヴィッド","ST/CF",26,1.8,"o++","jackal","CAN",9,"cf_poach","K08"],
+  ["toz12",10,1,"M.アリン","GK",34,0.9,"d+","pkstop","ITA",4,"gk_stop","K22"],
+  ["toz13",10,6,"L.ジアー","CB",27,1.1,"t+p+","carrier","ENG",9,"cb_build","K18"],
+  ["toz14",10,16,"W.パッケセー","CMF/RSB",28,1.3,"a++p+","iron","USA",9,"cm_b2b","K19"],
+  ["toz15",10,7,"F.コンギバソン","RWG",24,1.6,"s++t++","drib","POR",6,"w_drib","K04"],
+  ["toz16",10,9,"D.ヴドメヴィッチ","CF",26,1.8,"p++o++","post","SRB",11,"cf_target","T06"],
+  ["rmc01",11,94,"I.ロロヴェデプ","GK",32,1.4,"o++","feeder","ITA",6,"gk_feed","K24"],
+  ["rmc02",11,77,"A.ジルシッチ","RSB",34,1.0,"a++","iron","MNE",7,"sb_def","K19"],
+  ["rmc03",11,34,"M.プジ","CB",26,1.5,"s++","intercept","ESP",7,"cb_cover","K16"],
+  ["rmc04",11,13,"A.ロマニョーニ","CB",31,1.4,"t+p+","leader","ITA",5,"cb_build","T14"],
+  ["rmc05",11,17,"N.タヴァラテ","LSB",26,1.3,"s+++d-","over","POR",1,"sb_atk","K12"],
+  ["rmc06",11,6,"N.ノヴェッヘ","DMF",25,1.5,"t++","maker","ITA",7,"dm_anchor","K11"],
+  ["rmc07",11,8,"M.グロンフゥージ","CMF",27,1.6,"a+++","iron","FRA",10,"cm_b2b","K19"],
+  ["rmc08",11,7,"F.デプ=ドシル","CMF/OMF",25,1.0,"p++","carrier","NGA",4,"cm_runner","K10"],
+  ["rmc09",11,18,"G.イサゲドン","RWG/RMF",25,1.3,"s++","drib","DEN",2,"w_drib","K04"],
+  ["rmc10",11,11,"T.カステジャーモス","CF",28,1.5,"p++o+","post","ARG",8,"cf_target","T06"],
+  ["rmc11",11,10,"M.ヨッカーニ","LWG/LMF",31,1.7,"t++o+","cutin","ITA",4,"w_cutin","K05"],
+  ["rmc12",11,35,"C.レクダス","GK",25,1.0,"s+","sweeper","GRE",10,"gk_sweep","K23"],
+  ["rmc13",11,29,"M.リッツァーガ","RSB/RMF",33,0.9,"s++","over","ITA",4,"sb_atk","K12"],
+  ["rmc14",11,5,"M.カシーシ","CMF/DMF",35,1.0,"p++","aerial","URU",4,"cm_runner","K13"],
+  ["rmc15",11,9,"ペドカ","RWG/CF",39,1.3,"t++a-","touch","ESP",4,"w_play","K07"],
+  ["rmc16",11,19,"B.ムィグ","CF",30,1.2,"o++","jackal","SEN",3,"cf_poach","K08"],
+  ["rmg01",12,99,"M.コヴィラロ","GK",27,2.0,"d++","stopper","SRB",7,"gk_stop","K22"],
+  ["rmg02",12,23,"G.マポチーニ","CB",30,1.4,"p++d+","mark","ITA",10,"cb_stop","T15"],
+  ["rmg03",12,5,"E.ンディヌ","CB",27,1.6,"s++","leader","CIV",8,"cb_cover","K16"],
+  ["rmg04",12,22,"M.ゲルモソ","CB",31,1.2,"t++","carrier","ESP",6,"cb_build","K18"],
+  ["rmg05",12,4,"B.クアスタンテ","DMF/CMF",31,1.3,"p++","block","ITA",7,"dm_destroy","K13"],
+  ["rmg06",12,17,"M.ヅラ","CMF",25,1.7,"a++s+","carrier","FRA",6,"cm_b2b","K19"],
+  ["rmg07",12,8,"N.プル・アイブウイ","CMF",25,1.2,"p++","gegen","MAR",4,"cm_b2b","T11"],
+  ["rmg08",12,43,"ムェズレイ","RMF/RSB",23,1.5,"s++","over","BRA",10,"w_drib","K12"],
+  ["rmg09",12,12,"K.クィミカス","LMF/LSB",30,1.1,"t++","cross","GRE",11,"w_cross","K06"],
+  ["rmg10",12,18,"M.オラ","CF/OMF",23,1.8,"t++","drib","ARG",8,"cf_false9","K04"],
+  ["rmg11",12,21,"P.ディゲワ","ST/OMF/CF",33,1.9,"t+++a-","kicker","ARG",2,"cf_false9","K14"],
+  ["rmg12",12,95,"P.ペッブーニ","GK",31,0.7,"d+","pkstop","ITA",10,"gk_stop","K22"],
+  ["rmg13",12,19,"Z.チェメニ","RSB/CB",29,1.0,"a++","cover","TUR",10,"sb_def","K15"],
+  ["rmg14",12,7,"L.ペッテグリール","OMF/CMF",30,1.4,"t++","chance","ITA",1,"om_creator","K07"],
+  ["rmg15",12,16,"L.ベイユー","RWG",29,1.3,"s+++","sprint","JAM",9,"w_drib","K03"],
+  ["rmg16",12,11,"E.クァーガソザ","CF",22,1.2,"p++","target","IRL",9,"cf_target","T06"],
+  ["par01",13,30,"L.シュヴァリテ","GK",25,1.9,"s+o+","sweeper","FRA",7,"gk_sweep","K23"],
+  ["par02",13,2,"A.ハキド","RSB/RMF",28,2.8,"s+++o++","over","MAR",5,"sb_atk","T10"],
+  ["par03",13,5,"マルゲーニョス","CB",32,2.1,"d++t+","leader","BRA",2,"cb_cover","T14"],
+  ["par04",13,51,"W.オチョ","CB",25,2.0,"p++s+","block","ECU",7,"cb_stop","K15"],
+  ["par05",13,25,"N.ポンデス","LSB",24,2.6,"s+++t++","allout","POR",8,"sb_atk","K05"],
+  ["par06",13,17,"ヴィティーミャ","DMF/CMF",26,2.8,"t+++a+","longp","POR",3,"dm_regista","T01"],
+  ["par07",13,87,"J.レヴェス","CMF",22,2.5,"a+++d+","gegen","POR",11,"cm_b2b","T11"],
+  ["par08",13,8,"F.ネイス","CMF/OMF",30,2.0,"t++","passer","ESP",8,"cm_maker","K11"],
+  ["par09",13,14,"D.ツゥエ","RWG/OMF",21,2.4,"t++s++","drib","FRA",8,"w_drib","K04"],
+  ["par10",13,10,"O.デチベレ","CF/RWG",29,3.0,"t+++s++","false9","FRA",7,"cf_false9","T08"],
+  ["par11",13,7,"K.ズヴァラツヘリア","LWG",25,2.8,"t+++s+","cutin","GEO",8,"w_cutin","K02"],
+  ["par12",13,39,"M.サグォノフ","GK",27,1.3,"d+","pkstop","RUS",8,"gk_stop","K22"],
+  ["par13",13,33,"W.ザプール=エメリ","CMF/RSB",20,1.7,"a++","iron","FRA",10,"cm_b2b","K19"],
+  ["par14",13,19,"イエキンイン","OMF/RWG",25,1.6,"t++","kicker","KOR",3,"om_creator","K14"],
+  ["par15",13,29,"B.バチコベ","LWG",24,1.9,"s+++","sprint","FRA",11,"w_drib","K03"],
+  ["par16",13,9,"G.ラモレ","CF",25,1.6,"o++","jackal","POR",4,"cf_poach","K08"],
+  ["mur01",14,1,"M.ニオアー","GK",40,1.9,"t++o++s-","sweeper","GER",8,"gk_sweep","K23"],
+  ["mur02",14,27,"K.ヒイムー","RSB/CMF",29,1.6,"a+++","gegen","AUT",7,"sb_def","K19"],
+  ["mur03",14,2,"D.ワパメカル","CB",28,2.1,"s++p+","intercept","FRA",9,"cb_cover","K16"],
+  ["mur04",14,4,"J.ケー","CB",30,2.0,"p++","block","GER",4,"cb_stop","T14"],
+  ["mur05",14,19,"A.デネヴィム","LSB",26,1.9,"s+++","over","CAN",2,"sb_atk","K12"],
+  ["mur06",14,6,"J.ホミッヒ","DMF/RSB",31,2.6,"t+++a+","longp","GER",8,"dm_regista","K11"],
+  ["mur07",14,45,"A.ヤヴマヴィッチ","DMF/CMF",22,1.8,"t++","passer","GER",7,"dm_anchor","T01"],
+  ["mur08",14,17,"M.オセーズ","RMF/RWG",24,2.8,"t+++o+","cutin","FRA",11,"w_cutin","K07"],
+  ["mur09",14,42,"J.ムシアナ","OMF",23,2.8,"t+++s+","drib","GER",8,"om_10","K04"],
+  ["mur10",14,14,"L.ディアヌ","LMF/LWG",29,2.4,"s++o+","wing","COL",5,"w_drib","K05"],
+  ["mur11",14,9,"H.ライン","CF",33,3.1,"o+++t++","pkace","ENG",0,"cf_all","T08"],
+  ["mur12",14,40,"J.ウデビノ","GK",23,1.0,"d+","stopper","GER",3,"gk_stop","K21"],
+  ["mur13",14,3,"ヤム・シンジェ","CB",29,1.8,"p++s+","mark","KOR",6,"cb_stop","K15"],
+  ["mur14",14,44,"J.キタニネッチ","RSB/CB",26,1.2,"d++","cover","CRO",11,"sb_def","K16"],
+  ["mur15",14,8,"L.ゴハクカ","CMF",31,1.5,"p++o+","tower","GER",6,"cm_runner","K13"],
+  ["mur16",14,7,"S.ミャキリ","RWG/OMF",31,1.6,"o++","middle","GER",8,"w_cutin","K09"],
+  ["dog01",15,1,"G.コベア","GK",28,2.2,"d++","stopper","SUI",8,"gk_stop","K21"],
+  ["dog02",15,3,"W.アンマア","CB",30,1.4,"p++","leader","GER",5,"cb_stop","T14"],
+  ["dog03",15,4,"N.シュロッケーベック","CB",26,1.9,"t++p+","carrier","GER",1,"cb_build","K18"],
+  ["dog04",15,25,"N.エーツ","CB",31,1.2,"p+++s-","aerial","GER",11,"cb_air","K13"],
+  ["dog05",15,8,"F.メメチャ","DMF/CMF",26,1.5,"p++","post","GER",1,"dm_anchor","K10"],
+  ["dog06",15,13,"P.グリス","CMF/DMF",35,1.5,"t+++s-","kicker","GER",2,"dm_regista","K14"],
+  ["dog07",15,20,"M.ガダッツァー","CMF",32,1.3,"o++","middle","AUT",4,"cm_runner","K09"],
+  ["dog08",15,26,"J.ルイネソン","RMF/RSB",28,1.4,"a++","over","NOR",3,"w_cross","K12"],
+  ["dog09",15,24,"D.シヴェンニン","LMF/LSB",24,1.4,"s++","cross","SWE",5,"w_cross","K06"],
+  ["dog10",15,9,"S.ムラト","CF",30,2.3,"o+++p++","jackal","GUI",10,"cf_poach","K08"],
+  ["dog11",15,27,"K.ガデイェカ","ST/LWG/CF",24,1.7,"s+++","sprint","GER",0,"cf_speed","K03"],
+  ["dog12",15,33,"A.コイコー","GK",31,0.7,"d+","pkstop","GER",8,"gk_stop","K22"],
+  ["dog13",15,5,"R.ベブセバイニ","CB/LSB",31,1.0,"p++","mark","ALG",3,"cb_air","K15"],
+  ["dog14",15,7,"J.ベリフガシス","CMF/OMF",21,1.3,"a++","gegen","ENG",0,"cm_b2b","K19"],
+  ["dog15",15,10,"J.ブズコト","OMF",30,1.5,"t++","chance","GER",1,"om_10","K07"],
+  ["dog16",15,14,"M.バヌペー","CF/LWG",24,1.4,"o++s+","runner","GER",2,"cf_speed","K03"]
 ];
 
 /* 生成物。手で編集しない。 python tools/gen_rarekp.py が tools/rarekp_source.txt から書き出す(→docs/11)。
@@ -6221,6 +6301,26 @@ function gkOut(gk){
   const K=TUNING.gk;
   return gk&&gk.gk?clamp((gk.h+(gk.up||0)+(gk.tH||0)-K.baseH)/(K.maxH-K.baseH),0,1):0;   // up = キーパーの指示で上げた分
 }
+/**
+ * 選手の振る舞い(→docs/32 §32.8 B・docs/30)。型(card.ptype)と特性タグ(card.trait)を1つにまとめる。
+ * 高さ・横のずれは足し、重みは掛ける。試合の処理と映像はこれ(p.bh)だけを見る
+ */
+function bhOf(c){
+  const o={ h:0, xIn:0, xOut:0, ch:{}, recv:[], recvLong:1, mark:1, sweep:1, lob:1, save:0, near:false, quick:false, amp:1, drift:1, press:1, fx:{} };
+  const add=s=>{ if(!s)return;
+    o.h+=s.h||0; o.xIn+=s.xIn||0; o.xOut+=s.xOut||0;
+    for(const k in s.ch||{})o.ch[k]=(o.ch[k]||1)*s.ch[k];
+    if(s.recv)o.recv.push(s.recv);
+    for(const k of ["recvLong","mark","sweep","lob","amp","drift","press"])if(s[k]!=null)o[k]*=s[k];
+    if(s.save){ o.save+=s.save; if(s.near)o.near=true; }
+    if(s.quick)o.quick=true;
+    for(const k in s.fx||{})o.fx[k]=(o.fx[k]||1)*s.fx[k]; };
+  add(TUNING.ptype[c.ptype]);
+  const t=c.trait, TR=TUNING.trait;
+  if(t)add({ h:TR.h[t], xIn:TR.xIn[t], xOut:TR.xOut[t], ch:TR.ch[t], recv:TR.recv[t], recvLong:TR.recvLong[t], mark:TR.mark[t], sweep:TR.sweep[t],
+    lob:TR.lob[t], save:TR.save[t], near:t==="gkWall", quick:t==="anchor", amp:TR.amp[t], drift:TR.drift[t], press:TR.press[t] });
+  return o;
+}
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
   p.h=q.h; p.x=q.x;
@@ -6228,14 +6328,15 @@ function placePlayer(p,h,x){
   p.role=baseRole(p.pos);
   p.apt=aptOf(p.c,p.pos);
   // 特性の立ち位置(→docs/30): 高さのずれ(tH。blockH が足す)と、中央へ寄せる / 外へ開く(ポジションは元の位置で決めてから)
-  const tr=p.c.trait, TR=TUNING.trait;
-  p.tH=tr&&TR.h[tr]||0;
-  if(tr&&TR.xIn[tr])p.x=p.x+(50-p.x)*TR.xIn[tr];
-  if(tr&&TR.xOut[tr])p.x=clamp(p.x+(p.x<50?-1:1)*Math.abs(50-p.x)*TR.xOut[tr],4,96);
+  const B=p.bh=bhOf(p.c);   // 型と特性の振る舞い(→docs/32 §32.8 B)
+  p.tH=B.h;
+  if(B.xIn)p.x=p.x+(50-p.x)*Math.min(0.9,B.xIn);
+  if(B.xOut)p.x=clamp(p.x+(p.x<50?-1:1)*Math.abs(50-p.x)*B.xOut,4,96);
 }
 /** 効果の入れ物。数値は倍率(1=何も無い)、cov と range だけ加算 */
 const FX0=()=>({ chs:[], defs:[], shot:1, mid:1, aerial:1, fk:1, ck:1, pkK:1, blk:1, gk:1, pk:1,
   sweep:1, lob:1, sta:1, all:1, recv:1, recvDeep:1, zone:1, chase:1, assist:1, urge:1, vsKp:1,
+  angle:1, reb:1, gegen:1, big:1, gkNear:1, clutch:1,   // 新しいスキル(→docs/32 §32.8 E)
   cov:0, range:0 });
 function mkPlayer(card,h,x,gk){
   // fat0 = 練習の疲れ。試合をそのぶん消耗した状態で始める(→docs/05 §5.3)
@@ -6296,7 +6397,7 @@ const playerOf=(T,id)=>T.players.find(p=>p.id===id)||null;
 /* ---------- スキル・スタイル・連携(→docs/04) ---------- */
 
 const skOf=p=>p&&p.c.skill?SKILLS[p.c.skill]:null;
-const styleOfCard=c=>{ const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[s.style]||null:null; };
+const styleOfCard=c=>{ if(c&&c.kp&&STYLES[c.kp])return STYLES[c.kp]; const s=c&&c.skill?SKILLS[c.skill]:null; return s?STYLES[s.style]||null:null; };   // KP の型はスキルと別(→docs/32 §32.8)
 /** レアKP の表の行(カードが WORLD CLASS 以上で表にあるとき)。発動するかは rareOf */
 const rareOfCard=c=>c&&(c.rar==="K"||c.rar==="L")&&typeof RARE_KP!=="undefined"&&RARE_KP[c.id]||null;
 /** その選手のレアKP が発動しているか(→docs/11 §11.2): KP で、★5(相手は強さの段が oppTier 以上) */
@@ -6390,7 +6491,7 @@ function refreshFx(M,min){
     T.linkSum=T.links.reduce((s,l)=>s+(on.has(l[0])&&on.has(l[1])?l[2]:0),0);
     const kp=T.players.find(p=>p.kp)||null, st=kp?styleOfCard(kp.c):null;
     if(!kp)T.kp=null;
-    T.style=st?SKILLS[kp.c.skill].style:null;
+    T.style=st?(kp.c.kp&&STYLES[kp.c.kp]?kp.c.kp:SKILLS[kp.c.skill].style):null;   // KP の型はカードの kp(なければスキルから。→docs/32)
     T.rare=kp?rareOf(kp,T):null;                 // レアKP(→docs/11)
     T.axis=st?styleAxisVal(T,st)||0:0;
     T.rank=st?styleRank(T,st,ssOfP(kp)):null;
@@ -6413,6 +6514,8 @@ function refreshFx(M,min){
       const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
       addFx(fx,sk&&sk.buff,(p.c.buffK||1)*(rare?TUNING.rare.buffK:1));   // 特殊能力の★でバフが強まる。レアKP はさらに
       if(mv&&mv.fx)addFx(fx,mv.fx,1);
+      if(T.big&&fx.big!==1)fx.all*=fx.big;   // ビッグマッチ(→docs/32 §32.8 E)
+      if(p.bh)for(const k in p.bh.fx)fx[k]*=p.bh.fx[k];   // 型の小さな上乗せ(→docs/32 §32.8 B)
       p.mv=mv?rare.mv:null;
       if(T.setplay){ fx.fk*=1+T.setplay; fx.ck*=1+T.setplay; fx.pkK*=1+T.setplay; }
       if(p.kp){ fx.recv*=TUNING.kp.recv; if(solo)addFx(fx,st.fx,T.rk); }
@@ -6488,10 +6591,10 @@ function matchupDefender(rng,h,x,D,ballH){
   const bt=U.beaten*(D.fx.beaten||1)*(1+Math.max(0,D.lineOff)*TUNING.ins.lineBeaten);
   const dhOf=q=>{ const d=blockH(q,bh)-mh; return d<0?d*U.goalSide:d*bt; };
   // **飛び出したGKは守備者として数える**(→docs/02 §2.3a)。定位置では関与しない
-  const TR=TUNING.trait, gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep*(TR.sweep[gk.c.trait]||1);   // スイーパーキーパーはよく飛び出す
+  const gk=gkOf(D), sw=gkOut(gk)*TUNING.gk.sweep*gk.fx.sweep*(gk.bh?gk.bh.sweep:1);   // スイーパーキーパーはよく飛び出す(型・特性)
   const geom=q=>gauss2(dhOf(q),(q.x-mx)/100,U.sigH,U.sigX)*(q.gk?sw:1);
   const field=outfield(D), list=sw>0?field.concat(gk):field;
-  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd)*(TR.mark[q.c.trait]||1));   // 番犬・ストッパーは競りに行く
+  const p=pickW(rng,list,q=>geom(q)*(1+eff(q,"spd")/STAT_MAX*U.markSpd)*(q.bh?q.bh.mark:1));   // ストッパー・潰し屋・番犬は競りに行く
   if(!p)return null;
   let n=0;
   for(const q of field)
@@ -6509,9 +6612,9 @@ function sideW(T,x){
 }
 /** パスの受け手。行き先に近い味方ほど選ばれ、深い位置ほど決定力のある選手を探す */
 function receiverAt(rng,T,D,tg,self,bh,ch){
-  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH, TR=TUNING.trait;
+  const R=TUNING.recv, A=T.fx, deep=tg.h>TUNING.style.deepH;
   // 特性(→docs/30): その高さで受けやすい(No.9.5 は中盤まで降りて・No.10 はライン間)/ ターゲットマンはロングボールの受け手
-  const trW=q=>{ const t=q.c.trait; if(!t)return 1; let w=1; const r=TR.recv[t]; if(r&&tg.h>=r[0]&&tg.h<=r[1])w*=r[2]; if(ch&&ch.to&&TR.recvLong[t])w*=TR.recvLong[t]; return w; };
+  const trW=q=>{ const B=q.bh; if(!B)return 1; let w=1; for(const r of B.recv)if(tg.h>=r[0]&&tg.h<=r[1])w*=r[2]; if(ch&&ch.to)w*=B.recvLong; return w; };
   const geom=q=>gauss2(blockH(q,bh)-tg.h,(q.x-tg.x)/100,R.sigH,R.sigX);
   const list=outfield(T).filter(q=>q!==self);
   const p=pickW(rng,list,q=>geom(q)*(1+tg.h*eff(q,"off")/STAT_MAX*R.atk)
@@ -6530,7 +6633,7 @@ function strayOf(p,h,x){
 }
 
 function pickChannel(rng,p,h,x,T,fast,ctr,pn){
-  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{}, TR=TUNING.trait, tr=p.c.trait;
+  const C=TUNING.chain, stray=strayOf(p,h,x), A=T.fx, I=TUNING.ins, L=T.lane||{}, TR=TUNING.trait, B=p.bh;
   const mv=p.mv&&RARE_MOVES[p.mv], hand=mv&&mv.ch&&mv.roles.includes(p.role)?CHANNELS[p.role].concat([mv.ch]):CHANNELS[p.role];
   return pickW(rng,hand,ch=>{
     let w=eff(p,ch.stat)*chW(p,ch)*(ch===(mv&&mv.ch)?TUNING.rare.mvW:1);
@@ -6539,8 +6642,8 @@ function pickChannel(rng,p,h,x,T,fast,ctr,pn){
     if(T.ins.center&&ch.kind==="carry")w*=I.centerCarry;
     if(ctr&&ch.to)w*=I.counterTo;              // カウンター: 奪った直後は裏へ
     if(A.chW&&A.chW[ch.id])w*=A.chW[ch.id];
-    if(tr){ const tw=TR.ch[tr]; if(tw&&tw[ch.id])w*=tw[ch.id];   // 特性の得意な手(→docs/30)
-      if(tr==="anchor"&&pn!=null&&pn<=TR.quickN)w*=ch.kind==="pass"?TR.quick.pass:TR.quick.carry; }   // アンカー: 奪ってすぐはパス
+    if(B){ if(B.ch[ch.id])w*=B.ch[ch.id];   // 型・特性の得意な手(→docs/30・docs/32)
+      if(B.quick&&pn!=null&&pn<=TR.quickN)w*=ch.kind==="pass"?TR.quick.pass:TR.quick.carry; }   // アンカー: 奪ってすぐはパス
     if(A.safe)w*=Math.pow(ch.risk,A.safe);
     if(ch.to){ if(fast&&A.fastTo)w*=A.fastTo; if(A.direct)w*=A.direct; }
     if(ch.kind==="carry"){
@@ -6585,6 +6688,8 @@ function createMatch(homeDef,awayDef,seed,opts){
     events:[], orders:{ H:[], A:[] },
     phase:"kickoff", koSide:"H", ball:null, set:null, poss:{ side:null, n:0, h0:0.5 },
     opts:opts||{}, pso:null, ht:false, over:false };
+  const avgOf=T=>T.players.reduce((s,p)=>s+STATS.reduce((a,k)=>a+p.c[k],0),0)/Math.max(1,T.players.length);
+  for(const T of [M.home,M.away]){ const O=T===M.home?M.away:M.home; T.big=!!M.opts.final||avgOf(O)>avgOf(T)+TUNING.skill2.bigGap; }   // ビッグマッチの場面
   M.irng=mulberry32((seed^hashStr("inj"))>>>0);   // ケガだけの乱数(ほかの判定の並びを変えない)
   refreshFx(M,0);
   return M;
@@ -6971,6 +7076,7 @@ function stepMatch(M){
     let tD=dk*(high?(Dt.highK||1)*(D.ins.press?I.pressHigh:1)*m.fx.chase
                    :(Dt.lowK||1)*(D.ins.press?I.pressLow:1));
     if(c.kp)tD*=m.fx.vsKp; else if(Dt.others)tD*=Dt.others;
+    if(m.fx.gegen!==1&&M.poss.n<=1)tD*=m.fx.gegen;   // ゲーゲンプレス: 奪われた直後(相手が奪って1手目まで。→docs/32)
     if(mk.prox>0.5)tD*=m.fx.zone;
     if(!high)tD*=1-D.lineOff*I.lineDef;         // ラインが低いほど自陣が堅い
     const aSc=(eff(c,"off")*U.atkW+eff(c,ch.stat)*(1-U.atkW))*ch.risk*(rc?rc.q:1)*tA*rr(rng);
@@ -7124,7 +7230,7 @@ function gkPosK(gk,h,x){
   const ideal=50+((100-x)-50)*K.follow;
   const lat=1-K.lat*(Math.abs(gk.x-ideal)-Math.abs(50-ideal))/K.latSpan;
   const close=clamp((h-K.farH)/(K.nearH-K.farH),0,1);
-  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(TUNING.trait.lob[gk.c.trait]||1)*(1-close)));
+  return lat*(1+out*(K.rush*close-K.lob*gk.fx.lob*(gk.bh?gk.bh.lob:1)*(1-close)));
 }
 
 /**
@@ -7190,13 +7296,15 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist,xk){
   // 効果は**当てはまる場面だけ**に掛かる
   const far=!sp&&h<S.midH;
   const sk=sp==="hdr"?p.fx.aerial*(T.fx.aerial||1):sp==="fk"?p.fx.fk:sp==="pk"?p.fx.pkK
-    :p.fx.shot*(far?p.fx.mid:1);
+    :p.fx.shot*(far?p.fx.mid:1)
+      *(p.fx.clutch!==1&&M.ix>=TUNING.skill2.clutchMin/90*(M.len1+M.len2)&&Math.abs(T.score-D.score)<=1?p.fx.clutch:1)   // クラッチ(終盤・1点差以内)
+      *(p.fx.angle!==1&&Math.abs(x-50)>=TUNING.skill2.angleX?p.fx.angle:1);   // カットインシュート(角度のある所から)
   const as=assist&&assist!==p&&!sp?assist.fx.assist:1;
   if(sk>1)ev.sk=p.fxName; else if(as>1){ ev.sk=assist.fxName; ev.ask=assist.id; }
   if((far&&p.mv==="longshot")||(sp==="hdr"&&p.mv==="overhead")){ ev.mv=RARE_MOVES[p.mv].label; ev.mvBy=p.id; }
   const sSc=raw*Math.pow(near,S.rangePow)*ang*sk*as*(xk||1);   // xk … 薄いサイドを崩したクロス(→docs/02 §2.15)
-  const TRs=TUNING.trait.save, gk1=(sp==="pk"?gk.fx.pk:gk.fx.gk)*(1+(TRs[gk.c.trait]&&(gk.c.trait!=="gkWall"||h>=TUNING.trait.wallH)?TRs[gk.c.trait]:0));   // 守護神・壁(至近距離)(→docs/30)
-  const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1;
+  const gb=gk.bh, gk1=(sp==="pk"?gk.fx.pk:gk.fx.gk)*(1+(gb&&gb.save&&(!gb.near||h>=TUNING.trait.wallH)?gb.save:0));   // 守護神・壁・ショットストッパー(至近距離)(→docs/30・docs/32)
+  const gSc=(eff(gk,"def")*0.65+eff(gk,"pow")*0.20+eff(gk,"tec")*0.15)*gkPosK(gk,h,x)*gk1*(!sp&&h>=TUNING.gk.nearH?gk.fx.gkNear:1);   // 1対1の名手(→docs/32)
   ev.dest=[1.0,r2(gy)];
   const a=rr(rng), b=rr(rng);
   let goal=sp==="pk"?sSc*a>gSc*b*S.thPk:Math.pow(sSc/gSc,S.gapPow)*a>S.thGoal*b;
@@ -7221,7 +7329,7 @@ function shoot(M,rng,push,T,D,p,h,x,sp,assist,xk){
   // ④ こぼれ球
   if(r<O.ckSave+S.rebound){
     const at=nearestTo(T,0.9,gy,p), df=nearestTo(D,0.1,100-gy);
-    const aSc=(eff(at,"spd")*0.5+eff(at,"off")*0.5)*rr(rng);
+    const aSc=(eff(at,"spd")*0.5+eff(at,"off")*0.5)*rr(rng)*at.fx.reb;   // ジャッカル(→docs/32)
     const dSc=(eff(df,"def")*0.5+eff(df,"spd")*0.5)*rr(rng);
     ev.reb=aSc>dSc?at.id:df.id;
     push(ev);
@@ -7426,13 +7534,14 @@ function genWorld(seed){
     const cards=roles.map((role,i)=>{
       const g=GEN_ROLE[baseRole(role)], off=C.tierStat[tier-1];
       const age=18+Math.floor(rng()*17), ageOff=age<=21?-0.8:age>=31?0.4:0;
-      const st=g.st.map((v,k)=>clamp(Math.round(v+(v<=6?off*0.3:off+ageOff)+(rng()*2-1)*C.statNoise),1,STAT_MAX));
+      const tys=ptypesOf(role), ptype=tys[Math.floor(rng()*tys.length)];   // 型(→docs/32 §32.8)。ひな形は型から
+      const st=ptypeSt(ptype).map((v,k)=>clamp(Math.round(v+(v<=6?off*0.3:off+ageOff)+(rng()*2-1)*C.statNoise),1,STAT_MAX));
       const cid=id+"p"+String(i+1).padStart(2,"0");
       const sd=/^L/.test(role)?"L":"R";
       const two=role==="CMF"?["CMF",rng()<0.5?"DMF":"OMF"]:baseRole(role)==="SMF"?[role,sd+"WG"]:baseRole(role)==="WG"?[role,sd+"MF"]
         :role==="OMF"?["OMF","CMF"]:role==="DMF"?["DMF","CMF"]:role==="ST"?["ST","CF"]:role==="CF"?["CF","ST"]:[role];
       CARDS[cid]={ id:cid, no:GEN_NO[i], name:name(), pos:g.pos, roles:two,
-        off:st[0], def:st[1], tec:st[2], pow:st[3], spd:st[4], sta:st[5], skill:pick(g.sk), age };
+        off:st[0], def:st[1], tec:st[2], pow:st[3], spd:st[4], sta:st[5], skill:pick(g.sk), age, ptype };
       return cid;
     });
     const xi=cards.slice(0,11), links=[], nLink=C.linkBase+C.linkTier*tier;
@@ -7752,7 +7861,7 @@ function playerDef(S,fx){
 function fixtureMatch(S,fx){
   return { home:playerDef(S,fx), away:oppDefOf(S,fx),
     seed:(S.seed^hashStr("m:"+S.term+":"+S.played))>>>0,
-    opts:{ ko:fx.ko, agg:fx.agg } };
+    opts:{ ko:fx.ko, agg:fx.agg, final:fx.label==="決勝" } };   // 決勝はビッグマッチ(→docs/32)
 }
 
 /* ---------- 結果の反映 ---------- */
@@ -8467,18 +8576,27 @@ const rarOf=r=>RAR_ORDER.slice().reverse().find(k=>r>=RARITY[k].at);
 /** 特徴の文字 → 能力 */
 const TRAIT_STAT={ o:"off", d:"def", t:"tec", p:"pow", s:"spd", a:"sta" };
 const POOL_SEED=20261117;
+/**
+ * カードの6能力(→docs/32 §32.8)= 型のひな形 + 特徴(+ / − 1つで traitU。最大 ±3)+ 格。
+ * 格の上乗せは平均 gradeMid を境に広げ、上がる分は強い能力から gradeW の比で厚く(低い能力 6 以下は lowK だけ)。下がる分は均等
+ */
+function cardStats(tpl,grade,traits){
+  const C=TUNING.pack, base={};
+  STATS.forEach((k,i)=>base[k]=tpl[i]);
+  for(const m of String(traits||"").matchAll(/([odtpsa])(\++|-+)/g))base[TRAIT_STAT[m[1]]]+=(m[2][0]==="+"?1:-1)*m[2].length*C.traitU;
+  const b=(grade-C.gradeMid)*C.gradeK2+(C.gradeMid-C.gradeBase)*C.gradeK, st={};
+  const W=C.gradeW, wm=W.reduce((a,x)=>a+x,0)/W.length, ord=STATS.slice().sort((a,c)=>base[c]-base[a]);
+  for(const k of STATS){ const w=b>0?W[ord.indexOf(k)]/wm:1; st[k]=clamp(Math.round(base[k]+b*w*(tpl[STATS.indexOf(k)]<=6?C.lowK:1)),1,STAT_MAX); }
+  return st;
+}
 /** 実在クラブの id(並びは REAL_CLUBS の順) */
 const REAL_IDS=REAL_CLUBS.map(c=>c[0]);
 const POOL=(()=>{
   const C=TUNING.pack, out=[];
   for(const r of REAL_ROWS){
-    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[baseRole(rl[0])];
-    const st={};
-    const off=(grade-C.gradeBase)*C.gradeK;      // 格 → 能力のずれ
-    STATS.forEach((k,i)=>{ const v=g.st[i]; st[k]=v+(v<=6?off*C.lowK:off); });
-    for(let k=0;k+1<traits.length;k+=2)st[TRAIT_STAT[traits[k]]]+=traits[k+1]==="+"?C.trait:-C.trait;
-    STATS.forEach(k=>{ st[k]=clamp(Math.round(st[k]),1,STAT_MAX); });
-    CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade,
+    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani,ptype,kp]=r, rl=roles.split("/"), g=GEN_ROLE[baseRole(rl[0])];
+    const ty=PTYPES[ptype]?ptype:ptypesOf(rl[0])[0], st=cardStats(ptypeSt(ty),grade,traits);
+    CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade, ptype:ty, kp:STYLES[kp]?kp:null,
       rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0],
       nat:nat||NAT_POOL[hashStr("nat:"+id)%NAT_POOL.length], ani:ani!=null?ani:hashStr("ani:"+id)%ANIMALS.length },st);
     out.push(id);
@@ -12058,10 +12176,10 @@ function offBallGoal(p,bh,bx,att,press,now,dt){
   const V=TUNING.view.mv, m=mvOf(p);
   // ⓪ 隊列の上下は1人ずつ遅れて、役割ごとの幅で(全員が同じ上下動にならないように)
   const hb=blockH(p,0.5);
-  const TR=TUNING.trait, tr=p.c.trait;   // 特性の動き(→docs/30): 上下の幅(ボックス・トゥ・ボックス)・横のゆらぎ(ファンタジスタ)
-  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*(TR.amp[tr]||1)*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
+  const B=p.bh||{ amp:1, drift:1 };   // 型と特性の動き(→docs/30・docs/32): 上下の幅(ボックス・トゥ・ボックス)・横のゆらぎ(ファンタジスタ・突破)
+  let h=hb+(blockH(p,bh)-hb)*(V.amp[p.role]||1)*B.amp*(0.85+((hashStr("amp:"+p.id)%30)/100)), x=p.gk?p.x:p.x+(bx-p.x)*(0.08+((hashStr("bx:"+p.id)%12)/100));
   // ① その場のゆらぎ(1人ずつ周期が違う)
-  const g=(p.gk?0.3:1)*(TR.drift[tr]||1);
+  const g=(p.gk?0.3:1)*B.drift;
   h+=V.driftH*g*Math.sin(now*m.f+m.ph); x+=V.driftX*g*Math.sin(now*m.f2+m.ph2);
   // ② 走り込み(攻めているとき。FW と攻撃的な選手ほど、スキルの向きで増減)
   if(m.run&&now-m.run.t0>m.run.dur)m.run=null;
@@ -12217,7 +12335,7 @@ else{
     const bx=(T.side==="H"?RV.ball[1]:1-RV.ball[1])*100, att=atkSide===T.side;
     // 守っているときにボールへ寄せる人(ボールに近い順に pressN 人。GK は除く)
     const pr=att?new Set():new Set(T.players.filter(p=>!p.gk&&!pin.has(p.id))
-      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100)*(TUNING.trait.press[p.c.trait]||1) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));   // 番犬・ストッパーは寄せ役に選ばれやすい(→docs/30)
+      .map(p=>({ p, d:Math.hypot(blockH(p,bh)-bh,(p.x-bx)/100)*(p.bh?p.bh.press:1) })).sort((a,b)=>a.d-b.d).slice(0,VM.pressN).map(o=>o.p.id));   // 番犬・ストッパーは寄せ役に選ばれやすい(→docs/30)
     // まず全員の目標を出し、役割の動きで直してから走らせる(→docs/29 §29.4)
     const goals=new Map();
     for(const p of T.players){

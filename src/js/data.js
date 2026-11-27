@@ -7,6 +7,46 @@
 
 const STAT_MAX=20;
 const STATS=["off","def","tec","pow","spd","sta"];
+/**
+ * 選手の型(→docs/32 §32.8)。役割の群(grp)ごとに3〜5つ。st … 6能力のひな形 [OFE, DEF, TEC, POW, SPE, STA](**合計はどれも 73**)。
+ * 型は能力の配分と、試合の振る舞い(TUNING.ptype。特性タグと同じ語彙。→docs/30)を決める。
+ * GK の OFE は「攻撃の起点(フィード)」: ロングキックの判定に使う(GK も6能力すべてを使う)
+ */
+const PTYPES={
+  gk_stop:   { grp:"GK",  name:"ショットストッパー",       st:[8,17,11,15,10,12] },
+  gk_sweep:  { grp:"GK",  name:"スイーパー",               st:[9,15,13,12,13,11] },
+  gk_feed:   { grp:"GK",  name:"フィード",                 st:[13,15,13,12,9,11] },
+  cb_stop:   { grp:"CB",  name:"ストッパー",               st:[6,17,9,16,12,13] },
+  cb_build:  { grp:"CB",  name:"ビルドアップ",             st:[7,15,14,12,12,13] },
+  cb_air:    { grp:"CB",  name:"空中戦",                   st:[7,16,9,18,10,13] },
+  cb_cover:  { grp:"CB",  name:"カバー",                   st:[6,16,10,13,15,13] },
+  sb_atk:    { grp:"SB",  name:"攻撃型",                   st:[11,11,12,9,16,14] },
+  sb_def:    { grp:"SB",  name:"守備型",                   st:[7,15,11,12,14,14] },
+  sb_in:     { grp:"SB",  name:"インサイド",               st:[9,12,15,10,13,14] },
+  dm_anchor: { grp:"DMF", name:"アンカー",                 st:[8,15,14,13,10,13] },
+  dm_destroy:{ grp:"DMF", name:"潰し屋",                   st:[7,16,11,14,11,14] },
+  dm_regista:{ grp:"DMF", name:"レジスタ",                 st:[9,12,16,10,11,15] },
+  cm_b2b:    { grp:"CMF", name:"ボックス・トゥ・ボックス", st:[12,12,12,12,11,14] },
+  cm_maker:  { grp:"CMF", name:"司令塔",                   st:[11,10,16,10,12,14] },
+  cm_runner: { grp:"CMF", name:"飛び出し",                 st:[14,9,13,12,13,12] },
+  om_10:     { grp:"OMF", name:"10番",                     st:[14,7,17,10,13,12] },
+  om_shadow: { grp:"OMF", name:"シャドー",                 st:[16,7,13,11,15,11] },
+  om_creator:{ grp:"OMF", name:"チャンスメイカー",         st:[13,7,17,9,15,12] },
+  w_drib:    { grp:"W",   name:"突破",                     st:[13,6,15,9,18,12] },
+  w_cutin:   { grp:"W",   name:"カットイン",               st:[16,6,15,10,15,11] },
+  w_cross:   { grp:"W",   name:"クロッサー",               st:[12,8,15,10,14,14] },
+  w_play:    { grp:"W",   name:"ワイドの司令塔",           st:[14,7,16,9,14,13] },
+  cf_poach:  { grp:"CF",  name:"点取り屋",                 st:[18,5,13,14,13,10] },
+  cf_target: { grp:"CF",  name:"ターゲット",               st:[15,6,12,18,10,12] },
+  cf_false9: { grp:"CF",  name:"偽9番",                    st:[15,6,16,11,13,12] },
+  cf_speed:  { grp:"CF",  name:"スピード型",               st:[16,5,13,11,18,10] },
+  cf_all:    { grp:"CF",  name:"万能型",                   st:[16,6,14,14,13,10] }
+};
+/** 役割(細かいポジション)→ 型の群 */
+const PTYPE_GRP={ GK:"GK", CB:"CB", LSB:"SB", RSB:"SB", SB:"SB", DMF:"DMF", CMF:"CMF", OMF:"OMF", LMF:"W", RMF:"W", SMF:"W", LWG:"W", RWG:"W", WG:"W", CF:"CF", ST:"CF" };
+const ptypesOf=role=>Object.keys(PTYPES).filter(k=>PTYPES[k].grp===PTYPE_GRP[role]);
+/** 型のひな形(山と谷を tplK だけ平均へ寄せたもの。合計は変わらない) */
+const ptypeSt=ty=>{ const t=PTYPES[ty].st, m=t.reduce((a,b)=>a+b,0)/t.length, k=TUNING.pack.tplK; return t.map(v=>m+(v-m)*k); };
 // 能力の表記は本家に合わせた略号(→docs/06)
 const STAT_LABEL={ off:"OFE", def:"DEF", tec:"TEC", pow:"POW", spd:"SPE", sta:"STA" };
 
@@ -260,7 +300,11 @@ const TUNING={
   //   trait … 特徴(+/−)1つぶんの能力 / lowK … 低い能力(6以下)に格が乗る割合
   //   gradeBase/gradeK … 格を能力のずれに換算する: (格 − base) × K。相手の段(段4 ≒ +0.4 / 段5 ≒ +1.1)に揃える
   pack:{ rate:{ W:0.60, B:0.30, K:0.085, L:0.015 }, oilK:2,   // oilK … オイルマネー(レアスポンサー)のときの金パック(K・L)の率の倍率(→docs/23)
-    trait:1.5, lowK:0.5, gradeBase:0.9, gradeK:0.8,
+    trait:1.5, lowK:0.5, gradeBase:1.4, gradeK:0.8,
+    // 選手のブラッシュアップ(→docs/32 §32.8): 特徴は + / − 1つで traitU。格は平均 gradeMid を境に gradeK2 で広げ、
+    // 上がる分は強い能力から gradeW の比で厚く乗せる(下がる分は均等)
+    //   tplK … 型のひな形の山と谷を、平均へ寄せる割合(1 = そのまま)。平均の合計と 20 の数で合わせた(→docs/32 §32.9)
+    traitU:0.7, gradeMid:1.7, gradeK2:1.8, gradeW:[1.6,1.3,1.0,0.7,0.5,0.4], tplK:0.75,
     // めくる前の予兆(→docs/07 §7.12)。裏の光り方はレア度どおり。promo の割合で、一段下の光り方から途中で本来の光り方へ上がる
     promo:{ B:0.15, K:0.35, L:0.5 }, promoMs:1300 },
   // 試合の採点(→docs/07 §7.12)。base 点から足し引きして 0.5 刻み・min〜max に収める。記録(イベント)だけから数える
@@ -325,6 +369,24 @@ const TUNING={
   //   quick … アンカー: 奪って quickN 手目までパスを pass 倍・持ち運びを carry 倍 / h … 隊列の高さのずれ / xIn・xOut … 中央へ寄せる・外へ開く割合
   //   ch … 選ぶ手の重み / recv … [下, 上, 倍率] この高さの範囲で受けやすい / recvLong … ロングボールの受け手 / mark … 守備で競りに行く重み
   //   sweep … GK の飛び出し / lob … 前に出たときの頭越しへの弱さ / save … セーブの上乗せ(壁は至近距離 wallH より奥のシュートだけ)/ amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役の選ばれやすさ
+  // 新しいスキルの場面(→docs/32 §32.8 E)。bigGap … 相手の先発の能力(6つの合計)の平均がこれだけ上ならビッグマッチ /
+  //   clutchMin … クラッチが効く分 / angleX … カットインシュートが効く、中央からの横のずれ
+  skill2:{ bigGap:2, clutchMin:70, angleX:14 },
+  // 型の振る舞い(→docs/32 §32.8 B)。語彙は trait と同じ: h … 高さのずれ / xIn・xOut … 中へ寄る・外へ開く / ch … 選ぶ手の重み /
+  //   recv … [下, 上, 倍率] の高さで受けやすい / recvLong … ロングボールの受け手 / mark … 競りに行く / sweep・lob … GK の飛び出し・頭越し /
+  //   save … セーブの上乗せ(near … 至近距離だけ)/ quick … 奪ってすぐパス / amp・drift・press … 映像の上下の幅・横のゆらぎ・寄せ役 /
+  //   fx … 効果の入れ物への小さな上乗せ(FX0 の語彙)。特性タグを持つと、同じ語彙が掛け合わさって強まる
+  ptype:{
+    gk_stop:{ save:0.03, near:true }, gk_sweep:{ h:0.015, sweep:1.6, lob:0.6 }, gk_feed:{ ch:{ gkLong:1.6, gkShort:0.8 } },
+    cb_stop:{ mark:1.25, press:0.8, h:0.01 }, cb_build:{ ch:{ cbVert:1.4, cbCarry:1.3, cbFeed:0.8 } }, cb_air:{ fx:{ aerial:1.06 }, ch:{ cbFeed:1.2 } }, cb_cover:{ h:-0.02 },
+    sb_atk:{ h:0.04, xOut:0.1, ch:{ sbOver:1.4, sbEarly:1.2 } }, sb_def:{ h:-0.03, ch:{ sbOver:0.7, sbInner:0.8 } }, sb_in:{ xIn:0.25, ch:{ sbInner:1.5, sbOver:0.8 } },
+    dm_anchor:{ xIn:0.25, h:-0.02, quick:true }, dm_destroy:{ mark:1.3, press:0.7 }, dm_regista:{ h:-0.03, ch:{ dmSwitch:1.4, dmSpray:1.2, dmCarry:0.8 } },
+    cm_b2b:{ amp:1.4, ch:{ cmDrib:1.2 }, recv:[0.75,1,1.3] }, cm_maker:{ ch:{ cmWide:1.3, cmThru:1.1 } }, cm_runner:{ h:0.04, recv:[0.8,1,1.4] },
+    om_10:{ xIn:0.1, recv:[0.62,0.82,1.5] }, om_shadow:{ h:0.04, recv:[0.8,1,1.4], ch:{ omDrib:1.2 } }, om_creator:{ ch:{ omLast:1.4 } },
+    w_drib:{ xOut:0.2, ch:{ wgRun:1.4, smRun:1.4 }, drift:1.3 }, w_cutin:{ ch:{ wgCut:1.5, smCut:1.5 } }, w_cross:{ xOut:0.2, ch:{ wgCross:1.5, smCross:1.5 } },
+    w_play:{ xIn:0.15, ch:{ smCut:1.2, wgCut:1.2 }, fx:{ assist:1.05 } },
+    cf_poach:{ recv:[0.85,1,1.4], fx:{ reb:1.1 } }, cf_target:{ xIn:0.3, recvLong:1.8, ch:{ cfLay:1.3 } }, cf_false9:{ h:-0.06, recv:[0.45,0.7,1.4], ch:{ cfLay:1.4, cfTurn:1.2 } },
+    cf_speed:{ ch:{ cfRun:1.5 } }, cf_all:{} },
   trait:{ quickN:1, quick:{ pass:2.2, carry:0.3 },
     h:{ no95:-0.05, no10:0, sweeper:-0.02, libero:0.03, wingback:0.04, target:0.02, anchor:-0.02, gkSweep:0.015 },
     xIn:{ target:0.3, anchor:0.3, no10:0.08 }, xOut:{ dribbler:0.15, crosser:0.2, wingback:0.15 },
@@ -394,7 +456,7 @@ const sidedRoles=(roles,side)=>roles.map(r=>LR_ROLE[r]?LR_ROLE[r][side==="R"?1:0
  *   lane … 左右の行き先
  */
 const CHANNELS={
-  GK: [{id:"gkLong",  label:"ロングキック",   kind:"pass",  stat:"pow", risk:0.62, gain:0.50, to:0.58, lane:"any"},
+  GK: [{id:"gkLong",  label:"ロングキック",   kind:"pass",  stat:"off", risk:0.62, gain:0.50, to:0.58, lane:"any"},   // GK の OFE = フィード(→docs/32 §32.8)
        {id:"gkThrow", label:"スロー",         kind:"pass",  stat:"spd", risk:1.00, gain:0.24, lane:"out"},
        {id:"gkShort", label:"短い繋ぎ",       kind:"pass",  stat:"tec", risk:1.10, gain:0.14, lane:"same"}],
   CB: [{id:"cbCarry", label:"持ち上がり",     kind:"carry", stat:"spd", risk:0.90, gain:0.20, lane:"same"},
@@ -604,7 +666,7 @@ const SKILLS={
   maker:   { label:"ゲームメイカー",       style:"K11", desc:"散らしと展開が正確", buff:{ ch:["dmSpray","dmSwitch","cmWide"], w:1.1, s:1.08 } },
   passer:  { label:"パスマスター",         style:"T01", desc:"短いパスが正確", buff:{ ch:["dmSpray","cmWide","cbVert"], w:1.1, s:1.06 } },
   thru:    { label:"スルーパサー",         style:"T05", desc:"スルーパスが通りやすい", buff:{ ch:["cmThru","omLast"], w:1.2, s:1.07 } },
-  longp:   { label:"ロングパサー",         style:"T02", desc:"長いボールが正確", buff:{ ch:["cbFeed","dmSwitch","gkLong"], w:1.2, s:1.10 } },
+  longp:   { label:"レジスタ",             style:"K11", desc:"低い位置からの散らし・ロングパスが通る", buff:{ ch:["dmSwitch","dmSpray","cmWide","cbFeed"], w:1.2, s:1.10 } },   // ロングパサーを作り直した(→docs/32)
   counter: { label:"カウンターの起点",     style:"T03", desc:"スルーパスが通りやすい", buff:{ ch:["cmThru"], w:1.1, s:1.06 } },
   sprint:  { label:"快速アタッカー",       style:"T04", desc:"最終ラインの裏へ抜け出す", buff:{ ch:["cfRun","wgRun"], w:1.2, s:1.07 } },
   combo:   { label:"コンビネーション",     style:"T09", desc:"短いパスが正確", buff:{ ch:["dmSpray","cmWide"], w:1.1, s:1.05 } },
@@ -629,7 +691,24 @@ const SKILLS={
   stopper: { label:"ショットストッパー",   style:"K21", desc:"枠内のシュートを止める", buff:{ gk:1.05 } },
   pkstop:  { label:"PKストッパー",         style:"K22", desc:"PKを止める", buff:{ pk:1.12 } },
   sweeper: { label:"スイーパーキーパー",   style:"K23", desc:"前に出たときの守備範囲が広い", buff:{ sweep:1.3, lob:0.7 } },
-  feeder:  { label:"フィードの名手",       style:"K24", desc:"GKからのボールが味方に届く", buff:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.12 } }
+  feeder:  { label:"フィードの名手",       style:"K24", desc:"GKからのボールが味方に届く", buff:{ ch:["gkLong","gkThrow","gkShort"], w:1.0, s:1.12 } },
+  // 新しいスキル(→docs/32 §32.8 E)。KP の型はカードが別に持つ(style はカードに KP の型が無いときの既定)
+  cutin:    { label:"カットインシュート", style:"K05", desc:"中へ切れ込み、角度のある所から巻いて撃つ", buff:{ ch:["wgCut","smCut"], w:1.3, s:1.06, angle:1.12 } },
+  false9:   { label:"偽9番",             style:"K10", desc:"中盤へ降りて受け、2列目の飛び出しを生む", buff:{ ch:["cfLay","cfTurn"], w:1.2, s:1.06, recvDeep:1.3, assist:1.08 } },
+  jackal:   { label:"ジャッカル",         style:"K08", desc:"こぼれ球・ゴール前の混戦に強い", buff:{ reb:1.35, shot:1.03 } },
+  gegen:    { label:"ゲーゲンプレス",     style:"T11", desc:"奪われた直後に奪い返しやすい", buff:{ gegen:1.18 } },
+  bigmatch: { label:"ビッグマッチ",       style:"T17", desc:"決勝・格上との試合で力が上がる", buff:{ big:1.05 } },
+  pkace:    { label:"PK の名手",          style:"K14", desc:"PK が決まりやすい", buff:{ pkK:1.15 } },
+  oneone:   { label:"1対1の名手",         style:"K21", desc:"至近距離・1対1のシュートを止める", buff:{ gkNear:1.10 } },
+  touch:    { label:"ファーストタッチ",   style:"K10", desc:"受けてすぐ前を向き、次の手が速い", buff:{ ch:["cmDrib","omDrib","omKeep","cfTurn"], w:1.05, s:1.07 } },
+  iron:     { label:"鉄人",               style:"K19", desc:"終盤も力が落ちにくい", buff:{ sta:0.88 } },
+  intercept:{ label:"インターセプター",   style:"K16", desc:"パスの受け手に先回りして奪う", buff:{ def:1.09, on:"pass" } },
+  block:    { label:"シュートブロック",   style:"T12", desc:"身体を投げ出してシュートを防ぐ", buff:{ blk:1.18 } },
+  aerial:   { label:"空中戦の守備者",     style:"K13", desc:"守備のときの空中戦に強い", buff:{ aerial:1.12 } },
+  clutch:   { label:"クラッチ",           style:"T08", desc:"終盤・1点差以内の場面のシュートが強い", buff:{ clutch:1.12 } },
+  innerlap: { label:"インナーラップ",     style:"K12", desc:"内側を駆け上がる", buff:{ ch:["sbInner"], w:1.3, s:1.08 } },
+  carrier:  { label:"運ぶドリブル",       style:"K18", desc:"持ち運んで前進する", buff:{ ch:["cbCarry","dmCarry","cmDrib"], w:1.25, s:1.07 } },
+  inswing:  { label:"逆足のクロス",       style:"K06", desc:"巻いて入るクロスとCKが合いやすい", buff:{ ch:["smCross","wgCross","sbEarly"], w:1.1, s:1.10, ck:1.10 } }
 };
 
 /** 陣形の初期配置。[h, x] を GK から順に11人ぶん。試合中はカードを自由に動かせる */
@@ -659,8 +738,9 @@ const FORMS={
  * [id, 背番号, 表示名, ポジション, 得意な役割, off, def, tec, pow, spd, sta, スキル]
  * 表示名は差し替え層(PACK)で上書きできる(→docs/01 §1.4)。
  */
+// GK の OFE はフィード(ロングキックの判定。→docs/32 §32.8)。もとはロングキックに使っていた POW と同じ値
 const CARD_ROWS=[
-  ["h01", 1,"マレーニ","GK",["GK"],        3,17,11,14,10,10,"stopper"],
+  ["h01", 1,"マレーニ","GK",["GK"],       14,17,11,14,10,10,"stopper"],
   ["h02", 2,"ダルコ",  "DF",["SB"],        9,14,12,11,16,15,"over"],
   ["h03", 4,"ベルグ",  "DF",["CB"],        6,17,10,16,11,12,"leader"],
   ["h04", 5,"ソウザ",  "DF",["CB"],        7,16,12,15,12,12,"cover"],
@@ -671,13 +751,13 @@ const CARD_ROWS=[
   ["h09", 7,"サリフ",  "FW",["WG","SMF"], 15, 6,15, 9,17,12,"wing"],
   ["h10", 9,"グラーフ","FW",["CF"],       18, 5,13,16,14,11,"hunter"],
   ["h11",11,"ニコ",    "FW",["WG"],       15, 6,16, 8,16,12,"fanta"],
-  ["h12",12,"オルソ",  "GK",["GK"],        2,15,10,13, 9,10,"pkstop"],
+  ["h12",12,"オルソ",  "GK",["GK"],       13,15,10,13, 9,10,"pkstop"],
   ["h13",15,"パヴェル","DF",["CB","SB"],   6,15,10,14,12,12,"wall"],
   ["h14",14,"ジョアン","MF",["CMF","DMF"],11,12,14,12,12,15,"dynamo"],
   ["h15",17,"ティモ",  "MF",["SMF","WG"], 13, 8,14, 9,16,13,"counter"],
   ["h16",19,"ブルーノ","FW",["CF"],       16, 5,12,15,13,11,"tower"],
 
-  ["a01", 1,"ケーラー","GK",["GK"],        3,17,10,15, 9,10,"stopper"],
+  ["a01", 1,"ケーラー","GK",["GK"],       15,17,10,15, 9,10,"stopper"],
   ["a02", 2,"ハキム",  "DF",["SB"],       10,13,13,10,16,15,"over"],
   ["a03", 4,"ヴァルガ","DF",["CB"],        6,17,11,16,10,12,"line"],
   ["a04", 5,"ドミンゴ","DF",["CB"],        7,16,11,15,12,13,"mark"],
@@ -688,7 +768,7 @@ const CARD_ROWS=[
   ["a09",11,"ヴィニ",  "MF",["SMF","WG"], 14, 7,15, 9,17,13,"wing"],
   ["a10", 9,"レヴァン","FW",["CF"],       17, 5,14,15,12,11,"target"],
   ["a11",10,"ムバレ",  "FW",["CF","WG"],  17, 5,15,11,18,12,"runner"],
-  ["a12",13,"ノイマン","GK",["GK"],        2,15,10,13, 9,10,"sweeper"],
+  ["a12",13,"ノイマン","GK",["GK"],       13,15,10,13, 9,10,"sweeper"],
   ["a13",15,"ルカシュ","DF",["CB","SB"],   6,15,10,14,12,12,"killer"],
   ["a14",14,"カミロ",  "MF",["CMF","DMF"],11,12,14,12,12,15,"captain"],
   ["a15",17,"ジェイ",  "MF",["SMF","WG"], 13, 8,14, 9,16,13,"longp"],

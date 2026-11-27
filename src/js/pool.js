@@ -20,18 +20,27 @@ const rarOf=r=>RAR_ORDER.slice().reverse().find(k=>r>=RARITY[k].at);
 /** 特徴の文字 → 能力 */
 const TRAIT_STAT={ o:"off", d:"def", t:"tec", p:"pow", s:"spd", a:"sta" };
 const POOL_SEED=20261117;
+/**
+ * カードの6能力(→docs/32 §32.8)= 型のひな形 + 特徴(+ / − 1つで traitU。最大 ±3)+ 格。
+ * 格の上乗せは平均 gradeMid を境に広げ、上がる分は強い能力から gradeW の比で厚く(低い能力 6 以下は lowK だけ)。下がる分は均等
+ */
+function cardStats(tpl,grade,traits){
+  const C=TUNING.pack, base={};
+  STATS.forEach((k,i)=>base[k]=tpl[i]);
+  for(const m of String(traits||"").matchAll(/([odtpsa])(\++|-+)/g))base[TRAIT_STAT[m[1]]]+=(m[2][0]==="+"?1:-1)*m[2].length*C.traitU;
+  const b=(grade-C.gradeMid)*C.gradeK2+(C.gradeMid-C.gradeBase)*C.gradeK, st={};
+  const W=C.gradeW, wm=W.reduce((a,x)=>a+x,0)/W.length, ord=STATS.slice().sort((a,c)=>base[c]-base[a]);
+  for(const k of STATS){ const w=b>0?W[ord.indexOf(k)]/wm:1; st[k]=clamp(Math.round(base[k]+b*w*(tpl[STATS.indexOf(k)]<=6?C.lowK:1)),1,STAT_MAX); }
+  return st;
+}
 /** 実在クラブの id(並びは REAL_CLUBS の順) */
 const REAL_IDS=REAL_CLUBS.map(c=>c[0]);
 const POOL=(()=>{
   const C=TUNING.pack, out=[];
   for(const r of REAL_ROWS){
-    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani]=r, rl=roles.split("/"), g=GEN_ROLE[baseRole(rl[0])];
-    const st={};
-    const off=(grade-C.gradeBase)*C.gradeK;      // 格 → 能力のずれ
-    STATS.forEach((k,i)=>{ const v=g.st[i]; st[k]=v+(v<=6?off*C.lowK:off); });
-    for(let k=0;k+1<traits.length;k+=2)st[TRAIT_STAT[traits[k]]]+=traits[k+1]==="+"?C.trait:-C.trait;
-    STATS.forEach(k=>{ st[k]=clamp(Math.round(st[k]),1,STAT_MAX); });
-    CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade,
+    const [id,ci,no,name,roles,age,grade,traits,skill,nat,ani,ptype,kp]=r, rl=roles.split("/"), g=GEN_ROLE[baseRole(rl[0])];
+    const ty=PTYPES[ptype]?ptype:ptypesOf(rl[0])[0], st=cardStats(ptypeSt(ty),grade,traits);
+    CARDS[id]=Object.assign({ id, no, name, pos:g.pos, roles:rl, skill, age, grade, ptype:ty, kp:STYLES[kp]?kp:null,
       rar:rarOf(grade), club:REAL_CLUBS[ci][1], team:REAL_CLUBS[ci][0],
       nat:nat||NAT_POOL[hashStr("nat:"+id)%NAT_POOL.length], ani:ani!=null?ani:hashStr("ani:"+id)%ANIMALS.length },st);
     out.push(id);

@@ -270,8 +270,8 @@ console.log("⑦ スキル → スタイル + バフ");
   check("スキルとスタイルが指す手札はすべて実在する",
     skills.every(k=>chOk(E.SKILLS[k].buff))&&styles.every(k=>chOk(E.STYLES[k].fx)&&
       (!E.STYLES[k].gain||!E.STYLES[k].gain.chW||Object.keys(E.STYLES[k].gain.chW).every(c=>used.has(c)))));
-  const reach=new Set(skills.map(k=>E.SKILLS[k].style));
-  check("41種のスタイルすべてに、それを引くスキルがある",styles.length===41&&styles.every(k=>reach.has(k)),
+  const reach=new Set(skills.map(k=>E.SKILLS[k].style).concat(E.POOL.map(id=>E.CARDS[id].kp).filter(Boolean)));   // KP の型はカードも持つ(→docs/32)
+  check("41種のスタイルすべてに、それを引くスキルかカードがある",styles.length===41&&styles.every(k=>reach.has(k)),
     styles.length+"種 / 引けないもの: "+(styles.filter(k=>!reach.has(k)).join(" ")||"なし"));
   check("全体スタイルは失うものを持つ(ファイティングスピリッツを除く)",
     styles.filter(k=>E.STYLES[k].scope==="team"&&k!=="T17").every(k=>Object.keys(E.STYLES[k].cost).length>0));
@@ -304,7 +304,7 @@ console.log("⑦ スキル → スタイル + バフ");
   };
   const withStyle=id=>M=>{
     const p=M.home.players.find(q=>q.id===who(id));
-    p.c=Object.assign({},p.c,{ skill:skillFor[id] });
+    p.c=Object.assign({},p.c,{ skill:skillFor[id]||p.c.skill, kp:id });   // KP の型はカードに直接(→docs/32)
     E.orderMatch(M,"H",{ type:"kp", id:p.id });
   };
   const noKp=M=>{ M.home.players.forEach(p=>p.kp=false); M.home.kp=null; };
