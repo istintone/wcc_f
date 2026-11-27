@@ -403,12 +403,15 @@ function sqTokenHtml(id,i,on,o){
     (g?batteryHtml(g,CL.batTo&&CL.batTo[id]):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)。休憩の見通しでは、回復するぶんが点滅
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
-    (()=>{ const v=g?playerTagsView(S,id):[]; if(!v.length)return '';
+    (()=>{ const v=g?playerTagsView(S,id):[];
+      // SQUAD の札: 覚醒(★5)を終えた選手は、タグの下に個人(黄)・特殊(青)の★を1つずつ(→docs/14 §14.204)
+      const aw=!o&&g&&(g.is>=5||g.ss>=5)?'<span class="aws">'+(g.is>=5?'<i class="aw is">★</i>':'')+(g.ss>=5?'<i class="aw ss">★</i>':'')+'</span>':'';
+      if(!v.length&&!aw)return '';
       const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
       // 話題のタグ(白。→docs/23 §23.11)も数で: スターなど良いものは「+n」、問題児など悪いものは「−n」(同じ種類のタグが増えても並ぶように。→docs/14 §14.185)
       const fu=fm.filter(t=>!t.bad).length, fd=fm.length-fu;
       return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+
-        (fu?'<i class="t fm">+'+fu+'</i>':'')+(fd?'<i class="t fm bad">−'+fd+'</i>':'')+'</span>'; })()+
+        (fu?'<i class="t fm">+'+fu+'</i>':'')+(fd?'<i class="t fm bad">−'+fd+'</i>':'')+aw+'</span>'; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */

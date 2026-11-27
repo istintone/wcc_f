@@ -3928,6 +3928,11 @@ body :is(#club,#scene) .k3d small{font-size:11.5px}
 #club .sqc .srow.ss.aw i,#club .sqc .srow.ss.aw i.on{color:#1ab2ff;text-shadow:0 0 1px #003a5c,0 0 4px #4aa8ff,0 0 7px rgba(74,168,255,.85)}
 #club .st5 i.aw5{font-style:normal;animation:srowGlow 1.4s ease-in-out infinite alternate}
 #club .st5 i.aw5.is{color:#e0a800;text-shadow:0 0 4px #ffd23a,0 0 1px #fff} #club .st5 i.aw5.ss{color:#2a7bd6;text-shadow:0 0 4px #4aa8ff,0 0 1px #fff}
+/* SQUAD の札の覚醒の★(→docs/14 §14.204): 右上のタグの下に、個人 = 黄・特殊 = 青の★が光る */
+.ptags .aw{display:block;font-style:normal;font-size:11px;line-height:13px;width:15px;text-align:center;border-radius:2px;background:#1b1b1f;box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.ptags .aw.is{color:#ffe600;text-shadow:0 0 3px #ffd23a,0 0 6px rgba(255,210,58,.8)}
+.ptags .aw.ss{color:#1ab2ff;text-shadow:0 0 3px #4aa8ff,0 0 6px rgba(74,168,255,.8)}
+.ptags .aws{display:flex;flex-direction:column;gap:1px}   /* 個人と特殊の★はタグの下に縦に(横だと札の見出しにかかる) */
 
 /* =========================================================================
    wcc_f — ネオンのデザインシステム(→docs/14 §14.18)。既定のテーマ(th-bk。ブラック × レッド)にだけ掛かる。
@@ -12968,12 +12973,15 @@ function sqTokenHtml(id,i,on,o){
     (g?batteryHtml(g,CL.batTo&&CL.batTo[id]):'')+   // 疲労は電池(色だけに頼らない。→docs/14 §14.81)。休憩の見通しでは、回復するぶんが点滅
     // 選手のタグの印(→docs/23 §23.6): CAP・KP の札と同じ形で、反対の右上に(→docs/14 §14.83)
     // 数だけ: バフは「+2」(金)、デバフは「−1」(青紫)を2段で
-    (()=>{ const v=g?playerTagsView(S,id):[]; if(!v.length)return '';
+    (()=>{ const v=g?playerTagsView(S,id):[];
+      // SQUAD の札: 覚醒(★5)を終えた選手は、タグの下に個人(黄)・特殊(青)の★を1つずつ(→docs/14 §14.204)
+      const aw=!o&&g&&(g.is>=5||g.ss>=5)?'<span class="aws">'+(g.is>=5?'<i class="aw is">★</i>':'')+(g.ss>=5?'<i class="aw ss">★</i>':'')+'</span>':'';
+      if(!v.length&&!aw)return '';
       const fm=v.filter(t=>t.fame), w=v.filter(t=>!t.fame), up=w.filter(t=>t.pol>0).length, dn=w.length-up;
       // 話題のタグ(白。→docs/23 §23.11)も数で: スターなど良いものは「+n」、問題児など悪いものは「−n」(同じ種類のタグが増えても並ぶように。→docs/14 §14.185)
       const fu=fm.filter(t=>!t.bad).length, fd=fm.length-fu;
       return '<span class="ptags">'+(up?'<i class="t">+'+up+'</i>':'')+(dn?'<i class="t dn">−'+dn+'</i>':'')+
-        (fu?'<i class="t fm">+'+fu+'</i>':'')+(fd?'<i class="t fm bad">−'+fd+'</i>':'')+'</span>'; })()+
+        (fu?'<i class="t fm">+'+fu+'</i>':'')+(fd?'<i class="t fm bad">−'+fd+'</i>':'')+aw+'</span>'; })()+
     (o?(o.sign?'<em class="sg">'+BUB+'</em>':'')+'<small class="if">'+(o.info||'')+'</small></button>':'</div>');
 }
 /** 連携の線(薄線・太線・黄金線。黄金線の兆しは点線を重ねる) */
