@@ -4814,6 +4814,9 @@ body.th-wl #club .mgr-card>.fold{margin:10px auto 0}
 /* 出来事の返事をした選手の顔(→docs/14 §14.213) */
 body.th-wl #club .sec-ev.done .tk-rx{display:flex;align-items:flex-end;gap:8px}
 body.th-wl #club .sec-ev.done .tk-rx .rx-av{flex:none;width:40px;height:40px;margin:0}
+/* SEASON から見る相手 = スカウティングレポート(→docs/34 §34.13)。暗い地の頃の白い文字を戻す */
+body.th-wl #club .opp-vbox .ov-body{background:var(--t-paper,#f4f1ea);color:var(--w-ink);padding:8px 8px 10px}
+body.th-wl #club .opp-vbox .srep-inline{margin:0}
 </style>
 </head>
 <body>
@@ -14454,37 +14457,6 @@ function scoutReport(S,fx,def){
   say(ovM>=ovO+2?"scUp":ovO>=ovM+2?"scDown":"scEven");
   return { lines, opw, mpw, ovO, ovM, kc, st, rk, tier, pers, atk, dfn, pillarIx };
 }
-/** 相手の札(SQUAD の作り。押すとカードの裏) */
-function oppTokenHtml(c,h,x,OR,on){
-  const pos=on?(h<=0.06?"GK":posAt(h,x)):c.roles[0], a=aptOf(c,pos), p=on?sqPos(h,x):null;
-  return '<button class="sqc cmx opp '+c.pos.toLowerCase()+' r-'+(c.rar||"B")+(on?'':' bn')+'" data-act="oppcard" data-id="'+c.id+'"'+
-    (p?' style="left:'+p.l.toFixed(2)+'%;top:'+p.t.toFixed(2)+'%"':'')+'>'+
-    '<b class="rl '+aptClass(a)+'">'+c.no+'.'+pos+'</b><span class="bd"><i class="no">'+Math.round(cardTotal(c))+'</i><span class="nm">'+nameOf(c)+'</span></span>'+
-    (()=>{ const t=on&&OR?ROLE_TAG_ORDER.filter(([k])=>OR[k]===c.id):[]; return t.length?'<span class="rtags">'+t.map(([k,l])=>'<i class="t '+k+'">'+l+'</i>').join("")+'</span>':''; })()+
-    // 相手も育成済み・調子を持つ(→docs/31 §31.5): 自分の札と同じ調子のタグと覚醒の★
-    (c.gm!=null?'<em class="mtg m'+c.gm+'">'+MOT_LABEL[c.gm]+'</em>':'')+
-    (c.is>=5||c.ss>=5?'<span class="ptags"><span class="aws">'+(c.is>=5?'<i class="aw is">★</i>':'')+(c.ss>=5?'<i class="aw ss">★</i>':'')+'</span></span>':'')+'</button>';
-}
-/**
- * 相手の SQUAD(→docs/18 §18.5)。上部(レーダー・名前・★・陣形・監督・OVR・KP)と盤面(先発・控え。札を押すとカードの裏)。
- * rep … 視察レポートのボタンを出すか(視察の画面だけ)
- */
-function oppSquadHtml(S,oppId,def,rep){
-  const t=TEAMS[oppId], OR=oppRoles(def), xi=def.xi.map(x=>x.card), opw=axisPowerOf(xi), mpw=teamAxisPower(S);
-  const ovO=xi.reduce((a,c)=>a+cardTotal(c),0)/xi.length+graphOvr(def.graph), kc=def.kp&&CARDS[def.kp], st=kc?styleOfCard(kc):null, kx=def.xi.find(s=>s.card.id===def.kp), rk=st?styleRank({ graph:def.graph },st,kx?kx.card.ss:null):null;
-  const pers=TUNING.coach.pers[def.pers]||TUNING.coach.pers.steady, v1={}, v2={};
-  for(const a in opw){ v1[a]=opw[a]/STAT_MAX; v2[a]=mpw[a]/STAT_MAX; }
-  const team=Object.assign({ id:oppId },t);
-  return '<section class="sq-top scout-top"><div class="tf-g">'+radarSvg([{ v:v2, color:"#5e6470", fill:"#5e6470", op:0.15 },{ v:v1, color:teamColor(team), op:0.35 }],{ cls:"tf-radar" })+
-      '<small class="gg-leg2"><span>相手</span><span>自軍</span><i class="g" style="background:'+teamColor(team)+'"></i><i class="p"></i></small></div>'+
-      teamInfoHtml({ team, name:teamNameOf(t), sub:"★".repeat(tierOf(oppId))+' ・ '+t.form+' ・ 監督 '+pers.name+'型', ovr:ovO, kc, st, rk,
-        tags:(def.titles||[]).map(id=>({ name:TAGS[id].name, cls:'up ttl', desc:TAGS[id].desc }))
-          .concat((def.combos||[]).map(c=>({ name:COMBOS[c.id].name, cls:'up cmb', desc:c.ids.map(x=>nameOf(CARDS[x])).join("・")+" の"+comboDesc(COMBOS[c.id]) })))
-          .concat(def.xi.map(s=>s.card.id).filter(x=>TAGS["u_"+x]).map(x=>({ name:TAGS["u_"+x].name, cls:'up unq', desc:nameOf(CARDS[x])+" ― "+TAGS["u_"+x].desc }))) })+'</section>'+
-    '<div class="cm-board scout-board"><div class="sq-pitch cm-pitch"><i class="pm half"></i><i class="pm circ"></i><i class="pm pa top"></i><i class="pm pa bot"></i>'+
-      def.xi.map(x=>oppTokenHtml(x.card,x.h,x.x,OR,true)).join("")+'</div>'+
-      '<div class="sq-bench cm-bench"><span class="lbl">SUB</span>'+def.bench.map(c=>oppTokenHtml(c,0,0,null,false)).join("")+'</div></div>';
-}
 function scoutStepHtml(){
   const S=CL.S, fx=CL.fx;
   // スカウティングレポートを最初から出す。その下に相手の SQUAD(選手のカードを見る)(→docs/34 §34.11)
@@ -14496,14 +14468,15 @@ function oppViewModalHtml(){
   const inLg=S.league&&S.league.clubs.includes(id), def=oppDefOf(S,{ opp:id, kind:inLg?"league":"cup" });
   return '<div class="kmodal mid" data-act="oppvclose"><div class="kmod-box opp-vbox" data-act="none">'+
     '<header class="km-head"><span></span><b>'+teamNameOf(TEAMS[id])+'</b><small></small><span></span><button class="km-x" data-act="oppvclose" aria-label="閉じる">×</button></header>'+
-    '<div class="ov-body">'+oppSquadHtml(S,id,def,false)+'</div></div></div>';
+    '<div class="ov-body">'+scoutRepModalHtml(true,CL.fx&&CL.fx.opp===id?null:{ opp:id, kind:inLg?"league":"cup" })+'</div></div></div>';   // 視察と同じスカウティングレポート(→docs/34 §34.13)
 }
 /** 相手の選手のカードの裏(フロート) */
 /** 視察レポート(秘書の報告)のフロート */
-function scoutRepModalHtml(inline){
+function scoutRepModalHtml(inline,fx0){
   // 報告書の書式(→docs/14 §14.166): 題と判子 → 相手・大会・作成者 → 01 総合評価 → 02 戦力比較 → 03 要注意人物 → 04 所見 → 署名
-  const S=CL.S, fx=CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
-  const nm=c=>c?c.no+" "+nameOf(c):"—", en=compEn(fx);
+  // fx0 … SEASON から次の試合でない相手を見るとき(→docs/34 §34.13)。大会の行は出さない
+  const S=CL.S, fx=fx0||CL.fx, def=oppDefOf(S,fx), R=scoutReport(S,fx,def), se=secOf(S), t=TEAMS[fx.opp];
+  const nm=c=>c?c.no+" "+nameOf(c):"—", en=fx0?null:compEn(fx);
   // 秘書の親密度で読める量が変わる(→docs/14 §14.167)。読めないところは黒塗り
   const lv=secLv(S), RP=TUNING.sec.rep, keyOk=k=>RP.key[lv].includes(k);
   const rng=mulberry32((S.seed^hashStr("srep:"+S.term+":"+S.played+":"+fx.opp))>>>0);   // どの所見が読めるかは、この試合の中では変わらない
@@ -14523,7 +14496,7 @@ function scoutRepModalHtml(inline){
     '<article class="srep">'+
       '<header class="sr-top"><small>WCC F ・ SCOUTING DEPARTMENT</small><h2>SCOUTING REPORT</h2><i class="sr-stamp">CONFIDENTIAL</i></header>'+
       '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
-        '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
+        (en?'<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>':'')+
         '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
         // 相手監督のチームスタイルは 07 相手監督へ移した(→docs/34 §34.3)
         '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+

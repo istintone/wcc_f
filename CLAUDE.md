@@ -59,7 +59,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | チームの成長グラフ(器・限界突破・黄金期)と KP のランク(B/A/S/G)を変える | 数値は `TUNING.grow.graph` と `TUNING.rank`、対角と2軸の KP は `data.js` の `AXIS_PAIR` / `STYLES` の `axes`、仕組みは `grow.js` の `graphAdd` / `graphBreak`、ランクは `engine.js` の `styleRank`、画面は `clubui.js` の `growGraphHtml` → `clubtest.js` の ⑥。正本は docs/15 |
 | クラブオファー(3択・地域と規模と部・レアクラブ)・クラブの期待(獲得賞金)・オーナーの指令を変える | 数値は `TUNING.offer`、仕組みは `club.js` の末尾(`makeOffers` / `mkOffer` / `pickOffer` / `misAfterMatch`)、年俸は `term.js` の `endTerm`、画面は `clubui.js` の `offerHtml` / `expTileHtml` / `termExpHtml` → `clubtest.js` ④。正本は docs/16 |
 | ポジション(左右・CF と ST)・適性を変える | 区切りと適性は `TUNING.zone` / `TUNING.apt`、細かいポジションと束ねは `data.js` の `GROUP_OF` / `BASE_ROLE`、位置からの判定は `engine.js` の `posAt` / `roleAt` / `aptOf`。実在選手は `tools/squads.local.txt`。正本は docs/17 |
-| 視察(準備の3段目。相手の SQUAD と秘書の報告)を変える | `clubui.js` の `scoutStepHtml` / `scoutReport` / `oppTokenHtml`。正本は docs/18 |
+| 視察(準備の3段目。スカウティングレポート。SEASON から見る相手も同じ)を変える | `clubui.js` の `scoutRepModalHtml` / `scoutMoreHtml` / `scoutReport`。正本は docs/18・docs/34 |
 | レギュラーリーグの Div 制(2nd・1st・Premier、昇格・降格、Div ごとのトロフィー)を変える | `TUNING.club.leagueTiers` / `promoteRank` / `relegateRank` / `premierGraph`、`club.js` の `divName` / `oppDefOf` / `applyResult`(第14節)/ `endCycle`。正本は docs/19 |
 | カップ戦のトーナメント(抽選・山・勝ち上がり・トーナメント表)を変える | `club.js` の `drawCup` / `brAdvance` / `brAfterGroups`、エントリー受付は `enterCup` / `declineCup` と `clubui.js` の `entryTileHtml`、画面は `bracketModalHtml`。正本は docs/20 |
 | 日程(節)・カップの枠を休む・任期の打ち切りを変える | `club.js` の `skipSlot` / `upcoming` / `endCycle`、`term.js` の `endTerm`、画面は `clubui.js` の `nextTileHtml`(フレンドリーの札の「節をスキップ」)。正本は docs/22 |
