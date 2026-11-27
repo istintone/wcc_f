@@ -4577,7 +4577,8 @@ body.th-wl #club .btn-sub,body.th-wl #club .nx-go2 .sk,body.th-wl #club .prep-bo
 body.th-wl #club .nx-go2 .sk{font-family:var(--f-num);font-size:15px;letter-spacing:.12em}
 body.th-wl #club .btn-main:disabled,body.th-wl #club .btn-main[disabled]{background:var(--t-paper2)!important;color:var(--w-mute)!important;box-shadow:none!important;opacity:1}
 /* 押したときの振る舞い: 沈んで少し暗く(scale は既存の transform と重ねられる) */
-body.th-wl button:not(:disabled):active,body.th-wl .tab:active,body.th-wl [data-act]:not(section):active{scale:.97;filter:brightness(.92)}
+/* 押して沈むのはボタンとタブだけ(モーダルの背景や枠などの入れ物に掛けると、中を押したときに全体が縮み、× が指の下からずれて押せなくなった。→docs/33 §33.13) */
+body.th-wl button:not(:disabled):active,body.th-wl .tab:active{scale:.97;filter:brightness(.92)}
 /* 色の意味: 負けは暗い赤(赤は操作と自チーム) */
 body.th-wl #club .sched .sd-res.L{background:var(--w-loss)}
 /* 次の試合の札の帯は赤(自チームの次の一手) */
@@ -16749,7 +16750,7 @@ function boot(){
   // 押したら必ず音が返る(→docs/07 §7.3)
   // 音は離したとき(click)に鳴らす。pointerdown だと、一覧をなでてスクロールしただけで鳴る
   document.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
-  document.addEventListener("pointerdown",e=>{ const b=e.target.closest&&e.target.closest("button:not(:disabled),.tab,[data-act]"); if(b&&navigator.vibrate)try{ navigator.vibrate(8); }catch(_){} },true);   // 押したときの短い振動(→docs/33 GC1)
+  document.addEventListener("pointerdown",e=>{ const b=e.target.closest&&e.target.closest("button:not(:disabled),.tab"); if(b&&navigator.vibrate)try{ navigator.vibrate(8); }catch(_){} },true);   // 押したときの短い振動(→docs/33 GC1)
   // iPhone は電話・通知・裏に回ったあと音が止まる(interrupted)。触ったら戻す
   document.addEventListener("pointerdown",()=>{ if(SND.ctx&&SND.ctx.state!=="running")sndUnlock(); },true);
   // 監督ライセンス・監督契約の入力欄は、打つたびに下書き(CL.draft)へ。日付・決定のときは画面を作り直してプレビューを更新

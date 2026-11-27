@@ -531,7 +531,7 @@ function boot(){
   // 押したら必ず音が返る(→docs/07 §7.3)
   // 音は離したとき(click)に鳴らす。pointerdown だと、一覧をなでてスクロールしただけで鳴る
   document.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest(".btn,.tab,.tr,.chipb,.kc,.cd"))sndUi("tap"); },true);
-  document.addEventListener("pointerdown",e=>{ const b=e.target.closest&&e.target.closest("button:not(:disabled),.tab,[data-act]"); if(b&&navigator.vibrate)try{ navigator.vibrate(8); }catch(_){} },true);   // 押したときの短い振動(→docs/33 GC1)
+  document.addEventListener("pointerdown",e=>{ const b=e.target.closest&&e.target.closest("button:not(:disabled),.tab"); if(b&&navigator.vibrate)try{ navigator.vibrate(8); }catch(_){} },true);   // 押したときの短い振動(→docs/33 GC1)
   // iPhone は電話・通知・裏に回ったあと音が止まる(interrupted)。触ったら戻す
   document.addEventListener("pointerdown",()=>{ if(SND.ctx&&SND.ctx.state!=="running")sndUnlock(); },true);
   // 監督ライセンス・監督契約の入力欄は、打つたびに下書き(CL.draft)へ。日付・決定のときは画面を作り直してプレビューを更新
