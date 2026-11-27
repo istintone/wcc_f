@@ -299,7 +299,7 @@ console.log("⑤ 棄権と保存");
   const a=playOne(S,W), b=playOne(L,LW);
   check("読み込んだあとの続きが、読み込まなかった場合と同じ",
     a.fx.opp===b.fx.opp&&a.M.home.score===b.M.home.score&&a.M.away.score===b.M.away.score&&JSON.stringify(S)===JSON.stringify(L));
-  check("配置と KP が次の試合に引き継がれる",Object.keys(S.layout).length>=10&&!!S.kp,"配置 "+Object.keys(S.layout).length+"人(退場があれば10人)");
+  check("配置と KP が次の試合に引き継がれる",Object.keys(S.layout).length>=9&&!!S.kp,"配置 "+Object.keys(S.layout).length+"人(退場があれば10人・2人なら9人)");
   box.v="{壊れたデータ"; check("壊れたセーブは無視する",E.loadCareer(box)===null);
   // 読めないセーブは上書きせず退避する(→clubui.js initCareer)
   const ms=E.memStore(); ms.setItem(E.SAVE_KEY,"{壊れたデータ");
@@ -664,10 +664,15 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   check("特殊練習は施設レベルが高いほど候補に出る",spN(1)>0.3&&spN(5)>spN(1)*2.5,f2(spN(1))+" → "+f2(spN(5))+" 枠/回");
   check("特殊練習48種がすべてどこかの枠に入る",E.TRAIN_SP.length===48&&E.TRAIN_SP.every(t=>["off","def","tec","pow","spd","sta","any"].includes(t.slot)));
   // 年齢: 若い選手ほど★が早く、やる気の上下が大きい
-  { const ids=Object.keys(S.g.pl), young=ids.filter(id=>E.CARDS[id].age<=22), old=ids.filter(id=>E.CARDS[id].age>=30);
-    const avgIs=list=>list.reduce((s,id)=>s+S.g.pl[id].is+Math.min(1,S.g.pl[id].ie/100),0)/list.length;
-    console.log("    年齢  22歳以下 "+young.length+"人 ★"+f2(avgIs(young))+" / 30歳以上 "+old.length+"人 ★"+f2(avgIs(old)));
-    check("若い選手ほど個人能力の★が早い",avgIs(young)>avgIs(old),f2(avgIs(young))+" > "+f2(avgIs(old))); }
+  { const ids=Object.keys(S.g.pl).filter(id=>!FOCUS.includes(id)), young=ids.filter(id=>E.CARDS[id].age<=22), old=ids.filter(id=>E.CARDS[id].age>=30);   // 集中して育てた選手は除く(誰を選んだかで差が出ないように)
+    // ★は個人練習の3択の順番でも変わるので、たまった個人能力の経験(★に使った分も足す)で比べる(→docs/14 §14.201)
+    const need=E.TUNING.grow.ind.need, expOf=g=>need.slice(0,Math.min(4,g.is)).reduce((a,b)=>a+b,0)+(g.is>=5?E.TUNING.grow.ind.awake:0)+g.ie;
+    const avgIs=list=>list.reduce((s,id)=>s+expOf(S.g.pl[id]),0)/list.length;
+    console.log("    年齢  22歳以下 "+young.length+"人 経験 "+f2(avgIs(young))+" / 30歳以上 "+old.length+"人 経験 "+f2(avgIs(old)));
+    // 同じ個人練習1回で入る経験を、若い選手と年配の選手で比べる(育て方の違いが入らないように)
+    const one=id=>{ const T=E.newCareer(4242); T.g.step="comm"; T.g.pl[id].ie=0; E.doIndTrain(T,id); return T.g.pl[id].ie; };
+    const yE=young.reduce((a,id)=>a+one(id),0)/young.length, oE=old.reduce((a,id)=>a+one(id),0)/old.length;
+    check("若い選手ほど個人能力の★が早い(同じ個人練習で入る経験)",yE>oE,f2(yE)+" > "+f2(oE)); }
   { // やる気の上下の回数(同じ試合を200回)
     const swings=id=>{ let n=0; for(let i=0;i<300;i++){ const T=E.newCareer(9100+i); const m0=T.g.pl[id].mot;
       E.applyResult(T,E.worldOf(T),E.nextFixture(T,E.worldOf(T)),{ hg:i%3===0?2:i%3===1?0:1, ag:1, played:[id], onPitch:[id] });

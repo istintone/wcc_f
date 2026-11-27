@@ -165,14 +165,14 @@ const TUNING={
   //   premierGraph … Premier Div の相手の成長グラフ(育成レベル最大。KP の軸は金色)
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
   //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
-  club:{ termLen:100, tierStat:[-1.6,-0.9,-0.3,0.4,1.1], statNoise:1.2, linkBase:6, linkTier:4,
+  club:{ termLen:100, tierStat:[-0.2,0.5,1.1,1.8,2.5], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[4,4,5,5,5,5,5]], promoteRank:2, relegateRank:7, premierGraph:95,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
          historyMax:120 },
   // 育成(→docs/05 §5.3〜5.6)
-  //   startOff/startKeep … 任期の初めは能力がこれだけ低い(育てて戻す)。startKeep 以下の能力は下げない
+  //   startOff/startKeep … 任期の初めの能力のずれ(2026-11-27 から 0。→docs/14 §14.208)。startKeep 以下の能力は覚醒でも上げない
   //   spChance … 練習の枠が特殊練習に差し替わる率(施設レベル1つごと)
   //   ind  … 個人能力。need=★1〜4に要る経験 / awake=★4から兆しまで / train・trainFit・match=もらえる経験
   //          starUp=★1つで伸びる能力 / awakeP=フレンドリー勝利で覚醒する率 / awakeNew=覚醒のポイントの2つ目から、まだ上がっていない能力に振る率(→docs/14 §14.207)
@@ -196,7 +196,7 @@ const TUNING={
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
-  grow:{ startOff:-1.4, startKeep:6, spChance:0.12, evTrainK:1.3, trainEvP:0.10,   // イベントのレア訓練: 経験の倍率・試合ごとに出来事が起きる率(→docs/26 §26.4)
+  grow:{ startOff:0, startKeep:6, spChance:0.12, evTrainK:1.3, trainEvP:0.10,   // イベントのレア訓練: 経験の倍率・試合ごとに出来事が起きる率(→docs/26 §26.4)
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeNew:0.5 },
          // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
          //   awakeP … 覚醒で上がる値 1/2/3 の率(重なりなし)/ awakeStep … 重なり1枚ごとに足す率(1 から引き、2・3 に足す)
