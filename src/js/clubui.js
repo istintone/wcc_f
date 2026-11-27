@@ -2107,24 +2107,20 @@ function clubTabHtml(){
 function managerTabHtml(){
   const S=CL.S, m=S.mgr||{ name:"—" }, all=S.career.reduce((a,c)=>({ w:a.w+c.w, d:a.d+c.d, l:a.l+c.l }),{ w:0, d:0, l:0 });
   if(!S.termOver){ all.w+=S.rec.w; all.d+=S.rec.d; all.l+=S.rec.l; }
-  const n=all.w+all.d+all.l, wr=n?Math.round(all.w/n*100):0, earned=earnedTitles(S);
-  const last=S.career.length?titleOf(S.career[S.career.length-1].title).name:"—";
   const d=CL.draft||(CL.draft={});
-  const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button><button class="lnk" data-act="medit">やめる</button></span>'
-    :'<b>'+embEsc(m.name)+'</b><button class="ebtn" data-act="medit" aria-label="名前を変える">✎</button>';
+  // 編集は ✎ ひとつ(名前と絵をまとめて)。開いている間は、閉じるボタンをカードの中央下に(→docs/14 §14.212)
+  const name=CL.mEdit?'<span class="mg-edit"><input data-f="mname" maxlength="12" value="'+embEsc(d.mname!=null?d.mname:m.name)+'"><button class="btn btn-main" data-act="mrename">決定</button></span>'
+    :'<b>'+embEsc(m.name)+'</b><button class="ebtn" data-act="medit" aria-label="名前と絵を変える">✎</button>';
   const full=mgrArt(m.av,"full");
   return '<section class="card mgr-card"><h3>MANAGER</h3>'+
       '<div class="mg-top">'+(full?'<img class="mg-full" src="'+full+'" alt="">':'')+'<div class="mg-body">'+
       '<div class="mg-name">'+name+'</div>'+
-      '<p class="dim">'+(m.ani!=null&&ANIMALS[m.ani]?'動物 '+ANI_ICON[m.ani]+ANIMALS[m.ani].name+'('+ANI_GROUP[ANIMALS[m.ani].g]+')・ ':'')+
-        '監督ランク '+S.fac+' ・ 前の任期の称号「'+last+'」'+(S.tset?' ・ セット中「'+titleOf(S.tset).name+'」':'')+'</p>'+
-      (CL.avOpen?foldBtn("avopen",true):'<button class="ebtn" data-act="avopen" aria-label="アバターを変える">✎</button>')+'</div></div>'+
-      (CL.avOpen?mgrAvPickHtml(m.av|0,"mav"):'')+'</section>'+
+      '<div class="mg-tags">'+mgrTitleChip(S)+'</div></div></div>'+
+      (CL.mEdit?mgrAvPickHtml(m.av|0,"mav")+foldBtn("medit",true):'')+'</section>'+
     '<section class="card"><h3>CAREER RECORD</h3>'+
       '<div class="rec"><div><b>'+all.w+'</b><small>勝</small></div><div><b>'+all.d+'</b><small>分</small></div><div><b>'+all.l+'</b><small>敗</small></div>'+
-      '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+payTxt(S.pay!=null?S.pay:0)+'</b><small>年俸(億)</small></div></div>'+
-      (earned.length?'<p class="dim">取った称号: '+earned.map(id=>titleOf(id).name).join(" / ")+'</p>':'')+'</section>'+
-    trophyShelfHtml()+noteHtml()+careerHtml()+secClubHtml()+settingsHtml();   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
+      '<div><b>'+S.titles.length+'</b><small>タイトル</small></div><div><b>'+payTxt(S.pay!=null?S.pay:0)+'</b><small>年俸(億)</small></div></div></section>'+
+    trophyShelfHtml()+careerHtml()+noteHtml()+secClubHtml()+settingsHtml();   // 任期の記録(HISTORY)は成績とトロフィーの近くに(→docs/14 §14.212)   // 生涯のトロフィー(CLUB と同じ棚。→docs/14 §14.63)
 }
 function tabbarHtml(){
   const S=CL.S;
@@ -2217,7 +2213,7 @@ function onClubClick(e){
   if(act==="medit"){ CL.mEdit=!CL.mEdit; if(CL.draft)CL.draft.mname=null; showClub(true); return; }
   if(act==="mrename"){ const nm=CL.draft&&CL.draft.mname!=null?CL.draft.mname:S.mgr&&S.mgr.name; if(renameManager(S,nm)){ CL.mEdit=false; CL.draft.mname=null; save(); } else infoBar(["監督名を入れてください"]); showClub(true); return; }
   if(act==="licav"){ (CL.draft||(CL.draft={})).av=+b.dataset.v; showClub(true); return; }
-  if(act==="mav"){ if(setManagerAvatar(S,+b.dataset.v)){ CL.avOpen=false; save(); } showClub(true); return; }
+  if(act==="mav"){ if(setManagerAvatar(S,+b.dataset.v))save(); showClub(true); return; }   // 絵を選んでも編集は開いたまま(閉じるは下の ▲)
   if(act==="avopen"){ CL.avOpen=!CL.avOpen; showClub(true); return; }
   if(act==="license"){ const d=CL.draft||{}; if(registerManager(S,d.mname,d.birth,d.av|0)){ CL.draft=null; save(); } else CL.msg=["監督名を入れてください"]; showClub(true); return; }
   if(act==="ctown"||act==="ccolor"){ const c=CL.draft.c; if(act==="ctown")c.town=b.dataset.v; else{ c.color=b.dataset.v; c.emb=Object.assign({},c.emb,{ home:b.dataset.v }); } showClub(true); return; }   // 選んだ色はエンブレムの地の色にも(名前の色の言葉より優先)

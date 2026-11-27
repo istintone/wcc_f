@@ -508,3 +508,6 @@ body.th-wl #club .tabbar .tb-plus{position:absolute;left:72%;top:2px;font-family
 @keyframes tbGot{0%{transform:scale(1);color:inherit}25%{transform:scale(1.45);color:var(--w-red);filter:drop-shadow(0 0 6px rgba(208,16,47,.7))}100%{transform:scale(1)}}
 @keyframes tbPlus{0%{transform:translate(-50%,8px) scale(.6);opacity:0}20%{transform:translate(-50%,0) scale(1.15);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-6px);opacity:0}}
 @media (prefers-reduced-motion:reduce){.pk-stamp,.pk-wipe i,body.th-wl #club .tabbar button.got .ico,body.th-wl #club .tabbar .tb-plus{animation-duration:.01s}}
+/* MANAGER の札(→docs/14 §14.212) */
+body.th-wl #club .mgr-card .mg-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+body.th-wl #club .mgr-card>.fold{margin:10px auto 0}
