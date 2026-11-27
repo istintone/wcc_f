@@ -944,6 +944,7 @@ const SP_FAC_TAG={ indExp:"facTrain", indSec:"facTrain", loungeOk:"facLounge", l
 Object.assign(TUNING.tag,{
   stat:{ s:1, m:2, l:3 },
   statCap:3,
+  uniqK:0.05,                             // 固有の裏のパラメータ: stat の量 1 につき、試合の中の能力の効きを +5%(l = 3 で +15%。→docs/32 §32.10)
   nation:{ from:5, step:0.03, max:0.30, winK:1.5 }   // その国の11人で戦った試合が from 試合目から判定。率 = step ×(試合数 − from + 1)、上限 max、勝てば ×winK
 });
 const TITLE_NATION={
@@ -1099,8 +1100,9 @@ const UNIQUE_KIND={
 const statTxt=L=>L.map(x=>(x.st.length===6?"能力すべて":x.st.map(s=>STAT_LABEL[s]).join("・"))+" "+(x.neg?"−":"+")+TUNING.tag.stat[x.k]).join("、");
 // カードが持つ固有はタグ u_カードの id(どの任期でも初めから持つ。保存しない)
 if(typeof UNIQUE_CARDS!=="undefined")for(const id in UNIQUE_CARDS){ const u=UNIQUE_CARDS[id], K=UNIQUE_KIND[u.kind];
-  TAGS["u_"+id]={ name:u.name, scope:"player", kind:"unique", card:true, pol:1, dur:null, stat:K.stat, teamFx:K.teamFx,
-    desc:"固有(このカードだけ): "+statTxt(K.stat)+(K.teamFx?"、SQUAD にいるとチームの調子が落ちにくい":"") }; }
+  // 効き目は裏のパラメータ(ufx): カードの能力の数字は変えず、試合の中でその能力が効く強さに掛かる。上限 20 の能力にも効く(→docs/32 §32.10)
+  TAGS["u_"+id]={ name:u.name, scope:"player", kind:"unique", card:true, pol:1, dur:null, ufx:K.stat, teamFx:K.teamFx,
+    desc:"固有(このカードだけ): 試合で "+K.stat.map(x=>x.st.map(s=>STAT_LABEL[s]).join("・")).join("・")+" の力をいっそう発揮する"+(K.teamFx?"。SQUAD にいるとチームの調子が落ちにくい":"") }; }
 Object.assign(TAGS,{
   // 条件で付く固有(チームに1人ずつ。任期の終わりでクリア)
   kami:    { name:"神の子",           scope:"player", kind:"unique", pol:1, dur:null, stat:[{ st:ALL6, k:"m" },{ when:"final", st:ALL6, k:"s" }], desc:"固有: 20歳以下で能力の合計がチームの頂点。能力すべて +2、決勝ではさらに +1" },

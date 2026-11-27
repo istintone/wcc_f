@@ -923,9 +923,9 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   // 固有の能力は、上限(20)に届いていない能力で確かめる(作り直しで、固有の能力の多くは初めから 20。→docs/32 §32.9)
   { const S=E.newCareer(4242); S.coll.mcb01=1; E.swapSquad(S,S.sq[15],"mcb01"); S.sq=["mcb01"].concat(S.sq.filter(x=>x!=="mcb01")).slice(0,16);
     const base=E.growCard(S,E.CARDS.mcb01), d=E.playerDef(S,{ kind:"friendly" }), c=d.xi.concat(d.bench.map(x=>({ card:x }))).find(s=>s.card.id==="mcb01").card;
-    check("カードが持つ固有: 初めから効く(上限でない能力が上がる)",c.tec>base.tec&&E.playerTagsView(S,"mcb01").some(t=>t.unique),"TEC "+base.tec+" → "+c.tec); }
+    check("カードが持つ固有: 初めから効く(能力の数字は変えず、試合の中の効きに掛かる)",c.tec===base.tec&&c.ufx&&c.ufx.tec>1&&E.playerTagsView(S,"mcb01").some(t=>t.unique),"TEC "+c.tec+" × "+(c.ufx&&c.ufx.tec)); }
   { const S=E.newCareer(3), od=E.oppDefOf(S,{ opp:"MCB", kind:"cup" }), h=od.xi.find(s=>s.card.id==="mcb01");
-    check("相手のカードの固有も効く",!!h&&h.card.tec>E.CARDS.mcb01.tec,"TEC "+E.CARDS.mcb01.tec+" → "+(h&&h.card.tec)); }
+    check("相手のカードの固有も効く(上限 20 の能力にも)",!!h&&h.card.ufx&&h.card.ufx.def>1&&h.card.def>=20,"DEF "+(h&&h.card.def)+" × "+(h&&h.card.ufx&&h.card.ufx.def)); }
   { const S=E.newCareer(5), o=[]; const y=S.sq.find(id=>E.CARDS[id].age<=21)||S.sq[3]; S.g.pl[y].is=5;
     E.uniqueCheck(S,o); const yes=E.CARDS[y].age<=21;
     check("条件で付く固有: 21歳以下で覚醒すると「下部組織の至宝」(チームに1人)",!yes||(S.g.pl[y].tags||[]).some(t=>t.id==="academy"),yes?E.CARDS[y].age+"歳":"若手なし"); }

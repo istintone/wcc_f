@@ -1280,7 +1280,8 @@ function applyTagStats(def,tagIds,S,fx,combos){
   const hit=(who,pos)=>!who||who==="all"||who===pos||(who==="FM"&&(pos==="FW"||pos==="MF"))||(who==="DM"&&(pos==="DF"||pos==="MF"));
   const boost=(c,start,role)=>{ const add={}; let cap=T.statCap;
     const put=x=>{ for(const k of x.st)add[k]=(add[k]||0)+(x.neg?-1:1)*T.stat[x.k]; };
-    const U=TAGS["u_"+c.id]; if(U)for(const x of U.stat)put(x);   // カードが持つ固有(どの任期でも・相手のときも)
+    // カードが持つ固有(どの任期でも・相手のときも)は裏のパラメータ: 能力の数字は変えず、試合の中の効きに掛ける(→docs/32 §32.10)
+    const U=TAGS["u_"+c.id], ufx={}; if(U&&U.ufx)for(const x of U.ufx)for(const k of x.st)ufx[k]=(ufx[k]||1)+T.stat[x.k]*T.uniqK;
     for(const t of team)for(const x of t.stat)if(hit(x.who,c.pos))put(x);
     if(start)for(const C of cmb[c.id]||[])for(const x of C.stat)put(x);
     if(S)for(const tg of pTags(S,c.id)){ const P=TAGS[tg.id]; if(!P||!P.stat)continue;
@@ -1290,8 +1291,9 @@ function applyTagStats(def,tagIds,S,fx,combos){
         if(x.when==="hot"&&c.gm!==4)continue; if(x.when==="cold"&&!(c.gm<=2))continue; put(x); } }
     // 効いている特性の印(試合の処理と映像が、特性に合った動きをする。→docs/30)
     const tr=S&&start&&role?pTags(S,c.id).map(tg=>TAGS[tg.id]).find(P=>P&&P.kind==="trait"&&P.pos.includes(role)):null;
-    if(!Object.keys(add).length&&!tr)return c;
+    if(!Object.keys(add).length&&!tr&&!Object.keys(ufx).length)return c;
     const o=Object.assign({},c); for(const k in add)o[k]=clamp(o[k]+Math.max(-cap,Math.min(cap,add[k])),1,STAT_MAX);
+    if(Object.keys(ufx).length)o.ufx=ufx;
     if(tr)o.trait=Object.keys(TAGS).find(k=>TAGS[k]===tr).slice(2);
     return o; };
   def.xi.forEach((s,i)=>{ s.card=boost(s.card,true,i===0?"GK":posAt(s.h,s.x)); });

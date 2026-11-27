@@ -128,7 +128,7 @@ function mkPlayer(card,h,x,gk){
 }
 /** 能力に掛かる修正は必ずここへ足す(全判定の単一集約点) */
 function eff(p,k){
-  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1)*(p.inj?TUNING.inj.k:1);
+  return p.c[k]*p.apt*(1-fatOf(p.stam)*TUNING.stam.wear[k])*p.fx.all*(p.c.cond||1)*(p.inj?TUNING.inj.k:1)*((p.c.ufx&&p.c.ufx[k])||1);   // 固有の裏のパラメータ(→docs/32)
 }
 /** 消耗が能力に響く量(0〜fatMax)。減り始めは軽く、半分を切ると急に重くなる */
 function fatOf(stam){
