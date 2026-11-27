@@ -4695,6 +4695,12 @@ body.th-wl #club .srep .pr-part{display:grid;grid-template-columns:repeat(3,1fr)
 body.th-wl #club .srep .pr-part .kc{width:56px;margin:0 auto 4px;pointer-events:none}
 body.th-wl #club .srep .pr-part .gold .kc{box-shadow:0 0 0 3px var(--w-gold)}
 body.th-wl #club .srep .pr-part b{display:block;font-weight:800} body.th-wl #club .srep .pr-part small{color:var(--w-mute)}
+/* 新聞: 面は縦に並べて下へ読む。号を替えると紙面ごと横から入る(→docs/34 §34.9) */
+body.th-wl #club .paper-wrap .pp-view{overflow:visible}
+body.th-wl #club .paper-wrap .pp-pages{flex-direction:column;gap:12px;transform:none!important;transition:none}
+body.th-wl #club .paper-wrap .pp-view.sl-r{animation:clSlR .26s cubic-bezier(.2,.8,.2,1)}
+body.th-wl #club .paper-wrap .pp-view.sl-l{animation:clSlL .26s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){body.th-wl #club .paper-wrap .pp-view.sl-r,body.th-wl #club .paper-wrap .pp-view.sl-l{animation:none}}
 </style>
 </head>
 <body>
@@ -13026,10 +13032,11 @@ function showClub(keepScroll){
   if(pitch)sqBind(pitch);
   k3dBind();                                   // 大きなカード(→docs/14 §14.114)
   holdBind();                                  // 長押しのボタン(→docs/14 §14.124)
-  { const pp=el.querySelector(".pp-pages"); if(pp){ let x0=null; const n=pp.children.length;   // 新聞: 横のスワイプで面をめくる(→docs/34)
-      pp.addEventListener("touchstart",e=>{ x0=e.touches[0].clientX; },{ passive:true });
-      pp.addEventListener("touchend",e=>{ if(x0==null)return; const d=e.changedTouches[0].clientX-x0; x0=null; if(Math.abs(d)<40)return;
-        const k=Math.max(0,Math.min(n-1,(CL.paperPg||0)+(d<0?1:-1))); const btn=el.querySelector('.pp-pager [data-p="'+k+'"]'); if(btn)btn.click(); }); } }
+  { const pw=el.querySelector(".paper-wrap"); if(pw){ let t0=null;   // 新聞: 横のスワイプで前後の号(バックナンバー)。縦は面を下へ読む(→docs/34 §34.9)
+      pw.addEventListener("touchstart",e=>{ t0=[e.touches[0].clientX,e.touches[0].clientY]; },{ passive:true });
+      pw.addEventListener("touchend",e=>{ if(!t0)return; const dx=e.changedTouches[0].clientX-t0[0], dy=e.changedTouches[0].clientY-t0[1]; t0=null;
+        if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;
+        const btn=pw.querySelector(dx<0?".pp-arw.r":".pp-arw.l"); if(btn&&!btn.disabled)btn.click(); }); } }
   // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
   const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
   if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
@@ -14756,9 +14763,8 @@ function paperHtml(i){
   // 写真: 選手(話題の選手・相手の KP)か、スタジアム・施設ならスタジアムの絵(→docs/14 §14.135)
   const heroArt=img?'<img class="pp-ph" src="'+img+'" alt="">':(a.stadLv?'<div class="pp-stad">'+stadiumSvg(a.stadLv)+'</div>':'');
   const lead=String(a.lead||""), drop=lead.slice(0,1), rest=lead.slice(1);
-  const pg=CL.paperPg||0, p2=paperPage2(a), p3=paperPage3(a), np=1+(p2?1:0)+(p3?1:0);
-  const pager=np>1?'<nav class="pp-pager" data-act="none">'+Array.from({ length:np },(_,k)=>'<button data-act="ppage" data-p="'+k+'"'+(k===pg?' aria-current="true"':'')+'>'+(k+1)+'</button>').join("")+'</nav>':'';
-  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<div class="pp-view" data-act="none"><div class="pp-pages" data-act="none" style="transform:translateX('+(-100*pg)+'%)"><article class="paper v2 k-'+a.kind+'" data-act="none">'+
+  const p2=paperPage2(a), p3=paperPage3(a), dir=CL.paperDir?' sl-'+CL.paperDir:''; CL.paperDir=null;
+  return '<div class="paper-wrap" data-act="paperclose">'+nav+'<div class="pp-view'+dir+'" data-act="none"><div class="pp-pages" data-act="none"><article class="paper v2 k-'+a.kind+'" data-act="none">'+
     '<div class="pp-strip"><span>第'+a.term+'任期 ・ No.'+a.no+'</span><span>'+town+'</span><span>¥150</span></div>'+
     '<header class="pp-mast"><b>'+short+'<em>SPORT</em></b><small>QUOTIDIANO SPORTIVO</small></header>'+
     '<div class="pp-hero">'+
@@ -14771,7 +14777,7 @@ function paperHtml(i){
     '<div class="pp-body"><p class="pp-lead"><b class="pp-drop">'+drop+'</b>'+rest+'</p>'+(a.quote?'<blockquote class="pp-q">'+a.quote+'</blockquote>':'')+'</div>'+
     paperMatchBox(a)+
     (!p3&&a.side.length?'<aside id="ppGossip" class="pp-gos"><header><b>RUMORS</b><span>ゴシップ</span></header><ol>'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></aside>':'')+
-    '</article>'+(p2||'')+(p3||'')+'</div></div>'+pager+'</div>';
+    '</article>'+(p2||'')+(p3||'')+'</div></div></div>';
 }
 /** 1面の下: 試合のデータ(支配率・シュート・得点の経過。→docs/34 §34.7) */
 function paperMatchBox(a){
@@ -15059,8 +15065,8 @@ function onClubClick(e){
   if(act==="chatgo"){ CL.chat=null; CL.scout=true; showClub(); return; }   // 最後の1回の結果を見てから視察へ   // 最後の1回の結果を見てから戦略方針へ
   if(act==="ppage"){ CL.paperPg=+b.dataset.p; const box=document.querySelector(".pp-pages"); if(box){ box.style.transform="translateX("+(-100*CL.paperPg)+"%)";
       document.querySelectorAll(".pp-pager [data-p]").forEach(x=>x.setAttribute("aria-current",+x.dataset.p===CL.paperPg)); } return; }   // 新聞の面をめくる(→docs/34)
-  if(act==="paper"){ CL.paperPg=0; CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
-  if(act==="news"){ CL.paperPg=0; CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
+  if(act==="paper"){ CL.paperDir=+b.dataset.i>CL.paperI?"r":"l"; CL.paperI=+b.dataset.i; if(CL.paperI===S.paper.length-1){ S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); } showClub(); return; }
+  if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }

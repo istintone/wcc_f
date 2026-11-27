@@ -395,3 +395,9 @@ body.th-wl #club .srep .pr-part{display:grid;grid-template-columns:repeat(3,1fr)
 body.th-wl #club .srep .pr-part .kc{width:56px;margin:0 auto 4px;pointer-events:none}
 body.th-wl #club .srep .pr-part .gold .kc{box-shadow:0 0 0 3px var(--w-gold)}
 body.th-wl #club .srep .pr-part b{display:block;font-weight:800} body.th-wl #club .srep .pr-part small{color:var(--w-mute)}
+/* 新聞: 面は縦に並べて下へ読む。号を替えると紙面ごと横から入る(→docs/34 §34.9) */
+body.th-wl #club .paper-wrap .pp-view{overflow:visible}
+body.th-wl #club .paper-wrap .pp-pages{flex-direction:column;gap:12px;transform:none!important;transition:none}
+body.th-wl #club .paper-wrap .pp-view.sl-r{animation:clSlR .26s cubic-bezier(.2,.8,.2,1)}
+body.th-wl #club .paper-wrap .pp-view.sl-l{animation:clSlL .26s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){body.th-wl #club .paper-wrap .pp-view.sl-r,body.th-wl #club .paper-wrap .pp-view.sl-l{animation:none}}
