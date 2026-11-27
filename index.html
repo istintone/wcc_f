@@ -4672,6 +4672,29 @@ body.th-wl #club .paper.v2 .pp-folio,body.th-wl #club .paper.v2 .pp-k{margin-lef
 body.th-wl #club .paper.v2 .pp-sec,body.th-wl #club .paper.v2 .pp-data,body.th-wl #club .paper.v2 .pp-box,body.th-wl #club .paper.v2 .pp-letter,body.th-wl #club .paper.v2 .pp-two{margin-left:10px;margin-right:10px}
 body.th-wl #club .paper.v2 .pp-two .pp-sec{margin-left:0;margin-right:0}
 body.th-wl #club .paper.v2 .pp-ad{margin:0 10px}
+/* 視察レポートの束と選手の調書(→docs/34 §34.3・§34.4) */
+body.th-wl #club .srep .sr-pitch{position:relative;height:210px;margin:6px 0 4px;background:repeating-linear-gradient(180deg,#e6efe5 0 26px,#dbe8da 26px 52px);box-shadow:inset 0 0 0 2px #9fb79c}
+body.th-wl #club .srep .sr-dot{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 0 0 2px var(--w-blue);font-family:var(--f-num);font-weight:800;font-size:12px}
+body.th-wl #club .srep .sr-dot.kp{box-shadow:0 0 0 3px var(--w-gold);background:#fff6d8}
+body.th-wl #club .srep .sr-dot.hot::after{content:"";position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--w-red)}
+body.th-wl #club .srep .sr-leg{display:flex;gap:12px;font-size:11px;color:var(--w-mute);margin-bottom:6px}
+body.th-wl #club .srep .sr-leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+body.th-wl #club .srep .sr-leg i.kp{background:#fff6d8;box-shadow:0 0 0 2px var(--w-gold)} body.th-wl #club .srep .sr-leg i.hot{background:var(--w-red)}
+body.th-wl #club .srep .sr-form{margin:4px 0 8px;font-size:13px} body.th-wl #club .srep .sr-form b{font-family:var(--f-num);font-weight:800;font-size:18px;color:var(--w-red);margin-right:4px}
+body.th-wl #club .srep .sr-memo{margin:10px 0 4px auto;max-width:260px;background:#fff3a8;font-weight:700;font-size:13px;line-height:1.5;padding:10px 12px;transform:rotate(-1.5deg);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+body.th-wl #club .srep .sr-memo small{display:block;text-align:right}
+body.th-wl #club .srep .pr-note{margin:4px 0 8px;font-size:13px;line-height:1.8;padding:10px 12px;background:#fff;box-shadow:inset 0 0 0 1px #e8e0cc}
+body.th-wl #club .srep .pr-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin:4px 0 8px}
+body.th-wl #club .srep .pr-nums div{background:#fff;padding:6px;box-shadow:inset 0 0 0 1px #e8e0cc}
+body.th-wl #club .srep .pr-nums b{display:block;font-family:var(--f-num);font-weight:800;font-size:22px;line-height:1}
+body.th-wl #club .srep .pr-nums span{font-size:10.5px;color:var(--w-mute)}
+body.th-wl #club .srep .pr-tl{margin:4px 0 8px;padding:0 0 0 14px;border-left:2px solid var(--w-red);display:grid;gap:4px;font-size:12.5px}
+body.th-wl #club .srep .pr-tl li{list-style:none;position:relative} body.th-wl #club .srep .pr-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:9px;height:9px;background:var(--w-red);transform:rotate(45deg)}
+body.th-wl #club .srep .pr-tl b{font-family:var(--f-num);font-weight:800;margin-right:6px}
+body.th-wl #club .srep .pr-part{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;font-size:11.5px;margin:4px 0 8px}
+body.th-wl #club .srep .pr-part .kc{width:56px;margin:0 auto 4px;pointer-events:none}
+body.th-wl #club .srep .pr-part .gold .kc{box-shadow:0 0 0 3px var(--w-gold)}
+body.th-wl #club .srep .pr-part b{display:block;font-weight:800} body.th-wl #club .srep .pr-part small{color:var(--w-mute)}
 </style>
 </head>
 <body>
@@ -13431,10 +13454,33 @@ function sqDetailHtml(){
       (ps?'<dt>性格</dt><dd>'+PERS_LABEL[persOf(id)]+'</dd>':'')+(an?'<dt>動物</dt><dd>'+an+'</dd>':'')+
       (dupOf(S,id)?'<dt>重なり</dt><dd>×'+dupOf(S,id)+' ・ 個別指導の経験 +'+Math.round(TUNING.grow.dup.indK*dupOf(S,id)*100)+'%</dd>':'')+'</dl>'+
     playerTagsHtml(id)+
+    dossierHtml(S,id,c,no)+
     '<footer class="sr-sign"><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '<div class="sd-act pr-act">'+(on?(S.kp===id?'<span class="kpnow">KP</span>':'<button data-act="sqkp" data-id="'+id+'">キープレイヤーに指名</button>'):'')+'</div>'+
     '</article>';
 }
+/** 選手の調書(→docs/34 §34.4): SCOUT'S NOTE(型・強み・スキルから作る人物評)・THIS TERM・HISTORY・PARTNERS */
+function dossierHtml(S,id,c,no){
+  const g=S.g.pl[id]; if(!g)return '';
+  const ty=c.ptype&&PTYPE_NOTE[c.ptype], cc=growCard(S,c), top=STATS.slice().sort((a,b)=>cc[b]-cc[a])[0], sk=c.skill?SKILLS[c.skill]:null;
+  const note=(ty||'')+(STRONG_NOTE[top]||'')+(sk?'「'+sk.label+'」の持ち主で、'+sk.desc.replace(/。$/,'')+'。':'');
+  const t=(S.tstat||{})[id]||{ ap:0, gl:0, as:0, mvp:0, rs:0, rn:0 };
+  const term='<div class="pr-nums"><div><b>'+t.ap+'</b><span>出場</span></div><div><b>'+t.gl+'</b><span>得点</span></div><div><b>'+t.as+'</b><span>アシスト</span></div><div><b>'+(t.rn?(t.rs/t.rn).toFixed(1):'—')+'</b><span>平均の採点</span></div></div>';
+  const hist=(g.hist||[]).length?'<ul class="pr-tl">'+g.hist.slice().reverse().map(h=>'<li><b>#'+h[0]+'</b>'+h[1]+'</li>').join("")+'</ul>':'<p class="dim">まだ記録はない</p>';
+  const part=Object.keys(S.g.links).map(k=>{ const p=k.split("|"), l=S.g.links[k]; return p.includes(id)&&l.lv>=2?{ o:p[0]===id?p[1]:p[0], lv:l.lv }:null; }).filter(x=>x&&CARDS[x.o]).sort((a,b)=>b.lv-a.lv).slice(0,3);
+  const partners=part.length?'<div class="pr-part">'+part.map(x=>'<div class="'+(x.lv>=3?'gold':'')+'">'+cardHtml(x.o,"s")+'<b>'+nameOf(CARDS[x.o])+'</b><small>'+REL_LABEL[x.lv]+'</small></div>').join("")+'</div>':'<p class="dim">まだいない</p>';
+  return no(["SCOUT","NOTE"])+'<p class="pr-note">'+note+'</p>'+no(["THIS","TERM"])+term+no(["GROWTH","HISTORY"])+hist+no(["LINK","PARTNERS"])+partners;
+}
+/** 型ごとの人物評の書き出し(→docs/34 §34.4) */
+const PTYPE_NOTE={ gk_stop:"ゴール前で両手を広げる守護神。シュートへの反応は確かだ。", gk_sweep:"前に出て裏のボールを処理する、守備範囲の広いキーパー。", gk_feed:"足元の技術とキックで攻撃の起点になるキーパー。",
+  cb_stop:"前に出て相手を潰す、闘志むき出しのストッパー。", cb_build:"最終ラインから縦パスと持ち上がりで攻撃を組み立てる。", cb_air:"高さと強さで空中戦を制する、ゴール前の番人。", cb_cover:"スピードを生かして最終ラインの裏をカバーする。",
+  sb_atk:"サイドを駆け上がり、何度も攻撃に厚みを加える。", sb_def:"持ち場を離れず、相手のウイングを封じる堅実なサイドバック。", sb_in:"中へ入って中盤の数を増やす、頭脳派のサイドバック。",
+  dm_anchor:"中盤の底に構え、奪ったボールをすぐに味方へ預ける。", dm_destroy:"ボールへ激しく寄せて奪い取る、中盤の掃除屋。", dm_regista:"低い位置から長短のパスで試合を操る司令塔。",
+  cm_b2b:"両方のゴール前を往復する、疲れを知らない心臓。", cm_maker:"散らしと展開で試合のリズムを作る。", cm_runner:"後ろから一気にゴール前へ飛び込む。",
+  om_10:"ライン間で受けて前を向く、背番号10の申し子。", om_shadow:"FW の背後から裏とゴール前へ走り込む。", om_creator:"ラストパスで決定機を生み出す。",
+  w_drib:"大外に張り、縦への突破で相手を置き去りにする。", w_cutin:"逆サイドから中へ切れ込み、自ら撃つ。", w_cross:"大外から正確なクロスを送り込む。", w_play:"サイドから中へ入り、チャンスを作る。",
+  cf_poach:"ゴール前で受けることにこだわる生粋の点取り屋。", cf_target:"前線で体を張ってボールを収め、味方へ落とす。", cf_false9:"中盤まで降りて受け、攻撃をつなぐ。", cf_speed:"スピードで最終ラインの裏を突く。", cf_all:"どこからでも点を取れる万能型のストライカー。" };
+const STRONG_NOTE={ off:"ゴール前の決定力は群を抜く。", def:"守備の読みと対人の強さは折り紙つき。", tec:"足元の技術は一級品。", pow:"競り合いでまず負けない。", spd:"スピードは一級品。", sta:"最後まで走り切るスタミナがある。" };
 function sqDetailHtmlOld(){
   const S=CL.S, id=CL.sqSel;
   if(!id)return '';
@@ -14355,9 +14401,7 @@ function scoutRepModalHtml(){
       '<dl class="sr-meta"><dt>対戦相手</dt><dd>'+emblemSvg(Object.assign({ id:fx.opp },t),18)+'<b>'+teamNameOf(t)+'</b> <span class="sr-tier">'+"★".repeat(R.tier)+'</span></dd>'+
         '<dt>大会</dt><dd>'+en.name+(en.round?' ・ '+en.round:'')+' ・ GAME '+fx.no+'</dd>'+
         '<dt>陣形・監督</dt><dd>'+t.form+' ・ '+R.pers.name+'型</dd>'+
-        // 相手監督のチームスタイルと熟練度(→docs/31 §31.5)。秘書の親密度で読める数が増える(読めないものは黒塗り)
-        (def.mab&&Object.keys(def.mab).length?'<dt>チームスタイル</dt><dd class="sr-mab">'+Object.keys(def.mab).map((k,i)=>i<Math.min(3,lv+1)?
-          '<b>'+(MAB.find(x=>x.id===k)||{ name:k }).name+'</b>':red(30)).join("")+' <small>'+MAB_RANK[def.mabRank||0]+'</small></dd>':'')+
+        // 相手監督のチームスタイルは 07 相手監督へ移した(→docs/34 §34.3)
         '<dt>作成</dt><dd>'+se.name+'(監督付き秘書)</dd></dl>'+
       no(["01","総合評価"])+
       '<div class="sr-ovr"><div><small>自チーム</small><b>'+R.ovM.toFixed(1)+'</b></div><span>VS</span><div><small>'+t.short+'</small><b>'+R.ovO.toFixed(1)+'</b></div>'+
@@ -14370,8 +14414,31 @@ function scoutRepModalHtml(){
       no(["04","所見"])+
       '<div class="sr-sec">'+(open.size<R.lines.length?'<i class="sr-unk">UNKNOWN</i>':'')+'<ol class="sr-notes">'+R.lines.map((l,i)=>open.has(i)?'<li>'+l+'</li>':'<li class="lock">'+red(55+((i*37)%40))+'</li>').join("")+'</ol></div>'+
 
+      scoutMoreHtml(S,fx,def,lv,no,red)+
       '<footer class="sr-sign"><small>以上、ご報告いたします。</small><div><span>報告者</span><b>'+se.name+'</b><i class="sr-hanko">'+se.name.slice(0,2)+'</i></div></footer>'+
     '</article></div></div>';
+}
+/** 視察レポートの続き(→docs/34 §34.3): 05 予想布陣・06 直近の戦績・07 相手監督・秘書の手書きのメモ(親密度が高いとき) */
+function scoutMoreHtml(S,fx,def,lv,no,red){
+  const xi=def.xi, kpId=def.kp;
+  // 05 予想布陣: 相手の陣形(上がゴール。こちらへ攻めてくる向き)に KP と好調(絶好調)の印
+  const dots=xi.map(x=>{ const c=x.card, top=4+x.h*88, left=100-x.x;
+    return '<span class="sr-dot'+(c.id===kpId?' kp':'')+(c.gm===4?' hot':'')+'" style="left:'+left.toFixed(1)+'%;top:'+top.toFixed(1)+'%">'+c.no+'</span>'; }).join("");
+  const pitch='<div class="sr-pitch">'+dots+'</div><div class="sr-leg"><span><i class="kp"></i>KP</span><span><i class="hot"></i>好調</span></div>';
+  // 06 直近の戦績: 同じリーグなら順位と勝ち負け
+  const L=S.league, row=L&&L.table&&L.table[fx.opp];
+  const form=row?(()=>{ const ord=sortTable(L.table); return '<p class="sr-form"><b>'+(ord.indexOf(fx.opp)+1)+'位</b> '+row.w+'勝 '+row.d+'分 '+row.l+'敗 ・ 得失点 '+(row.gf-row.ga>0?'+':'')+(row.gf-row.ga)+'</p>'; })()
+    :'<p class="sr-form dim">同じリーグではないため記録なし</p>';
+  // 07 相手監督: 戦い方・チームスタイル・後半に出しそうな指示
+  const P=TUNING.coach.pers[def.pers]||{}, ht=def.pers==="attack"?"同点か負けていれば攻めの指示":def.pers==="careful"?"同点か勝っていれば守りの指示":"前半の結果しだいで攻めか守り";
+  const mab=def.mab?Object.keys(def.mab).map((k,i)=>i<Math.min(3,lv+1)?(MAB.find(x=>x.id===k)||{ name:k }).name:red(26)).join(" ・ "):'';
+  const coach='<dl class="sr-meta"><dt>戦い方</dt><dd>'+(P.name||'')+'型</dd>'+(mab?'<dt>スタイル</dt><dd>'+mab+' <small>'+MAB_RANK[def.mabRank||0]+'</small></dd>':'')+'<dt>後半</dt><dd>'+ht+'</dd></dl>';
+  // 秘書のメモ: 親密度が高いとき。相手の守備でいちばん足の遅い選手と、こちらでいちばん速い攻め手
+  let memo='';
+  if(lv>=2){ const slow=xi.map(x=>x.card).filter(c=>c.pos==="DF").sort((a,b)=>a.spd-b.spd)[0];
+    const mine=S.sq.slice(0,11).map(id=>CARDS[id]).filter(c=>c&&(c.pos==="FW"||c.pos==="MF")).sort((a,b)=>b.spd-a.spd)[0];
+    if(slow&&mine)memo='<div class="sr-memo">'+slow.no+'番の'+nameOf(slow)+'は足が遅めです。'+nameOf(mine)+'で裏を狙いましょう!<small>― '+secOf(S).name.split(" ").pop()+'</small></div>'; }
+  return no(["05","予想布陣"])+pitch+no(["06","直近の戦績"])+form+no(["07","相手監督"])+coach+memo;
 }
 function oppCardModalHtml(){
   const c=CARDS[CL.oppSel]; if(!c)return "";
