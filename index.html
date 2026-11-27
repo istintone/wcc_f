@@ -4785,6 +4785,29 @@ body.th-wl #club .srep .sr-mem td:last-child{width:52px;text-align:right}
 body.th-wl #club .srep .sr-mem .mtg{position:static;display:inline-block;padding:0 4px;font-style:normal;font-size:10.5px;font-weight:900;line-height:16px;color:#fff;background:var(--mot2)}
 body.th-wl #club .srep .sr-mem .mtg.m1{background:var(--mot1)} body.th-wl #club .srep .sr-mem .mtg.m3{background:var(--mot3)} body.th-wl #club .srep .sr-mem .mtg.m4{background:var(--mot4)}
 body.th-wl #club .srep .sr-mem tr.sub td{font-family:var(--f-num);font-weight:800;letter-spacing:.14em;color:var(--w-mute);padding-top:8px;cursor:default}
+/* カード排出のあと → 監督室(→docs/33 §33.15): 判子・赤い帯の拭き取り・CARDS へ飛ぶカード・+1 */
+.pk-stamp{position:absolute;left:50%;top:46%;z-index:6;pointer-events:none;transform:translate(-50%,-50%) rotate(-12deg);
+  border:4px solid var(--w-red,#d0102f);padding:4px 12px;background:rgba(255,255,255,.12);animation:pkStamp .32s cubic-bezier(.3,1.6,.5,1) both}
+.pk-stamp b{display:block;font-family:var(--f-num);font-weight:900;font-size:26px;letter-spacing:.08em;color:var(--w-red,#d0102f);white-space:nowrap;
+  text-shadow:0 0 1px rgba(255,255,255,.6)}
+@keyframes pkStamp{0%{transform:translate(-50%,-50%) rotate(-12deg) scale(2.6);opacity:0}60%{opacity:1}100%{transform:translate(-50%,-50%) rotate(-12deg) scale(1);opacity:1}}
+.pk-wipe{position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden}
+.pk-wipe i{position:absolute;top:-20%;bottom:-20%;left:0;width:150vw;transform:translateX(-230vw) skewX(-18deg);animation:pkWipe .62s cubic-bezier(.65,0,.35,1) both}
+.pk-wipe i:nth-child(1){background:#fff;animation-delay:0s}
+.pk-wipe i:nth-child(2){background:var(--w-red,#d0102f);animation-delay:.05s}
+.pk-wipe i:nth-child(3){background:#111;width:14vw;animation-delay:.12s}
+@keyframes pkWipe{to{transform:translateX(170vw) skewX(-18deg)}}
+.pk-ghost{position:fixed!important;right:auto!important;bottom:auto!important;z-index:9100;pointer-events:none;transform-origin:50% 50%;box-shadow:0 14px 30px rgba(0,0,0,.45)}
+
+.pk-ghost.fade{transition:opacity .35s;opacity:0}
+.pk-ghost .pk-stamp{animation:none}
+body.th-wl #club .tabbar button{position:relative}
+body.th-wl #club .tabbar button.got .ico{animation:tbGot .9s ease-out}
+body.th-wl #club .tabbar .tb-plus{position:absolute;left:72%;top:2px;font-family:var(--f-num);font-weight:900;font-size:15px;color:var(--w-red);
+  pointer-events:none;animation:tbPlus 1.1s ease-out both}
+@keyframes tbGot{0%{transform:scale(1);color:inherit}25%{transform:scale(1.45);color:var(--w-red);filter:drop-shadow(0 0 6px rgba(208,16,47,.7))}100%{transform:scale(1)}}
+@keyframes tbPlus{0%{transform:translate(-50%,8px) scale(.6);opacity:0}20%{transform:translate(-50%,0) scale(1.15);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-6px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pk-stamp,.pk-wipe i,body.th-wl #club .tabbar button.got .ico,body.th-wl #club .tabbar .tb-plus{animation-duration:.01s}}
 </style>
 </head>
 <body>
@@ -13123,13 +13146,13 @@ function showClub(keepScroll){
         const btn=pw.querySelector(dx<0?".pp-arw.r":".pp-arw.l"); if(btn&&!btn.disabled)btn.click(); }); } }
   // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
   const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
-  if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
+  if(main&&CL._vk&&(CL._vk[0]!==vk[0]?1:CL._vk[1]!==vk[1]))main.classList.add(CL._vk[0]!==vk[0]?(vk[0]==="p"?"sl-r":"sl-l"):vk[1]>CL._vk[1]?"sl-r":"sl-l");   /* タブ → 準備は右から、準備 → タブは左から(→docs/33 §33.15) */
   CL._vk=vk;
   // モーダルは開いたときだけ下から出る(中を操作して描き直すたびには動かさない)
   if(kb2&&!CL._modal)kb2.closest(".kmodal").classList.add("enter");
   CL._modal=!!kb2;
 }
-function hideClub(){ document.getElementById("club").classList.remove("on"); }
+function hideClub(){ document.getElementById("club").classList.remove("on"); CL._vk=null; }   // 試合から戻ったときは向きの動きを付けない
 
 const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
 const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
@@ -16242,11 +16265,47 @@ function packStep(){
     return;
   }
 }
+/**
+ * 排出のあと → 監督室(→docs/33 §33.15)。NEW のカードは「NEW SIGNING」の判子を押してから。
+ * 赤い帯が画面を拭き取る間に監督室へ替わり、カードは縮みながら下の CARDS へ飛んで、CARDS が光って +1
+ */
+function packExit(f){
+  const K=SC.card||{}, slot=SC.el.querySelector(".pk-slot"), cin=SC.el.querySelector(".pk-cardin");
+  const calm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fly=()=>{
+    const r=cin?cin.getBoundingClientRect():null, st=slot&&slot.querySelector(".pk-stamp");
+    let gh=null;
+    if(r&&!calm){ gh=document.createElement("div"); gh.className="pk-cardin pk-ghost";
+      const face=cin.querySelector(".k3d-f .kc")||cin.querySelector(".kc"); gh.innerHTML=(face?face.outerHTML:"")+(st?st.outerHTML:"");   // 表の面だけ写す
+      Object.assign(gh.style,{ left:r.left+"px", top:r.top+"px", width:r.width+"px", height:r.height+"px" }); }
+    const band=document.createElement("div"); band.className="pk-wipe"; band.innerHTML="<i></i><i></i><i></i>";
+    document.body.appendChild(band); if(gh)document.body.appendChild(gh);
+    sndPull();
+    setTimeout(()=>{
+      SC.card=null; SC.busy=false; f();
+      const tb=document.querySelector('#club .tabbar [data-v="cards"]');
+      const got=()=>{ if(!tb)return; tb.classList.add("got"); const pl=document.createElement("b"); pl.className="tb-plus"; pl.textContent="+1"; tb.appendChild(pl);
+        sndUi("ok"); setTimeout(()=>{ tb.classList.remove("got"); pl.remove(); },1200); };
+      if(!gh){ got(); return; }
+      if(!tb){ gh.classList.add("fade"); setTimeout(()=>gh.remove(),400); return; }
+      const t=tb.getBoundingClientRect(), dx=t.left+t.width/2-(r.left+r.width/2), dy=t.top+t.height/2-(r.top+r.height/2), k=Math.max(0.06,26/r.width);
+      gh.animate([{ transform:"none", opacity:1 },{ transform:"translate("+(dx*0.35).toFixed(0)+"px,"+(dy*0.1-40).toFixed(0)+"px) scale(.62) rotate(-6deg)", opacity:1, offset:.35 },
+        { transform:"translate("+dx.toFixed(0)+"px,"+dy.toFixed(0)+"px) scale("+k.toFixed(3)+") rotate(-18deg)", opacity:.8 }],{ id:"pkFly", duration:520, easing:"cubic-bezier(.4,0,.8,.6)", fill:"forwards" });
+      setTimeout(()=>{ gh.remove(); got(); },560);
+    },300);
+    setTimeout(()=>band.remove(),900);
+  };
+  if(K.isNew&&slot){
+    const st=document.createElement("div"); st.className="pk-stamp"; st.innerHTML="<b>NEW SIGNING</b>"; slot.appendChild(st);
+    setTimeout(sndStamp,170); setTimeout(fly,calm?300:820);
+  } else fly();
+}
+function sndStamp(){ if(sndOk()){ noiseBurst(now(),0.09,0.55,"lowpass",420,220,0.7); noiseBurst(now()+0.02,0.05,0.25,"bandpass",1400,900,0.5); } }
 function sndPull(){ if(sndOk())noiseBurst(now(),0.22,0.25,"bandpass",900,1400,0.4); }
 function sndTear(){ if(sndOk()){ noiseBurst(now(),0.12,0.3,"highpass",1800,3200,0.5); noiseBurst(now()+0.08,0.16,0.22,"bandpass",2400,3000,0.45); } }
 function sceneAct(act,b){
   if(act==="snd"){ sndUnlock(); sndSetOn(!SND.on); b.textContent=SND.on?"🔊 音あり":"🔇 音なし"; sndUi("ok"); return; }
-  if(act==="cardgo"){ if(SC.busy||!SC.cardGo)return; sndUi("tap"); const f=SC.cardGo; SC.cardGo=null; SC.card=null; f(); return; }
+  if(act==="cardgo"){ if(SC.busy||!SC.cardGo)return; sndUi("tap"); const f=SC.cardGo; SC.cardGo=null; SC.busy=true; packExit(f); return; }
   if(act==="flip"){
     if(SC.packMoved){ SC.packMoved=false; return; }   // なぞった直後のタップは数えない
     packStep();

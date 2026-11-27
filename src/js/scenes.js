@@ -371,11 +371,47 @@ function packStep(){
     return;
   }
 }
+/**
+ * 排出のあと → 監督室(→docs/33 §33.15)。NEW のカードは「NEW SIGNING」の判子を押してから。
+ * 赤い帯が画面を拭き取る間に監督室へ替わり、カードは縮みながら下の CARDS へ飛んで、CARDS が光って +1
+ */
+function packExit(f){
+  const K=SC.card||{}, slot=SC.el.querySelector(".pk-slot"), cin=SC.el.querySelector(".pk-cardin");
+  const calm=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fly=()=>{
+    const r=cin?cin.getBoundingClientRect():null, st=slot&&slot.querySelector(".pk-stamp");
+    let gh=null;
+    if(r&&!calm){ gh=document.createElement("div"); gh.className="pk-cardin pk-ghost";
+      const face=cin.querySelector(".k3d-f .kc")||cin.querySelector(".kc"); gh.innerHTML=(face?face.outerHTML:"")+(st?st.outerHTML:"");   // 表の面だけ写す
+      Object.assign(gh.style,{ left:r.left+"px", top:r.top+"px", width:r.width+"px", height:r.height+"px" }); }
+    const band=document.createElement("div"); band.className="pk-wipe"; band.innerHTML="<i></i><i></i><i></i>";
+    document.body.appendChild(band); if(gh)document.body.appendChild(gh);
+    sndPull();
+    setTimeout(()=>{
+      SC.card=null; SC.busy=false; f();
+      const tb=document.querySelector('#club .tabbar [data-v="cards"]');
+      const got=()=>{ if(!tb)return; tb.classList.add("got"); const pl=document.createElement("b"); pl.className="tb-plus"; pl.textContent="+1"; tb.appendChild(pl);
+        sndUi("ok"); setTimeout(()=>{ tb.classList.remove("got"); pl.remove(); },1200); };
+      if(!gh){ got(); return; }
+      if(!tb){ gh.classList.add("fade"); setTimeout(()=>gh.remove(),400); return; }
+      const t=tb.getBoundingClientRect(), dx=t.left+t.width/2-(r.left+r.width/2), dy=t.top+t.height/2-(r.top+r.height/2), k=Math.max(0.06,26/r.width);
+      gh.animate([{ transform:"none", opacity:1 },{ transform:"translate("+(dx*0.35).toFixed(0)+"px,"+(dy*0.1-40).toFixed(0)+"px) scale(.62) rotate(-6deg)", opacity:1, offset:.35 },
+        { transform:"translate("+dx.toFixed(0)+"px,"+dy.toFixed(0)+"px) scale("+k.toFixed(3)+") rotate(-18deg)", opacity:.8 }],{ id:"pkFly", duration:520, easing:"cubic-bezier(.4,0,.8,.6)", fill:"forwards" });
+      setTimeout(()=>{ gh.remove(); got(); },560);
+    },300);
+    setTimeout(()=>band.remove(),900);
+  };
+  if(K.isNew&&slot){
+    const st=document.createElement("div"); st.className="pk-stamp"; st.innerHTML="<b>NEW SIGNING</b>"; slot.appendChild(st);
+    setTimeout(sndStamp,170); setTimeout(fly,calm?300:820);
+  } else fly();
+}
+function sndStamp(){ if(sndOk()){ noiseBurst(now(),0.09,0.55,"lowpass",420,220,0.7); noiseBurst(now()+0.02,0.05,0.25,"bandpass",1400,900,0.5); } }
 function sndPull(){ if(sndOk())noiseBurst(now(),0.22,0.25,"bandpass",900,1400,0.4); }
 function sndTear(){ if(sndOk()){ noiseBurst(now(),0.12,0.3,"highpass",1800,3200,0.5); noiseBurst(now()+0.08,0.16,0.22,"bandpass",2400,3000,0.45); } }
 function sceneAct(act,b){
   if(act==="snd"){ sndUnlock(); sndSetOn(!SND.on); b.textContent=SND.on?"🔊 音あり":"🔇 音なし"; sndUi("ok"); return; }
-  if(act==="cardgo"){ if(SC.busy||!SC.cardGo)return; sndUi("tap"); const f=SC.cardGo; SC.cardGo=null; SC.card=null; f(); return; }
+  if(act==="cardgo"){ if(SC.busy||!SC.cardGo)return; sndUi("tap"); const f=SC.cardGo; SC.cardGo=null; SC.busy=true; packExit(f); return; }
   if(act==="flip"){
     if(SC.packMoved){ SC.packMoved=false; return; }   // なぞった直後のタップは数えない
     packStep();

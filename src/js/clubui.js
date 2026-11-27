@@ -79,13 +79,13 @@ function showClub(keepScroll){
         const btn=pw.querySelector(dx<0?".pp-arw.r":".pp-arw.l"); if(btn&&!btn.disabled)btn.click(); }); } }
   // 画面の切り替えに向き(→docs/33 §33.10 GC2): タブは並びの右へ行くと右から、準備の段は進むと右から・戻ると左から入る
   const vk=CL.flow==="prep"&&!CL.S.termOver?["p",CL.S.g.step==="train"?1:CL.strat?4:CL.scout?3:2]:["t",TABS.findIndex(t=>t[0]===CL.tab)];
-  if(main&&CL._vk&&CL._vk[0]===vk[0]&&CL._vk[1]!==vk[1])main.classList.add(vk[1]>CL._vk[1]?"sl-r":"sl-l");
+  if(main&&CL._vk&&(CL._vk[0]!==vk[0]?1:CL._vk[1]!==vk[1]))main.classList.add(CL._vk[0]!==vk[0]?(vk[0]==="p"?"sl-r":"sl-l"):vk[1]>CL._vk[1]?"sl-r":"sl-l");   /* タブ → 準備は右から、準備 → タブは左から(→docs/33 §33.15) */
   CL._vk=vk;
   // モーダルは開いたときだけ下から出る(中を操作して描き直すたびには動かさない)
   if(kb2&&!CL._modal)kb2.closest(".kmodal").classList.add("enter");
   CL._modal=!!kb2;
 }
-function hideClub(){ document.getElementById("club").classList.remove("on"); }
+function hideClub(){ document.getElementById("club").classList.remove("on"); CL._vk=null; }   // 試合から戻ったときは向きの動きを付けない
 
 const clubName=id=>id==="me"?myTeam(CL.S).name:teamNameOf(TEAMS[id]);
 const clubShort=id=>id==="me"?myTeam(CL.S).short:TEAMS[id].short;
