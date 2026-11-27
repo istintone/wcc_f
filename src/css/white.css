@@ -511,3 +511,6 @@ body.th-wl #club .tabbar .tb-plus{position:absolute;left:72%;top:2px;font-family
 /* MANAGER の札(→docs/14 §14.212) */
 body.th-wl #club .mgr-card .mg-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 body.th-wl #club .mgr-card>.fold{margin:10px auto 0}
+/* 出来事の返事をした選手の顔(→docs/14 §14.213) */
+body.th-wl #club .sec-ev.done .tk-rx{display:flex;align-items:flex-end;gap:8px}
+body.th-wl #club .sec-ev.done .tk-rx .rx-av{flex:none;width:40px;height:40px;margin:0}

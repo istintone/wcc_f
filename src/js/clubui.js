@@ -1207,7 +1207,7 @@ function talkDoneHtml(d,av,nm,tag){
   const an=d.seen?'':' anim'; d.seen=true;
   return '<section class="sec sec-ev done'+an+'">'+av+'<div><b class="sec-nm">'+nm+'<em class="sec-tag">'+tag+'</em></b><p>'+d.q+'</p>'+
     '<div class="tk-me"><span>'+d.a+'</span></div>'+
-    (d.rx?'<div class="tk-rx"><small>'+d.who+'</small><p>「'+d.rx+'」</p></div>':'')+'</div></section>';
+    (d.rx?'<div class="tk-rx">'+(d.id&&CARDS[d.id]&&artSrc(CARDS[d.id],"stand")?'<i class="sec-av pl-av rx-av"><img src="'+artSrc(CARDS[d.id],"stand")+'" alt=""></i>':'')+'<div><small>'+d.who+'</small><p>「'+d.rx+'」</p></div></div>':'')+'</div></section>';   // 返事をした選手の顔(→docs/14 §14.213)
 }
 /** CLUB の秘書の欄: いまの秘書と親密度。開くと選び直せる */
 function secClubHtml(){
