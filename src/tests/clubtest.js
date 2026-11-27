@@ -917,6 +917,17 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   { const S=mk(); S.g.combos=[{ id:"k_kyougeki", ids:[S.sq[2],S.sq[3]] }];
     check("コンビは任期の終わりで消える(新しい育成は空)",!(E.newGrowth(S.sq).combos||[]).length); }
 }
+// B案(→docs/32 §32.12): スキルの効き目は格が高いほど控えめ。それでも「格が高いほど強い」は崩れない
+{
+  console.log("■ スキルの効き目と格(B案)");
+  const K=id=>E.skGradeK(E.CARDS[id]);
+  check("スキルの効き目は格が高いほど控えめ(格 1.5 まで 1、下限 0.6)",K("rmc16")===1&&K("cat10")<1&&K("mcb10")<K("cat10")&&K("mcb10")>=0.6,
+    "格1.2 "+K("rmc16").toFixed(2)+" / 2.2 "+K("cat10").toFixed(2)+" / 3.4 "+K("mcb10").toFixed(2));
+  const gd=cf=>{ let g=0; const N=300; for(let i=0;i<N;i++){ const H=E.makeTeamDef("azr",false); const j=H.xi.findIndex((x,k)=>k>0&&E.posAt(x.h,x.x)==="CF");
+      H.xi[j]=Object.assign({},H.xi[j],{ card:E.CARDS[cf] }); const M=E.simulateMatch(H,E.makeTeamDef("ros",true),777000+i); g+=M.home.score-M.away.score; } return g/N; };
+  const hi=gd("mcb10"), mid=gd("cat10"), lo=gd("rmc16");
+  check("同じスキル(ジャッカル)なら、格が高い CF のチームほど強い(逆転しない)",hi>mid&&mid>lo,"格3.4 "+f2(hi)+" / 2.2 "+f2(mid)+" / 1.2 "+f2(lo));
+}
 // 第5段(→docs/23): 固有・出来事・自動で付くチームのタグ
 {
   console.log("\n■ 固有と出来事");

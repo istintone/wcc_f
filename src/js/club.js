@@ -57,14 +57,14 @@ const SCHED=(()=>{
 /** 役割ごとの能力のひな形 [off,def,tec,pow,spd,sta] と、付けるスキルの候補 */
 const GEN_ROLE={
   GK: { st:[3,16,10,14,9,10],   pos:"GK", sk:["stopper","stopper","pkstop","sweeper","feeder"] },
-  CB: { st:[6,16,10,15,11,12],  pos:"DF", sk:["leader","wall","line","cover","mark","manmark","killer","libero","tower"] },
+  CB: { st:[6,16,10,15,11,12],  pos:"DF", sk:["leader","block","line","cover","mark","manmark","intercept","libero","tower"] },
   SB: { st:[9,13,12,10,15,15],  pos:"DF", sk:["over","over","cross","allout","dynamo"] },
   DMF:{ st:[8,14,13,13,11,16],  pos:"MF", sk:["hunt","maker","cover","captain","dynamo","passer"] },
-  CMF:{ st:[12,10,15,11,12,14], pos:"MF", sk:["passer","thru","maker","counter","combo","longp","area","team"] },
+  CMF:{ st:[12,10,15,11,12,14], pos:"MF", sk:["passer","thru","maker","touch","combo","longp","area","dynamo"] },
   OMF:{ st:[14,8,16,10,13,12],  pos:"MF", sk:["chance","fanta","drib","middle","kicker","thru"] },
-  SMF:{ st:[13,8,14,9,16,13],   pos:"MF", sk:["wing","cross","counter","dynamo"] },
+  SMF:{ st:[13,8,14,9,16,13],   pos:"MF", sk:["wing","cross","allout","dynamo"] },
   WG: { st:[15,6,15,9,16,12],   pos:"FW", sk:["wing","cross","fanta","sprint"] },
-  CF: { st:[16,5,13,15,13,11],  pos:"FW", sk:["hunter","runner","post","target","tower","ace","chase","sprint"] }
+  CF: { st:[16,5,13,15,13,11],  pos:"FW", sk:["hunter","runner","post","target","tower","jackal","chase","sprint"] }
 };
 const GEN_BENCH=["GK","CB","CMF","SMF","CF"];
 const GEN_NO=[1,2,5,4,3,6,8,10,7,9,11,12,15,14,17,19];

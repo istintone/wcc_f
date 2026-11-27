@@ -83,6 +83,11 @@ function gkOut(gk){
  * 選手の振る舞い(→docs/32 §32.8 B・docs/30)。型(card.ptype)と特性タグ(card.trait)を1つにまとめる。
  * 高さ・横のずれは足し、重みは掛ける。試合の処理と映像はこれ(p.bh)だけを見る
  */
+/**
+ * B案(→docs/32 §32.12): スキルの効き目を格で裏調整する。格 gradeFrom までは 1、そこから 1 上がるごとに gradeSlope 控えめに(下限 gradeMin)。
+ * 格の高い選手は能力が高いので、控えめにしても「格が高いほど強い」は崩れない(clubtest で確かめる)。格の無いカード(固定のチーム・作った相手)は 1
+ */
+function skGradeK(c){ const K=TUNING.skill2; return c&&c.grade!=null?clamp(1-(c.grade-K.gradeFrom)*K.gradeSlope,K.gradeMin,1):1; }
 function bhOf(c){
   const o={ h:0, xIn:0, xOut:0, ch:{}, recv:[], recvLong:1, mark:1, sweep:1, lob:1, save:0, near:false, quick:false, amp:1, drift:1, press:1, fx:{} };
   const add=s=>{ if(!s)return;
@@ -115,6 +120,7 @@ function placePlayer(p,h,x){
 const FX0=()=>({ chs:[], defs:[], shot:1, mid:1, aerial:1, fk:1, ck:1, pkK:1, blk:1, gk:1, pk:1,
   sweep:1, lob:1, sta:1, all:1, recv:1, recvDeep:1, zone:1, chase:1, assist:1, urge:1, vsKp:1,
   angle:1, reb:1, gegen:1, big:1, gkNear:1, clutch:1,   // 新しいスキル(→docs/32 §32.8 E)
+  spirit:1, offL:1, aerD:1,   // 闘将・ラインコントローラー・空中戦の守護者(→docs/32 §32.12)
   cov:0, range:0 });
 function mkPlayer(card,h,x,gk){
   // fat0 = 練習の疲れ。試合をそのぶん消耗した状態で始める(→docs/05 §5.3)
@@ -290,9 +296,10 @@ function refreshFx(M,min){
     for(const p of T.players){
       const fx=FX0(), sk=skOf(p);
       const rare=p.kp?T.rare:null, mv=rare&&rare.mv?RARE_MOVES[rare.mv]:null;
-      addFx(fx,sk&&sk.buff,(p.c.buffK||1)*(rare?TUNING.rare.buffK:1));   // 特殊能力の★でバフが強まる。レアKP はさらに
+      addFx(fx,sk&&sk.buff,(p.c.buffK||1)*(rare?TUNING.rare.buffK:1)*skGradeK(p.c));   // 特殊能力の★でバフが強まる。レアKP はさらに。格が高いほど控えめ(B案)
       if(mv&&mv.fx)addFx(fx,mv.fx,1);
       if(T.big&&fx.big!==1)fx.all*=fx.big;   // ビッグマッチ(→docs/32 §32.8 E)
+      if(fx.spirit!==1&&(min>=Y.lateMin||T.score<D.score))fx.all*=fx.spirit;   // 闘将: 終盤と、負けているとき
       if(p.bh)for(const k in p.bh.fx)fx[k]*=p.bh.fx[k];   // 型の小さな上乗せ(→docs/32 §32.8 B)
       p.mv=mv?rare.mv:null;
       if(T.setplay){ fx.fk*=1+T.setplay; fx.ck*=1+T.setplay; fx.pkK*=1+T.setplay; }
@@ -816,7 +823,8 @@ function stepMatch(M){
   // オフサイド(→docs/02 §2.10)。相手の最終ラインより前で受けると取られる
   if(rc&&dest.h>0.5&&dest.h>h){
     const O=TUNING.rule, over=dest.h-lastLine(D,h);
-    if(over>0&&rng()<O.offBase*(Dt.off||1)*(A.offRisk||1)*Math.min(1,over/O.offSpan)){
+    const offL=D.players.reduce((v,q)=>Math.max(v,q.fx.offL||1),1);   // ラインコントローラー(→docs/32)
+    if(over>0&&rng()<O.offBase*(Dt.off||1)*(A.offRisk||1)*offL*Math.min(1,over/O.offSpan)){
       tire(c); T.st.pass++; c.st.pass++; T.st.off++;
       push({ side:T.side, type:"offside", by:c.id, to:rc.p.id, label:ch.label, ok:false,
         from:[r2(h),r2(x)], dest:[r2(dest.h),r2(dest.x)] });
@@ -959,13 +967,13 @@ function takeSet(M,rng,push){
   // ボックスへ入れる → 空中戦。高さ(pow)が主役
   const k=spKicker(T,s.kind), th=0.9, tx=50+(rng()*2-1)*10, air=T.fx.aerial||1;
   const a=pickW(rng,outfield(T).filter(q=>q!==k),q=>Math.pow((eff(q,"pow")+eff(q,"off")*0.5)*q.fx.aerial,2));
-  const d=pickW(rng,outfield(D),q=>Math.pow((eff(q,"pow")+eff(q,"def")*0.5)*q.fx.aerial,2));
+  const d=pickW(rng,outfield(D),q=>Math.pow((eff(q,"pow")+eff(q,"def")*0.5)*q.fx.aerial*q.fx.aerD,2));   // 空中戦の守護者は守るときだけ
   tire(k); if(a)tire(a); if(d)tire(d);
   let won=false;
   if(a&&d){
     const aSc=(eff(a,"pow")*0.65+eff(a,"off")*0.35)*(0.75+eff(k,"tec")/STAT_MAX*0.5)
       *a.fx.aerial*k.fx.ck*air*rr(rng);
-    const dSc=(eff(d,"pow")*0.65+eff(d,"def")*0.35)*d.fx.aerial*rr(rng);
+    const dSc=(eff(d,"pow")*0.65+eff(d,"def")*0.35)*d.fx.aerial*d.fx.aerD*rr(rng);
     won=aSc>dSc*O.thAerial;
   }else won=!!a;
   push({ side:T.side, type:"cross", sp:s.kind, by:k.id, to:a?a.id:null, vs:d?d.id:null, ok:won,
