@@ -206,9 +206,10 @@ const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.
 /** 個人練習で★突破の3択が出る状態か(→docs/14 §14.201) */
 const indReady=(S,id)=>{ const g=S.g.pl[id]; return !!g&&g.is<4&&g.ie>=TUNING.grow.ind.need[g.is]; };
 /** 得意な能力(カード + 育成の上乗せがいちばん高く、まだ上限でないもの)。個人練習の3択の正解 */
-function indBest(S,id){
-  const c=CARDS[id], g=S.g.pl[id], v=k=>c[k]+((g&&g.up[k])||0);
-  const room=STATS.filter(k=>v(k)<STAT_MAX);
+function indBest(S,id){ const g=S.g.pl[id]; return bestStat(CARDS[id],g?g.up:{}); }
+/** 得意な能力(カード + 上乗せがいちばん高く、まだ上限でないもの)。相手クラブの育成でも使う(→docs/31) */
+function bestStat(c,up){
+  const v=k=>c[k]+((up&&up[k])||0), room=STATS.filter(k=>v(k)<STAT_MAX);
   return (room.length?room:STATS).slice().sort((a,b)=>v(b)-v(a))[0];
 }
 /** 個人練習の★突破の3択の練習メニュー(能力ごとに2通り) */
@@ -584,10 +585,22 @@ function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||indReady(S,id)
 
 /** 重なったカードの枚数(持っている枚数 − 1。数えるのは dup.max まで) */
 const dupOf=(S,id)=>Math.min(TUNING.grow.dup.max,Math.max(0,((S.coll&&S.coll[id])||1)-1));
-/** 覚醒で1項目に上がる値(1〜3 = 無地 / ＋ / ＋＋)。重なりが多いほど大きい値が出やすい */
-function awakeGain(S,id,rng){
-  const D=TUNING.grow.dup, n=dupOf(S,id), p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
+/** 覚醒で上がるポイント(1〜3 = 無地 / ＋ / ＋＋)。重なり n 枚が多いほど大きい値が出やすい(相手クラブは n = 0。→docs/31) */
+function awakePts(n,rng){
+  const D=TUNING.grow.dup, p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
   let r=rng()*t; for(let i=0;i<3;i++){ if(r<p[i])return i+1; r-=p[i]; } return 1;
+}
+const awakeGain=(S,id,rng)=>awakePts(dupOf(S,id),rng);
+/** 覚醒のポイントを能力に割り振る(自分の選手と相手クラブで同じ。→docs/14 §14.207・docs/31)。up = いまの上乗せ。返り値は { 能力: 上がる値 } */
+function awakeSplit(card,up,pts,rng){
+  const add={}, room=k=>STAT_MAX-card[k]-(up[k]||0)-(add[k]||0);
+  for(let n=0;n<pts;n++){
+    const chosen=Object.keys(add).filter(k=>room(k)>=1), fresh=STATS.filter(k=>!add[k]&&room(k)>=1&&card[k]>TUNING.grow.startKeep);
+    const pickNew=!chosen.length||(fresh.length&&rng()<TUNING.grow.ind.awakeNew);
+    const list=pickNew?fresh:chosen; if(!list.length)break;
+    const k=list[Math.floor(rng()*list.length)]; add[k]=(add[k]||0)+1;
+  }
+  return add;
 }
 const GAIN_MARK=["","","＋","＋＋"];
 /** 覚醒。能力が最大3項目、各+1〜3(どれが上がるか・いくつ上がるかは不定。1つは必ず上がる。重なりで大きくなりやすい) */
@@ -597,15 +610,7 @@ const GAIN_MARK=["","","＋","＋＋"];
  * 例: 3ポイント → TEC +3 / POW +1・TEC +2 / OFE +1・POW +1・TEC +1
  */
 function awaken(S,id,rng,out){
-  const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], add={};
-  const room=k=>STAT_MAX-card[k]-(g.up[k]||0)-(add[k]||0);
-  const pts=awakeGain(S,id,rng);
-  for(let n=0;n<pts;n++){
-    const chosen=Object.keys(add).filter(k=>room(k)>=1), fresh=STATS.filter(k=>!add[k]&&room(k)>=1&&card[k]>TUNING.grow.startKeep);
-    const pickNew=!chosen.length||(fresh.length&&rng()<I.awakeNew);
-    const list=pickNew?fresh:chosen; if(!list.length)break;
-    const k=list[Math.floor(rng()*list.length)]; add[k]=(add[k]||0)+1;
-  }
+  const g=S.g.pl[id], card=CARDS[id], add=awakeSplit(card,g.up,awakeGain(S,id,rng),rng);
   const got=STATS.filter(k=>add[k]).map(k=>{ g.up[k]=(g.up[k]||0)+add[k]; return STAT_LABEL[k]+" +"+add[k]; });
   const sum=STATS.reduce((a,k)=>a+(add[k]||0),0);
   g.is=5; g.q=false; g.ie=0;

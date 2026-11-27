@@ -150,9 +150,37 @@ function compEn(fx){
 }
 /** 大会名(英字。→docs/14 §14.164) */
 const compNm=id=>COMPS[id]?COMPS[id].en||COMPS[id].name:id;
+/**
+ * 相手も育成済みのチーム(→docs/31 §31.2)。自分の選手と同じ育成の結果(個人能力の★・覚醒・特殊能力の★)を、
+ * 強さの段と任期の進み(節)から決めて持たせる。たねは任期とクラブで決まり、任期のあいだ選手ごとの順は変わらない(育つだけ)
+ * 返り値は { id: 育てたカード }(先発と控え)
+ */
+function oppGrowth(S,teamId){
+  const G=TUNING.club.oppGrow, I=TUNING.grow.ind, t=Math.max(0,Math.min(4,tierOf(teamId)-1)), T=TEAMS[teamId];
+  const pr=clamp((S.played||0)/TUNING.club.termLen,0,1), lerp=(a,b)=>a[t]+(b[t]-a[t])*pr;
+  const avg=lerp(G.is0,G.is1), nAw=Math.round(lerp(G.aw0,G.aw1));
+  const u=id=>mulberry32((S.seed^hashStr("og:"+S.term+":"+id))>>>0)();
+  const xi=T.xi.slice().sort((a,b)=>u(b)-u(a)), aw=new Set(xi.slice(0,nAw));
+  const out={};
+  for(const id of T.xi.concat(T.bench)){
+    const card=CARDS[id], up={};
+    const is=aw.has(id)?5:clamp(Math.floor(avg+(u(id)-0.5)*2*G.isSpread+0.5),0,4);
+    for(let s=0;s<Math.min(4,is);s++){ const k=bestStat(card,up); if(card[k]+(up[k]||0)<STAT_MAX)up[k]=Math.min(STAT_MAX-card[k],(up[k]||0)+I.starUp); }
+    if(is>=5){ const r=mulberry32((S.seed^hashStr("ogA:"+S.term+":"+id))>>>0), add=awakeSplit(card,up,awakePts(0,r),r); for(const k in add)up[k]=(up[k]||0)+add[k]; }
+    const ss=id===T.kp?G.ss[t]:Math.min(4,Math.floor(avg));
+    const c=Object.assign({},card,{ is, ss, up, buffK:1+TUNING.grow.sp.buff*ss });
+    for(const k of STATS)c[k]=clamp(card[k]+(up[k]||0),1,STAT_MAX);
+    out[id]=c;
+  }
+  return out;
+}
 /** 相手の定義。Premier Div のリーグ戦では、相手は育成レベル最大(全軸が高く、KP の軸は金色) */
 function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
+  // 相手も育成済み(→docs/31 §31.2): 選手の★・覚醒・特殊能力の★
+  const gr=oppGrowth(S,fx.opp);
+  d.xi=d.xi.map(x=>gr[x.card.id]?Object.assign({},x,{ card:gr[x.card.id] }):x);
+  d.bench=d.bench.map(c=>gr[c.id]||c);
   if(fx.kind==="league"&&S.grade>=3){
     const v=TUNING.club.premierGraph, st=d.kp&&CARDS[d.kp]?styleOfCard(CARDS[d.kp]):null;
     d.graph={ O:v, D:v, R:v, C:v, S:v, P:v, gold:{} };

@@ -165,12 +165,15 @@ const TUNING={
   //   premierGraph … Premier Div の相手の成長グラフ(育成レベル最大。KP の軸は金色)
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
   //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
-  club:{ termLen:100, tierStat:[-0.2,0.5,1.1,1.8,2.5], statNoise:1.2, linkBase:6, linkTier:4,
+  club:{ termLen:100, tierStat:[-0.55,0.15,0.75,1.45,2.15], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[4,4,5,5,5,5,5]], promoteRank:2, relegateRank:7, premierGraph:95,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
-         historyMax:120 },
+         historyMax:120,
+         // 相手も育成済みのチーム(→docs/31 §31.2)。段1〜5ごと。is0・is1 … 先発の個人能力の★の平均(任期の初め・終わり)
+         //   aw0・aw1 … 覚醒している人数(初め・終わり)/ ss … KP の特殊能力の★ / isSpread … ★のばらつき(±)
+         oppGrow:{ is0:[0,0.5,1,2,3], is1:[1,1.5,2.5,3.5,4.5], aw0:[0,0,0,1,2], aw1:[0,0,1,3,5], ss:[1,2,3,4,5], isSpread:1 } },
   // 育成(→docs/05 §5.3〜5.6)
   //   startOff/startKeep … 任期の初めの能力のずれ(2026-11-27 から 0。→docs/14 §14.208)。startKeep 以下の能力は覚醒でも上げない
   //   spChance … 練習の枠が特殊練習に差し替わる率(施設レベル1つごと)

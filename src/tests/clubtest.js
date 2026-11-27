@@ -587,9 +587,20 @@ console.log("⑥ 育成(1任期を、検証用の方針で育てながら回す)
   }
 
   // 育てる前の強さ(段4の相手に300試合)
-  const strength=T=>{ let gd=0; const N=300, opp=W.clubs.filter(c=>E.tierOf(c)===4)[0];
+  // 育成だけの強さを比べる: 調子と疲れは初めと同じにそろえる(その日の調子・ケガで差が出ないように。→docs/31)
+  { // 相手も育成済み(→docs/31 §31.2): 段と任期の進みで★・覚醒が増え、同じ試合なら毎回同じ。自分の上限を超えない
+    const at=(pl,t)=>{ const o=W.clubs.filter(c=>E.tierOf(c)===t)[0]; return E.oppDefOf(Object.assign({},S,{ played:pl }),{ opp:o, kind:"friendly" }).xi.map(x=>x.card); };
+    const av=xi=>xi.reduce((a,c)=>a+c.is,0)/xi.length, awN=xi=>xi.filter(c=>c.is>=5).length;
+    const a0=at(0,5), a1=at(99,5), b1=at(99,1), same=JSON.stringify(at(40,4))===JSON.stringify(at(40,4));
+    const okMax=a1.every(c=>c.is<=5&&c.ss<=5&&E.STATS.every(k=>c[k]<=E.STAT_MAX&&(c.up[k]||0)<=0.5*4+3));
+    check("相手も育成済み: 任期の後半ほど育ち、強い段ほど★と覚醒が多い。同じ試合なら同じ・上限は自分と同じ",av(a1)>av(a0)&&awN(a1)>awN(a0)&&av(a1)>av(b1)&&same&&okMax,
+      "段5 ★"+av(a0).toFixed(1)+"→"+av(a1).toFixed(1)+" 覚醒 "+awN(a0)+"→"+awN(a1)+" / 段1 ★"+av(b1).toFixed(1)); }
+  // 相手は任期の初めの育成済みの段4(→docs/31 §31.2)。初めと終わりで同じ相手と比べる
+  const opp4=W.clubs.filter(c=>E.tierOf(c)===4)[0], oppDef=E.oppDefOf(Object.assign({},S,{ played:0 }),{ opp:opp4, kind:"friendly" });
+  const strength=T0=>{ let gd=0; const N=300;
+    const T=JSON.parse(JSON.stringify(T0)); for(const id in T.g.pl){ T.g.pl[id].mot=E.TUNING.grow.mot.start; T.g.pl[id].fat=0; }
     for(let i=0;i<N;i++){ const d=E.playerDef(T); d.cpu=true;
-      const M=E.simulateMatch(d,E.makeTeamDef(opp,true),333000+i); gd+=M.home.score-M.away.score; }
+      const M=E.simulateMatch(d,oppDef,333000+i); gd+=M.home.score-M.away.score; }
     return gd/N; };
   const before=strength(S);
   const log=[]; let ok=true;

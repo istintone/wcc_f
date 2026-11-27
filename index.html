@@ -4782,12 +4782,15 @@ const TUNING={
   //   premierGraph … Premier Div の相手の成長グラフ(育成レベル最大。KP の軸は金色)
   //   prize       … 賞金(億)。cup は格ごとの1勝ぶん。優勝は titleK 倍が上乗せ
   //   linkTier    … 段1つごとに増える線の本数 / tierGraph … 段ごとの成長グラフの値(相手は育成しない代わり)/ tierGold … この段以上は既定の KP の軸が金色
-  club:{ termLen:100, tierStat:[-0.2,0.5,1.1,1.8,2.5], statNoise:1.2, linkBase:6, linkTier:4,
+  club:{ termLen:100, tierStat:[-0.55,0.15,0.75,1.45,2.15], statNoise:1.2, linkBase:6, linkTier:4,
          tierGraph:[25,45,60,75,90], tierGold:5,
          leagueTiers:[[1,1,2,2,2,3,3],[2,2,3,3,3,4,4],[4,4,5,5,5,5,5]], promoteRank:2, relegateRank:7, premierGraph:95,
          prize:{ league:1, leagueRank:[12,7,4,2,1,0,0,0], gradeK:[1,1.6,2.4], friendly:0.3, titleK:4,
                  cup:{ E:1.5, D:2, C:3, B:5, A:7, S:10 } },
-         historyMax:120 },
+         historyMax:120,
+         // 相手も育成済みのチーム(→docs/31 §31.2)。段1〜5ごと。is0・is1 … 先発の個人能力の★の平均(任期の初め・終わり)
+         //   aw0・aw1 … 覚醒している人数(初め・終わり)/ ss … KP の特殊能力の★ / isSpread … ★のばらつき(±)
+         oppGrow:{ is0:[0,0.5,1,2,3], is1:[1,1.5,2.5,3.5,4.5], aw0:[0,0,0,1,2], aw1:[0,0,1,3,5], ss:[1,2,3,4,5], isSpread:1 } },
   // 育成(→docs/05 §5.3〜5.6)
   //   startOff/startKeep … 任期の初めの能力のずれ(2026-11-27 から 0。→docs/14 §14.208)。startKeep 以下の能力は覚醒でも上げない
   //   spChance … 練習の枠が特殊練習に差し替わる率(施設レベル1つごと)
@@ -7446,9 +7449,37 @@ function compEn(fx){
 }
 /** 大会名(英字。→docs/14 §14.164) */
 const compNm=id=>COMPS[id]?COMPS[id].en||COMPS[id].name:id;
+/**
+ * 相手も育成済みのチーム(→docs/31 §31.2)。自分の選手と同じ育成の結果(個人能力の★・覚醒・特殊能力の★)を、
+ * 強さの段と任期の進み(節)から決めて持たせる。たねは任期とクラブで決まり、任期のあいだ選手ごとの順は変わらない(育つだけ)
+ * 返り値は { id: 育てたカード }(先発と控え)
+ */
+function oppGrowth(S,teamId){
+  const G=TUNING.club.oppGrow, I=TUNING.grow.ind, t=Math.max(0,Math.min(4,tierOf(teamId)-1)), T=TEAMS[teamId];
+  const pr=clamp((S.played||0)/TUNING.club.termLen,0,1), lerp=(a,b)=>a[t]+(b[t]-a[t])*pr;
+  const avg=lerp(G.is0,G.is1), nAw=Math.round(lerp(G.aw0,G.aw1));
+  const u=id=>mulberry32((S.seed^hashStr("og:"+S.term+":"+id))>>>0)();
+  const xi=T.xi.slice().sort((a,b)=>u(b)-u(a)), aw=new Set(xi.slice(0,nAw));
+  const out={};
+  for(const id of T.xi.concat(T.bench)){
+    const card=CARDS[id], up={};
+    const is=aw.has(id)?5:clamp(Math.floor(avg+(u(id)-0.5)*2*G.isSpread+0.5),0,4);
+    for(let s=0;s<Math.min(4,is);s++){ const k=bestStat(card,up); if(card[k]+(up[k]||0)<STAT_MAX)up[k]=Math.min(STAT_MAX-card[k],(up[k]||0)+I.starUp); }
+    if(is>=5){ const r=mulberry32((S.seed^hashStr("ogA:"+S.term+":"+id))>>>0), add=awakeSplit(card,up,awakePts(0,r),r); for(const k in add)up[k]=(up[k]||0)+add[k]; }
+    const ss=id===T.kp?G.ss[t]:Math.min(4,Math.floor(avg));
+    const c=Object.assign({},card,{ is, ss, up, buffK:1+TUNING.grow.sp.buff*ss });
+    for(const k of STATS)c[k]=clamp(card[k]+(up[k]||0),1,STAT_MAX);
+    out[id]=c;
+  }
+  return out;
+}
 /** 相手の定義。Premier Div のリーグ戦では、相手は育成レベル最大(全軸が高く、KP の軸は金色) */
 function oppDefOf(S,fx){
   const d=makeTeamDef(fx.opp,true);
+  // 相手も育成済み(→docs/31 §31.2): 選手の★・覚醒・特殊能力の★
+  const gr=oppGrowth(S,fx.opp);
+  d.xi=d.xi.map(x=>gr[x.card.id]?Object.assign({},x,{ card:gr[x.card.id] }):x);
+  d.bench=d.bench.map(c=>gr[c.id]||c);
   if(fx.kind==="league"&&S.grade>=3){
     const v=TUNING.club.premierGraph, st=d.kp&&CARDS[d.kp]?styleOfCard(CARDS[d.kp]):null;
     d.graph={ O:v, D:v, R:v, C:v, S:v, P:v, gold:{} };
@@ -8778,9 +8809,10 @@ const spReady=(S,id)=>{ const g=S.g.pl[id]; return g.ss<4&&g.se>=TUNING.grow.sp.
 /** 個人練習で★突破の3択が出る状態か(→docs/14 §14.201) */
 const indReady=(S,id)=>{ const g=S.g.pl[id]; return !!g&&g.is<4&&g.ie>=TUNING.grow.ind.need[g.is]; };
 /** 得意な能力(カード + 育成の上乗せがいちばん高く、まだ上限でないもの)。個人練習の3択の正解 */
-function indBest(S,id){
-  const c=CARDS[id], g=S.g.pl[id], v=k=>c[k]+((g&&g.up[k])||0);
-  const room=STATS.filter(k=>v(k)<STAT_MAX);
+function indBest(S,id){ const g=S.g.pl[id]; return bestStat(CARDS[id],g?g.up:{}); }
+/** 得意な能力(カード + 上乗せがいちばん高く、まだ上限でないもの)。相手クラブの育成でも使う(→docs/31) */
+function bestStat(c,up){
+  const v=k=>c[k]+((up&&up[k])||0), room=STATS.filter(k=>v(k)<STAT_MAX);
   return (room.length?room:STATS).slice().sort((a,b)=>v(b)-v(a))[0];
 }
 /** 個人練習の★突破の3択の練習メニュー(能力ごとに2通り) */
@@ -9156,10 +9188,22 @@ function hasSign(S,id){ const g=S.g.pl[id]; return spReady(S,id)||indReady(S,id)
 
 /** 重なったカードの枚数(持っている枚数 − 1。数えるのは dup.max まで) */
 const dupOf=(S,id)=>Math.min(TUNING.grow.dup.max,Math.max(0,((S.coll&&S.coll[id])||1)-1));
-/** 覚醒で1項目に上がる値(1〜3 = 無地 / ＋ / ＋＋)。重なりが多いほど大きい値が出やすい */
-function awakeGain(S,id,rng){
-  const D=TUNING.grow.dup, n=dupOf(S,id), p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
+/** 覚醒で上がるポイント(1〜3 = 無地 / ＋ / ＋＋)。重なり n 枚が多いほど大きい値が出やすい(相手クラブは n = 0。→docs/31) */
+function awakePts(n,rng){
+  const D=TUNING.grow.dup, p=D.awakeP.map((v,i)=>Math.max(0,v+D.awakeStep[i]*n)), t=p.reduce((a,b)=>a+b,0);
   let r=rng()*t; for(let i=0;i<3;i++){ if(r<p[i])return i+1; r-=p[i]; } return 1;
+}
+const awakeGain=(S,id,rng)=>awakePts(dupOf(S,id),rng);
+/** 覚醒のポイントを能力に割り振る(自分の選手と相手クラブで同じ。→docs/14 §14.207・docs/31)。up = いまの上乗せ。返り値は { 能力: 上がる値 } */
+function awakeSplit(card,up,pts,rng){
+  const add={}, room=k=>STAT_MAX-card[k]-(up[k]||0)-(add[k]||0);
+  for(let n=0;n<pts;n++){
+    const chosen=Object.keys(add).filter(k=>room(k)>=1), fresh=STATS.filter(k=>!add[k]&&room(k)>=1&&card[k]>TUNING.grow.startKeep);
+    const pickNew=!chosen.length||(fresh.length&&rng()<TUNING.grow.ind.awakeNew);
+    const list=pickNew?fresh:chosen; if(!list.length)break;
+    const k=list[Math.floor(rng()*list.length)]; add[k]=(add[k]||0)+1;
+  }
+  return add;
 }
 const GAIN_MARK=["","","＋","＋＋"];
 /** 覚醒。能力が最大3項目、各+1〜3(どれが上がるか・いくつ上がるかは不定。1つは必ず上がる。重なりで大きくなりやすい) */
@@ -9169,15 +9213,7 @@ const GAIN_MARK=["","","＋","＋＋"];
  * 例: 3ポイント → TEC +3 / POW +1・TEC +2 / OFE +1・POW +1・TEC +1
  */
 function awaken(S,id,rng,out){
-  const I=TUNING.grow.ind, g=S.g.pl[id], card=CARDS[id], add={};
-  const room=k=>STAT_MAX-card[k]-(g.up[k]||0)-(add[k]||0);
-  const pts=awakeGain(S,id,rng);
-  for(let n=0;n<pts;n++){
-    const chosen=Object.keys(add).filter(k=>room(k)>=1), fresh=STATS.filter(k=>!add[k]&&room(k)>=1&&card[k]>TUNING.grow.startKeep);
-    const pickNew=!chosen.length||(fresh.length&&rng()<I.awakeNew);
-    const list=pickNew?fresh:chosen; if(!list.length)break;
-    const k=list[Math.floor(rng()*list.length)]; add[k]=(add[k]||0)+1;
-  }
+  const g=S.g.pl[id], card=CARDS[id], add=awakeSplit(card,g.up,awakeGain(S,id,rng),rng);
   const got=STATS.filter(k=>add[k]).map(k=>{ g.up[k]=(g.up[k]||0)+add[k]; return STAT_LABEL[k]+" +"+add[k]; });
   const sum=STATS.reduce((a,k)=>a+(add[k]||0),0);
   g.is=5; g.q=false; g.ie=0;
