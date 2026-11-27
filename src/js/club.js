@@ -1115,7 +1115,7 @@ function upcoming(S,n){
     }
     if(cup.st==="wait"&&(ix===0?entryOk(S,cid):enter.has(cid))){ enter.add(cid);   // 出られる大会は、2戦目からも「勝ち進めば」で見せる
       out.push({ no, comp:cid, label, kind:"cup", opp:null, home:type!=="leg2", note:ix===0?"出場できる(相手は抽選)":"相手は抽選", ifWin:ix>0&&type!=="grp"&&type!=="leg2" }); continue; }
-    if(cup.st==="wait"&&ix===0&&!wrap){ out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true, note:compNm(cid)+"の出場条件を満たせば、そちらに出る" }); continue; }
+    if(cup.st==="wait"&&ix===0&&!wrap){ out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true, note:compNm(cid)+" に出られればそちら" }); continue; }
     out.push({ no, comp:"FR", label:"", kind:"friendly", opp:null, home:true,
       note:cup.st==="wait"?compNm(cid)+"は条件待ち":cup.st==="in"?"":compNm(cid)+(cup.st==="won"?"は優勝済み":cup.st==="quit"?"は棄権":"は敗退")+"の枠" });
   }

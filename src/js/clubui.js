@@ -612,7 +612,7 @@ function squadHtml(){
       '<span><small>連携線</small><button class="lk-tg'+(CL.noLinks?' off':'')+'" data-act="lktoggle" aria-label="連携線の表示"><i></i></button></span></span></div>'+'</div>'+
     '<div class="sq-side"><div class="sq-bench"><span class="lbl">SUB</span>'+bench.map((id,j)=>sqTokenHtml(id,11+j,false)).join("")+'</div>'+sqRolesHtml()+
       // KP設定と最適配置は ORDER の下に1段ずつ(→docs/14 §14.132)
-      '<div class="sq-mini"><button class="sq-mb" data-act="kpopen">KP設定</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div></div>';
+      '<div class="sq-mini"><button class="sq-mb" data-act="kpopen">KP</button><button class="sq-mb" data-act="sqauto">最適配置</button></div></div></div>';
   // 選手の詳細はフロート(sqModalHtml)、任命の案内と結果はインフォバー(→docs/14 §14.48)
   // ハーフタイムの指示は戦略方針へ移した(→docs/14 §14.31)
   return h;
@@ -886,7 +886,7 @@ function cardModalHtml(id,list){
     const arw=(d,c1,c2)=>'<svg class="'+d+'" viewBox="0 0 20 40" aria-hidden="true"><defs><linearGradient id="xg'+d+'" x1="0" y1="'+(d==="up"?1:0)+'" x2="0" y2="'+(d==="up"?0:1)+'"><stop offset="0" stop-color="'+c1+'" stop-opacity=".15"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs>'+
       '<path d="'+(d==="up"?'M10 1 L19 14 L13 14 L13 39 L7 39 L7 14 L1 14 Z':'M10 39 L19 26 L13 26 L13 1 L7 1 L7 26 L1 26 Z')+'" fill="url(#xg'+d+')"/></svg>';
     h+=CL.kSwap?'<div class="km-xchg" role="img" aria-label="交代(IN と OUT)">'+arw("up","#e8304a","#ff8a9a")+arw("dn","#2fb36a","#7dffb0")+'</div>'
-      :'<button class="btn btn-main km-swap" data-act="kswap">⇄ SQUAD と交代</button>';
+      :'<button class="btn btn-main km-swap" data-act="kswap">⇄ 入れ替える</button>';
     if(CL.kSwap){
       // 交代の相手は、下のカードの左右の ‹ › で登録の順に切り替える(16人の札の並びはやめた。→docs/14 §14.122)
       if(!CL.kOut||!S.sq.includes(CL.kOut))CL.kOut=S.sq[0];
@@ -1137,7 +1137,7 @@ function nextTileHtml(){
       (fx.kind==="friendly"?"":fx.home?" ・ HOME":" ・ AWAY")+(fx.agg?' ・ 第1試合 '+fx.agg[0]+'-'+fx.agg[1]:fx.ko?' ・ KNOCK OUT':'')+'</p>'+
     (fx.missed?'<p class="nx-meta dim">'+compNm(fx.missed)+'('+fx.why+')の枠</p>':'')+
     formHtml(S)+
-    (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">SKIP</button></div>'
+    (fr?'<div class="nx-go2"><button class="go" data-act="go">'+go+'</button><button class="sk" data-act="skipslot">スキップ</button></div>'
       :'<div class="nx-go"><span>'+go+'</span></div>')+'</section>';
 }
 /** カップのエントリー受付(1戦目の前。→docs/20 §20.4)。エントリーすると対戦の札、棄権するとフレンドリーの札に変わる */
