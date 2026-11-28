@@ -29,7 +29,7 @@ OUT = ROOT / "index.html"
 
 # 結合順。data.js は先頭("use strict" を持つ)、main.js は起動の副作用を持つので最後。
 # DOM に触らない8つ(data / trainings / realcards / engine / club / pool / grow / term)は src/tests/_setup.js の ENGINE_FILES と同じ並びにする。
-JS_FILES = ["combos.js", "uniques.js", "data.js", "trainings.js", "realcards.js", "rarekp.js", "engine.js", "club.js", "splogo.js", "pool.js", "grow.js", "term.js", "awards.js", "scoop.js", "emblem-art.js", "emblem.js", "art-players.js", "art-sec.js", "art-mgr.js", "art-stadium.js", "paper.js", "logo-img.js", "logo.js", "cardback.js", "render.js", "board.js", "clubui.js", "tutorial.js", "settings.js", "sound.js", "scenes.js", "main.js"]
+JS_FILES = ["combos.js", "uniques.js", "data.js", "trainings.js", "realcards.js", "rarekp.js", "engine.js", "club.js", "splogo.js", "pool.js", "talks.js", "grow.js", "term.js", "awards.js", "scoop.js", "emblem-art.js", "emblem.js", "art-players.js", "art-sec.js", "art-mgr.js", "art-stadium.js", "paper.js", "logo-img.js", "logo.js", "cardback.js", "render.js", "board.js", "clubui.js", "tutorial.js", "settings.js", "sound.js", "scenes.js", "main.js"]
 CSS_FILES = ["base.css", "theme.css", "neon.css", "white.css"]   # neon = ブラック × レッドの作り込み / white = ホワイト × レッドの作り込み
 # 埋め込む書体(英数字だけの latin サブセット。日本語はシステムの書体)。Oswald は SIL Open Font License
 # (ファイル, 書体名, 太さ, 斜体か)。Barlow Condensed は見出し・数字用(本物の斜体を持つ。OFL。→docs/14 §14.18)

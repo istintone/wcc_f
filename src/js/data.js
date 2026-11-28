@@ -246,6 +246,7 @@ const TUNING={
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
+  //          missRate=この採点より低いと「ミスの場面」の話しかけ / consultMot・consultFat=相談で合う言い方を選んだときの、やる気の上乗せと疲れの抜け(→docs/39)
   grow:{ startOff:0, startKeep:6, spChance:0.12, evTrainK:1.3, trainEvP:0.10,   // イベントのレア訓練: 経験の倍率・試合ごとに出来事が起きる率(→docs/26 §26.4)
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeNew:0.5 },
          // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
@@ -270,7 +271,7 @@ const TUNING={
          rest:{ keep:0.3, motUp:0.6 },
          // 見える化: 連携の経験がこの割合を超えた組を「育ちそう」として点線で出す / 信頼度(絆)の段の区切り
          soon:0.6, trust:[3,8,15],
-         comm:{ max:3, ind:20, talk:1, talkLow:2 },
+         comm:{ max:3, ind:20, talk:1, talkLow:2, missRate:6.0, consultMot:1, consultFat:0.04 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
   // 任期の終わり(→docs/05 §5.8)

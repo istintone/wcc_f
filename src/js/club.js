@@ -554,6 +554,7 @@ function applyResult(S,W,fx,res){
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
   if(typeof scoopAfterMatch==="function")scoopAfterMatch(S,fx);   // スクープの報告(→docs/38)
+  S.lastPl={ goals:res.goals||{}, rate:res.rate||{}, mvp:res.mvp||null };   // 前の試合の選手ごとの出来事(話しかけの場面。→docs/39 A)
   // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
   if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
     if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }

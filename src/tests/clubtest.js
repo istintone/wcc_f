@@ -1078,5 +1078,24 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   check("伝説の OB に会うと隠しイベントの種(S.obSeed)",S.obSeed===true);
   K.p=0.3; K.truth=[0.4,0.55,0.7,0.85]; K.cheatP=0.4;
 }
+// コミュニケーションのパターン(→docs/39)
+{
+  console.log("\n■ コミュニケーション");
+  const S=E.newCareer(51), xi=S.sq.slice(0,11), id=xi[9], o=[];
+  S.lastPl={ goals:{ [id]:2 }, rate:{}, mvp:null };
+  check("前の試合で点を取った選手は、そのことを話す(場面)",E.voiceScene(S,id)==="scored",E.voiceOf(S,id,"talk"));
+  S.g.step="comm"; S.g.cn=0; S.g.pl[id].mot=0; S.g.pl[id].injN=1; E.doTalk(S,id); S.g.cn=0;
+  check("ケガを手当てしたあとは「ケガ明け」の場面",E.voiceScene(S,id)==="back",E.voiceOf(S,id,"talk"));
+  const w=xi[5]; E.addPlayerTag(S,w,"doubt",o); S.g.pl[w].mot=2;
+  check("迷いのある選手は相談の3択が出る(言い方は3つ)",E.worryOf(S,w)==="doubt"&&E.consultOpts(S,w).length===3);
+  S.g.cn=0; const best=E.CONSULT_BEST[E.persOf(w)], m0=S.g.pl[w].mot, r=E.doConsult(S,w,best);
+  check("性格に合う言い方なら、やる気が大きく戻り、悩みのタグが消える",r.res===0&&S.g.pl[w].mot>=m0+2&&!(S.g.pl[w].tags||[]).some(t=>t.id==="doubt"),m0+" → "+S.g.pl[w].mot);
+  const v=xi[6]; E.addPlayerTag(S,v,"doubt",o); S.g.pl[v].mot=2; S.g.cn=0;
+  const bad=[0,1,2].find(i=>i!==E.CONSULT_BEST[E.persOf(v)]), r2=E.doConsult(S,v,bad);
+  check("合わない言い方なら、いつものケアと同じ(タグは残る)",r2.res===1&&(S.g.pl[v].tags||[]).some(t=>t.id==="doubt"));
+  const rx=E.reactOf(S,id,"lounge",2);
+  check("返事は種類と性格で変わる(ラウンジの失敗)",/「.+」/.test(rx),rx);
+  check("監督の言葉は悩みに合わせる",E.mgrSay(S,"talk",0,v).length>0,E.mgrSay(S,"talk",0,v));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

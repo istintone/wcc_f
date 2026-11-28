@@ -302,7 +302,11 @@ function commChatHtml(){
   }else{
     const p=S.g.pl[id];
     log+=chatSec(growLine(S,id,"talk"),true);   // 調子と疲れを秘書の言葉で(→docs/14 §14.108)
-    acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
+    // 悩みのある選手は、打ち明けてくれる。言い方を3つから選ぶ(→docs/39 C)
+    const co=consultOpts(S,id);
+    if(co.length){ log+=chatMe(mgrSay(S,"talk",0,id))+chatPl(id,"「"+consultConfess(S,id)+"」",true);
+      acts=co.map(o=>'<button class="cr" data-act="consult" data-i="'+o.i+'">'+o.t+'</button>').join(""); }
+    else acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
     '<button class="ch-x" data-act="chatx">×</button></div><div class="ch-log">'+log+'</div><div class="ch-acts">'+acts+'</div></div>';
@@ -2348,6 +2352,10 @@ function onClubClick(e){
   }
   else if(act==="talk"&&CL.pick.length===1){
     const id=CL.pick[0], said=mgrSay(S,"talk",0,id), r=doTalk(S,id); chatResult("talk",[id],said,r,reactOf(S,id,"talk",0));
+    save(); showClub(true);
+  }
+  else if(act==="consult"&&CL.pick.length===1){   // 相談(→docs/39 C)
+    const id=CL.pick[0], said=b.textContent, r=doConsult(S,id,+b.dataset.i); chatResult("talk",[id],said,r,reactOf(S,id,"talk",r.res));
     save(); showClub(true);
   }
   else if(act==="pick"){

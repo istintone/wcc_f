@@ -71,7 +71,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 場面(タイトル・対戦カード・結果・カード排出)を変える | `src/js/scenes.js`(描画)と `base.css` の末尾。設計の正本は docs/07 |
 | 試合のあと(採点・チームの数字・ロッカールーム・優勝の撮影・排出の予兆・リプレイ)を変える | 採点は `engine.js` の `matchRatings` と `TUNING.rate` → `enginetest.js` の ⑨。場面は `scenes.js`、話す選手の知らせは `grow.js` の `newsOf`、リプレイは `main.js` の `stepReplay`。正本は docs/07 §7.12 |
 | HOME の直近の試合・クラブ新聞(見出し・ゴシップ)を変える | 文の型と記事は `paper.js`、数は `TUNING.paper`、紙面は `clubui.js` の `lastHtml` / `paperHtml`。正本は docs/07 §7.13 |
-| コミュニケーションのチャット(吹き出し)を変える | `clubui.js` の `commChatHtml` / `chatResult` と `theme.css` の「チャット」。正本は docs/07 §7.14 |
+| コミュニケーションのチャット(吹き出し)を変える | `clubui.js` の `commChatHtml` / `chatResult` と `theme.css` の「チャット」。正本は docs/07 §7.14。会話の言葉(場面の話しかけ・監督の言葉・返事・相談)は `talks.js`、場面と相談の仕組みは `grow.js` の `voiceScene` / `worryOf` / `doConsult`(正本は docs/39) |
 | 【仮】選手の絵を作り直す | `python tools/gen_player_art.py` → `src/js/art-players.js`(生成物)。使う所は `clubui.js` の `artSrc`、試合は `render.js` の `drawMan`。正本は docs/10 §10.9 |
 | レアKP(固有名・技・効き目・カットイン)を変える・技を足す | 名前と技の割り当ては `tools/rarekp_source.txt` → `python tools/gen_rarekp.py` → `src/js/rarekp.js`(生成物)。技は `data.js` の `RARE_MOVES`、数値は `TUNING.rare`、発動は `engine.js` の `rareOf`、カットインは `scenes.js` の `cutIn` → `enginetest.js` の ⑫。正本は docs/11 |
 | キャプテン・キッカーの任命を変える | 効き目は `engine.js` の `capApt` / `rolePlayer` / `refreshFx` / `spKicker` と `TUNING.cap`、任命とやる気は `pool.js` の `setRole`、画面は `clubui.js` の `sqRolesHtml` / `kickMark` → `enginetest.js` の ⑬。正本は docs/12 |

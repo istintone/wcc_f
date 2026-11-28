@@ -376,8 +376,63 @@ function voiceOf(S,id,kind){
     :ck<1?"rebel":(ck>1||ek>1)?"grow"
     :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
     :c.age<=21?"young":c.age>=31?"vet":"plain";   // 信頼の深さは trustSay で添える(→docs/14 §14.109)
+  if(k!=="ready"&&k!=="awake"&&typeof VOICE_SCENE!=="undefined"){ const sc=voiceScene(S,id);   // 試合の出来事とタグの場面(→docs/39 A)
+    if(sc){ const L=VOICE_SCENE[sc][persOf(id)]||VOICE_SCENE[sc][0], q=sc==="buddy"?voiceBuddy(S,id):null;
+      return L[hashStr("vs:"+S.term+":"+S.played+":"+id)%L.length].split("{q}").join(q?nameOf(CARDS[q]):""); } }
   const list=(VOICE_P[persOf(id)]||{})[k]||VOICE[k]||VOICE.plain, r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
+}
+/** 連携の深い仲間(信頼の線)。いなければ null */
+const voiceBuddy=(S,id)=>(S.sq||[]).find(x=>x!==id&&S.g.pl[x]&&(S.g.links[lkey(id,x)]||{}).lv>=3)||null;
+/**
+ * 話しかけの場面(→docs/39 A)。いちばん最近・いちばん大きいことから: ケガ明け > 悩み(迷い・騒動・ゴシップ)> ゾーン > 得点の上の段 > 不発 > 疲れ >
+ * 前の試合の MVP > 得点 > ミス > 大一番の前 > スター・受賞者 > 新加入 > 連携の深い仲間
+ */
+function voiceScene(S,id){
+  const g=S.g.pl[id], L=S.lastPl||{}, has=t=>pHas(S,id,t); if(!g)return null;
+  if(g.mot>0&&g.healAt!=null&&S.played-g.healAt<=2)return "back";
+  if(has("doubt")||has("turmoil")||has("gossip"))return "troubled";
+  if(has("zone"))return "zone";
+  if(has("sniff")||has("machine"))return "hotshot";
+  if(has("dud")||has("dud2"))return "dud";
+  if(has("tire1")||has("tire2"))return "tired2";
+  if(L.mvp===id)return "mvp";
+  if(L.goals&&L.goals[id]>0)return "scored";
+  if(L.rate&&L.rate[id]!=null&&L.rate[id]<TUNING.grow.comm.missRate)return "miss";
+  const nx=typeof upcoming==="function"?(upcoming(S,1)||[])[0]:null;
+  if(nx&&nx.opp&&TEAMS[nx.opp]&&S.sq.indexOf(id)<11&&(tierOf(nx.opp)>=S.grade+2||/^決勝/.test(nx.label||"")))return "bigmatch";
+  if(has("star")||has("laureate"))return "star";
+  if(has("rookie")||has("veteran"))return "join";
+  if(voiceBuddy(S,id))return "buddy";
+  return null;
+}
+/** 相談の悩み(→docs/39 C)。騒動 > 迷い > 不発 > 疲れ > 控え続き > 調子が低い。ケガの選手は手当てが先 */
+function worryOf(S,id){
+  const g=S.g.pl[id], has=t=>pHas(S,id,t); if(!g||g.mot===0||typeof CONSULT==="undefined")return null;
+  if(has("turmoil"))return "turmoil"; if(has("doubt"))return "doubt"; if(has("dud")||has("dud2"))return "dud";
+  if(has("tire1")||has("tire2"))return "tire"; if((g.bench||0)>=TUNING.grow.mot.benchGrace)return "bench"; if(g.mot<=1)return "low";
+  return null;
+}
+/** 相談の3つの言い方(並びは試合と選手ごとに入れ替える)。[{ i:0 共感 / 1 背中を押す / 2 助言, t }] */
+function consultOpts(S,id){
+  const w=worryOf(S,id); if(!w)return [];
+  const ord=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]][hashStr("co:"+S.term+":"+S.played+":"+id)%6];
+  return ord.map(i=>({ i, t:CONSULT[w].opts[i] }));
+}
+const consultConfess=(S,id)=>{ const w=worryOf(S,id); return w?CONSULT[w].confess[persOf(id)]||CONSULT[w].confess[0]:""; };
+/** 相談に答える。性格に合う言い方なら、やる気がもう1段・悩みのタグが消える(合わなければ、いつものケアと同じ) */
+function doConsult(S,id,i){
+  const w=worryOf(S,id), good=!!w&&i===CONSULT_BEST[persOf(id)], r=doTalk(S,id); if(r.res<0)return r;
+  const g=S.g.pl[id], C=TUNING.grow.comm;
+  if(!good){ r.res=1; return r; }
+  g.mot=Math.min(4,g.mot+C.consultMot);
+  if(w==="turmoil")dropPlayerTag(S,id,"turmoil",r.lines);
+  if(w==="doubt")dropPlayerTag(S,id,"doubt",r.lines);
+  if(w==="dud"){ dropPlayerTag(S,id,"dud",r.lines); dropPlayerTag(S,id,"dud2",r.lines); }
+  if(w==="tire"){ g.fat=Math.max(0,(g.fat||0)-C.consultFat); dropPlayerTag(S,id,"tire2",r.lines); dropPlayerTag(S,id,"tire1",r.lines); }
+  if(w==="bench"){ g.bench=0; dropPlayerTag(S,id,"waiting",r.lines); }
+  r.lines.push("💬 "+nameOf(CARDS[id])+" の悩みが晴れた("+MOT_LABEL[g.mot]+")"); r.res=0;
+  return r;
 }
 /** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・ケアは成功) */
 const REACT={
@@ -387,7 +442,7 @@ const REACT={
   lounge:[["あいつとは息が合いそうです！"],["悪くない時間でした。"],["……どうも噛み合わないな。"]]
 };
 function reactOf(S,id,kind,res){
-  const t=REACT_P[persOf(id)]||REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;   // 性格で返事が変わる(→docs/14 §14.108)
+  const t=(typeof REACT_K!=="undefined"&&REACT_K[kind]&&REACT_K[kind][persOf(id)])||REACT_P[persOf(id)]||REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;   // 性格で返事が変わる(→docs/14 §14.108)
   return nameOf(CARDS[id])+"「"+list[r]+"」";
 }
 
@@ -463,7 +518,7 @@ function doTalk(S,id){
     const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].mot>0&&S.g.pl[x].mot<=2).sort((a,b)=>S.g.pl[a].mot-S.g.pl[b].mot)[0];
     if(o){ const q=S.g.pl[o], w=q.mot; q.mot=Math.min(4,q.mot+1); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" もケアしてくれた("+MOT_LABEL[w]+" → "+MOT_LABEL[q.mot]+")"); }
   }
-  if(was===0)g.injN=0;
+  if(was===0){ g.injN=0; g.healAt=S.played; }
   out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
   if(++pCnt(g).care>=TUNING.tag.player.careN&&!pHas(S,id,"injRes"))addPlayerTag(S,id,"injRes",out);   // ケアを重ねた選手はケガに強い(→docs/23)
   useComm(S,"talk");
@@ -668,7 +723,7 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。メディカルで手当てできる)"); newsOf("inj",[id],out); }
     else if(g.mot===0){
-      if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
+      if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; g.healAt=S.played; out.push(nameOf(CARDS[id])+" のケガが治った"); }
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
     }
   }
@@ -1812,7 +1867,9 @@ function growLine(S,id,kind){
 }
 const cname0=id=>nameOf(CARDS[id]);
 /** 監督の言葉。kind と選んだ手(ラウンジは 0〜2) */
+if(typeof MGR_MORE!=="undefined")for(const k in MGR_MORE)if(MGR_SAY[k])MGR_SAY[k]=MGR_SAY[k].concat(MGR_MORE[k]);   // 監督の言葉を足す(→docs/39 B)
 function mgrSay(S,kind,choice,id){
+  if(kind==="talk"&&id&&typeof worryOf==="function"){ const w=worryOf(S,id); if(w&&MGR_WORRY[w])return talkPick(S,MGR_WORRY[w],"mw"+id); }
   if(kind==="lounge")return talkPick(S,MGR_SAY.lounge[choice]||MGR_SAY.lounge[0],"ml"+choice);
   if(kind==="talk"&&S.g.pl[id]&&S.g.pl[id].mot===0)return talkPick(S,MGR_SAY.heal,"mh"+id);
   return talkPick(S,MGR_SAY[kind]||MGR_SAY.ind,"m"+kind+id);

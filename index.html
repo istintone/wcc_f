@@ -5219,6 +5219,7 @@ const TUNING={
   //   育成の釣り合いの基準(→docs/08 §8.5): 1人に5〜10試合ぶん集中すると覚醒。関わらない選手は練習と試合だけでは★1〜2どまり
   //          ind.train・trainFit・spTrain・match = 全員に入る経験(小さく) / comm.ind = 個人練習で入る経験(大きく)
   //   comm … コミュニケーション。max=1試合の回数 / ind=個人練習の経験 / talk・talkLow=ケアで上がるやる気(落ちている選手は2段)
+  //          missRate=この採点より低いと「ミスの場面」の話しかけ / consultMot・consultFat=相談で合う言い方を選んだときの、やる気の上乗せと疲れの抜け(→docs/39)
   grow:{ startOff:0, startKeep:6, spChance:0.12, evTrainK:1.3, trainEvP:0.10,   // イベントのレア訓練: 経験の倍率・試合ごとに出来事が起きる率(→docs/26 §26.4)
          ind:{ need:[26,48,68,94], awake:40, train:0.4, trainFit:0.4, spTrain:0.4, match:0.3, starUp:0.5, awakeP:0.6, awakeNew:0.5 },
          // dup … 重なったカード(→docs/08 §8.12)。indK … 重なり1枚ごとの個別指導の経験の上乗せ / max … 数える枚数の上限
@@ -5243,7 +5244,7 @@ const TUNING={
          rest:{ keep:0.3, motUp:0.6 },
          // 見える化: 連携の経験がこの割合を超えた組を「育ちそう」として点線で出す / 信頼度(絆)の段の区切り
          soon:0.6, trust:[3,8,15],
-         comm:{ max:3, ind:20, talk:1, talkLow:2 },
+         comm:{ max:3, ind:20, talk:1, talkLow:2, missRate:6.0, consultMot:1, consultFat:0.04 },
          age:{ band:[21,24,28,31], grow:[1.40,1.20,1.00,0.85,0.70], swing:[1.6,1.25,1.0,0.75,0.55] },
          abil:{ ref:14, k:0.04, lo:0.80, hi:1.20 } },
   // 任期の終わり(→docs/05 §5.8)
@@ -8393,6 +8394,7 @@ function applyResult(S,W,fx,res){
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
   if(typeof scoopAfterMatch==="function")scoopAfterMatch(S,fx);   // スクープの報告(→docs/38)
+  S.lastPl={ goals:res.goals||{}, rate:res.rate||{}, mvp:res.mvp||null };   // 前の試合の選手ごとの出来事(話しかけの場面。→docs/39 A)
   // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
   if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
     if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }
@@ -9298,6 +9300,101 @@ function autoSquad(S){
   return S.sq.slice(0,11);
 }
 
+/**
+ * 選手とのコミュニケーションの言葉(→docs/39)。DOM に触らない。
+ * 性格の並びは PERS_LABEL と同じ: 0 褒められて伸びる / 1 負けず嫌い / 2 マイペース
+ */
+/** A. 話しかけの場面(試合の出来事とタグに反応する)。[性格0, 性格1, 性格2] の言葉。{q} は連携の深い仲間 */
+const VOICE_SCENE={
+  scored:  [["ゴール、見ててくれましたか！？ うれしくて眠れませんでした！","決められてよかったです……みんなのおかげです！","あの一点で、少し自信がつきました！"],
+            ["次も決める。もっと取れる。","一点じゃ足りない。次は二点だ。","ゴールの感触、まだ足に残ってる。"],
+            ["あのゴールは、練習どおりの形でした。","入るときは、こんなものですね。","次も同じ形を狙ってみます。"]],
+  mvp:     [["チームで一番だなんて……夢みたいです！","監督に褒めてもらえたら、もっとうれしいです！"],
+            ["今日の自分は、悪くなかったですよね？","当然の結果だ。でも、まだ上がある。"],
+            ["悪くない試合でした。自分らしくやれたと思います。","評価は気にしません。でも、少しうれしいです。"]],
+  miss:    [["この前の試合、迷惑かけてすみません……。","うまくいかなくて、悔しいです。次は必ず……。"],
+            ["あのミス、自分で取り返します。","あんなのは自分じゃない。次で証明する。"],
+            ["前の試合は、リズムが合いませんでした。修正します。","悪い日もあります。切り替えていきます。"]],
+  back:    [["やっと戻れました！ みんなとまたプレーできてうれしいです！","ケガの間、ずっと監督の言葉を思い出してました。"],
+            ["やっと戻れた。遅れた分、取り返します。","休んでた分、誰よりも走ってやる。"],
+            ["焦らず戻ってこられました。まずは感覚を取り戻します。","体は大丈夫です。自分のペースで上げていきます。"]],
+  dud:     [["なかなか決まらなくて……みんなに申し訳ないです。","次こそは入れたいです。見捨てないでください……。"],
+            ["入らない……でも、打ち続けます。","ゴールが遠い。こんなはずじゃない。"],
+            ["今は入らない時期なんだと思います。形は悪くないので。","シュートの選び方を、少し変えてみます。"]],
+  hotshot: [["最近、ゴールが見えるんです！ 不思議な感じです！","みんながいいボールをくれるおかげです！"],
+            ["今なら、どこからでも入る気がする。","止められるもんなら止めてみろ。"],
+            ["いい流れです。この感覚を大事にします。","今は迷わず打てています。"]],
+  zone:    [["なんだか、何をやってもうまくいくんです！","体が勝手に動くんです。こんなの初めてです！"],
+            ["全部見えてるんです、今。","誰にも負ける気がしない。"],
+            ["不思議と、周りがゆっくり見えます。","今は、考える前に体が動きます。"]],
+  tired2:  [["まだがんばれます……がんばりたいんです。","少しだけ、休ませてもらえたら……。"],
+            ["まだやれます。……たぶん。","疲れてなんかない。出してくれ。"],
+            ["正直、体が重いです。休む勇気も必要だと思います。","今は回復を優先させてください。"]],
+  troubled:[["最近、いろいろあって……。でもサッカーは好きです。","外の声が気になっちゃって……。"],
+            ["今は、サッカーのことだけ考えたい。","周りが何を言おうと関係ない。……はずなんだ。"],
+            ["少し騒がしいですね。自分は自分です。","気にしないようにしています。たぶん大丈夫です。"]],
+  star:    [["みんなに見られてるって思うと、ドキドキします！","応援してくれる人のために、がんばります！"],
+            ["注目されるのは悪くない。結果で応えます。","もっと大きな舞台が見たい。"],
+            ["周りの声は気にせず、いつもどおりやります。","騒がれても、やることは同じです。"]],
+  bigmatch:[["次の試合、ちょっと緊張してます……でも楽しみです！","大きな試合ですね。監督、そばで見ててください！"],
+            ["こういう試合のために、やってきたんです。","格上だろうが関係ない。叩きのめす。"],
+            ["大事な試合ですね。いつもどおりを心がけます。","準備はできています。あとはやるだけです。"]],
+  buddy:   [["{q}さんと一緒だと、すごく心強いんです！","{q}さんとのプレー、もっと磨きたいです！"],
+            ["{q}とは目が合うだけで分かるんです。","{q}となら、どんな相手でも崩せる。"],
+            ["{q}とは、言葉がなくても通じるんです。","{q}の動きは、なんとなく分かります。"]],
+  join:    [["早くチームの力になりたいです！ よろしくお願いします！","みんな優しくて、ほっとしました！"],
+            ["来たからには、すぐにレギュラーを取る。","ここで自分の力を見せつけてやります。"],
+            ["新しい環境、少しずつ慣れていきます。","まずはチームのやり方を覚えます。"]]
+};
+/** B. 監督の言葉を足す(MGR_SAY に追加する分) */
+const MGR_MORE={
+  ind:["今日は弱点を潰すぞ。","いいところを伸ばそう。もっと尖っていい。","一つずつ、確実にいこう。"],
+  meet:["お前の役割を、もう一度整理しよう。","映像を見ながら話そうか。","ピッチの上での判断について話したい。"],
+  talk:["何かあったら、いつでも言ってこい。","いい顔してるな。その調子だ。","少し肩の力を抜こうか。"],
+  heal:["リハビリも練習のうちだ。","戻ってくる日を、みんな待ってるぞ。"]
+};
+/** 悩みに合わせた声かけの言葉(相談の前の、監督の最初の一言) */
+const MGR_WORRY={
+  low:["最近、元気がないな。何かあったか？","浮かない顔だな。話してみろ。"],
+  bench:["出番が少なくて、もどかしいだろう。","ベンチで何を考えてる？ 聞かせてくれ。"],
+  doubt:["移籍の話、気になってるんだろう？","迷ってることがあるなら、言ってくれ。"],
+  turmoil:["外が騒がしいな。大丈夫か？","いろいろ言われてるが、気にしてるか？"],
+  dud:["点が取れなくて、焦ってるか？","ゴールが遠いな。どう感じてる？"],
+  tire:["顔に疲れが出てるぞ。正直に言ってくれ。","無理してないか？ 体の声を聞かせてくれ。"]
+};
+/** B. 返事(種類 × 性格 × 結果3段[大成功, 成功, 失敗])。個人練習とメディカルは成功の2段まで使う */
+const REACT_K={
+  ind:[[["手応えがありました！ ありがとうございます！","監督に見てもらえると、力が出ます！","できなかったことが、できました！"],["勉強になりました。","少しずつ、分かってきました。","がんばります！"],["……すみません、うまくできなくて。","もう一回、お願いできますか……？","難しいです……。"]],
+       [["今の、見たか。もう自分のものだ。","この感覚、絶対に忘れない。","まだいける。もっとやらせてくれ。"],["悪くない。次はもっとだ。","やれば伸びる。分かってた。","この程度じゃ満足しない。"],["……今日はダメだ。","くそ、こんなはずじゃ。","次は必ず。"]],
+       [["なるほど、そういうことでしたか。","自分のやり方に合っています。","少し、見えてきました。"],["ありがとうございます。持ち帰って考えます。","自分なりに試してみます。","悪くないですね。"],["今日は、噛み合いませんでした。","自分のペースでやり直します。","また今度、お願いします。"]]],
+  meet:[[["監督、やってみます！ 目が覚めました！","そんなふうに思ってくれてたなんて……！","絶対に応えてみせます！"],["分かりました。考えてみます。","はい、意識してみます。","ありがとうございます。"],["それは……少し違う気がします。","ごめんなさい、よく分からなくて……。","今は、受け止めきれません……。"]],
+        [["火がついた。次で証明してやる。","その言葉、待ってた。","やってやるよ。見てろ。"],["わかった。結果で返す。","悪くない話だ。","考えておく。"],["……納得いかないな。","それは違うだろう。","言われなくても分かってる。"]],
+        [["腑に落ちました。自分のやり方に取り入れます。","迷いが晴れました。","なるほど、その手がありましたか。"],["分かりました。自分なりに試してみます。","参考にします。","一度、考えてみます。"],["うーん、自分には合わない気がします。","今は、別のやり方を試したいです。","少し、考えさせてください。"]]],
+  talk:[[["気持ちが楽になりました！ ありがとうございます！","監督と話せてよかったです！","元気が出てきました！"],["ありがとうございます。切り替えます。","少し落ち着きました。","がんばります。"],["……分かりました。","まだ、気持ちの整理がつかなくて……。","ありがとうございます……。"]],
+        [["よし、吹っ切れた。","次の試合、暴れてやる。","監督、ありがとう。目が覚めた。"],["分かった。切り替える。","気にしないことにする。","ああ、大丈夫だ。"],["……自分でなんとかする。","放っておいてくれ。","分かってるって。"]],
+        [["話してよかったです。すっきりしました。","おかげで、自分のペースに戻れそうです。","ありがとうございます。落ち着きました。"],["ありがとうございます。","大丈夫です。自分でやれます。","少し休めば戻ります。"],["今は、そっとしておいてほしいです。","自分で考えます。","……ありがとうございます。"]]],
+  lounge:[[["あいつとは息が合いそうです！","すごく楽しかったです！","また一緒にやりたいです！"],["悪くない時間でした。","少し仲良くなれました。","いい刺激になりました。"],["……ちょっと、気まずかったです。","うまく話せませんでした……。","まだ、よく分からないです。"]],
+          [["あいつ、なかなかやる。","いいライバルが見つかった。","次は一緒に勝ちに行く。"],["悪くない。","まあ、合わなくはない。","少しは分かった。"],["……どうも噛み合わないな。","あいつとは合わない。","勝手にしてくれ。"]],
+          [["いい時間でした。通じるものがありました。","思ったより、気が合いました。","また話してみたいです。"],["普通に楽しかったです。","悪くなかったです。","まあ、こんなものですね。"],["お互い、ペースが違いました。","今日は、あまり話が弾みませんでした。","無理に合わせなくてもいいと思います。"]]]
+};
+/** C. 相談(メディカルの声かけ)。悩み → 打ち明け([性格0, 1, 2])と、監督の3つの言い方[共感, 背中を押す, 助言] */
+const CONSULT={
+  low:{ confess:["最近、何をやってもうまくいかなくて……。","調子が戻らない。自分にイラついてる。","少し、リズムを崩しています。"],
+    opts:["つらかったな。お前の頑張りは、ちゃんと見てるぞ。","下を向くな。お前ならすぐ取り戻せる。","今は練習の量を減らして、基本だけに絞ってみろ。"] },
+  bench:{ confess:["ずっと試合に出られなくて……僕、必要ですか……？","いつまでベンチなんだ。出せば結果を出す。","出番がないので、何をすればいいか考えています。"],
+    opts:["お前はチームに必要だ。それは変わらない。","悔しいなら、練習で俺を黙らせてみろ。","次の相手なら、お前の良さが生きる。そこを狙え。"] },
+  doubt:{ confess:["移籍の話……正直、迷ってます。","大きいクラブから声がかかった。試したい気持ちもある。","移籍の話、自分でもどうしたいのか、まだ分かりません。"],
+    opts:["迷うのは当然だ。お前の気持ちを大事にしろ。","ここで頂点を取ってからでも遅くない。一緒に取ろう。","今の役割と、向こうでの役割を比べてみろ。答えは出る。"] },
+  turmoil:{ confess:["いろいろ言われて、つらいです……。","周りがうるさい。……でも、気にしてる自分が嫌なんだ。","外の騒ぎで、少し集中が切れています。"],
+    opts:["お前のことは、俺たちが分かってる。大丈夫だ。","騒ぎはプレーで黙らせろ。それが一番だ。","しばらく取材は断ろう。サッカーに集中できるようにする。"] },
+  dud:{ confess:["点が取れなくて、みんなに申し訳なくて……。","入らない。自分の何が悪いのか分からない。","最近、シュートの感覚が少しずれています。"],
+    opts:["点だけがお前の仕事じゃない。いい動きはできてる。","打ち続けろ。一本入れば、全部ひっくり返る。","シュートの前に、一つ顔を上げてみろ。選択肢が増える。"] },
+  tire:{ confess:["まだがんばれます……でも、少しだけ体が……。","疲れてなんかない。……少ししか。","正直、疲れがたまっています。"],
+    opts:["よく頑張ってくれてる。少し休め。","休むのも戦いだ。次に全力を出すために休め。","次の練習は軽めにする。体のケアに時間を使え。"] }
+};
+/** 性格ごとに合う言い方(0 共感 / 1 背中を押す / 2 助言) */
+const CONSULT_BEST=[0,1,2];
+
 /* =========================================================================
    wcc_f — 育成(DOM非依存)→docs/05 §5.3〜5.6
    1試合ごとに:
@@ -9676,8 +9773,63 @@ function voiceOf(S,id,kind){
     :ck<1?"rebel":(ck>1||ek>1)?"grow"
     :(g.bench||0)>=G0.mot.benchGrace?"bench":(indProgress(g)>=0.8&&g.is<5)?"near":g.mot>=4?"high"
     :c.age<=21?"young":c.age>=31?"vet":"plain";   // 信頼の深さは trustSay で添える(→docs/14 §14.109)
+  if(k!=="ready"&&k!=="awake"&&typeof VOICE_SCENE!=="undefined"){ const sc=voiceScene(S,id);   // 試合の出来事とタグの場面(→docs/39 A)
+    if(sc){ const L=VOICE_SCENE[sc][persOf(id)]||VOICE_SCENE[sc][0], q=sc==="buddy"?voiceBuddy(S,id):null;
+      return L[hashStr("vs:"+S.term+":"+S.played+":"+id)%L.length].split("{q}").join(q?nameOf(CARDS[q]):""); } }
   const list=(VOICE_P[persOf(id)]||{})[k]||VOICE[k]||VOICE.plain, r=hashStr("v:"+S.term+":"+S.played+":"+id)%list.length;
   return list[r];
+}
+/** 連携の深い仲間(信頼の線)。いなければ null */
+const voiceBuddy=(S,id)=>(S.sq||[]).find(x=>x!==id&&S.g.pl[x]&&(S.g.links[lkey(id,x)]||{}).lv>=3)||null;
+/**
+ * 話しかけの場面(→docs/39 A)。いちばん最近・いちばん大きいことから: ケガ明け > 悩み(迷い・騒動・ゴシップ)> ゾーン > 得点の上の段 > 不発 > 疲れ >
+ * 前の試合の MVP > 得点 > ミス > 大一番の前 > スター・受賞者 > 新加入 > 連携の深い仲間
+ */
+function voiceScene(S,id){
+  const g=S.g.pl[id], L=S.lastPl||{}, has=t=>pHas(S,id,t); if(!g)return null;
+  if(g.mot>0&&g.healAt!=null&&S.played-g.healAt<=2)return "back";
+  if(has("doubt")||has("turmoil")||has("gossip"))return "troubled";
+  if(has("zone"))return "zone";
+  if(has("sniff")||has("machine"))return "hotshot";
+  if(has("dud")||has("dud2"))return "dud";
+  if(has("tire1")||has("tire2"))return "tired2";
+  if(L.mvp===id)return "mvp";
+  if(L.goals&&L.goals[id]>0)return "scored";
+  if(L.rate&&L.rate[id]!=null&&L.rate[id]<TUNING.grow.comm.missRate)return "miss";
+  const nx=typeof upcoming==="function"?(upcoming(S,1)||[])[0]:null;
+  if(nx&&nx.opp&&TEAMS[nx.opp]&&S.sq.indexOf(id)<11&&(tierOf(nx.opp)>=S.grade+2||/^決勝/.test(nx.label||"")))return "bigmatch";
+  if(has("star")||has("laureate"))return "star";
+  if(has("rookie")||has("veteran"))return "join";
+  if(voiceBuddy(S,id))return "buddy";
+  return null;
+}
+/** 相談の悩み(→docs/39 C)。騒動 > 迷い > 不発 > 疲れ > 控え続き > 調子が低い。ケガの選手は手当てが先 */
+function worryOf(S,id){
+  const g=S.g.pl[id], has=t=>pHas(S,id,t); if(!g||g.mot===0||typeof CONSULT==="undefined")return null;
+  if(has("turmoil"))return "turmoil"; if(has("doubt"))return "doubt"; if(has("dud")||has("dud2"))return "dud";
+  if(has("tire1")||has("tire2"))return "tire"; if((g.bench||0)>=TUNING.grow.mot.benchGrace)return "bench"; if(g.mot<=1)return "low";
+  return null;
+}
+/** 相談の3つの言い方(並びは試合と選手ごとに入れ替える)。[{ i:0 共感 / 1 背中を押す / 2 助言, t }] */
+function consultOpts(S,id){
+  const w=worryOf(S,id); if(!w)return [];
+  const ord=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]][hashStr("co:"+S.term+":"+S.played+":"+id)%6];
+  return ord.map(i=>({ i, t:CONSULT[w].opts[i] }));
+}
+const consultConfess=(S,id)=>{ const w=worryOf(S,id); return w?CONSULT[w].confess[persOf(id)]||CONSULT[w].confess[0]:""; };
+/** 相談に答える。性格に合う言い方なら、やる気がもう1段・悩みのタグが消える(合わなければ、いつものケアと同じ) */
+function doConsult(S,id,i){
+  const w=worryOf(S,id), good=!!w&&i===CONSULT_BEST[persOf(id)], r=doTalk(S,id); if(r.res<0)return r;
+  const g=S.g.pl[id], C=TUNING.grow.comm;
+  if(!good){ r.res=1; return r; }
+  g.mot=Math.min(4,g.mot+C.consultMot);
+  if(w==="turmoil")dropPlayerTag(S,id,"turmoil",r.lines);
+  if(w==="doubt")dropPlayerTag(S,id,"doubt",r.lines);
+  if(w==="dud"){ dropPlayerTag(S,id,"dud",r.lines); dropPlayerTag(S,id,"dud2",r.lines); }
+  if(w==="tire"){ g.fat=Math.max(0,(g.fat||0)-C.consultFat); dropPlayerTag(S,id,"tire2",r.lines); dropPlayerTag(S,id,"tire1",r.lines); }
+  if(w==="bench"){ g.bench=0; dropPlayerTag(S,id,"waiting",r.lines); }
+  r.lines.push("💬 "+nameOf(CARDS[id])+" の悩みが晴れた("+MOT_LABEL[g.mot]+")"); r.res=0;
+  return r;
 }
 /** 手を打ったあとの返事。res: 0=大成功 / 1=成功 / 2=失敗(個人練習・ケアは成功) */
 const REACT={
@@ -9687,7 +9839,7 @@ const REACT={
   lounge:[["あいつとは息が合いそうです！"],["悪くない時間でした。"],["……どうも噛み合わないな。"]]
 };
 function reactOf(S,id,kind,res){
-  const t=REACT_P[persOf(id)]||REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;   // 性格で返事が変わる(→docs/14 §14.108)
+  const t=(typeof REACT_K!=="undefined"&&REACT_K[kind]&&REACT_K[kind][persOf(id)])||REACT_P[persOf(id)]||REACT[kind]||REACT.ind, list=t[Math.max(0,Math.min(2,res))], r=hashStr("r:"+S.term+":"+S.played+":"+id+":"+kind)%list.length;   // 性格で返事が変わる(→docs/14 §14.108)
   return nameOf(CARDS[id])+"「"+list[r]+"」";
 }
 
@@ -9763,7 +9915,7 @@ function doTalk(S,id){
     const o=S.sq.slice(0,11).filter(x=>x!==id&&S.g.pl[x]&&S.g.pl[x].mot>0&&S.g.pl[x].mot<=2).sort((a,b)=>S.g.pl[a].mot-S.g.pl[b].mot)[0];
     if(o){ const q=S.g.pl[o], w=q.mot; q.mot=Math.min(4,q.mot+1); out.push("💬 "+secOf(S).name+"が "+nameOf(CARDS[o])+" もケアしてくれた("+MOT_LABEL[w]+" → "+MOT_LABEL[q.mot]+")"); }
   }
-  if(was===0)g.injN=0;
+  if(was===0){ g.injN=0; g.healAt=S.played; }
   out.push(nameOf(CARDS[id])+(was===0?" のケガを手当てした(":" をケアした(")+MOT_LABEL[was]+" → "+MOT_LABEL[g.mot]+")");
   if(++pCnt(g).care>=TUNING.tag.player.careN&&!pHas(S,id,"injRes"))addPlayerTag(S,id,"injRes",out);   // ケアを重ねた選手はケガに強い(→docs/23)
   useComm(S,"talk");
@@ -9968,7 +10120,7 @@ function afterMatchGrowth(S,fx,res){
     const g=S.g.pl[id];
     if(newInj.includes(id)){ g.mot=0; g.injN=1; out.push("🩹 "+nameOf(CARDS[id])+" がケガ(治るまで能力が落ちる。メディカルで手当てできる)"); newsOf("inj",[id],out); }
     else if(g.mot===0){
-      if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; out.push(nameOf(CARDS[id])+" のケガが治った"); }
+      if((g.injN||0)>=J.maxN||rng()<J.heal+medHeal(S)){ g.mot=J.healTo; g.injN=0; g.healAt=S.played; out.push(nameOf(CARDS[id])+" のケガが治った"); }
       else{ g.injN=(g.injN||0)+1; out.push(nameOf(CARDS[id])+" のケガが続いている"); }
     }
   }
@@ -11112,7 +11264,9 @@ function growLine(S,id,kind){
 }
 const cname0=id=>nameOf(CARDS[id]);
 /** 監督の言葉。kind と選んだ手(ラウンジは 0〜2) */
+if(typeof MGR_MORE!=="undefined")for(const k in MGR_MORE)if(MGR_SAY[k])MGR_SAY[k]=MGR_SAY[k].concat(MGR_MORE[k]);   // 監督の言葉を足す(→docs/39 B)
 function mgrSay(S,kind,choice,id){
+  if(kind==="talk"&&id&&typeof worryOf==="function"){ const w=worryOf(S,id); if(w&&MGR_WORRY[w])return talkPick(S,MGR_WORRY[w],"mw"+id); }
   if(kind==="lounge")return talkPick(S,MGR_SAY.lounge[choice]||MGR_SAY.lounge[0],"ml"+choice);
   if(kind==="talk"&&S.g.pl[id]&&S.g.pl[id].mot===0)return talkPick(S,MGR_SAY.heal,"mh"+id);
   return talkPick(S,MGR_SAY[kind]||MGR_SAY.ind,"m"+kind+id);
@@ -14000,7 +14154,11 @@ function commChatHtml(){
   }else{
     const p=S.g.pl[id];
     log+=chatSec(growLine(S,id,"talk"),true);   // 調子と疲れを秘書の言葉で(→docs/14 §14.108)
-    acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
+    // 悩みのある選手は、打ち明けてくれる。言い方を3つから選ぶ(→docs/39 C)
+    const co=consultOpts(S,id);
+    if(co.length){ log+=chatMe(mgrSay(S,"talk",0,id))+chatPl(id,"「"+consultConfess(S,id)+"」",true);
+      acts=co.map(o=>'<button class="cr" data-act="consult" data-i="'+o.i+'">'+o.t+'</button>').join(""); }
+    else acts='<button class="cr" data-act="talk">'+(p.mot===0?'ケガを手当てする':'ケアする')+'</button>';
   }
   return '<div class="chat-sheet"><div class="ch-head"><b>'+COMM_LABEL[CL.comm]+'</b><small>'+who.map(cname).join(" ・ ")+'</small>'+
     '<button class="ch-x" data-act="chatx">×</button></div><div class="ch-log">'+log+'</div><div class="ch-acts">'+acts+'</div></div>';
@@ -16046,6 +16204,10 @@ function onClubClick(e){
   }
   else if(act==="talk"&&CL.pick.length===1){
     const id=CL.pick[0], said=mgrSay(S,"talk",0,id), r=doTalk(S,id); chatResult("talk",[id],said,r,reactOf(S,id,"talk",0));
+    save(); showClub(true);
+  }
+  else if(act==="consult"&&CL.pick.length===1){   // 相談(→docs/39 C)
+    const id=CL.pick[0], said=b.textContent, r=doConsult(S,id,+b.dataset.i); chatResult("talk",[id],said,r,reactOf(S,id,"talk",r.res));
     save(); showClub(true);
   }
   else if(act==="pick"){
