@@ -178,9 +178,10 @@ function infoBar(lines){
   if(!box){ box=document.createElement("div"); box.id="infoBars"; document.body.appendChild(box); }
   lines.forEach((t,i)=>{
     const el=document.createElement("div");
-    const kind=/個人能力 ★/.test(t)?["is","★ UP"]:/特殊能力 ★/.test(t)?["ss","★ UP"]:/覚醒/.test(t)?["aw","AWAKEN"]:/^🏷/.test(t)?["tag","TAG"]:/^(👑|🏆)|称号/.test(t)?["title",/^🏆/.test(t)?"TROPHY":"TITLE"]:["info","INFO"];   /* 報酬の帯(→docs/33 §33.12) */ el.className="ibar band "+kind[0];
+    const kind=/個人能力 ★/.test(t)?["is","★ UP"]:/特殊能力 ★/.test(t)?["ss","★ UP"]:/覚醒/.test(t)?["aw","AWAKEN"]:/^🏷/.test(t)?["tag","TAG"]:/^(👑|🏆)|称号/.test(t)?["title",/^🏆/.test(t)?"TROPHY":"TITLE"]:/ミッション達成/.test(t)&&CL.S&&CL.S.biz&&CL.S.biz.sp?["sp","MISSION"]:["info","INFO"];   /* 報酬の帯(→docs/33 §33.12) */ el.className="ibar band "+kind[0];
     const m=/^(\p{Extended_Pictographic}\uFE0F?)\s*/u.exec(t);
     el.innerHTML='<i>'+kind[1]+'</i><span>'+(m?t.slice(m[0].length):t)+'</span>';
+    if(kind[0]==="sp")el.style.setProperty("--spc",spColors(CL.S.biz.sp)[0]);   // ミッション達成の帯は会社の色(→docs/35)
     el.style.animationDelay=(i*0.45)+"s";
     box.appendChild(el);
     setTimeout(()=>el.remove(),4200+i*450);
@@ -1280,7 +1281,9 @@ function missionsHtml(ms){
 /** 1社ぶん(業種・☆・収入・報酬・ミッション) */
 function spCardHtml(o){
   const ind=spIndOf(o.ind);
-  return '<div class="spo-h">'+(o.rare?'<em class="sp-rare">RARE</em>':'')+'<b>'+o.name+'</b><i>'+ind.name+'</i><span class="st">'+spStars(o.rank)+'</span>'+
+  // 頭は会社の色の帯に白抜きのロゴ(→docs/35 §35.3)。社名・業種・収入はその下
+  return '<div class="sp-bn" style="--spc:'+spColors(o)[0]+'">'+spLogoSvg(o,true)+(o.rare?'<em class="sp-rare">RARE</em>':'')+'<span class="st">'+spStars(o.rank)+'</span></div>'+
+    '<div class="spo-h"><b>'+o.name+'</b><i>'+ind.name+'</i>'+
     '<small>1試合 '+o.pay.toFixed(2)+'億 ・ ミッションを達成するたびに報酬</small></div>'+
     '<p class="rw"><b>'+spItem(ind,o.rank)+'</b> '+spEffTxt(ind.eff,o.rank)+'(<u>'+spDur(ind,o.rank)+'試合</u>)</p>'+
     (o.rare?'<p class="rw oil"><b>オイルマネー</b> 契約しているあいだ、カードの金パック(キラ・レジェンド)が出る率 ×'+TUNING.pack.oilK+'</p>':'')+missionsHtml(o.ms);
@@ -1304,7 +1307,7 @@ function spRenewBarHtml(){ return '<button class="tile sp-bar" data-act="spopen"
 /** CLUB のスポンサーの欄(胸ロゴとミッションの進み) */
 function spTileHtml(){
   const S=CL.S, sp=S.biz&&S.biz.sp; if(!sp||S.termOver)return "";
-  return '<section class="tile sptile"><h3><span class="logo r'+sp.rank+'">'+sp.name+'</span></h3><div class="spo r'+sp.rank+'">'+spCardHtml(sp)+'</div>'+spBoostHtml()+'</section>';
+  return '<section class="tile sptile"><h3>SPONSOR</h3><div class="spo r'+sp.rank+'">'+spCardHtml(sp)+'</div>'+spBoostHtml()+'</section>';
 }
 /** CLUB のスタジアムと施設の欄 */
 function bizClubHtml(){

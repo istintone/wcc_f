@@ -79,16 +79,26 @@ function drawStands(c,W,H){
   }
   drawBoards(c,W,H,yB,yW);
 }
-/** 広告の枠に出すもの(順に繰り返す)。スポンサーが増えたらここに足す */
-function boardAds(){
-  const sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  // 赤い枠はスポンサー。スポンサーがいなければ白いロゴ(ボール + 2行の文字。→docs/14 §14.155)
-  return [sp?{ text:sp, bg:"#c8102e", fg:"#fff" }:{ text:"WCC F", logo:true, white:true, bg:"#c8102e", fg:"#fff" },
-    { text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" }];   // logo … ボール + ロゴの2行の文字(→docs/14 §14.154)
+/**
+ * 広告の枠に出すもの(→docs/35 §35.3)。偶数の枠 = 契約しているスポンサー(会社の色の地に白抜きのロゴ。いなければ WCC F のロゴ)、
+ * 奇数の枠 = パートナー企業(架空の他社)。LED の段では slot ごとにパートナーが入れ替わる
+ */
+function boardAds(n,slot){
+  const S=typeof CL!=="undefined"&&CL.S?CL.S:null, sp=S&&S.biz&&S.biz.sp?S.biz.sp:null;
+  const own=sp?{ sp, dark:true, bg:spColors(sp)[0] }:{ text:"WCC F", logo:true, white:true, bg:"#c8102e", fg:"#fff" };   // logo … ボール + ロゴの2行の文字(→docs/14 §14.154)
+  const pn=spPartners(S,6), out=[];
+  for(let i=0;i<n;i++){
+    if(i%2===0){ out.push(own); continue; }
+    const p=pn[((i>>1)+slot)%pn.length];
+    out.push(p?{ sp:p, dark:p.dark, bg:p.dark?spColors(p)[0]:"#f4f1ea" }:{ text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" });
+  }
+  return out;
 }
+/** LED の入れ替わりの番(LED でない段は 0) */
+const boardSlot=()=>stadLv()>=TUNING.view.boardLed?Math.floor(performance.now()/TUNING.view.boardRot):0;
 /** B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす */
 function drawBoards(c,W,H,y0,y1){
-  const bh=y1-y0, ads=boardAds(), n=TUNING.view.boardN, cw=W/n, lg=logoImg();
+  const n=TUNING.view.boardNLv[stadLv()-1]||4, bh=y1-y0, ads=boardAds(n,boardSlot()), cw=W/n, lg=logoImg();
   c.fillStyle="#0b0d12"; c.fillRect(0,y0,W,bh);
   c.fillStyle="#c8102e"; c.fillRect(0,y0,W,Math.max(1.5,bh*0.1));                 // 上の縁(赤)
   const p0=y0+bh*0.18, ph=bh*0.7;
@@ -96,6 +106,7 @@ function drawBoards(c,W,H,y0,y1){
   for(let i=0;i<n;i++){ const a=ads[i%ads.length], x=i*cw+1, w=cw-2, cx=x+w/2, cy=p0+ph/2;
     c.fillStyle=a.bg; c.fillRect(x,p0,w,ph);
     c.fillStyle="rgba(255,255,255,.14)"; c.fillRect(x,p0,w,ph*0.4);                 // LED の光り(上半分を少し明るく)
+    if(a.sp){ spLogoDraw(c,a.sp,a.dark,cx,cy,ph*0.94,w-6); continue; }   // スポンサー・パートナーのロゴ(→docs/35)
     c.fillStyle=a.fg;
     const wd=a.logo&&lg?wordsImg(a.white):null;
     if(wd){ let ls=ph*0.82, wh=ph*0.66, ww=wd.naturalWidth*wh/wd.naturalHeight; const k=Math.min(1,(w-8)/(ls+4+ww)); ls*=k; wh*=k; ww*=k;
@@ -134,7 +145,7 @@ function logoImg(){
 function drawPitch(){
   const W=RV.w, H=RV.h, dpr=RV.cv.width/W;
   const lv=(typeof CL!=="undefined"&&CL.S&&CL.S.biz)?CL.S.biz.stad:1, sp=(typeof CL!=="undefined"&&CL.S&&CL.S.biz&&CL.S.biz.sp)?CL.S.biz.sp.name:"";
-  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+!!logoImg()+":"+!!wordsImg()+!!wordsImg(true)+":"+!!stadImg(lv);   // 絵の読み込みが済んだら描き直す
+  const key=RV.cv.width+"x"+RV.cv.height+":"+lv+":"+sp+":"+boardSlot()+":"+(document.fonts?document.fonts.status:"")+":"+!!logoImg()+":"+!!wordsImg()+!!wordsImg(true)+":"+!!stadImg(lv);   // 絵の読み込みが済んだら描き直す
   if(RV.bgKey!==key){
     const off=RV.bg||(RV.bg=document.createElement("canvas"));
     off.width=RV.cv.width; off.height=RV.cv.height;

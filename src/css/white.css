@@ -517,3 +517,13 @@ body.th-wl #club .sec-ev.done .tk-rx .rx-av{flex:none;width:40px;height:40px;mar
 /* SEASON から見る相手 = スカウティングレポート(→docs/34 §34.13)。暗い地の頃の白い文字を戻す */
 body.th-wl #club .opp-vbox .ov-body{background:var(--t-paper,#f4f1ea);color:var(--w-ink);padding:8px 8px 10px}
 body.th-wl #club .opp-vbox .srep-inline{margin:0}
+/* スポンサーのバナー(→docs/35) */
+body.th-wl #club .sp-bn{display:flex;align-items:center;gap:8px;height:46px;margin:-2px -2px 8px;padding:0 12px;background:var(--spc,#c8102e);color:#fff;position:relative;overflow:hidden}
+body.th-wl #club .sp-bn::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0));pointer-events:none}
+body.th-wl #club .sp-bn .splogo{height:30px;width:auto;max-width:68%;flex:none}
+body.th-wl #club .sp-bn .st{margin-left:auto;color:#ffe27a;font-size:13px;letter-spacing:1px;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+body.th-wl #club .sp-bn .sp-rare{position:static;margin:0;flex:none}
+body.th-wl #club .spo-h b{font-size:14px}
+body.th-wl #infoBars .ibar.sp{background:linear-gradient(100deg,rgba(0,0,0,.35),rgba(0,0,0,0) 60%),var(--spc,#c8102e)}
+.vs-sp{padding:4px 8px!important;background:var(--spc,#c8102e)!important;transform:skewX(-8deg)}
+.vs-sp .splogo{display:block;height:20px;width:auto;transform:skewX(8deg)}
