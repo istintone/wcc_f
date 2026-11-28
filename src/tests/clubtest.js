@@ -861,7 +861,7 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   const after=(o)=>{ S.played++; E.playerTagsAfterMatch(S,{ kind:"friendly" },Object.assign({ played:xi, starters:xi, goals:{}, rate:{}, win:false, lose:false, inj:[] },o),out,null); };
   for(let n=0;n<P.ace;n++)after({ goals:{ [id]:1 } });
   const d=E.playerDef(S,{ kind:"friendly" }), c=d.xi.find(s=>s.card.id===id).card, base=E.growCard(S,E.CARDS[id]);
-  check("先発で "+P.ace+" 点で「エース」、続けて得点で「得点感覚」。先発すると能力が上がる",has(id,"ace")&&has(id,"scorer")&&c.off>base.off,base.off+" → "+c.off);
+  check("先発で "+P.ace+" 点で「エース」、続けて得点で得点の系統(得点感覚 → 量産体制)。先発すると能力が上がる",has(id,"ace")&&has(id,"machine")&&!has(id,"scorer")&&c.off>base.off,base.off+" → "+c.off);
   const bc=d.bench.length?d.bench[0]:null;
   check("エースの上乗せは先発のときだけ(控えのカードには乗らない)",!bc||!has(bc.id,"ace")||bc.off===E.growCard(S,E.CARDS[bc.id]).off);
   const S2=E.newCareer(77), o2=[], g=S2.sq[4];
@@ -995,6 +995,47 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   E.fameAfterMatch(S,{ fame:{ titles:1 }, played:S.sq.slice(0,11) },o);
   const n1=S.sq.filter(id=>(S.g.pl[id].tags||[]).some(t=>t.id==="star")).length;
   check("優勝でスターが "+F.titleN+" 人増える(もうスターの選手は除く)",n1-n0===F.titleN,n0+" → "+n1+"人");
+}
+
+// 連鎖するタグ(→docs/23 §23.12)
+{
+  console.log("\n■ 連鎖するタグ");
+  const C=E.TUNING.tag.chain, S=E.newCareer(77), out=[], tg=()=>S.g.tags.map(t=>t.id);
+  const match=(win,lose)=>{ S.played++; E.tagsAfterMatch(S,{ kind:"friendly" },{ win, lose },out); };
+  for(let i=0;i<C.rush;i++)match(true,false);
+  check("5連勝で「破竹の勢い」(勢いは外れる)",tg().includes("rush")&&!tg().includes("momentum"),tg().join(","));
+  match(false,true);
+  check("負けると1段戻る(破竹の勢い → 勢い)",tg().includes("momentum")&&!tg().includes("rush"),tg().join(","));
+  for(let i=0;i<C.mire;i++)match(false,true);
+  check("5連敗で「泥沼」。上の系統はすべて外れる",tg().includes("mire")&&!tg().some(x=>E.TAGS[x].fam==="flowUp"),tg().join(","));
+  match(true,false);
+  check("勝つと1段戻る(泥沼 → スランプ)",tg().includes("slump")&&!tg().includes("mire"),tg().join(","));
+  const S2=E.newCareer(78); S2.g.tags=[{ id:"collapse", n:null }];
+  const d0=E.playerDef(S2,{ kind:"friendly" }), c0=d0.xi[5].card, g0=E.growCard(S2,E.CARDS[c0.id]);
+  check("崩壊寸前はチーム全員の能力を下げる",c0.off<g0.off,g0.off+" → "+c0.off);
+  // 選手: 不発・疲れ・ゾーン・組み合わせ
+  const P=E.newCareer(79), o2=[], xi=P.sq.slice(0,11), fw=xi.find(x=>E.CARDS[x].pos==="FW"), has=(x,t)=>(P.g.pl[x].tags||[]).some(q=>q.id===t);
+  const after=o=>{ P.played++; E.playerTagsAfterMatch(P,{ kind:"friendly" },Object.assign({ played:xi, starters:xi, goals:{}, rate:{}, win:false, lose:false, inj:[] },o),o2,null); };
+  for(let i=0;i<C.dud;i++)after({});
+  check("FW が先発で3試合無得点で「不発」",has(fw,"dud"),(P.g.pl[fw].tags||[]).map(t=>t.id).join(","));
+  after({ goals:{ [fw]:1 } });
+  check("得点すると不発が消えて「得点感覚」",has(fw,"scorer")&&!has(fw,"dud"));
+  const id=xi[4]; P.g.pl[id].fat=0.12;
+  for(let i=0;i<C.tire2;i++){ P.g.pl[id].fat=0.12; after({}); }
+  check("重い疲れが5試合続くと「オーバーワーク」",has(id,"tire2")&&!has(id,"tire1"));
+  P.g.pl[id].fat=0; after({});
+  check("疲れが抜けると消える",!has(id,"tire2"));
+  const z=xi[6]; for(let i=0;i<C.zone;i++){ P.g.pl[z].mot=4; after({}); }
+  check("絶好調が3試合続くと「ゾーン」",has(z,"zone"));
+  const r=xi[7]; E.addPlayerTag(P,r,"rebel",o2); E.addPlayerTag(P,r,"gossip",o2); E.comboTagCheck(P,o2);
+  check("反抗期 + ゴシップ → 「騒動」(2つはまとまる)",has(r,"turmoil")&&!has(r,"rebel")&&!has(r,"gossip"));
+  const m=xi[8]; E.addPlayerTag(P,m,"mood",o2); P.g.tags=[{ id:"momentum", n:5 }]; E.comboTagCheck(P,o2);
+  check("ムードメーカー + 勢い → チームに「一体感」",P.g.tags.some(t=>t.id==="unity"));
+  // 出来事の第2弾: 資金・ファン・SQUAD 全員の疲労
+  P.g.tev={ k:"trip", id:null }; const m0=P.money; E.answerTagEvent(P,0);
+  check("出来事「長距離遠征」で前の日に入ると資金 −0.5億・疲れが抜ける",Math.abs(P.money-(m0-0.5))<1e-9);
+  P.g.tev={ k:"kids", id:null }; const f0=P.biz.fans; E.answerTagEvent(P,0);
+  check("出来事「地元の子どもたち」でファンが増え、チームに「地域の誇り」",P.biz.fans>f0&&P.g.tags.some(t=>t.id==="pride"));
 }
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

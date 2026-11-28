@@ -423,7 +423,8 @@ function playerDef(S,fx){
   if(S.club){ def.name=S.club.name; def.short=S.club.short; def.color=S.club.color; }   // 監督契約で決めたクラブ
   def.mab=mabOf(S);                              // 監督能力(→docs/10 §10.2 C)
   def.titles=myTitleIds(S);                      // チームの称号(→docs/23 §23.3)。能力の上乗せは試合のカードに
-  return applyTagStats(def,def.titles,S,fx);      // 称号と選手のタグ・特性の能力の上乗せ(→docs/23)
+  const flow=((S.g&&S.g.tags)||[]).filter(t=>TAGS[t.id]&&TAGS[t.id].kind==="gen"&&TAGS[t.id].stat).map(t=>t.id);   // 段が上がるチームのタグ(破竹の勢い・泥沼など。→docs/23 §23.12)
+  return applyTagStats(def,def.titles.concat(flow),S,fx);      // 称号と選手のタグ・特性の能力の上乗せ(→docs/23)
 }
 /** 試合を作る材料。自分は常にホーム側(右へ攻める)に置く */
 function fixtureMatch(S,fx){

@@ -1029,8 +1029,13 @@ function tagK(S,key){
   return k;
 }
 /** チームのタグを付ける。反対のタグは消し、同じタグは期限を延ばす。上限を超えたら残りがいちばん短いものを押し出す */
+/** 系統の反対(→docs/23 §23.12) */
+const TAG_FAM_OPP={ flowUp:"flowDown", flowDown:"flowUp", goalUp:"goalDown", goalDown:"goalUp" };
+/** 同じ系統の別の段と、反対の系統のタグを外す(段が上がる・入れ替わる) */
+function famClear(L,T){ if(!T.fam)return; for(const t of L.slice()){ const U=TAGS[t.id]; if(U&&U!==T&&U.fam&&(U.fam===T.fam||U.fam===TAG_FAM_OPP[T.fam]))L.splice(L.indexOf(t),1); } }
 function addTeamTag(S,id,out,quiet){
   const T=TAGS[id], L=S.g.tags||(S.g.tags=[]); if(!T)return;
+  famClear(L,T);
   if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 「"+TAGS[T.opp].name+"」が消えた"); } }
   const cur=L.find(t=>t.id===id);
   if(cur){ cur.n=tagDur(T); return; }
@@ -1058,16 +1063,24 @@ function tagsAfterMatch(S,fx,res,out){
   for(const t of L.slice()){
     const T=TAGS[t.id];
     if((T.endOn==="win"&&res.win)||(T.endOn==="lose"&&res.lose)){ dropTeamTag(S,t.id,out); continue; }
+    if(T.step&&((T.stepOn==="lose"&&res.lose)||(T.stepOn==="win"&&res.win))){ out.push("🏷 「"+T.name+"」が「"+TAGS[T.step].name+"」に"); addTeamTag(S,T.step,out,true); continue; }   // 1段戻る(→docs/23 §23.12)
     if(t.n!=null&&--t.n<=0)dropTeamTag(S,t.id,out);
   }
   const st=S.g.streak||0;
   S.g.streak=res.win?Math.max(0,st)+1:res.lose?Math.min(0,st)-1:0;
-  if(S.g.streak===TUNING.tag.streak)addTeamTag(S,"momentum",out);
-  if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
+  S.g.unb=res.lose?0:(S.g.unb||0)+1; S.g.wl=res.win?0:(S.g.wl||0)+1;   // 負けなし・勝ちなしの続き
+  const C=TUNING.tag.chain, hasT=x=>(S.g.tags||[]).some(t=>t.id===x);
+  if(S.g.unb===C.march&&!hasT("march"))addTeamTag(S,"march",out);
+  else if(S.g.streak===C.rush&&!hasT("march"))addTeamTag(S,"rush",out);
+  else if(S.g.streak===TUNING.tag.streak)addTeamTag(S,"momentum",out);
+  if(S.g.wl===C.collapse&&!hasT("collapse"))addTeamTag(S,"collapse",out);
+  else if(S.g.streak===-C.mire&&!hasT("collapse"))addTeamTag(S,"mire",out);
+  else if(S.g.streak===-TUNING.tag.streak)addTeamTag(S,"slump",out);
   if(fx&&fx.kind==="league"&&S.league&&S.league.done===14&&S.divMove)addTeamTag(S,S.divMove>0?"promo":"releg",out);
   nationTitleCheck(S,res,out);                  // 国の称号(→docs/23 §23.3)
   comboCheck(S,out);                            // コンビ(→docs/23 §23.3b)
   autoTeamTags(S,fx,res,out);                   // 優勝の余韻・過密日程・サポーターの熱狂
+  comboTagCheck(S,out);                         // 組み合わせで変わるタグ(→docs/23 §23.12 ②)
   uniqueCheck(S,out);                           // 条件で付く固有
   tagEventRoll(S);                              // ランダムに起きる出来事(HOME で答える)
   trainEventRoll(S);                            // 練習の出来事(スタジアム・施設の段で。→docs/26 §26.4)
@@ -1151,6 +1164,7 @@ function plHist(S,id,t){ const g=S.g&&S.g.pl[id]; if(!g)return; const L=g.hist||
 function addPlayerTag(S,id,tid,out){
   const T=TAGS[tid], g=S.g&&S.g.pl[id]; if(!T||!g)return;
   const L=g.tags||(g.tags=[]), nm=nameOf(CARDS[id]);
+  famClear(L,T);
   if(T.opp){ const j=L.findIndex(t=>t.id===T.opp); if(j>=0){ L.splice(j,1); out.push("🏷 "+nm+" の「"+TAGS[T.opp].name+"」が消えた"); } }
   // ゴシップが重なると問題児(→docs/23 §23.11)。付いている間にまた付いても1回と数える
   if(tid==="gossip"&&++pCnt(g).gos>=TUNING.tag.fame.gossipN&&!pHas(S,id,"trouble"))addPlayerTag(S,id,"trouble",out);
@@ -1234,8 +1248,22 @@ function playerTagsAfterMatch(S,fx,res,out,st0){
     if(c.cap>=P.pillar)add("pillar");
     if(c.kpW>=P.kpWin)add("strat");
     if(c.startRun===P.iron)addPlayerTag(S,id,"iron",out);
-    if(gl>0&&c.scored)addPlayerTag(S,id,"scorer",out);
+    // 段が上がる選手のタグ(→docs/23 §23.12 ①)。得点: 得点感覚 → ゴールの嗅覚 → 量産体制 / 不発 → 決定力不足
+    const CH=TUNING.tag.chain;
+    c.gRun=gl>0?(c.gRun||0)+1:on?0:(c.gRun||0);
+    if(gl>0)addPlayerTag(S,id,c.gRun>=3?"machine":c.gRun===2?"sniff":"scorer",out);
+    c.dry=gl>0?0:st&&CARDS[id].pos==="FW"?(c.dry||0)+1:(c.dry||0);
+    if(c.dry===CH.dud2)addPlayerTag(S,id,"dud2",out); else if(c.dry===CH.dud)addPlayerTag(S,id,"dud",out);
     c.scored=gl>0;
+    // 疲れ: 重い疲れの続き → 疲労の蓄積 → オーバーワーク → そのままケガで ケガがち。疲れが抜けると消える。鉄人・ベテランは付かない
+    const heavy=(g.fat||0)>=CH.tireFat&&!pHas(S,id,"iron")&&!pHas(S,id,"veteran");
+    c.tire=heavy?(c.tire||0)+1:0;
+    if(!heavy)for(const t of pTags(S,id).slice())if(TAGS[t.id]&&TAGS[t.id].endOn==="rested")dropPlayerTag(S,id,t.id,out);
+    if(c.tire===CH.tire2)addPlayerTag(S,id,"tire2",out); else if(c.tire===CH.tire1)addPlayerTag(S,id,"tire1",out);
+    if(pHas(S,id,"tire2")&&(res.inj||[]).includes(id))add("injProne");
+    // ゾーン: 絶好調が続く
+    c.hot=g.mot===4?(c.hot||0)+1:0;
+    if(c.hot===CH.zone)addPlayerTag(S,id,"zone",out);
     if(fin&&gl>0)add("bigstage");
     if(fin&&res.mvp===id&&fx&&COMPS[fx.comp]&&/^[SA]$/.test(COMPS[fx.comp].grade))addPlayerTag(S,id,"mvp",out);
     // ④ 特性: そのポジションで好採点が続く
@@ -1249,6 +1277,19 @@ function playerTagsAfterMatch(S,fx,res,out,st0){
     }
     if(pTagOn(S,id,"motLock")&&g.mot>0)g.mot=4;
   }
+}
+/**
+ * 組み合わせで変わるタグ(→docs/23 §23.12 ②)。チーム: ムードメーカー + 流れの上 → 一体感。
+ * 選手: スター + 大舞台に強い → 千両役者 / 成長期 + 得点の上 → 覚醒の予感 / 反抗期 + ゴシップ → 騒動(元の2つはまとまる)
+ */
+function comboTagCheck(S,out){
+  const L=S.g.tags||[], up=L.some(t=>TAGS[t.id]&&TAGS[t.id].fam==="flowUp");
+  if(up&&!L.some(t=>t.id==="unity")&&S.sq.some(id=>pHas(S,id,"mood")))addTeamTag(S,"unity",out);
+  for(const id of S.sq){ const g=S.g.pl[id]; if(!g)continue;
+    const fam=f=>pTags(S,id).some(t=>TAGS[t.id]&&TAGS[t.id].fam===f), quiet=[];
+    if(pHas(S,id,"star")&&pHas(S,id,"bigstage")&&!pHas(S,id,"showman")){ dropPlayerTag(S,id,"bigstage",quiet); addPlayerTag(S,id,"showman",out); }
+    if(pHas(S,id,"growth")&&fam("goalUp")&&!pHas(S,id,"awaken")){ dropPlayerTag(S,id,"growth",quiet); addPlayerTag(S,id,"awaken",out); }
+    if(pHas(S,id,"rebel")&&pHas(S,id,"gossip")){ dropPlayerTag(S,id,"rebel",quiet); dropPlayerTag(S,id,"gossip",quiet); addPlayerTag(S,id,"turmoil",out); } }
 }
 /** 加入(SQUAD と交代で入った選手): 若手は ROOKIE、熟練はベテラン */
 function joinTags(S,id,out){
@@ -1399,9 +1440,13 @@ function tagEventRoll(S){
   if(S.g.tev||S.termOver)return;
   const r=mulberry32((S.seed^hashStr("tev:"+S.term+":"+S.played))>>>0);
   if(r()>=TUNING.tag.event.p)return;
-  const base=TAG_EVENTS.filter(e=>!e.tr);
-  const ev=base[Math.floor(r()*base.length)], sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
-  S.g.tev={ k:ev.k, id:ev.p&&sq.length?sq[Math.floor(r()*sq.length)]:null };
+  const sq=S.sq.filter(id=>S.g.pl[id]&&S.g.pl[id].mot>0);
+  // pick … 選ぶ選手(inj = ケガをしたことがある / cap = キャプテン)。当てはまる選手がいない出来事は選ばない(→docs/23 §23.12 ③)
+  const who=e=>e.pick==="inj"?sq.filter(id=>pCnt(S.g.pl[id]).inj>0):e.pick==="cap"?sq.filter(id=>S.roles&&S.roles.cap===id):sq;
+  const base=TAG_EVENTS.filter(e=>!e.tr&&(!e.p||who(e).length));
+  if(!base.length)return;
+  const ev=base[Math.floor(r()*base.length)], pool=who(ev);
+  S.g.tev={ k:ev.k, id:ev.p&&pool.length?pool[Math.floor(r()*pool.length)]:null };
 }
 /** 練習の出来事(→docs/26 §26.4)。スタジアム・施設の段で起きる出来事が変わり、段の高いものほど選ばれやすい */
 const trEvOk=(S,e)=>{ const B=S.biz||{ stad:1, fac:{} }; return Object.keys(e.need).every(k=>k==="stad"?(B.stad||1)>=e.need.stad:((B.fac||{})[k]||0)>=e.need[k]); };
@@ -1454,6 +1499,29 @@ const TAG_EV_RX={
   mood:["任せてください！みんなを笑わせますよ！","あ、ちょっと騒ぎすぎましたかね。へへ。"],
   bday:["うわ、ケーキまで！ 最高の誕生日です！","いつもどおりが一番です。今日も練習、頑張ります。"],
   extra:["監督が見てくれるなら、もう一本いけます！","わかりました。今日はしっかり休みます。"],
+  // 第2弾(→docs/23 §23.12 ③)
+  callup:["行ってきます！ 代表で学んだことを、チームに持ち帰ります！","……わかりました。クラブのために戦います。"],
+  gear:["新しいスパイク、足に吸い付くみたいです！","そうですね。今はプレーで結果を出します。"],
+  rally:["ありがとうございます！ 全員で同じ方向を向きましょう！","……そうですね。まずは練習で示します。"],
+  night:["……すみません。罰金は払います。ちゃんと反省してます。","ありがとうございます……二度とないようにします。"],
+  mentor:["先生に会えて、初心を思い出しました！","わかりました。今は練習が先ですね。"],
+  rehab:["ありがとうございます。焦らず、万全で戻ります。","任せてください！ 待ちきれなかったんです！"],
+  charity:{ sec:true, s0:["承知しました。病院の方も喜ばれると思います。","かしこまりました。丁重にお断りしておきます。"],
+    s1:["わあ、素敵です！ 子どもたちも喜びますね！","了解です！ また機会があればですね！"],
+    s2:["了解です。地域の評判にも良い影響が出ます。","承知しました。日程を優先するのは合理的です。"],
+    s3:["いいことね。きっと応援が増えるわよ。","そう。先方には、うまく伝えておくわね。"] },
+  critic:{ sec:true, s0:["承知しました。会見の準備をいたします。","かしこまりました。結果で黙らせましょう。"],
+    s1:["言ってやりましょう、監督！","ですよね！ 勝てば全部ひっくり返ります！"],
+    s2:["了解です。反論の要点をまとめておきます。","承知しました。記事への反応は最小限が得策です。"],
+    s3:["ふふ、強気ね。嫌いじゃないわ。","大人の対応ね。選手たちも見ているわよ。"] },
+  trip:{ sec:true, s0:["承知しました。前日の便とホテルを手配します。","かしこまりました。いつもどおりの日程で参ります。"],
+    s1:["了解です！ みんなで前乗りですね！","わかりました！ 当日移動、頑張りましょう！"],
+    s2:["了解です。移動の疲れは確実に減ります。","承知しました。費用は抑えられます。"],
+    s3:["ええ、手配しておくわ。ゆっくり休めるといいわね。","わかったわ。長旅になるけど、みんな大丈夫よ。"] },
+  kids:{ sec:true, s0:["承知しました。選手たちにも声をかけておきます。","かしこまりました。見学の案内をしておきます。"],
+    s1:["子どもたち、大喜びですよ！ サインの列ができてます！","了解です！ 静かに見ててもらいますね！"],
+    s2:["了解です。地元のファンが増える見込みです。","承知しました。練習の妨げにならないようにします。"],
+    s3:["ふふ、みんないい顔してるわ。","ええ、遠くから見てもらいましょう。"] },
   train:{ sec:true, s0:["承知しました。次の練習に組み込んでおきますね。","かしこまりました。今回は見送りましょう。"],
     s1:["了解です！みんな、きっと喜びますよ！","わかりました！また今度ですね！"],
     s2:["了解です。練習メニューを差し替えます。","承知しました。今のメニューを優先します。"],
@@ -1529,6 +1597,11 @@ function answerTagEvent(S,i){
   if(R.bet&&id){ const [p,hit,miss]=R.bet, ok=mulberry32((S.seed^hashStr("teb:"+S.term+":"+S.played+":"+id))>>>0)()<p, t=ok?hit:miss;
     if(t)addPlayerTag(S,id,t,out); else out.push(nameOf(CARDS[id])+" は落ち着いたようだ"); }
   if(R.fat&&id){ const g=S.g.pl[id]; g.fat=clamp(g.fat+R.fat,0,TUNING.grow.int.fatMax); }
+  // 第2弾の語彙(→docs/23 §23.12 ③): 資金・ファン・SQUAD 全員の疲労・確率でチームのタグ
+  if(R.money){ S.money=Math.round((S.money+R.money)*100)/100; out.push("資金 "+(R.money>0?"+":"")+R.money+"億"); }
+  if(R.fans&&S.biz){ S.biz.fans+=R.fans; out.push("ファン +"+R.fans+"人"); }
+  if(R.teamFat){ for(const x of S.sq){ const g=S.g.pl[x]; if(g)g.fat=clamp((g.fat||0)+R.teamFat,0,TUNING.grow.int.fatMax); } out.push(R.teamFat>0?"チームに疲れが残った":"チームの疲れが抜けた"); }
+  if(R.teamBet){ const [p,hit,miss]=R.teamBet, ok=mulberry32((S.seed^hashStr("ttb:"+S.term+":"+S.played))>>>0)()<p; addTeamTag(S,ok?hit:miss,out); }
   if(!out.length)out.push("いつもどおりに戻った");
   return out;
 }

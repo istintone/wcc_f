@@ -914,12 +914,24 @@ TUNING.tag={
   str:{ s:0.15, m:0.3, l:0.5 },   // 小・中・大
   teamMax:3,                      // チームの汎用(保存するもの)の上限。超えたら残りの試合がいちばん短いものを押し出す
   playerMax:2,                    // 選手の汎用の上限(任期まで続くもの・一過性のもの、それぞれ)
-  streak:3                        // 勢い・スランプが付く連勝・連敗の数
+  streak:3,                       // 勢い・スランプが付く連勝・連敗の数
+  // 段が上がるタグ(→docs/23 §23.12): 破竹の勢い・泥沼の連勝・連敗 / 王者の行進の負けなし・崩壊寸前の勝ちなし / 不発の無得点 / 重い疲れ(この疲労以上)の続き / ゾーンの絶好調の続き
+  chain:{ rush:5, march:8, mire:5, collapse:7, dud:3, dud2:5, tireFat:0.08, tire1:3, tire2:5, zone:3 }
 };
+const ALL6_T=["off","def","tec","pow","spd","sta"];   // 能力すべて(チームのタグの上乗せ用。→docs/23 §23.12)
 const TAGS={
   golden:   { name:"黄金期到来",   scope:"team", kind:"gen", pol:1,  keep:true, dur:"graph.golden", fx:{ motLock:"on" }, endMsg:"黄金期がひと区切り(金色の成長グラフはそのまま)", desc:"選手全員が絶好調。調子が落ちない" },
-  momentum: { name:"勢い",         scope:"team", kind:"gen", pol:1,  dur:10, endOn:"lose", opp:"slump", fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい。負けると消える" },
-  slump:    { name:"スランプ",     scope:"team", kind:"gen", pol:-1, dur:null, endOn:"win", opp:"momentum", fx:{ motDown:"+m" }, desc:"負けたとき、調子が下がりやすい。勝つと消える" },
+  momentum: { name:"勢い",         scope:"team", kind:"gen", pol:1,  dur:10, endOn:"lose", opp:"slump", fam:"flowUp", fx:{ motUp:"+m" }, desc:"勝ったとき、調子が上がりやすい。負けると消える" },
+  slump:    { name:"スランプ",     scope:"team", kind:"gen", pol:-1, dur:null, endOn:"win", opp:"momentum", fam:"flowDown", fx:{ motDown:"+m" }, desc:"負けたとき、調子が下がりやすい。勝つと消える" },
+  // 段が上がるチームの流れ(→docs/23 §23.12 ①)。step … 崩れたときに戻る段 / stepOn … 崩れる結果
+  rush:     { name:"破竹の勢い",   scope:"team", kind:"gen", pol:1,  dur:null, fam:"flowUp", step:"momentum", stepOn:"lose", fx:{ motUp:"+l", motDown:"-s" }, desc:"5連勝。調子が上がりやすく、落ちにくい。負けると「勢い」に戻る" },
+  march:    { name:"王者の行進",   scope:"team", kind:"gen", pol:1,  dur:null, fam:"flowUp", step:"rush", stepOn:"lose", fx:{ motUp:"+l", motDown:"-m" }, stat:[{ who:"all", st:ALL6_T, k:"s" }], desc:"8試合負けなし。調子が上がりやすく落ちにくい。能力すべて +1。負けると「破竹の勢い」に戻る" },
+  mire:     { name:"泥沼",         scope:"team", kind:"gen", pol:-1, dur:null, fam:"flowDown", step:"slump", stepOn:"win", fx:{ motDown:"+l" }, desc:"5連敗。調子が下がりやすい。勝つと「スランプ」に戻る" },
+  collapse: { name:"崩壊寸前",     scope:"team", kind:"gen", pol:-1, dur:null, fam:"flowDown", step:"mire", stepOn:"win", fx:{ motDown:"+l", motUp:"-m" }, stat:[{ who:"all", st:ALL6_T, k:"s", neg:true }], desc:"7試合勝ちなし。能力すべて −1、調子が上がりにくい。勝つと「泥沼」に戻る" },
+  // 組み合わせ・出来事で付くチームのタグ(→docs/23 §23.12 ②③)
+  unity:    { name:"一体感",       scope:"team", kind:"gen", pol:1,  dur:10, fx:{ motUp:"+m", motDown:"-m" }, desc:"ムードメーカーと勢いがかみ合った。調子が上がりやすく、落ちにくい" },
+  pride:    { name:"地域の誇り",   scope:"team", kind:"gen", pol:1,  dur:5,  fx:{ money:"+s", motDown:"-s" }, desc:"地元に愛されている。入場料 ×1.15、調子が落ちにくい" },
+  resolve:  { name:"反骨心",       scope:"team", kind:"gen", pol:1,  dur:5,  fx:{ motDown:"-m" }, desc:"批判を力に変える。負けても調子が落ちにくい" },
   promo:    { name:"昇格の勢い",   scope:"team", kind:"gen", pol:1,  dur:10, opp:"releg", fx:{ motDown:"-m" }, desc:"チームの調子が落ちにくい" },
   releg:    { name:"降格の重圧",   scope:"team", kind:"gen", pol:-1, dur:10, opp:"promo", fx:{ motDown:"+m" }, desc:"チームの調子が落ちやすい" },
   facTrain: { name:"練習場施設充実",   scope:"team", kind:"gen", pol:1, derived:true, desc:"スポンサーの報酬" },
@@ -1013,7 +1025,20 @@ Object.assign(TAGS,{
   iron:    { name:"鉄人",         scope:"player", kind:"gen", pol:1,  dur:10, fx:{ fat:"-m" }, desc:"試合の疲労がたまりにくい" },
   waiting: { name:"出番待ち",     scope:"player", kind:"gen", pol:-1, dur:null, endOn:"played", fx:{ motDown:"+m" }, desc:"調子が落ちやすい。出場すると「やる気爆発」に変わる" },
   burst:   { name:"やる気爆発",   scope:"player", kind:"gen", pol:1,  dur:1, onAdd:"mot4", fx:{ motLock:"on" }, desc:"待ちに待った出番。次の試合は絶好調" },
-  scorer:  { name:"得点感覚",     scope:"player", kind:"gen", pol:1,  dur:3, stat:[{ st:["off"], k:"s" }], desc:"ゴールの匂いがわかる。OFE +1" },
+  scorer:  { name:"得点感覚",     scope:"player", kind:"gen", pol:1,  dur:3, fam:"goalUp", stat:[{ st:["off"], k:"s" }], desc:"ゴールの匂いがわかる。OFE +1" },
+  // 段が上がる選手のタグ(→docs/23 §23.12 ①)
+  sniff:   { name:"ゴールの嗅覚", scope:"player", kind:"gen", pol:1,  dur:3, fam:"goalUp", stat:[{ st:["off"], k:"m" }], desc:"2試合連続の得点。OFE +2" },
+  machine: { name:"量産体制",     scope:"player", kind:"gen", pol:1,  dur:3, fam:"goalUp", stat:[{ st:["off"], k:"m" },{ st:["tec"], k:"s" }], desc:"3試合連続の得点。OFE +2・TEC +1" },
+  dud:     { name:"不発",         scope:"player", kind:"gen", pol:-1, dur:10, fam:"goalDown", stat:[{ st:["off"], k:"s", neg:true }], desc:"FW が3試合続けて無得点。OFE −1。得点すると消える" },
+  dud2:    { name:"決定力不足",   scope:"player", kind:"gen", pol:-1, dur:10, fam:"goalDown", fx:{ motDown:"+s" }, stat:[{ st:["off"], k:"m", neg:true }], desc:"FW が5試合続けて無得点。OFE −2、調子が落ちやすい。得点すると消える" },
+  tire1:   { name:"疲労の蓄積",   scope:"player", kind:"gen", pol:-1, dur:null, endOn:"rested", fam:"tire", fx:{ fat:"+s" }, desc:"重い疲れが3試合続いた。疲労がたまりやすい。疲れが抜けると消える" },
+  tire2:   { name:"オーバーワーク", scope:"player", kind:"gen", pol:-1, dur:null, endOn:"rested", fam:"tire", fx:{ fat:"+m", inj:"+m" }, desc:"重い疲れが5試合続いた。疲労がたまりやすく、ケガをしやすい。このままケガをすると「ケガがち」に" },
+  zone:    { name:"ゾーン",       scope:"player", kind:"gen", pol:1,  dur:3, stat:[{ st:ALL6, k:"s" }], desc:"絶好調が3試合続いた。能力すべて +1" },
+  // 組み合わせ・出来事で付く選手のタグ(→docs/23 §23.12 ②③)
+  showman: { name:"千両役者",     scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"l" }], desc:"スター選手が大舞台に強い。決勝で能力すべて +3" },
+  awaken:  { name:"覚醒の予感",   scope:"player", kind:"gen", pol:1,  dur:5, fx:{ exp:"+l" }, desc:"成長期に点を取り始めた。経験 ×1.5" },
+  turmoil: { name:"騒動",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+l", comm:"-m" }, desc:"反抗期にゴシップが重なった。調子が乱れやすく、コミュニケーションが失敗しやすい" },
+  callup:  { name:"代表帰り",     scope:"player", kind:"gen", pol:1,  dur:3, fx:{ exp:"+m", motUp:"+s" }, desc:"代表で刺激を受けてきた。経験 ×1.3、調子が上がりやすい" },
   bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
 });
 // 特性(ポジション)。pos のポジションで出たときだけ効く。grp … 選手からの提案で、そのグループ(GK・DF・MF・FW)の選手にも候補に出す
@@ -1132,6 +1157,17 @@ const TAG_EVENTS=[
   { k:"mood",   q:"{n} がロッカールームを盛り上げています。",              p:true, ch:[["任せる",{ player:"mood" }],["静かに見守る",{}]] },
   { k:"bday",   q:"今日は {n} の誕生日です。",                             p:true, ch:[["みんなで祝う",{ player:"birthday" }],["普段どおり",{}]] },
   { k:"extra",  q:"{n} が居残りで自主練をしたいと言っています。",          p:true, ch:[["付き合う",{ player:"growth", fat:0.08 }],["休ませる",{ fat:-0.08 }]] },
+  // 第2弾(→docs/23 §23.12 ③)。pick … 選ぶ選手(inj = ケガをしたことがある / cap = キャプテン)。money は億、fans は人、teamFat は SQUAD 全員の疲労
+  { k:"callup", q:"{n} が代表に招集されました。",                           p:true, ch:[["送り出す",{ player:"callup", fat:0.06 }],["クラブを優先させる",{ bet:[0.5,null,"rebel"] }]] },
+  { k:"charity",q:"地元の病院から、チャリティーマッチの依頼が来ました。",   ch:[["受ける",{ team:"pride", fans:1500, teamFat:0.03 }],["断る",{}]] },
+  { k:"gear",   q:"{n} に、スパイクの契約の話が来ています。",               p:true, ch:[["受けさせる",{ bet:[0.6,"scorer","gossip"], money:0.3 }],["サッカーに集中させる",{}]] },
+  { k:"critic", q:"スポーツ紙に、監督を批判する記事が出ました。",           ch:[["会見で反論する",{ teamBet:[0.5,"momentum","slump"] }],["黙って結果で返す",{ team:"resolve" }]] },
+  { k:"rally",  q:"{n} が、決起集会を開きたいと言っています。",             p:true, pick:"cap", ch:[["許可する",{ team:"unity", teamFat:0.03 }],["今は練習に集中",{}]] },
+  { k:"night",  q:"{n} の夜遊びが、週刊誌に見つかりました。",               p:true, ch:[["罰金を科す",{ player:"rebel", money:0.2 }],["今回は見逃す",{ player:"gossip" }]] },
+  { k:"mentor", q:"{n} の恩師が、クラブハウスを訪ねてきました。",           p:true, ch:[["会わせる",{ player:"growth" }],["練習を優先させる",{ fat:-0.04 }]] },
+  { k:"trip",   q:"次は長距離の遠征です。移動をどうしますか？",             ch:[["前の日に入る(0.5億)",{ money:-0.5, teamFat:-0.05 }],["いつもどおり",{ teamFat:0.05 }]] },
+  { k:"kids",   q:"地元の子どもたちが、クラブハウスに見学に来ています。",   ch:[["選手と交流させる",{ team:"pride", fans:800 }],["見学だけにする",{}]] },
+  { k:"rehab",  q:"ケガから戻った {n} が、焦っているようです。",           p:true, pick:"inj", ch:[["じっくり戻す",{ fat:-0.06 }],["すぐ使う",{ bet:[0.5,"burst","injProne"] }]] },
   // 練習のイベント(→docs/26 §26.4)。tr … 次のチーム練習に1回だけ出るレア訓練(配列なら1つを選ぶ)/ need … スタジアム・施設の条件 / w … 選ばれやすさ(段が高いほど大きい)
   { k:"trMedia", tr:"非公開練習", need:{ stad:5 }, w:5, q:"メディアが練習を取材に来ています。今日は非公開練習にしましょうか？", ch:[["非公開にする",{ train:1 }],["公開のままにする",{}]] },
   { k:"trFans",  tr:"フルコート3対3", need:{ stad:3 }, w:3, q:"サポーターが練習を見に来ています。見せる練習「{t}」をしませんか？", ch:[["やろう",{ train:1 }],["いつもどおりで",{}]] },
@@ -1154,6 +1190,11 @@ const NOTE_HOW={
   star:"格上に勝つ・大会で優勝する・昇格を決める試合で活躍する", trouble:"同じ任期にゴシップが2回付く",
   golden:"成長グラフの金色が3つそろう(黄金期)",
   momentum:"3連勝する", slump:"3連敗する",
+  rush:"5連勝する(勢いが上がる)", march:"8試合負けなし(破竹の勢いが上がる)", mire:"5連敗する(スランプが深まる)", collapse:"7試合勝ちなし(泥沼が深まる)",
+  unity:"ムードメーカーがいて、チームに勢いがある / 決起集会を許可する", pride:"チャリティーマッチを受ける・地元の子どもたちと交流させる", resolve:"監督批判の記事に、黙って結果で返す",
+  sniff:"2試合連続で得点する", machine:"3試合連続で得点する", dud:"FW が先発で3試合続けて無得点", dud2:"FW が先発で5試合続けて無得点",
+  tire1:"試合のあとの重い疲れが3試合続く", tire2:"試合のあとの重い疲れが5試合続く", zone:"絶好調が3試合続く",
+  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
   facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
   facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",
@@ -1166,7 +1207,7 @@ const NOTE_HOW={
   bandiera:"任期の中でチームでいちばん早く70試合に出場する", supersub:"途中出場で2得点する", ace:"先発で10得点する",
   pillar:"キャプテンとして30試合先発する", mvp:"格 S・A の大会の決勝で MVP になる", strat:"試合の最後の KP として10勝する",
   iron:"20試合続けて先発する", waiting:"出場なしが10試合続く", burst:"「出番待ち」の選手を出場させる",
-  scorer:"2試合続けて得点する", bigstage:"決勝で得点する",
+  scorer:"得点する", bigstage:"決勝で得点する",
   gossip:"出来事「協賛の増額」の広告に出る / 週刊誌の件を本人に任せる", mood:"出来事でロッカールームの盛り上げ役を任せる", birthday:"出来事で誕生日を祝う",
   kami:"20歳以下で能力の合計がチームの頂点の選手が、10試合以上出場する", prince:"TEC がチームでいちばん高い攻撃の選手が、50試合以上出場する",
   crybaby:"高いレアリティの選手に、反抗期・ゴシップ・出番待ちが2回付く", academy:"21歳以下の選手が覚醒する"
