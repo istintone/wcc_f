@@ -97,6 +97,7 @@ function settingsHtml(){
     (rawBad()?'<h4>退避したセーブ</h4><p class="dim">読めなかった前のセーブを、消さずに取ってある。書き出して保管するか、要らなければ消す</p>'+
       '<button class="btn btn-sub" data-act="exbad">退避したセーブを書き出す</button>'+
       '<button class="btn btn-sub" data-act="rmbad">退避したセーブを消す</button>':'')+
+    '<h4>チュートリアル</h4><button class="btn btn-sub" data-act="tutreplay">チュートリアルをもう一度見る</button>'+   // →docs/36
     '<h4>最初から</h4>'+
     '<button class="btn btn-sub" data-act="reset">'+(CL.armReset?"本当に最初からやり直す(セーブが消える)":"最初からやり直す")+'</button>'+
     '</section>';
@@ -105,6 +106,7 @@ function rawBad(){ try{ return CL.store.getItem(SAVE_BAD_KEY); }catch(e){ return
 function settingsMsg(t){ CL.setMsg=t; showClub(true); }
 function onSettingsClick(act,b){
   const S=CL.S;
+  if(act==="tutreplay"){ tutReplay(S); persist(S); CL.set=false; CL.tab="home"; showClub(); return true; }
   if(act==="sndtoggle"){ sndUnlock(); sndSetOn(!SND.on); showClub(true); return true; }
   if(act==="bgmtoggle"){ sndUnlock(); bgmSetOn(!BGM.on); showClub(true); return true; }
   if(act==="theme"){ saveTheme(applyTheme(b.dataset.v)); showClub(true); return true; }

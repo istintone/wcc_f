@@ -227,7 +227,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null, tut:{ seen:{}, off:false, match:false } };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -650,6 +650,7 @@ function loadCareer(store){
  *   g … 育成(3b で追加)。無ければ任期の途中でも育成なしの状態から始める
  */
 function migrate(S){
+  if(!S.tut)S.tut={ seen:{}, off:true, match:true };   // チュートリアル(→docs/36)。遊んでいる人には急に出さない(設定からもう一度見られる)
   if(!S.sq)S.sq=startSquad();
   if(!S.coll)S.coll=newCollection();
   if(!S.note)S.note={};                         // COACHING NOTE(→docs/23 §23.10)。任期をまたいで残る

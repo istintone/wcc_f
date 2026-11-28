@@ -14,7 +14,7 @@ const SPEEDS=[1,2,4];
  * 何も渡さなければ、その場かぎりの練習試合(検証用の ?quick=1)。
  */
 function newMatch(homeDef,awayDef,seed,opts,meta){
-  if(typeof bgmPlay==="function"&&(!meta||meta.career))bgmPlay("match");   // 試合の BGM(クラブハウスの下に作る見本の試合では鳴らさない)
+  if(typeof bgmPlay==="function"&&(!meta||meta.career||meta.tut))bgmPlay("match");   // 試合の BGM(クラブハウスの下に作る見本の試合では鳴らさない)
   G.seed=seed>>>0;
   G.meta=meta||{ title:"KICK OFF", career:false };
   G.M=createMatch(homeDef||makeTeamDef("azr",false),awayDef||makeTeamDef("ros",true),G.seed,opts);
@@ -362,7 +362,7 @@ function startEvent(ev){
     const d=pso?pso[0]-pso[1]:H.score-A.score;
     // 試合の結果は結果の画面で出すので、ここは短い字幕だけ。数秒で結果へ(練習試合は次の試合へ)
     overlay("FULL TIME",'<span class="sc">'+H.score+' - '+A.score+'</span>'+(pso?'<small>PK '+pso[0]+' - '+pso[1]+'</small>':''),TUNING.play.capEnd,
-      ()=>{ if(G.meta.career)finishFixture(G.M); else newMatch(null,null,G.seed+1); });
+      ()=>{ if(G.meta.career)finishFixture(G.M); else if(G.meta.tut)tutMatchEnd(); else newMatch(null,null,G.seed+1); });   // 練習試合はクラブハウスへ(→docs/36)
     return;
   }
   if(!ev.from)return;                        // 知らない種類のイベントは読み飛ばす

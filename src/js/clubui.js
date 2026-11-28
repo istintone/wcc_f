@@ -84,6 +84,7 @@ function showClub(keepScroll){
   // モーダルは開いたときだけ下から出る(中を操作して描き直すたびには動かさない)
   if(kb2&&!CL._modal)kb2.closest(".kmodal").classList.add("enter");
   CL._modal=!!kb2;
+  if(typeof tutCheck==="function")tutCheck();   // 初めての場面なら秘書が案内する(→docs/36)
 }
 function hideClub(){ document.getElementById("club").classList.remove("on"); CL._vk=null; }   // 試合から戻ったときは向きの動きを付けない
 
@@ -1924,7 +1925,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON: リーグの順位と大会 */
@@ -2163,6 +2164,8 @@ function onClubClick(e){
   if(act==="tab"){ CL.tab=b.dataset.v; CL.sel=null; CL.sqSel=null; CL.secOpen=false; CL.oppView=null; CL.oppSel=null; CL.brView=null; showClub(); return; }
   if(act==="secpick"){ chooseSec(S,b.dataset.v); CL.secOpen=false; CL.msg=[secOf(S).name+"「"+SEC_LINES[secOf(S).id].hello+"」"]; save(); showClub(true); return; }
   if(act==="secopen"){ CL.secOpen=true; showClub(true); return; }
+  if(act==="tutgo"){ tutMatchStart(); return; }   // 練習試合(→docs/36 §36.3)
+  if(act==="tutno"){ tutState(S).match=true; save(); showClub(true); return; }
   if(act==="chatx"){ CL.pick=[]; showClub(true); return; }
   if(act==="chatok"){ CL.chat=null; showClub(true); return; }
   if(act==="propick"){ const i=+b.dataset.i, ln=answerProposal(S,i<0?null:i); if(CL.chat)CL.chat.lines=CL.chat.lines.concat(ln); save(); showClub(true); setTimeout(()=>infoBar(ln.filter(x=>/^🏷/.test(x))),0); return; }
