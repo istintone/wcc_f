@@ -106,7 +106,7 @@ function bhOf(c){
 }
 function placePlayer(p,h,x){
   const q=clampPos(p.gk,h,x);
-  p.h=q.h; p.x=q.x;
+  p.h=q.h; p.x=q.x; p.ux=q.x;   // ux = 監督が置いた横の位置(特性で開く・絞る前。盤面の表示と、次に動かすときの土台。→docs/32 §32.13)
   p.pos=p.gk?"GK":posAt(p.h,p.x);            // 細かいポジション(表示と適性)
   p.role=baseRole(p.pos);
   p.apt=aptOf(p.c,p.pos);
@@ -129,7 +129,7 @@ function mkPlayer(card,h,x,gk){
     kp:false, fx:FX0(), fxName:undefined, lo:0, stayK:1,
     st:{ act:0, pass:0, passOk:0, duelW:0, duelL:0, shots:0, goals:0 } };
   placePlayer(p,h,x);
-  p.b={ h:p.h, x:p.x };                      // 監督が戻ってくる基準の位置(相手監督だけが使う)
+  p.b={ h:p.h, x:p.ux };                      // 監督が戻ってくる基準の位置(相手監督だけが使う)
   return p;
 }
 /** 能力に掛かる修正は必ずここへ足す(全判定の単一集約点) */
@@ -517,7 +517,7 @@ function doSub(M,T,outId,inId,t){
   if(T.subs>=TUNING.squad.subMax)return false;
   const i=T.players.findIndex(p=>p.id===outId), j=T.bench.findIndex(c=>c.id===inId);
   if(i<0||j<0)return false;
-  const out=T.players[i], np=mkPlayer(T.bench[j],out.h,out.x,out.gk);
+  const out=T.players[i], np=mkPlayer(T.bench[j],out.h,out.ux,out.gk);
   np.b=out.b; np.b0=out.b0;
   T.players[i]=np; T.bench.splice(j,1); T.subs++;
   if(out.kp)T.kp=null;                       // KP を下げると KP は居なくなる
@@ -697,11 +697,11 @@ function coachMove(M,T,t){
       if(!M.ball)continue;
       const bx=M.ball.side===T.side?M.ball.x:100-M.ball.x;
       const tx=50+(bx-50)*TUNING.gk.follow;
-      placePlayer(p,p.b.h,p.x+clamp(tx-p.x,-K.gkStep,K.gkStep));
+      placePlayer(p,p.b.h,p.ux+clamp(tx-p.ux,-K.gkStep,K.gkStep));
       continue;
     }
     const s=safeTarget(p,{ h:p.b.h, x:50+((markX.has(p)?markX.get(p):p.b.x)-50)*nar });
-    placePlayer(p,p.h+clamp(s.h-p.h,-K.stepH,K.stepH),p.x+clamp(s.x-p.x,-K.stepX,K.stepX));
+    placePlayer(p,p.h+clamp(s.h-p.h,-K.stepH,K.stepH),p.ux+clamp(s.x-p.ux,-K.stepX,K.stepX));   // 開いた後の x を土台にすると、動かすたびに外へずれていく
   }
 }
 

@@ -113,7 +113,7 @@ function syncBoard(M){
     const el=BD.map.get(p.id);
     if(!el)continue;
     if(!(BD.drag&&BD.drag.id===p.id&&!BD.drag.bench)){
-      const [l,t]=bdPos(p.h,p.x);
+      const [l,t]=bdPos(p.h,p.ux!=null?p.ux:p.x);   // 盤面は監督が置いた位置(特性で開く・絞るのは試合の中の立ち位置。→docs/32 §32.13)
       el.style.left=l+"%"; el.style.top=t+"%";
       setCardLook(el,p.role,p.apt);
     }
