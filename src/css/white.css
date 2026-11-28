@@ -527,3 +527,8 @@ body.th-wl #club .spo-h b{font-size:14px}
 body.th-wl #infoBars .ibar.sp{background:linear-gradient(100deg,rgba(0,0,0,.35),rgba(0,0,0,0) 60%),var(--spc,#c8102e)}
 .vs-sp{padding:4px 8px!important;background:var(--spc,#c8102e)!important;transform:skewX(-8deg)}
 .vs-sp .splogo{display:block;height:20px;width:auto;transform:skewX(8deg)}
+/* 新聞の広告 = スポンサーのロゴバナー(→docs/35 §35.3) */
+body.th-wl .paper .pp-ad{background:var(--spc,#111);justify-items:center;padding:10px 10px 8px;position:relative;overflow:hidden}
+body.th-wl .paper .pp-ad::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0));pointer-events:none}
+body.th-wl .paper .pp-ad .splogo{height:38px;width:auto;max-width:90%}
+body.th-wl .paper .pp-ad small{color:rgba(255,255,255,.82);font-size:10px;letter-spacing:.08em}

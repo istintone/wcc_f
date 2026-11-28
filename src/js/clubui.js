@@ -1829,7 +1829,7 @@ function paperPage3(a){
     '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></section>':'')+
     (a.col?'<section class="pp-sec"><p class="pp-k">LA RUBRICA ・ コラム</p><div class="pp-col">'+secAv(S)+'<p><b>秘書 '+secOf(S).name+'</b><br>'+a.col+'</p></div></section>':'')+'</div>'+
     (a.letter?'<p class="pp-letter">「'+a.letter+'」<small>'+(S.club?S.club.town:'')+'・サポーター</small></p>':'')+
-    (a.ad?'<div class="pp-ad"><small>OFFICIAL SPONSOR</small><b>'+a.ad.name+'</b><small>'+ind+' '+"★".repeat(a.ad.rank||1)+'</small></div>':'')+'</article>';
+    (a.ad?'<div class="pp-ad" style="--spc:'+spColors(a.ad)[0]+'"><small>OFFICIAL SPONSOR</small>'+spLogoSvg(a.ad,true)+'<small>'+a.ad.name+' ・ '+ind+'</small></div>':'')+'</article>';   // 広告はスポンサーのロゴバナー(→docs/35 §35.3)
 }
 /** 答えが要る出来事は1つずつ出し、ほかは数だけ(→docs/33 GD1) */
 function oneAtATime(list){ const L=list.filter(Boolean); if(!L.length)return ''; return (L.length>1?'<p class="ev-count">1 / '+L.length+'</p>':'')+L[0]; }
