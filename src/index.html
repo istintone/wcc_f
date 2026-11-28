@@ -14,6 +14,9 @@
 <title>wcc_f</title>
 <style>
 /*__CSS__*/
+/* 起動のちらつき止め(→docs/14 §14.214): JS がテーマ(th-wl)を付けるまでは、TOP と同じ紙の色だけを見せる */
+body:not(.th-wl){background:#f2f0eb!important}
+body:not(.th-wl)>*{opacity:0!important}
 </style>
 </head>
 <body>

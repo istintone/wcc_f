@@ -4817,6 +4817,9 @@ body.th-wl #club .sec-ev.done .tk-rx .rx-av{flex:none;width:40px;height:40px;mar
 /* SEASON から見る相手 = スカウティングレポート(→docs/34 §34.13)。暗い地の頃の白い文字を戻す */
 body.th-wl #club .opp-vbox .ov-body{background:var(--t-paper,#f4f1ea);color:var(--w-ink);padding:8px 8px 10px}
 body.th-wl #club .opp-vbox .srep-inline{margin:0}
+/* 起動のちらつき止め(→docs/14 §14.214): JS がテーマ(th-wl)を付けるまでは、TOP と同じ紙の色だけを見せる */
+body:not(.th-wl){background:#f2f0eb!important}
+body:not(.th-wl)>*{opacity:0!important}
 </style>
 </head>
 <body>
