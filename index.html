@@ -12472,16 +12472,17 @@ function drawStands(c,W,H){
 function boardAds(n,slot){
   const S=typeof CL!=="undefined"&&CL.S?CL.S:null, sp=S&&S.biz&&S.biz.sp?S.biz.sp:null;
   const own=sp?{ sp, dark:true, bg:spColors(sp)[0] }:{ text:"WCC F", logo:true, white:true, bg:"#c8102e", fg:"#fff" };   // logo … ボール + ロゴの2行の文字(→docs/14 §14.154)
-  const pn=spPartners(S,6), out=[];
+  const pn=spPartners(S,5), out=[];
+  pn.splice(2,0,{ wcc:true });   // パートナーに紛れて、ときどきゲームのロゴ(WCC F)も出る(→docs/35 §35.3)
   for(let i=0;i<n;i++){
     if(i%2===0){ out.push(own); continue; }
     const p=pn[((i>>1)+slot)%pn.length];
-    out.push(p?{ sp:p, dark:p.dark, bg:p.dark?spColors(p)[0]:"#f4f1ea" }:{ text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" });
+    out.push(p&&!p.wcc?{ sp:p, dark:p.dark, bg:p.dark?spColors(p)[0]:"#f4f1ea" }:{ text:"WCC F", logo:true, bg:"#f4f1ea", fg:"#111" });
   }
   return out;
 }
-/** LED の入れ替わりの番(LED でない段は 0) */
-const boardSlot=()=>stadLv()>=TUNING.view.boardLed?Math.floor(performance.now()/TUNING.view.boardRot):0;
+/** パートナーの枠の番。LED の段は時間で入れ替わり、LED でない段は試合ごとに決まる(試合のたねで) */
+const boardSlot=()=>stadLv()>=TUNING.view.boardLed?Math.floor(performance.now()/TUNING.view.boardRot):(typeof G!=="undefined"&&G.M&&G.M.seed?G.M.seed>>>0:0)%6;
 /** B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす */
 function drawBoards(c,W,H,y0,y1){
   const n=TUNING.view.boardNLv[stadLv()-1]||4, bh=y1-y0, ads=boardAds(n,boardSlot()), cw=W/n, lg=logoImg();
