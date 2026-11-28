@@ -90,6 +90,7 @@ headless Chrome は窓幅を 500px 未満にできないので、幅390の ifram
 | 公開用を作る | `python build.py --dist` → `dist/`(index.html・manifest・sw.js・アイコン)。実名は入らない |
 | 公開する(外に出る操作。決めたときだけ) | `python tools/publish.py` → https://istintone.github.io/wcc_f/ |
 | 長い期間の賞(得点王・アシスト王・ベストイレブン・年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手・最優秀監督)を変える | 仕組みは `awards.js`(`awCycleEnd` / `awTermEnd` / `awRace` / ライバルの成績 `awRivalLeague`)、数値は `TUNING.award`、画面は `clubui.js` の `awardsHtml` と `scenes.js` の `sceneAwards` → `clubtest.js` の「長い期間の賞」。正本は docs/37 |
+| ゴシップの秘密の情報(スクープ)を変える・種類を足す | 種類と文と2択は `scoop.js` の `SCOOPS`、秘書の誘導は `SCOOP_NUDGE`、数値は `TUNING.scoop`、新聞の手がかりは `paper.js` の `makeArticle`(`scoopLead`)、画面は `clubui.js` の `scoopStamp` / `scoopRepHtml` / `scoopNudgeHtml` → `clubtest.js` の「スクープ」。正本は docs/38 |
 | チュートリアル(秘書の案内・練習試合)を変える | 場面と話すことは `tutorial.js` の `TUT_CLUB` / `TUT_MATCH`、出す判定は `tutCheck`、練習試合は `tutMatchStart` / `tutMatchEnd`、見たかどうかは `S.tut`。正本は docs/36 |
 | 設定・データの画面を変える | `src/js/settings.js`(実名パックの読み込み・セーブの書き出しと読み込み) |
 | 実名で遊ぶ(手元だけ) | `python build.py --real` → `index.local.html`(Git管理外。**公開しない**) |

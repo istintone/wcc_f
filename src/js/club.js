@@ -202,7 +202,8 @@ function oppDefOf(S,fx){
   // 相手のコンビ(→docs/23 §23.7 の 4): 特別なコンビはカードがそろえば、型は強い相手だけ(強い側の軸を金色とみなす)
   const ct=d.titles.find(t=>/^c_/.test(t)), gold={}; if(ct)for(const a of ct.slice(2))gold[a]=true;
   d.combos=oppCombos(d,strong,gold);
-  return applyTagStats(d,d.titles,null,fx,d.combos);
+  const d2=applyTagStats(d,d.titles,null,fx,d.combos);
+  return typeof scoopOppDef==="function"?scoopOppDef(S,fx,d2):d2;   // 調べた弱み(エースの負傷・布陣の変更。→docs/38)
 }
 function newLeague(S,W){
   setLeagueName(S);
@@ -552,6 +553,7 @@ function applyResult(S,W,fx,res){
   // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
+  if(typeof scoopAfterMatch==="function")scoopAfterMatch(S,fx);   // スクープの報告(→docs/38)
   // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
   if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
     if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }
@@ -912,7 +914,7 @@ function spAfterMatch(S,fx,r,out){
     const ok=m.t==="att"?Z.att>=m.n:m.t==="title"?r.titles>0:m.p>=m.n;
     if(ok){
       m.done=true;
-      const d=spDur(ind,sp.rank);
+      const d=spDur(ind,sp.rank)*(Z.spX2?2:1); Z.spX2=false;   // 社長をもてなしたら、次のミッションの報酬は2倍(→docs/38)
       // 同じ効果が重なったら、残りは長い方・大きさは高い☆の方
       const on=(Z.boost[ind.eff]||0)>0;
       Z.boostRank[ind.eff]=Math.max(on?(Z.boostRank[ind.eff]||1):1,sp.rank); Z.boost[ind.eff]=Math.max(Z.boost[ind.eff]||0,d);

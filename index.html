@@ -4905,6 +4905,14 @@ body.th-wl #club .awards .tbl.aw tr.me td{background:rgba(200,16,46,.07);font-we
 @keyframes awIn{from{opacity:0;transform:translateY(10px)}}
 @keyframes awWin{50%{transform:scale(1.08)}to{transform:scale(1.04);box-shadow:0 0 0 3px #c9a227,0 6px 18px rgba(201,162,39,.5)}}
 @media (prefers-reduced-motion:reduce){#scene.sc-award *{animation:none!important}}
+/* ゴシップの秘密の情報(→docs/38): 紙面の判子 */
+body.th-wl .paper .pp-scoop{display:inline-block;margin-left:6px;padding:0 6px;border:2px solid #c8102e;color:#c8102e;background:rgba(255,255,255,.6);font:800 italic 10.5px var(--f-num);letter-spacing:.1em;
+  transform:rotate(-6deg);vertical-align:1px;cursor:pointer;line-height:16px}
+body.th-wl .paper button.pp-scoop{animation:scoopPulse 1.6s ease-in-out infinite}
+body.th-wl .paper .pp-scoop.on{border-color:#c9a227;color:#7a5a10;font-style:normal;font-family:inherit;font-size:10px}
+body.th-wl .paper .pp-scoop.done{border-color:#9aa0aa;color:#6b717c;font-style:normal;font-family:inherit;font-size:10px}
+@keyframes scoopPulse{50%{box-shadow:0 0 0 3px rgba(200,16,46,.18)}}
+@media (prefers-reduced-motion:reduce){body.th-wl .paper button.pp-scoop{animation:none}}
 /* 起動のちらつき止め(→docs/14 §14.214): JS がテーマ(th-wl)を付けるまでは、TOP と同じ紙の色だけを見せる */
 body:not(.th-wl){background:#f2f0eb!important}
 body:not(.th-wl)>*{opacity:0!important}
@@ -6003,6 +6011,7 @@ Object.assign(TAGS,{
   showman: { name:"千両役者",     scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"l" }], desc:"スター選手が大舞台に強い。決勝で能力すべて +3" },
   awaken:  { name:"覚醒の予感",   scope:"player", kind:"gen", pol:1,  dur:5, fx:{ exp:"+l" }, desc:"成長期に点を取り始めた。経験 ×1.5" },
   turmoil: { name:"騒動",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+l", comm:"-m" }, desc:"反抗期にゴシップが重なった。調子が乱れやすく、コミュニケーションが失敗しやすい" },
+  doubt:   { name:"迷い",         scope:"player", kind:"gen", pol:-1, dur:5, fx:{ motDown:"+m" }, desc:"移籍の話で迷っている。調子が落ちやすい" },
   laureate:{ name:"受賞者",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ motDown:"-m" }, desc:"前の任期の賞を受けた。調子が落ちにくく、SQUAD にいると入場料 ×1.3(任期の終わりまで)" },
   callup:  { name:"代表帰り",     scope:"player", kind:"gen", pol:1,  dur:3, fx:{ exp:"+m", motUp:"+s" }, desc:"代表で刺激を受けてきた。経験 ×1.3、調子が上がりやすい" },
   bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
@@ -6114,6 +6123,10 @@ Object.assign(TAGS,{
  * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
  *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
  */
+// ゴシップの秘密の情報(→docs/38)。p … 新聞の号が手がかりを持つ率 / life … 調べられる試合数 / truth … 本当の秘密にたどり着く率(秘書の親密度の段)/ w … 種類の出やすさ /
+//   weakK … 突いた相手のエースの OFE・SPE・TEC の下げ / cheatP・cheatFans … 突いたときに「卑怯」と書かれる率とファンの減り / fairFans / linkExp / spCost(億)
+TUNING.scoop={ p:0.3, life:5, truth:[0.4,0.55,0.7,0.85], w:{ ace:2, transfer:2, night:2, pair:2, sponsor:1, plan:2, ob:1 },
+  weakK:2, cheatP:0.4, cheatFans:1500, fairFans:800, linkExp:40, spCost:0.3 };
 TUNING.award={ share:[0.28,0.40], asShare:[0.12,0.22], minAp:5, xiRate:6.8, youngAge:23,
   poyW:{ gl:3, as:2, mvp:4, rate:10, title:2 }, mgrTitle:8,
   prize:{ poy:5, shoe:3, gk:3, young:2, mgr:3 }, fans:{ poy:3000, shoe:2000, gk:1500, young:1500, mgr:2000 } };   // 長い期間の賞(→docs/37)
@@ -6163,7 +6176,7 @@ const NOTE_HOW={
   unity:"ムードメーカーがいて、チームに勢いがある / 決起集会を許可する", pride:"チャリティーマッチを受ける・地元の子どもたちと交流させる", resolve:"監督批判の記事に、黙って結果で返す",
   sniff:"2試合連続で得点する", machine:"3試合連続で得点する", dud:"FW が先発で3試合続けて無得点", dud2:"FW が先発で5試合続けて無得点",
   tire1:"試合のあとの重い疲れが3試合続く", tire2:"試合のあとの重い疲れが5試合続く", zone:"絶好調が3試合続く",
-  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
+  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", doubt:"移籍で迷っている選手を放っておく(スクープ)", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
   facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
   facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",
@@ -6181,7 +6194,7 @@ const NOTE_HOW={
   kami:"20歳以下で能力の合計がチームの頂点の選手が、10試合以上出場する", prince:"TEC がチームでいちばん高い攻撃の選手が、50試合以上出場する",
   crybaby:"高いレアリティの選手に、反抗期・ゴシップ・出番待ちが2回付く", academy:"21歳以下の選手が覚醒する"
 };
-const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"], ["mgr","監督"] ];   // 監督 = 監督称号(→docs/14 §14.147)
+const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"], ["mgr","監督"], ["scoop","スクープ"] ];   // スクープ(→docs/38)   // 監督 = 監督称号(→docs/14 §14.147)
 
 /* ---- 選手の声(→docs/14 §14.79)----
  * 育成度・動物・相性は裏の数字にした。その代わり、選手がたまに HOME で自分のことを伝えてくる。ちゃんと選手を見ていると得をする
@@ -8028,7 +8041,8 @@ function oppDefOf(S,fx){
   // 相手のコンビ(→docs/23 §23.7 の 4): 特別なコンビはカードがそろえば、型は強い相手だけ(強い側の軸を金色とみなす)
   const ct=d.titles.find(t=>/^c_/.test(t)), gold={}; if(ct)for(const a of ct.slice(2))gold[a]=true;
   d.combos=oppCombos(d,strong,gold);
-  return applyTagStats(d,d.titles,null,fx,d.combos);
+  const d2=applyTagStats(d,d.titles,null,fx,d.combos);
+  return typeof scoopOppDef==="function"?scoopOppDef(S,fx,d2):d2;   // 調べた弱み(エースの負傷・布陣の変更。→docs/38)
 }
 function newLeague(S,W){
   setLeagueName(S);
@@ -8378,6 +8392,7 @@ function applyResult(S,W,fx,res){
   // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
+  if(typeof scoopAfterMatch==="function")scoopAfterMatch(S,fx);   // スクープの報告(→docs/38)
   // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
   if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
     if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }
@@ -8738,7 +8753,7 @@ function spAfterMatch(S,fx,r,out){
     const ok=m.t==="att"?Z.att>=m.n:m.t==="title"?r.titles>0:m.p>=m.n;
     if(ok){
       m.done=true;
-      const d=spDur(ind,sp.rank);
+      const d=spDur(ind,sp.rank)*(Z.spX2?2:1); Z.spX2=false;   // 社長をもてなしたら、次のミッションの報酬は2倍(→docs/38)
       // 同じ効果が重なったら、残りは長い方・大きさは高い☆の方
       const on=(Z.boost[ind.eff]||0)>0;
       Z.boostRank[ind.eff]=Math.max(on?(Z.boostRank[ind.eff]||1):1,sp.rank); Z.boost[ind.eff]=Math.max(Z.boost[ind.eff]||0,d);
@@ -10903,6 +10918,7 @@ function noteTag(S,id){
 function noteCat(id){
   if(/^cb:/.test(id))return "combo";
   if(/^mt:/.test(id))return typeof TITLES!=="undefined"&&TITLES.some(t=>t.id===id.slice(3))?"mgr":null;   // 監督称号(→docs/14 §14.147)
+  if(/^sc:/.test(id))return typeof SCOOPS!=="undefined"&&SCOOPS[id.slice(3)]?"scoop":null;   // スクープ(→docs/38)
   const T=TAGS[id]; if(!T)return null;
   return T.kind==="title"?"title":T.kind==="trait"?"trait":T.kind==="unique"?"unique":T.scope==="team"?"team":"player";
 }
@@ -10913,6 +10929,7 @@ function noteHow(id){
     return C.special?"決められた選手の組("+C.ids.map(x=>nameOf(CARDS[x])).join("・")+")が全員先発で黄金線・信頼でつながり、"+ax+" が金色"
       :C.slots.length+"人("+C.slots.map(s=>COMBO_SLOT[s].join("/")).join(" + ")+")が黄金線・信頼でつながり、"+ax+" が金色"; }
   if(/^mt:/.test(id)){ const t=TITLES.find(x=>x.id===id.slice(3)); return t?"任期の終わりに: "+t.need:""; }
+  if(/^sc:/.test(id)){ const k=id.slice(3), X=typeof SCOOPS!=="undefined"&&SCOOPS[k]; return X?"新聞のうわさ「"+X.rumor.replace(/\{(opp|a|p|q|sp|town)\}/g,"◯◯")+"」を秘書に調べてもらう":""; }
   const T=TAGS[id]; if(!T)return "";
   if(NOTE_HOW[id])return NOTE_HOW[id];
   if(T.sub==="nation")return "先発の11人をすべて "+(NAT_NAME[T.nat]||T.nat)+" の選手にして戦い続ける";
@@ -10927,6 +10944,7 @@ function noteAll(){
   for(const id in TAGS){ const c=noteCat(id); if(c)out[c].push(id); }
   for(const id in COMBOS)out.combo.push("cb:"+id);
   if(typeof TITLES!=="undefined")for(const t of TITLES)out.mgr.push("mt:"+t.id);   // 監督称号
+  if(typeof SCOOPS!=="undefined")for(const k in SCOOPS)out.scoop.push("sc:"+k);   // スクープ(→docs/38)
   return out;
 }
 /** 試合のあとに、見えているタグ(施設充実・オイルマネー・カードの固有)も手帳に書く */
@@ -11473,6 +11491,94 @@ function awNextTerm(S){
 const awHonorTxt=(S,id)=>((S&&S.honors&&S.honors[id])||[]).map(h=>"第"+h[0]+"任期 "+AWARDS[h[1]].name);
 /** ライバルの名前(監督の賞は「◯◯ の監督」) */
 const awWho=x=>x.id==="mgr"?"監督(あなた)":/^mgr:/.test(x.id)?teamNameOf(TEAMS[x.club])+" の監督":nameOf(CARDS[x.id]);
+
+/**
+ * ゴシップの秘密の情報(スクープ。→docs/38)。DOM に触らない。
+ * 新聞の号のゴシップの1つが手がかり(art.scoop)になる → 判子を押すと秘書が調べる(S.scoop.inv)→ 次の試合のあとに報告(S.scoop.rep)→ 2択
+ */
+/** 秘密の種類。rumor … ゴシップの文 / truth … 本当だったときの秘書の報告 / ch … [答え, 結果] / need … 作れる条件 */
+const SCOOPS={
+  ace:{ name:"エースの負傷", rumor:"{opp}のエース {a}、練習を途中で切り上げる姿が目撃される", truth:"{opp}の {a}、やはり足を痛めているようです。次の試合、そこを突きますか？",
+    ch:[["そこを突く",{ weak:true }],["見なかったことにする",{ fans:"fair" }]] },
+  transfer:{ name:"移籍の迷い", rumor:"{p}に国外のビッグクラブが関心か? 関係者は「ノーコメント」", truth:"{p}さん、本当に移籍の話で迷っているようです。",
+    ch:[["話を聞く",{ bet:[0.6,"growth","rebel"] }],["放っておく",{ player:"doubt" }]] },
+  night:{ name:"深夜の自主練", rumor:"{p}、深夜のクラブハウスでひとり練習 ― 目撃情報", truth:"{p}さん、実は結果が出なくて焦っているみたいです。",
+    ch:[["練習に付き合う",{ player:"growth", fat:0.06 }],["休ませる",{ fat:-0.06 }]] },
+  pair:{ name:"昔からの仲", rumor:"{p}と{q}、オフに一緒に食事か 連携の秘密はここに?", truth:"{p}さんと{q}さん、昔からの仲だそうです。",
+    ch:[["同じ組で練習させる",{ link:true }],["普段どおり",{}]] },
+  sponsor:{ name:"社長の思惑", rumor:"{sp}の社長、お忍びでスタジアムに? VIP席に見慣れない姿", truth:"{sp}の社長、協賛を増やすか考えているそうです。おもてなし、しますか？",
+    ch:[["もてなす(0.3億)",{ spX2:true }],["普段どおり",{}]] },
+  plan:{ name:"新しい布陣", rumor:"{opp}の監督、非公開練習で新しい布陣を試しているらしい", truth:"{opp}、次の試合で布陣を変えてくるようです。",
+    ch:[["対策を練る",{ plan:true }],["気にしない",{}]] },
+  ob:{ name:"伝説の OB", rumor:"{town}の街で、伝説のOBらしき人物を見かけたとの声", truth:"街で見かけたのは、本当にクラブの伝説の OB でした。クラブのことを気にかけているそうです。",
+    ch:[["会いに行く",{ ob:true }],["そっとしておく",{}]] } };
+const scoopOf=S=>S.scoop||(S.scoop={ inv:null, rep:null, weak:null, plan:null, found:{}, readNo:-1 });
+/** 名前を当てはめる */
+function scoopFill(t,x){
+  return t.replace(/\{opp\}/g,x.opp&&TEAMS[x.opp]?teamNameOf(TEAMS[x.opp]):"").replace(/\{a\}/g,x.ace&&CARDS[x.ace]?nameOf(CARDS[x.ace]):"")
+    .replace(/\{p\}/g,x.id&&CARDS[x.id]?nameOf(CARDS[x.id]):"").replace(/\{q\}/g,x.id2&&CARDS[x.id2]?nameOf(CARDS[x.id2]):"")
+    .replace(/\{sp\}/g,x.sp||"").replace(/\{town\}/g,x.town||"");
+}
+/** 新聞の号に手がかりを作るか(paper.js の makeArticle から)。作れば { k, id, id2, opp, ace, sp, town, at, txt } */
+function scoopLead(S,rng){
+  const K=TUNING.scoop, Z=scoopOf(S);
+  if(S.termOver||rng()>=K.p)return null;
+  const sq=(S.sq||[]).filter(id=>CARDS[id]&&S.g&&S.g.pl[id]), nx=typeof upcoming==="function"?(upcoming(S,1)||[])[0]:null, opp=nx&&nx.opp&&TEAMS[nx.opp]?nx.opp:null;
+  const ace=opp?(TEAMS[opp].kp||(TEAMS[opp].xi||[])[9]):null;
+  const ok={ ace:!!(opp&&ace&&CARDS[ace]), transfer:sq.length>0, night:sq.length>0, pair:sq.length>1, sponsor:!!(S.biz&&S.biz.sp), plan:!!opp, ob:!S.obSeed };
+  const w=Object.keys(SCOOPS).filter(k=>ok[k]).map(k=>[k,K.w[k]||1]); if(!w.length)return null;
+  let r=rng()*w.reduce((a,x)=>a+x[1],0), k=w[w.length-1][0]; for(const [kk,v] of w){ if(r<v){ k=kk; break; } r-=v; }
+  const a=sq[Math.floor(rng()*sq.length)], b=sq.filter(x=>x!==a)[Math.floor(rng()*Math.max(1,sq.length-1))];
+  const x={ k, id:a||null, id2:b||null, opp, ace, sp:S.biz&&S.biz.sp?S.biz.sp.name:"", town:S.club?S.club.town:"", at:S.played };
+  x.txt="【うわさ】"+scoopFill(SCOOPS[k].rumor,x);
+  return x;
+}
+/** その手がかりを今調べられるか(古くない・ほかを調べていない・報告を待っていない) */
+const scoopCanAsk=(S,sc)=>!!sc&&!sc.asked&&S.played-sc.at<=TUNING.scoop.life&&!scoopOf(S).inv&&!scoopOf(S).rep&&!S.termOver;
+/** 秘書に調べてもらう */
+function scoopAsk(S,sc){ if(!scoopCanAsk(S,sc))return false; sc.asked=true; scoopOf(S).inv=Object.assign({},sc,{ askAt:S.played }); return true; }
+/** 試合のあと(applyResult から): 調べた結果の報告を作る・相手の弱みと采配の対策を使い終える */
+function scoopAfterMatch(S,fx){
+  const Z=scoopOf(S);
+  if(Z.weak&&fx&&fx.opp===Z.weak.opp)Z.weak=null;
+  if(Z.plan&&fx&&fx.opp===Z.plan.opp)Z.plan=null;
+  if(Z.inv&&S.played>=Z.inv.askAt){   // 調べ始めた次の試合の結果を反映するとき(S.played はまだ増える前)
+    const lv=typeof secLv==="function"?secLv(S):0, ok=mulberry32((S.seed^hashStr("scp:"+S.term+":"+S.played))>>>0)()<TUNING.scoop.truth[lv];
+    Z.rep=Object.assign({},Z.inv,{ ok }); Z.inv=null;
+  }
+}
+/** 2択に答える。i = 答えの番号(ただの噂のときは i を見ない)。結果の行を返す */
+function scoopAnswer(S,i){
+  const Z=scoopOf(S), r=Z.rep; if(!r)return [];
+  Z.rep=null; const out=[];
+  if(!r.ok){ out.push("ただの噂だった"); return out; }
+  Z.found[r.k]=(Z.found[r.k]||0)+1;
+  if(typeof noteTag==="function")noteTag(S,"sc:"+r.k);   // COACHING NOTE のスクープ
+  const R=(SCOOPS[r.k].ch[i]||[])[1]||{}, K=TUNING.scoop, rng=mulberry32((S.seed^hashStr("sca:"+S.term+":"+S.played+":"+i))>>>0);
+  if(R.weak){ Z.weak={ opp:r.opp, id:r.ace }; out.push("🔎 次の試合、"+nameOf(CARDS[r.ace])+" の足を狙う");
+    if(rng()<K.cheatP){ if(S.biz)S.biz.fans=Math.max(0,S.biz.fans-K.cheatFans); (S.pnews||(S.pnews=[])).push({ t:"cheat" }); out.push("📰 新聞に「卑怯な采配」と書かれた(ファン −"+K.cheatFans+"人)"); } }
+  if(R.fans==="fair"&&S.biz){ S.biz.fans+=K.fairFans; out.push("ファン +"+K.fairFans+"人(フェアプレーが評判に)"); }
+  if(R.bet&&r.id&&S.g.pl[r.id]){ const [p,hit,miss]=R.bet; addPlayerTag(S,r.id,rng()<p?hit:miss,out); }
+  if(R.player&&r.id&&S.g.pl[r.id])addPlayerTag(S,r.id,R.player,out);
+  if(R.fat&&r.id&&S.g.pl[r.id]){ const g=S.g.pl[r.id]; g.fat=clamp((g.fat||0)+R.fat,0,TUNING.grow.int.fatMax); out.push(R.fat>0?nameOf(CARDS[r.id])+" に疲れが残った":nameOf(CARDS[r.id])+" の疲れが抜けた"); }
+  if(R.link&&r.id&&r.id2&&S.g.pl[r.id]&&S.g.pl[r.id2]&&typeof linkExp==="function"){ linkExp(S,r.id,r.id2,K.linkExp); out.push("🔗 "+nameOf(CARDS[r.id])+" と "+nameOf(CARDS[r.id2])+" の連携が深まった"); }
+  if(R.spX2&&S.biz){ S.money=Math.round((S.money-K.spCost)*100)/100; S.biz.spX2=true; out.push("📣 次のミッションの報酬は2倍(資金 −"+K.spCost+"億)"); }
+  if(R.plan){ Z.plan={ opp:r.opp }; out.push("🔎 次の試合、"+teamNameOf(TEAMS[r.opp])+" の布陣の変更に備える"); }
+  if(R.ob){ S.obSeed=true; out.push("🤝 伝説の OB と話した。いつか何かが起きるかもしれない"); }
+  if(!out.length)out.push("いつもどおりに戻った");
+  return out;
+}
+/** 秘書の誘導の言い回し(→docs/38 §38.5) */
+const SCOOP_NUDGE=["気になるうわさが載っていますよ。もう新聞は読まれましたか？","たまにはニュースもチェックしてくださいね。ゴシップ欄が少し気になります。",
+  "記者さんが何か嗅ぎつけたみたいです。紙面、ご覧になりました？","今朝の新聞、面白い記事がありましたよ。","監督、新聞を読む時間はありますか？ ひとつ、確かめたいうわさがあるんです。"];
+/** 相手の定義に、調べた弱みを当てる(oppDefOf の最後)。エースの能力 −weakK、布陣の変更をしない(頑固) */
+function scoopOppDef(S,fx,d){
+  const Z=S&&S.scoop; if(!Z||!fx)return d;
+  if(Z.weak&&Z.weak.opp===fx.opp){ const k=TUNING.scoop.weakK;
+    d.xi=d.xi.map(x=>x.card.id!==Z.weak.id?x:Object.assign({},x,{ card:Object.assign({},x.card,{ off:Math.max(1,x.card.off-k), spd:Math.max(1,x.card.spd-k), tec:Math.max(1,x.card.tec-k) }) })); }
+  if(Z.plan&&Z.plan.opp===fx.opp)d.pers="stubborn";
+  return d;
+}
 
 // ================= 紋章の意匠(pftb docs/10 §3.54b)=================
 // pftb から取り込んだもの(wcc_f docs/10 §10.2 A)。元は pftb の tools/slice_emblem.py が書き出す
@@ -12510,9 +12616,11 @@ function makeArticle(S,M,L,RT){
     else if(/スタジアムを改修|ファンが/.test(x))side.push("【クラブ】"+x);
   }
   const q=mine[1]?nameOf(CARDS[mine[1].id]):v.p;
-  if(v.p)side.push("【うわさ】"+paperFill(pick(PAPER_RUMOR),Object.assign({},v,{ q })));
+  // うわさ話: ときどき本当かもしれない手がかり(スクープ。→docs/38)。紙面に SCOOP? の判子
+  const sc=typeof scoopLead==="function"?scoopLead(S,rng):null;
+  if(sc)side.push(sc.txt); else if(v.p)side.push("【うわさ】"+paperFill(pick(PAPER_RUMOR),Object.assign({},v,{ q })));
   const art={ no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind, topic:"match",
-    head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null };
+    head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null, scoop:sc&&side.slice(0,4).includes(sc.txt)?sc:null };
   paperTopic(S,L,art,v,pick,rng);
   paperPages(S,M,L,RT,art,pick);   // 2面・3面(→docs/34)
   return art;
@@ -15125,9 +15233,9 @@ function noteHtml(){
   for(const c of S.career||[]){ const k="mt:"+c.title; if(!N[k])N[k]={ term:c.term, n:0 }; N[k].n++; }
   const tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
   const ttl=id=>TITLES.find(x=>x.id===id.slice(3))||{};
-  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:/^mt:/.test(id)?ttl(id).name:TAGS[id].name;
-  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):/^mt:/.test(id)?(TITLE_FX[id.slice(3)]?'セットすると: '+TITLE_FX[id.slice(3)].desc+' ・ ':'')+'年俸 +'+ttl(id).bonus+'億 ・ 監督の格 '+ttl(id).grade:TAGS[id].desc;
-  const cls=id=>/^cb:/.test(id)?'cmb':/^mt:/.test(id)?'up ttl':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
+  const nameOfId=id=>/^sc:/.test(id)?SCOOPS[id.slice(3)].name:/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:/^mt:/.test(id)?ttl(id).name:TAGS[id].name;
+  const descOf=id=>/^sc:/.test(id)?'2択: '+SCOOPS[id.slice(3)].ch.map(c=>c[0]).join(' / '):/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):/^mt:/.test(id)?(TITLE_FX[id.slice(3)]?'セットすると: '+TITLE_FX[id.slice(3)].desc+' ・ ':'')+'年俸 +'+ttl(id).bonus+'億 ・ 監督の格 '+ttl(id).grade:TAGS[id].desc;
+  const cls=id=>/^sc:/.test(id)?'up':/^cb:/.test(id)?'cmb':/^mt:/.test(id)?'up ttl':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
   let h='<section class="card note"><h3>COACHING NOTE</h3>'+
     '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
       return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
@@ -15152,6 +15260,21 @@ function playerVoiceHtml(){
   const c=CARDS[v.id], a=artSrc(c,"stand");
   return '<section class="sec pvoice"><i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'+
     '<div><b class="sec-nm">'+c.no+' '+nameOf(c)+'<em class="sec-tag">VOICE</em></b><p>「'+v.text+'」</p></div></section>';
+}
+/** スクープの報告(→docs/38)。本当なら2択、ただの噂なら一言 */
+function scoopRepHtml(){
+  const S=CL.S, r=S.scoop&&S.scoop.rep; if(!r||S.termOver)return "";
+  const X=SCOOPS[r.k];
+  return '<section class="sec sec-ev scoop-rep">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">SCOOP</em></b>'+
+    '<p>'+(r.ok?scoopFill(X.truth,r):'「'+scoopFill(X.rumor,r)+'」の件、調べてみましたが、ただの噂でした。')+'</p>'+
+    '<div class="sec-ch">'+(r.ok?X.ch.map((c,i)=>'<button class="btn ch" data-act="scoopans" data-i="'+i+'">'+c[0]+'</button>').join(""):'<button class="btn ch" data-act="scoopans" data-i="0">わかった</button>')+'</div></div></section>';
+}
+/** 秘書の誘導: まだ読んでいない号に、調べられる手がかりがあるとき(→docs/38 §38.5) */
+function scoopNudgeHtml(){
+  const S=CL.S, a=(S.paper||[])[(S.paper||[]).length-1]; if(!a||!a.scoop||S.termOver||!scoopCanAsk(S,a.scoop)||S.paperSeen===paperKey(a))return "";
+  const line=SCOOP_NUDGE[hashStr("nudge:"+a.term+":"+a.no)%SCOOP_NUDGE.length];
+  return '<section class="sec scoop-nudge">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">NEWS</em></b><p>'+line+'</p>'+
+    '<div class="sec-ch"><button class="btn ch" data-act="news">新聞を読む</button></div></div></section>';
 }
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
@@ -15411,13 +15534,20 @@ function paperPage2(a){
     tbl+rd+'</article>';
 }
 /** 3面: 次の相手・ゴシップ・秘書のコラム・サポーターの投書・スポンサーの広告 */
+/** ゴシップの手がかりの判子(→docs/38)。押すと秘書が調べる。調査中・調査済み・古くなったものは押せない印 */
+function scoopStamp(a){
+  const S=CL.S, sc=a.scoop, Z=scoopOf(S);
+  if(scoopCanAsk(S,sc))return '<button class="pp-scoop" data-act="scoop" data-v="'+a.term+':'+a.no+'">SCOOP?</button>';
+  if(sc.asked)return '<i class="pp-scoop '+(Z.inv&&Z.inv.at===sc.at||Z.rep&&Z.rep.at===sc.at?'on">調査中':'done">調査済み')+'</i>';
+  return '';
+}
 function paperPage3(a){
   if(!a.col&&!a.side.length)return '';
   const S=CL.S, T=a.next&&TEAMS[a.next.opp], kp=T&&T.kp&&CARDS[T.kp], st=kp?styleOfCard(kp):null, pers=T?(TUNING.coach.pers[persOfClub(a.next.opp)]||{}).name:'';
   const next=T?'<section class="pp-box"><p class="pp-k">PROSSIMA ・ NEXT</p><b>'+teamNameOf(T)+' <small>'+"★".repeat(tierOf(a.next.opp))+'</small></b><p>'+(COMPS[a.next.comp]?compNm(a.next.comp)+'。':'')+(kp?'KP は '+nameOf(kp)+(st?'('+st.name+')':'')+'。':'')+(pers?'相手監督は'+pers+'型。':'')+'</p></section>':'';
   const ind=a.ad&&typeof SP_IND!=="undefined"?(SP_IND.find(x=>x.id===a.ad.ind)||{}).name:'';
   return '<article class="paper v2 pp-p3" data-act="none"><div class="pp-folio"><span>PROSSIMA &amp; PETTEGOLEZZI</span><span>3</span></div>'+next+
-    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></section>':'')+
+    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+(a.scoop&&x===a.scoop.txt?scoopStamp(a):'')+'</li>').join("")+'</ol></section>':'')+
     (a.col?'<section class="pp-sec"><p class="pp-k">LA RUBRICA ・ コラム</p><div class="pp-col">'+secAv(S)+'<p><b>秘書 '+secOf(S).name+'</b><br>'+a.col+'</p></div></section>':'')+'</div>'+
     (a.letter?'<p class="pp-letter">「'+a.letter+'」<small>'+(S.club?S.club.town:'')+'・サポーター</small></p>':'')+
     (a.ad?'<div class="pp-ad" style="--spc:'+spColors(a.ad)[0]+'"><small>OFFICIAL SPONSOR</small>'+spLogoSvg(a.ad,true)+'<small>'+a.ad.name+' ・ '+ind+'</small></div>':'')+'</article>';   // 広告はスポンサーのロゴバナー(→docs/35 §35.3)
@@ -15515,7 +15645,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([scoopRepHtml(),tagEventHtml(),stadOfferHtml()])+scoopNudgeHtml()+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON の賞レース(→docs/37 §37.4): リーグの得点王・アシスト王と、任期のゴールデンシュー。自分の選手とライバルが混ざる */
@@ -15779,6 +15909,9 @@ function onClubClick(e){
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
+  if(act==="scoop"){ const [t,n]=b.dataset.v.split(":").map(Number), a=(S.paper||[]).find(x=>x.term===t&&x.no===n);   // 秘書に調べてもらう(→docs/38)
+    if(a&&scoopAsk(S,a.scoop)){ save(); infoBar(["🔎 "+secOf(S).name+" が調べてくれる(次の試合のあとに報告)"]); } showClub(true); return; }
+  if(act==="scoopans"){ const out=scoopAnswer(S,+b.dataset.i); CL.msg=out; save(); showClub(true); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }
   if(act==="none")return;
   if(act==="htopen"){ CL.htOpen=!CL.htOpen; showClub(true); return; }

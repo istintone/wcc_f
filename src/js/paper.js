@@ -137,9 +137,11 @@ function makeArticle(S,M,L,RT){
     else if(/スタジアムを改修|ファンが/.test(x))side.push("【クラブ】"+x);
   }
   const q=mine[1]?nameOf(CARDS[mine[1].id]):v.p;
-  if(v.p)side.push("【うわさ】"+paperFill(pick(PAPER_RUMOR),Object.assign({},v,{ q })));
+  // うわさ話: ときどき本当かもしれない手がかり(スクープ。→docs/38)。紙面に SCOOP? の判子
+  const sc=typeof scoopLead==="function"?scoopLead(S,rng):null;
+  if(sc)side.push(sc.txt); else if(v.p)side.push("【うわさ】"+paperFill(pick(PAPER_RUMOR),Object.assign({},v,{ q })));
   const art={ no:S.played, term:S.term, comp:L.comp, label:L.label||"", opp:L.opp, hg, ag, pso:pso||null, kind, topic:"match",
-    head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null };
+    head, sub, lead, quote, side:side.slice(0,4), mvp:mvp?{ id:mvp.id, r:mvp.r }:null, photo:mvp?mvp.id:null, scoop:sc&&side.slice(0,4).includes(sc.txt)?sc:null };
   paperTopic(S,L,art,v,pick,rng);
   paperPages(S,M,L,RT,art,pick);   // 2面・3面(→docs/34)
   return art;

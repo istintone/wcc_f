@@ -1056,5 +1056,27 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   E.awNextTerm(S);
   check("次の任期の初めに「受賞者」と(年間最優秀は)スター選手",(S.g.pl[id].tags||[]).some(t=>t.id==="laureate"));
 }
+// ゴシップの秘密の情報(→docs/38)
+{
+  console.log("\n■ スクープ");
+  const S=E.newCareer(41), W=E.worldOf(S), K=E.TUNING.scoop; K.p=1;
+  const sc0=E.scoopLead(S,E.mulberry32(7));
+  check("新聞の号に手がかり(うわさ)ができる",!!sc0&&/【うわさ】/.test(sc0.txt),sc0&&sc0.txt);
+  const opp=Object.keys(E.TEAMS).find(k=>k!=="azr"&&E.TEAMS[k].kp&&E.TEAMS[k].xi), sc={ k:"ace", opp, ace:E.TEAMS[opp].kp, at:S.played, txt:"【うわさ】" };
+  check("判子を押すと秘書が調べ始める(同時に1つ)",E.scoopAsk(S,sc)&&!E.scoopAsk(S,Object.assign({},sc,{ asked:false })));
+  K.truth=[1,1,1,1]; E.scoopAfterMatch(S,{ opp:"x" });
+  const Z=E.scoopOf(S);
+  check("次の試合のあとに報告が来る(本当の秘密)",!!Z.rep&&Z.rep.ok&&!Z.inv);
+  K.cheatP=0; E.scoopAnswer(S,0);
+  const fx={ opp:sc.opp, kind:"cup" }, d=E.oppDefOf(S,fx), ace=d.xi.find(x=>x.card.id===sc.ace);
+  Z.weak=null; const d0=E.oppDefOf(S,fx), ace0=d0.xi.find(x=>x.card.id===sc.ace);
+  check("「そこを突く」と次の試合で相手のエースの能力が下がる",!!ace&&!!ace0&&ace.card.off<ace0.card.off,ace0&&ace0.card.off+" → "+(ace&&ace.card.off));
+  Z.plan={ opp:sc.opp }; check("「対策を練る」と相手監督は布陣を変えない(頑固)",E.oppDefOf(S,fx).pers==="stubborn");
+  E.scoopAfterMatch(S,fx); check("その相手と試合をしたら対策は使い終わる",!Z.plan);
+  check("見つけた秘密は手帳に(スクープ)",!!(S.note&&S.note["sc:ace"])&&E.noteCat("sc:ace")==="scoop"&&E.noteHow("sc:ace").length>0);
+  Z.rep={ k:"ob", ok:true, at:S.played }; E.scoopAnswer(S,0);
+  check("伝説の OB に会うと隠しイベントの種(S.obSeed)",S.obSeed===true);
+  K.p=0.3; K.truth=[0.4,0.55,0.7,0.85]; K.cheatP=0.4;
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

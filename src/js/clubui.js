@@ -1535,9 +1535,9 @@ function noteHtml(){
   for(const c of S.career||[]){ const k="mt:"+c.title; if(!N[k])N[k]={ term:c.term, n:0 }; N[k].n++; }
   const tot=Object.values(all).reduce((a,l)=>a+l.length,0), got=Object.keys(N).filter(id=>noteCat(id)).length;
   const ttl=id=>TITLES.find(x=>x.id===id.slice(3))||{};
-  const nameOfId=id=>/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:/^mt:/.test(id)?ttl(id).name:TAGS[id].name;
-  const descOf=id=>/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):/^mt:/.test(id)?(TITLE_FX[id.slice(3)]?'セットすると: '+TITLE_FX[id.slice(3)].desc+' ・ ':'')+'年俸 +'+ttl(id).bonus+'億 ・ 監督の格 '+ttl(id).grade:TAGS[id].desc;
-  const cls=id=>/^cb:/.test(id)?'cmb':/^mt:/.test(id)?'up ttl':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
+  const nameOfId=id=>/^sc:/.test(id)?SCOOPS[id.slice(3)].name:/^cb:/.test(id)?(COMBOS[id.slice(3)]||{}).name:/^mt:/.test(id)?ttl(id).name:TAGS[id].name;
+  const descOf=id=>/^sc:/.test(id)?'2択: '+SCOOPS[id.slice(3)].ch.map(c=>c[0]).join(' / '):/^cb:/.test(id)?comboDesc(COMBOS[id.slice(3)]):/^mt:/.test(id)?(TITLE_FX[id.slice(3)]?'セットすると: '+TITLE_FX[id.slice(3)].desc+' ・ ':'')+'年俸 +'+ttl(id).bonus+'億 ・ 監督の格 '+ttl(id).grade:TAGS[id].desc;
+  const cls=id=>/^sc:/.test(id)?'up':/^cb:/.test(id)?'cmb':/^mt:/.test(id)?'up ttl':TAGS[id].kind==="title"?'ttl':TAGS[id].kind==="unique"?'unq':TAGS[id].kind==="fame"?'fm':TAGS[id].pol<0?'dn':'up';
   let h='<section class="card note"><h3>COACHING NOTE</h3>'+
     '<div class="nt-cats">'+NOTE_CAT.map(([k,l])=>{ const n=all[k].filter(id=>N[id]).length;
       return '<button class="nt-cat'+(CL.noteCat===k?' on':'')+'" data-act="notecat" data-v="'+k+'">'+l+'<small>'+n+'/'+all[k].length+'</small></button>'; }).join("")+'</div>';
@@ -1562,6 +1562,21 @@ function playerVoiceHtml(){
   const c=CARDS[v.id], a=artSrc(c,"stand");
   return '<section class="sec pvoice"><i class="sec-av pl-av">'+(a?'<img src="'+a+'" alt="">':'')+'</i>'+
     '<div><b class="sec-nm">'+c.no+' '+nameOf(c)+'<em class="sec-tag">VOICE</em></b><p>「'+v.text+'」</p></div></section>';
+}
+/** スクープの報告(→docs/38)。本当なら2択、ただの噂なら一言 */
+function scoopRepHtml(){
+  const S=CL.S, r=S.scoop&&S.scoop.rep; if(!r||S.termOver)return "";
+  const X=SCOOPS[r.k];
+  return '<section class="sec sec-ev scoop-rep">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">SCOOP</em></b>'+
+    '<p>'+(r.ok?scoopFill(X.truth,r):'「'+scoopFill(X.rumor,r)+'」の件、調べてみましたが、ただの噂でした。')+'</p>'+
+    '<div class="sec-ch">'+(r.ok?X.ch.map((c,i)=>'<button class="btn ch" data-act="scoopans" data-i="'+i+'">'+c[0]+'</button>').join(""):'<button class="btn ch" data-act="scoopans" data-i="0">わかった</button>')+'</div></div></section>';
+}
+/** 秘書の誘導: まだ読んでいない号に、調べられる手がかりがあるとき(→docs/38 §38.5) */
+function scoopNudgeHtml(){
+  const S=CL.S, a=(S.paper||[])[(S.paper||[]).length-1]; if(!a||!a.scoop||S.termOver||!scoopCanAsk(S,a.scoop)||S.paperSeen===paperKey(a))return "";
+  const line=SCOOP_NUDGE[hashStr("nudge:"+a.term+":"+a.no)%SCOOP_NUDGE.length];
+  return '<section class="sec scoop-nudge">'+secAv(S)+'<div><b class="sec-nm">'+secOf(S).name+'<em class="sec-tag">NEWS</em></b><p>'+line+'</p>'+
+    '<div class="sec-ch"><button class="btn ch" data-act="news">新聞を読む</button></div></div></section>';
 }
 /** 出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える */
 function tagEventHtml(){
@@ -1821,13 +1836,20 @@ function paperPage2(a){
     tbl+rd+'</article>';
 }
 /** 3面: 次の相手・ゴシップ・秘書のコラム・サポーターの投書・スポンサーの広告 */
+/** ゴシップの手がかりの判子(→docs/38)。押すと秘書が調べる。調査中・調査済み・古くなったものは押せない印 */
+function scoopStamp(a){
+  const S=CL.S, sc=a.scoop, Z=scoopOf(S);
+  if(scoopCanAsk(S,sc))return '<button class="pp-scoop" data-act="scoop" data-v="'+a.term+':'+a.no+'">SCOOP?</button>';
+  if(sc.asked)return '<i class="pp-scoop '+(Z.inv&&Z.inv.at===sc.at||Z.rep&&Z.rep.at===sc.at?'on">調査中':'done">調査済み')+'</i>';
+  return '';
+}
 function paperPage3(a){
   if(!a.col&&!a.side.length)return '';
   const S=CL.S, T=a.next&&TEAMS[a.next.opp], kp=T&&T.kp&&CARDS[T.kp], st=kp?styleOfCard(kp):null, pers=T?(TUNING.coach.pers[persOfClub(a.next.opp)]||{}).name:'';
   const next=T?'<section class="pp-box"><p class="pp-k">PROSSIMA ・ NEXT</p><b>'+teamNameOf(T)+' <small>'+"★".repeat(tierOf(a.next.opp))+'</small></b><p>'+(COMPS[a.next.comp]?compNm(a.next.comp)+'。':'')+(kp?'KP は '+nameOf(kp)+(st?'('+st.name+')':'')+'。':'')+(pers?'相手監督は'+pers+'型。':'')+'</p></section>':'';
   const ind=a.ad&&typeof SP_IND!=="undefined"?(SP_IND.find(x=>x.id===a.ad.ind)||{}).name:'';
   return '<article class="paper v2 pp-p3" data-act="none"><div class="pp-folio"><span>PROSSIMA &amp; PETTEGOLEZZI</span><span>3</span></div>'+next+
-    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+'</li>').join("")+'</ol></section>':'')+
+    '<div class="pp-two">'+(a.side.length?'<section class="pp-sec"><p class="pp-k">RUMORS ・ ゴシップ</p><ol class="pp-rum">'+a.side.map(x=>'<li>'+x+(a.scoop&&x===a.scoop.txt?scoopStamp(a):'')+'</li>').join("")+'</ol></section>':'')+
     (a.col?'<section class="pp-sec"><p class="pp-k">LA RUBRICA ・ コラム</p><div class="pp-col">'+secAv(S)+'<p><b>秘書 '+secOf(S).name+'</b><br>'+a.col+'</p></div></section>':'')+'</div>'+
     (a.letter?'<p class="pp-letter">「'+a.letter+'」<small>'+(S.club?S.club.town:'')+'・サポーター</small></p>':'')+
     (a.ad?'<div class="pp-ad" style="--spc:'+spColors(a.ad)[0]+'"><small>OFFICIAL SPONSOR</small>'+spLogoSvg(a.ad,true)+'<small>'+a.ad.name+' ・ '+ind+'</small></div>':'')+'</article>';   // 広告はスポンサーのロゴバナー(→docs/35 §35.3)
@@ -1925,7 +1947,7 @@ function homeHtml(){
   // スポンサー: 契約が無ければ選ぶまで始められない。区切りでは選び直せる(続けてもよい)
   if(S.biz&&S.biz.offers&&!S.biz.sp&&!S.termOver)return homeHeadHtml()+alertBox+spPickHtml(true);
   // 次の試合が主役。その下に WEEKLY NEWS の1行。秘書・スポンサー・改修は、答えや判断が要るときだけ(→docs/14 第2弾)
-  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
+  return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([scoopRepHtml(),tagEventHtml(),stadOfferHtml()])+scoopNudgeHtml()+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
 /** SEASON の賞レース(→docs/37 §37.4): リーグの得点王・アシスト王と、任期のゴールデンシュー。自分の選手とライバルが混ざる */
@@ -2189,6 +2211,9 @@ function onClubClick(e){
   if(act==="news"){ CL.paperI=S.paper.length-1; S.paperSeen=paperKey(S.paper[CL.paperI]); persist(S); showClub();
     const g=document.getElementById("ppGossip"); if(g)g.scrollIntoView({ block:"center" }); return; }   // ゴシップ欄から開く
   if(act==="paperclose"){ CL.paperI=null; showClub(); return; }
+  if(act==="scoop"){ const [t,n]=b.dataset.v.split(":").map(Number), a=(S.paper||[]).find(x=>x.term===t&&x.no===n);   // 秘書に調べてもらう(→docs/38)
+    if(a&&scoopAsk(S,a.scoop)){ save(); infoBar(["🔎 "+secOf(S).name+" が調べてくれる(次の試合のあとに報告)"]); } showClub(true); return; }
+  if(act==="scoopans"){ const out=scoopAnswer(S,+b.dataset.i); CL.msg=out; save(); showClub(true); return; }
   if(act==="fulltable"){ CL.fullTable=!CL.fullTable; showClub(true); return; }
   if(act==="none")return;
   if(act==="htopen"){ CL.htOpen=!CL.htOpen; showClub(true); return; }

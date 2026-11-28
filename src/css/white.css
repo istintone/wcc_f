@@ -605,3 +605,11 @@ body.th-wl #club .awards .tbl.aw tr.me td{background:rgba(200,16,46,.07);font-we
 @keyframes awIn{from{opacity:0;transform:translateY(10px)}}
 @keyframes awWin{50%{transform:scale(1.08)}to{transform:scale(1.04);box-shadow:0 0 0 3px #c9a227,0 6px 18px rgba(201,162,39,.5)}}
 @media (prefers-reduced-motion:reduce){#scene.sc-award *{animation:none!important}}
+/* ゴシップの秘密の情報(→docs/38): 紙面の判子 */
+body.th-wl .paper .pp-scoop{display:inline-block;margin-left:6px;padding:0 6px;border:2px solid #c8102e;color:#c8102e;background:rgba(255,255,255,.6);font:800 italic 10.5px var(--f-num);letter-spacing:.1em;
+  transform:rotate(-6deg);vertical-align:1px;cursor:pointer;line-height:16px}
+body.th-wl .paper button.pp-scoop{animation:scoopPulse 1.6s ease-in-out infinite}
+body.th-wl .paper .pp-scoop.on{border-color:#c9a227;color:#7a5a10;font-style:normal;font-family:inherit;font-size:10px}
+body.th-wl .paper .pp-scoop.done{border-color:#9aa0aa;color:#6b717c;font-style:normal;font-family:inherit;font-size:10px}
+@keyframes scoopPulse{50%{box-shadow:0 0 0 3px rgba(200,16,46,.18)}}
+@media (prefers-reduced-motion:reduce){body.th-wl .paper button.pp-scoop{animation:none}}

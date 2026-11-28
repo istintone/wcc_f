@@ -1038,6 +1038,7 @@ Object.assign(TAGS,{
   showman: { name:"千両役者",     scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"l" }], desc:"スター選手が大舞台に強い。決勝で能力すべて +3" },
   awaken:  { name:"覚醒の予感",   scope:"player", kind:"gen", pol:1,  dur:5, fx:{ exp:"+l" }, desc:"成長期に点を取り始めた。経験 ×1.5" },
   turmoil: { name:"騒動",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+l", comm:"-m" }, desc:"反抗期にゴシップが重なった。調子が乱れやすく、コミュニケーションが失敗しやすい" },
+  doubt:   { name:"迷い",         scope:"player", kind:"gen", pol:-1, dur:5, fx:{ motDown:"+m" }, desc:"移籍の話で迷っている。調子が落ちやすい" },
   laureate:{ name:"受賞者",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ motDown:"-m" }, desc:"前の任期の賞を受けた。調子が落ちにくく、SQUAD にいると入場料 ×1.3(任期の終わりまで)" },
   callup:  { name:"代表帰り",     scope:"player", kind:"gen", pol:1,  dur:3, fx:{ exp:"+m", motUp:"+s" }, desc:"代表で刺激を受けてきた。経験 ×1.3、調子が上がりやすい" },
   bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
@@ -1149,6 +1150,10 @@ Object.assign(TAGS,{
  * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
  *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
  */
+// ゴシップの秘密の情報(→docs/38)。p … 新聞の号が手がかりを持つ率 / life … 調べられる試合数 / truth … 本当の秘密にたどり着く率(秘書の親密度の段)/ w … 種類の出やすさ /
+//   weakK … 突いた相手のエースの OFE・SPE・TEC の下げ / cheatP・cheatFans … 突いたときに「卑怯」と書かれる率とファンの減り / fairFans / linkExp / spCost(億)
+TUNING.scoop={ p:0.3, life:5, truth:[0.4,0.55,0.7,0.85], w:{ ace:2, transfer:2, night:2, pair:2, sponsor:1, plan:2, ob:1 },
+  weakK:2, cheatP:0.4, cheatFans:1500, fairFans:800, linkExp:40, spCost:0.3 };
 TUNING.award={ share:[0.28,0.40], asShare:[0.12,0.22], minAp:5, xiRate:6.8, youngAge:23,
   poyW:{ gl:3, as:2, mvp:4, rate:10, title:2 }, mgrTitle:8,
   prize:{ poy:5, shoe:3, gk:3, young:2, mgr:3 }, fans:{ poy:3000, shoe:2000, gk:1500, young:1500, mgr:2000 } };   // 長い期間の賞(→docs/37)
@@ -1198,7 +1203,7 @@ const NOTE_HOW={
   unity:"ムードメーカーがいて、チームに勢いがある / 決起集会を許可する", pride:"チャリティーマッチを受ける・地元の子どもたちと交流させる", resolve:"監督批判の記事に、黙って結果で返す",
   sniff:"2試合連続で得点する", machine:"3試合連続で得点する", dud:"FW が先発で3試合続けて無得点", dud2:"FW が先発で5試合続けて無得点",
   tire1:"試合のあとの重い疲れが3試合続く", tire2:"試合のあとの重い疲れが5試合続く", zone:"絶好調が3試合続く",
-  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
+  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", doubt:"移籍で迷っている選手を放っておく(スクープ)", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
   facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
   facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",
@@ -1216,7 +1221,7 @@ const NOTE_HOW={
   kami:"20歳以下で能力の合計がチームの頂点の選手が、10試合以上出場する", prince:"TEC がチームでいちばん高い攻撃の選手が、50試合以上出場する",
   crybaby:"高いレアリティの選手に、反抗期・ゴシップ・出番待ちが2回付く", academy:"21歳以下の選手が覚醒する"
 };
-const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"], ["mgr","監督"] ];   // 監督 = 監督称号(→docs/14 §14.147)
+const NOTE_CAT=[ ["team","チーム"], ["title","称号"], ["player","選手"], ["trait","特性"], ["combo","コンビ"], ["unique","固有"], ["mgr","監督"], ["scoop","スクープ"] ];   // スクープ(→docs/38)   // 監督 = 監督称号(→docs/14 §14.147)
 
 /* ---- 選手の声(→docs/14 §14.79)----
  * 育成度・動物・相性は裏の数字にした。その代わり、選手がたまに HOME で自分のことを伝えてくる。ちゃんと選手を見ていると得をする

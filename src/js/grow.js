@@ -1618,6 +1618,7 @@ function noteTag(S,id){
 function noteCat(id){
   if(/^cb:/.test(id))return "combo";
   if(/^mt:/.test(id))return typeof TITLES!=="undefined"&&TITLES.some(t=>t.id===id.slice(3))?"mgr":null;   // 監督称号(→docs/14 §14.147)
+  if(/^sc:/.test(id))return typeof SCOOPS!=="undefined"&&SCOOPS[id.slice(3)]?"scoop":null;   // スクープ(→docs/38)
   const T=TAGS[id]; if(!T)return null;
   return T.kind==="title"?"title":T.kind==="trait"?"trait":T.kind==="unique"?"unique":T.scope==="team"?"team":"player";
 }
@@ -1628,6 +1629,7 @@ function noteHow(id){
     return C.special?"決められた選手の組("+C.ids.map(x=>nameOf(CARDS[x])).join("・")+")が全員先発で黄金線・信頼でつながり、"+ax+" が金色"
       :C.slots.length+"人("+C.slots.map(s=>COMBO_SLOT[s].join("/")).join(" + ")+")が黄金線・信頼でつながり、"+ax+" が金色"; }
   if(/^mt:/.test(id)){ const t=TITLES.find(x=>x.id===id.slice(3)); return t?"任期の終わりに: "+t.need:""; }
+  if(/^sc:/.test(id)){ const k=id.slice(3), X=typeof SCOOPS!=="undefined"&&SCOOPS[k]; return X?"新聞のうわさ「"+X.rumor.replace(/\{(opp|a|p|q|sp|town)\}/g,"◯◯")+"」を秘書に調べてもらう":""; }
   const T=TAGS[id]; if(!T)return "";
   if(NOTE_HOW[id])return NOTE_HOW[id];
   if(T.sub==="nation")return "先発の11人をすべて "+(NAT_NAME[T.nat]||T.nat)+" の選手にして戦い続ける";
@@ -1642,6 +1644,7 @@ function noteAll(){
   for(const id in TAGS){ const c=noteCat(id); if(c)out[c].push(id); }
   for(const id in COMBOS)out.combo.push("cb:"+id);
   if(typeof TITLES!=="undefined")for(const t of TITLES)out.mgr.push("mt:"+t.id);   // 監督称号
+  if(typeof SCOOPS!=="undefined")for(const k in SCOOPS)out.scoop.push("sc:"+k);   // スクープ(→docs/38)
   return out;
 }
 /** 試合のあとに、見えているタグ(施設充実・オイルマネー・カードの固有)も手帳に書く */
