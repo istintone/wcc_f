@@ -102,5 +102,7 @@ function cardBackHtml(c,x){
     '<div class="cb-foot">'+(sk?'<p><b>★'+sk.label+'</b> '+sk.desc+'</p>':'')+
       (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (R?'<p class="cb-rare"><b>RARE KP</b> '+((x.ss||0)>=5?R.name:'？？？(特殊能力★5で解放)')+'</p>':'')+
-      '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+(x.extra||'')+'</div></div>';
+      '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+
+      (typeof awHonorTxt==="function"&&typeof CL!=="undefined"&&CL.S&&awHonorTxt(CL.S,c.id).length?'<p class="cb-hon"><b>AWARDS</b> '+awHonorTxt(CL.S,c.id).join(" ・ ")+'</p>':'')+   // 受賞歴(→docs/37)
+      (x.extra||'')+'</div></div>';
 }

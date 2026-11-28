@@ -4872,6 +4872,39 @@ body.th-wl #bench{flex-basis:58px!important;margin:0!important;padding-top:6px;b
   box-shadow:0 0 0 2px #0b0b0b,inset 6px 0 10px rgba(0,0,0,.25),0 12px 24px rgba(0,0,0,.35)!important;position:relative}
 body.th-wl #bench::before{content:"";position:absolute;left:7px;right:5px;top:22px;bottom:8px;border:1.5px dashed rgba(255,255,255,.55);border-radius:4px;pointer-events:none}
 body.th-wl #bench .lbl{color:#fff!important;background:none;padding:1px 0;font-size:9px;letter-spacing:.24em;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+/* 長い期間の賞(→docs/37): SEASON の賞レース・授賞式・カードの裏の受賞歴 */
+body.th-wl #club .awards .aw-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+body.th-wl #club .awards .aw-k{margin:4px 0 2px;font-family:var(--f-num);font-weight:800;font-style:italic;letter-spacing:.12em;font-size:12px;color:var(--w-red)}
+body.th-wl #club .awards .tbl.aw td{padding:3px 4px;font-size:12px}
+body.th-wl #club .awards .tbl.aw td:first-child{width:14px;color:var(--w-mute);font-family:var(--f-num)}
+body.th-wl #club .awards .tbl.aw td:last-child{text-align:right;font-family:var(--f-num)}
+body.th-wl #club .awards .tbl.aw td small{color:var(--w-mute);font-family:var(--f-num);font-size:10px}
+body.th-wl #club .awards .tbl.aw tr.me td{background:rgba(200,16,46,.07);font-weight:800}
+.cb-hon{margin:4px 0 0;font-size:11px;color:#7a5a10}
+.cb-hon b{font-family:var(--f-num);letter-spacing:.12em;margin-right:4px;color:#c9a227}
+#scene.sc-award{background:radial-gradient(120% 70% at 50% 0%,#fff 0,#f1ece2 60%,#e4dccb 100%);color:#151515;display:flex;flex-direction:column;align-items:center;padding:56px 14px 20px;box-sizing:border-box}
+#scene.sc-award .aw-head{text-align:center;animation:awIn .4s both}
+#scene.sc-award .aw-head small{display:block;font-family:var(--f-num);font-weight:800;font-style:italic;letter-spacing:.22em;color:#c8102e;font-size:13px}
+#scene.sc-award .aw-head b{display:block;font-size:26px;font-weight:900;margin:4px 0 2px}
+#scene.sc-award .aw-head i{font-style:normal;font-size:11px;color:#8a8f99}
+#scene.sc-award .aw-noms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px;margin:26px 0 18px}
+#scene.sc-award .aw-nom{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);padding:8px 4px 8px;text-align:center;animation:awIn .4s both;border-top:3px solid #c9ccd3}
+#scene.sc-award .aw-nom.me{border-top-color:#c8102e}
+#scene.sc-award .aw-nom.win{animation:awIn .4s both,awWin .6s 1.3s both}
+#scene.sc-award .aw-pic{height:78px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+#scene.sc-award .aw-pic img{height:100%;width:auto;image-rendering:pixelated}
+#scene.sc-award .aw-nom b{display:block;font-size:12.5px;font-weight:800;margin-top:4px;line-height:1.3}
+#scene.sc-award .aw-nom small{display:block;font-size:10px;color:#8a8f99;line-height:1.3}
+#scene.sc-award .aw-win{width:100%;max-width:380px;text-align:center;padding:12px 10px;background:linear-gradient(100deg,#7a5a10,#c9a227 40%,#f2d77a 55%,#c9a227 70%,#7a5a10);color:#1d1400;
+  clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,12px 100%);animation:awIn .5s 1.5s both}
+#scene.sc-award .aw-win.me{box-shadow:0 0 24px rgba(242,193,78,.8)}
+#scene.sc-award .aw-win small{display:block;font-family:var(--f-num);font-weight:800;letter-spacing:.3em;font-size:11px}
+#scene.sc-award .aw-win b{display:block;font-size:22px;font-weight:900}
+#scene.sc-award .aw-win em{display:block;font-style:normal;font-size:11px;font-weight:700;opacity:.8}
+#scene.sc-award .touch{margin-top:auto;color:#c8102e}
+@keyframes awIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes awWin{50%{transform:scale(1.08)}to{transform:scale(1.04);box-shadow:0 0 0 3px #c9a227,0 6px 18px rgba(201,162,39,.5)}}
+@media (prefers-reduced-motion:reduce){#scene.sc-award *{animation:none!important}}
 /* 起動のちらつき止め(→docs/14 §14.214): JS がテーマ(th-wl)を付けるまでは、TOP と同じ紙の色だけを見せる */
 body:not(.th-wl){background:#f2f0eb!important}
 body:not(.th-wl)>*{opacity:0!important}
@@ -5970,6 +6003,7 @@ Object.assign(TAGS,{
   showman: { name:"千両役者",     scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"l" }], desc:"スター選手が大舞台に強い。決勝で能力すべて +3" },
   awaken:  { name:"覚醒の予感",   scope:"player", kind:"gen", pol:1,  dur:5, fx:{ exp:"+l" }, desc:"成長期に点を取り始めた。経験 ×1.5" },
   turmoil: { name:"騒動",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+l", comm:"-m" }, desc:"反抗期にゴシップが重なった。調子が乱れやすく、コミュニケーションが失敗しやすい" },
+  laureate:{ name:"受賞者",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ motDown:"-m" }, desc:"前の任期の賞を受けた。調子が落ちにくく、SQUAD にいると入場料 ×1.3(任期の終わりまで)" },
   callup:  { name:"代表帰り",     scope:"player", kind:"gen", pol:1,  dur:3, fx:{ exp:"+m", motUp:"+s" }, desc:"代表で刺激を受けてきた。経験 ×1.3、調子が上がりやすい" },
   bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
 });
@@ -6080,6 +6114,9 @@ Object.assign(TAGS,{
  * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
  *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
  */
+TUNING.award={ share:[0.28,0.40], asShare:[0.12,0.22], minAp:5, xiRate:6.8, youngAge:23,
+  poyW:{ gl:3, as:2, mvp:4, rate:10, title:2 }, mgrTitle:8,
+  prize:{ poy:5, shoe:3, gk:3, young:2, mgr:3 }, fans:{ poy:3000, shoe:2000, gk:1500, young:1500, mgr:2000 } };   // 長い期間の賞(→docs/37)
 const TAG_EVENTS=[
   { k:"camp",   q:"地元の企業から、合宿の申し出が届きました。",           ch:[["受ける",{ team:"camp" }],["断る",{}]] },
   { k:"boom",   q:"地元の企業が、協賛を増やしたいそうです。広告に {n} を出してほしいとのこと。", p:true,
@@ -6126,7 +6163,7 @@ const NOTE_HOW={
   unity:"ムードメーカーがいて、チームに勢いがある / 決起集会を許可する", pride:"チャリティーマッチを受ける・地元の子どもたちと交流させる", resolve:"監督批判の記事に、黙って結果で返す",
   sniff:"2試合連続で得点する", machine:"3試合連続で得点する", dud:"FW が先発で3試合続けて無得点", dud2:"FW が先発で5試合続けて無得点",
   tire1:"試合のあとの重い疲れが3試合続く", tire2:"試合のあとの重い疲れが5試合続く", zone:"絶好調が3試合続く",
-  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す",
+  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
   facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
   facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",
@@ -8016,7 +8053,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null, tut:{ seen:{}, off:false, match:false } };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null, tut:{ seen:{}, off:false, match:false }, awards:[], honors:{}, lstat:{}, awAcc:{}, awNext:[], mgrAwards:0 };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -8341,6 +8378,10 @@ function applyResult(S,W,fx,res){
   // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
+  // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
+  if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
+    if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }
+  if(ag===0&&res.starters&&res.starters[0]){ const T=S.tstat||(S.tstat={}), k=res.starters[0], t=T[k]||(T[k]={ ap:0, gl:0, as:0, mvp:0, rs:0, rn:0 }); t.cs=(t.cs||0)+1; }
   S.history.push([fx.comp,fx.opp,hg,ag,fx.label||"",res.pso||null,fx.no,fx.home===false?0:1]);   // 大会・相手・得点・段・PK・試合番号・ホーム(SEASON の日程)
   if(S.history.length>TUNING.club.historyMax)S.history.shift();
   S.played++; S.slot++;
@@ -8361,6 +8402,7 @@ function skipSlot(S,W){
 }
 /** 1周(43枠)の終わり。前の周の成績を残し、リーグと大会を作り直す */
 function endCycle(S,W,out){
+  awCycleEnd(S,out);                             // リーグの1周の賞(→docs/37)
   const rank=sortTable(S.league.table).indexOf("me")+1;
   const won=CUP_IDS.filter(id=>S.cups[id].st==="won");
   if(rank===1)won.push("LG");
@@ -8384,6 +8426,7 @@ function newTerm(S,W){
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
   S.tstat={};                                   // この任期の選手ごとの成績(選手の調書。→docs/34 §34.4)
+  S.lstat={}; S.awAcc={};                       // 賞の記録(→docs/37)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   if(S.ht)S.ht.set=S.ht.set.filter(x=>/^b/.test(x));   // ハーフタイムの指示も任期ごと(→docs/26 §26.5)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
@@ -8440,7 +8483,8 @@ function loadCareer(store){
  *   g … 育成(3b で追加)。無ければ任期の途中でも育成なしの状態から始める
  */
 function migrate(S){
-  if(!S.tut)S.tut={ seen:{}, off:true, match:true };   // チュートリアル(→docs/36)。遊んでいる人には急に出さない(設定からもう一度見られる)
+  if(!S.tut)S.tut={ seen:{}, off:true, match:true };
+  if(!S.awards){ S.awards=[]; S.honors={}; S.lstat={}; S.awAcc={}; S.awNext=[]; S.mgrAwards=0; }   // 長い期間の賞(→docs/37)   // チュートリアル(→docs/36)。遊んでいる人には急に出さない(設定からもう一度見られる)
   if(!S.sq)S.sq=startSquad();
   if(!S.coll)S.coll=newCollection();
   if(!S.note)S.note={};                         // COACHING NOTE(→docs/23 §23.10)。任期をまたいで残る
@@ -10444,7 +10488,7 @@ function fameK(S,key){
   // スターの掛け算は上限 starCap(×4)で止め、そのあとに問題児を掛ける(→docs/24 §24.6)
   const F=TUNING.tag.fame; let k=1, tr=1;
   for(const id of S.sq||[])for(const t of pTags(S,id)){
-    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }
+    if(t.id==="star"||(t.id==="laureate"&&key==="gate"))k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }   // 受賞者も入場料に効く(→docs/37)
   return Math.min(F.starCap,k)*tr;
 }
 /** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */
@@ -11199,6 +11243,7 @@ function nextPay(pay,P){
 }
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
+  if(typeof awTermEnd==="function")awTermEnd(S);   // 任期の賞(→docs/37)。授賞式は任期の終わりの画面の前に
   const T=TUNING.term, x=termFacts(S), title=pickTitle(S,x);
   // 任期の終わりで決着しなかった指令は「打ち切り」(年俸は動かない。→docs/22)
   if(S.mis){ (S.ts.misLog||(S.ts.misLog=[])).push({ text:S.mis.text, ok:null, v:0 }); S.mis=null; }
@@ -11241,6 +11286,7 @@ function startNextTerm(S,W){
     if(keep.includes(p[0])&&keep.includes(p[1])&&old.links[k].lv>0)
       S.g.links[k]={ lv:old.links[k].lv, exp:0, gold:false, cap:old.links[k].cap||0 };
   }
+  if(typeof awNextTerm==="function")awNextTerm(S);   // 受賞者のタグ・年間最優秀のスター(→docs/37)
   S.tend=null;
 }
 const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];
@@ -11295,6 +11341,138 @@ function trainWeight(S,t){
   const hit=(f.eff&&t.eff[f.eff])||(f.axis&&t.up&&f.axis.split("").some(a=>t.up.includes(a)));
   return hit?TUNING.tset.favorW:1;
 }
+
+/**
+ * 長い期間の賞(→docs/37)。DOM に触らない。
+ * リーグの1周の終わり: 得点王・アシスト王(ごほうびはスター選手のタグだけ)・リーグ ベストイレブン(受賞歴だけ)
+ * 任期の終わり: 年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手・最優秀監督(授賞式の場面・賞金・ファン・次の任期の受賞者のタグ)
+ * ライバルは同じリーグのクラブの選手。成績はそのクラブの順位表の記録(得点・失点)から作る(同じ試合なら同じ値)
+ */
+const AWARDS={
+  scorer:{ name:"得点王", en:"TOP SCORER", lg:true },
+  assist:{ name:"アシスト王", en:"TOP ASSIST", lg:true },
+  xi:    { name:"リーグ ベストイレブン", en:"BEST XI", lg:true },
+  poy:   { name:"年間最優秀選手", en:"PLAYER OF THE YEAR" },
+  shoe:  { name:"ゴールデンシュー", en:"GOLDEN SHOE" },
+  gk:    { name:"最優秀GK", en:"BEST KEEPER" },
+  young: { name:"最優秀若手", en:"YOUNG PLAYER" },
+  mgr:   { name:"最優秀監督", en:"MANAGER OF THE YEAR" } };
+const awHash=s=>{ let h=2166136261; for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619); return (h>>>0)/4294967296; };
+/** リーグ戦の自分の選手の成績(この周)。S.lstat = { id:{ ap, gl, as, rs, rn } } */
+function awLeagueAdd(S,res){
+  const L=S.lstat||(S.lstat={}), st=id=>L[id]||(L[id]={ ap:0, gl:0, as:0, rs:0, rn:0 });
+  for(const id of res.played||[]){ const s=st(id); s.ap++; const r=res.rate&&res.rate[id]; if(r!=null){ s.rs+=r; s.rn++; } }
+  for(const id in res.goals||{})st(id).gl+=res.goals[id];
+  for(const id in res.assists||{})st(id).as+=res.assists[id];
+}
+/** ライバルのクラブの選手: エース(FW の中で OFE と TEC がいちばん高い)・GK・若手(23歳以下でいちばん強い) */
+function awClubMen(cid){
+  const T=TEAMS[cid]; if(!T||!T.xi)return null;
+  const xi=T.xi.map(id=>CARDS[id]).filter(Boolean), tot=c=>c.off+c.def+c.tec+c.pow+c.spd+c.sta;
+  const fw=xi.filter(c=>c.pos==="FW"), ace=(fw.length?fw:xi.slice(1)).slice().sort((a,b)=>(b.off*1.2+b.tec)-(a.off*1.2+a.tec))[0];
+  const yg=xi.filter(c=>c.age&&c.age<=TUNING.award.youngAge).sort((a,b)=>tot(b)-tot(a))[0]||null;
+  return { ace, gk:xi[0], young:yg };
+}
+/** ライバルの成績(リーグのこの周): 順位表の得点・失点から。share は選手ごとに決まった取り分 */
+function awRivalLeague(S){
+  const A=TUNING.award, L=S.league, out=[]; if(!L||!L.table)return out;
+  for(const cid of L.clubs){ if(cid==="me")continue; const m=awClubMen(cid), t=L.table[cid]; if(!m||!t)continue;
+    const h=awHash(S.term+":"+S.cyc+":"+m.ace.id), sh=A.share[0]+(A.share[1]-A.share[0])*h, ash=A.asShare[0]+(A.asShare[1]-A.asShare[0])*awHash("a"+m.ace.id);
+    out.push({ id:m.ace.id, club:cid, gl:Math.round(t.gf*sh), as:Math.round(t.gf*ash), p:t.p, ga:t.ga, w:t.w, gk:m.gk.id, young:m.young?m.young.id:null }); }
+  return out;
+}
+/** 得点王・アシスト王のレース(SEASON の表と、リーグの1周の終わり)。上位 n 人 [{ id, club, v, me }] */
+const AW_STAT={ scorer:"gl", assist:"as", gl:"gl", as:"as" };
+function awRace(S,key,n){
+  key=AW_STAT[key]||key;
+  const mine=Object.keys(S.lstat||{}).filter(id=>CARDS[id]).map(id=>({ id, club:"me", v:S.lstat[id][key], me:true }));
+  const riv=awRivalLeague(S).map(r=>({ id:r.id, club:r.club, v:r[key] }));
+  return mine.concat(riv).filter(x=>x.v>0).sort((a,b)=>b.v-a.v||(a.me?-1:1)).slice(0,n||5);
+}
+/** 受賞を記録する(カードの受賞歴は任期をまたいで残る) */
+function awRecord(S,key,id,v,club){
+  const rec={ term:S.term, cyc:S.cyc, key, id, v, club };
+  (S.awards||(S.awards=[])).push(rec);
+  if(club==="me"&&id&&id!=="mgr"){ const H=S.honors||(S.honors={}); (H[id]||(H[id]=[])).push([S.term,key]); }
+  return rec;
+}
+/** リーグの1周の終わり(endCycle の初め。順位表が締まった時点で) */
+function awCycleEnd(S,out){
+  const A=TUNING.award, lines=[];
+  for(const key of ["scorer","assist"]){
+    const top=awRace(S,key,1)[0]; if(!top)continue;
+    awRecord(S,key,top.id,top.v,top.club);
+    const nm=nameOf(CARDS[top.id]);
+    if(top.me){ lines.push("🏅 "+nm+" が"+AWARDS[key].name+"("+top.v+(key==="scorer"?"点":"アシスト")+")");
+      if(S.g&&S.g.pl[top.id]&&!pHas(S,top.id,"star"))addPlayerTag(S,top.id,"star",out); }   // ごほうびはスター選手だけ(→docs/37 §37.6)
+    else lines.push("🏅 "+AWARDS[key].name+"は "+teamNameOf(TEAMS[top.club])+" の "+nm+"("+top.v+")");
+  }
+  // リーグ ベストイレブン: 自分の選手から、ポジションの束ごとに採点の平均が上位(出場が minAp 以上)。受賞歴だけ
+  const L=S.lstat||{}, grp={ GK:1, DF:4, MF:3, FW:3 }, picked=[];
+  for(const g in grp){ const c=Object.keys(L).filter(id=>CARDS[id]&&CARDS[id].pos===g&&L[id].ap>=A.minAp&&L[id].rn&&L[id].rs/L[id].rn>=A.xiRate)
+      .sort((a,b)=>L[b].rs/L[b].rn-L[a].rs/L[a].rn).slice(0,grp[g]); picked.push(...c); }
+  for(const id of picked)awRecord(S,"xi",id,+(L[id].rs/L[id].rn).toFixed(2),"me");
+  if(picked.length)lines.push("🏅 リーグ ベストイレブンに "+picked.length+"人("+picked.map(id=>nameOf(CARDS[id])).join("・")+")");
+  lines.forEach(x=>out.push(x));
+  S.awAcc=S.awAcc||{};                          // 任期の賞に使うライバルの積み上げ(この周のリーグの記録)
+  for(const r of awRivalLeague(S)){ const a=S.awAcc[r.id]||(S.awAcc[r.id]={ club:r.club, gl:0, as:0, p:0, w:0, ga:0, gk:r.gk, young:r.young }); a.gl+=r.gl; a.as+=r.as; a.p+=r.p; a.w+=r.w; a.ga+=r.ga; }
+  S.lstat={};
+}
+/** 年間最優秀選手の点数(自分の選手) */
+function awPoyMine(S,id){
+  const W=TUNING.award.poyW, t=(S.tstat||{})[id]; if(!t||t.ap<TUNING.award.minAp*2)return 0;
+  return t.gl*W.gl+t.as*W.as+t.mvp*W.mvp+(t.rn?t.rs/t.rn:0)*W.rate+(S.titles||[]).length*W.title;
+}
+/** ライバルの任期の成績: 周ごとの積み上げに、この周の途中の記録を足し、任期の試合数に引き伸ばす */
+function awRivalTerm(S){
+  const acc=JSON.parse(JSON.stringify(S.awAcc||{}));
+  for(const r of awRivalLeague(S)){ const a=acc[r.id]||(acc[r.id]={ club:r.club, gl:0, as:0, p:0, w:0, ga:0, gk:r.gk, young:r.young }); a.gl+=r.gl; a.as+=r.as; a.p+=r.p; a.w+=r.w; a.ga+=r.ga; }
+  const n=TUNING.club.termLen, W=TUNING.award.poyW;
+  return Object.keys(acc).map(id=>{ const a=acc[id], k=a.p?n/a.p:0, wr=a.p?a.w/a.p:0;
+    return Object.assign({ id, k, gl:Math.round(a.gl*k), as:Math.round(a.as*k),
+      poy:Math.round(a.gl*k)*W.gl+Math.round(a.as*k)*W.as+Math.round(a.gl*k/5)*W.mvp+(6.6+wr*0.8)*W.rate+(wr>0.6?2:0)*W.title }, a); });
+}
+/** 任期の終わりの賞(endTerm で)。S.tAwards = [{ key, cand:[{ id, club, v }](3人), win }] を作り、ごほうびを付ける */
+function awTermEnd(S){
+  const A=TUNING.award, T=S.tstat||{}, R=awRivalTerm(S), ids=Object.keys(T).filter(id=>CARDS[id]), out=[];
+  const rk=(L,v)=>L.slice().sort((a,b)=>b.v-a.v).slice(0,3);
+  const tot=c=>c.off+c.def+c.tec+c.pow+c.spd+c.sta;
+  const mineT=f=>ids.map(id=>({ id, club:"me", v:f(id), me:true })).filter(x=>x.v>0);
+  const list=[];
+  list.push({ key:"poy", cand:rk(mineT(id=>Math.round(awPoyMine(S,id))).concat(R.map(r=>({ id:r.id, club:r.club, v:Math.round(r.poy) })))) });
+  list.push({ key:"shoe", cand:rk(mineT(id=>T[id].gl).concat(R.map(r=>({ id:r.id, club:r.club, v:r.gl })))) });
+  const gkMine=ids.filter(id=>CARDS[id].pos==="GK"&&T[id].ap>=A.minAp*2).map(id=>({ id, club:"me", me:true, v:Math.round((T[id].cs||0)*3+(T[id].rn?T[id].rs/T[id].rn:0)*10) }));
+  const gkRiv=R.filter(r=>r.gk).map(r=>{ const pg=r.p?r.ga/r.p:1.5, cs=Math.round(TUNING.club.termLen*Math.max(0.05,0.5-pg*0.22)); return { id:r.gk, club:r.club, v:Math.round(cs*3+(6.6+(1.5-pg)*0.4)*10) }; });
+  list.push({ key:"gk", cand:rk(gkMine.concat(gkRiv)) });
+  const yMine=ids.filter(id=>CARDS[id].age&&CARDS[id].age<=A.youngAge).map(id=>({ id, club:"me", me:true, v:Math.round(awPoyMine(S,id)) })).filter(x=>x.v>0);
+  const yRiv=R.filter(r=>r.young&&r.young!==r.id).map(r=>({ id:r.young, club:r.club, v:Math.round(r.poy*0.55*(0.8+0.4*awHash("y"+r.young))) }))
+    .concat(R.filter(r=>r.young===r.id).map(r=>({ id:r.id, club:r.club, v:Math.round(r.poy) })));
+  list.push({ key:"young", cand:rk(yMine.concat(yRiv)) });
+  // 最優秀監督: 任期の勝率とタイトル。ライバルの監督は、勝ち越したクラブの監督の点数で比べる
+  const rec=S.rec, n=rec.w+rec.d+rec.l, wr=n?rec.w/n:0, me={ id:"mgr", club:"me", me:true, v:Math.round(wr*100+(S.titles||[]).length*A.mgrTitle) };
+  const rm=R.map(r=>({ id:"mgr:"+r.club, club:r.club, v:Math.round((r.p?r.w/r.p:0)*100+(r.p&&r.w/r.p>0.6?2:0)*A.mgrTitle) }));
+  list.push({ key:"mgr", cand:rk([me].concat(rm)) });
+  for(const a of list){ const w=a.cand[0]; if(!w)continue; a.win=w; awRecord(S,a.key,w.id,w.v,w.club);
+    if(w.club!=="me")continue;
+    S.money+=A.prize[a.key]||0; if(S.biz)S.biz.fans+=A.fans[a.key]||0;
+    if(a.key!=="mgr")(S.awNext||(S.awNext=[])).push({ id:w.id, key:a.key }); else S.mgrAwards=(S.mgrAwards||0)+1; }
+  S.tAwards=list.filter(a=>a.win); S.tAwShown=false;
+  S.awAcc={}; S.lstat={};
+  return out;
+}
+/** 次の任期の初め(startNextTerm で): 受賞した選手に「受賞者」のタグ、年間最優秀選手にスター選手 */
+function awNextTerm(S){
+  const out=[];
+  for(const a of S.awNext||[]){ if(!S.g||!S.g.pl[a.id])continue;
+    addPlayerTag(S,a.id,"laureate",out);
+    if(a.key==="poy"&&!pHas(S,a.id,"star"))addPlayerTag(S,a.id,"star",out); }
+  S.awNext=[];
+  return out;
+}
+/** 選手の受賞歴の文(カードの裏・調書) */
+const awHonorTxt=(S,id)=>((S&&S.honors&&S.honors[id])||[]).map(h=>"第"+h[0]+"任期 "+AWARDS[h[1]].name);
+/** ライバルの名前(監督の賞は「◯◯ の監督」) */
+const awWho=x=>x.id==="mgr"?"監督(あなた)":/^mgr:/.test(x.id)?teamNameOf(TEAMS[x.club])+" の監督":nameOf(CARDS[x.id]);
 
 // ================= 紋章の意匠(pftb docs/10 §3.54b)=================
 // pftb から取り込んだもの(wcc_f docs/10 §10.2 A)。元は pftb の tools/slice_emblem.py が書き出す
@@ -12542,7 +12720,9 @@ function cardBackHtml(c,x){
     '<div class="cb-foot">'+(sk?'<p><b>★'+sk.label+'</b> '+sk.desc+'</p>':'')+
       (st?'<p><b>KP: '+st.name+'</b> <small>'+(st.scope==="team"?"全体":"個人")+'・'+AXIS_ABBR[st.axis]+'</small></p>':'')+
       (R?'<p class="cb-rare"><b>RARE KP</b> '+((x.ss||0)>=5?R.name:'？？？(特殊能力★5で解放)')+'</p>':'')+
-      '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+(x.extra||'')+'</div></div>';
+      '<p class="dim">キャプテンシー '+CAP_MARK[capApt(c)]+(typeof natTxt==="function"?' ・ '+natTxt(c):'')+'</p>'+
+      (typeof awHonorTxt==="function"&&typeof CL!=="undefined"&&CL.S&&awHonorTxt(CL.S,c.id).length?'<p class="cb-hon"><b>AWARDS</b> '+awHonorTxt(CL.S,c.id).join(" ・ ")+'</p>':'')+   // 受賞歴(→docs/37)
+      (x.extra||'')+'</div></div>';
 }
 
 /* =========================================================================
@@ -15338,6 +15518,16 @@ function homeHtml(){
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
+/** SEASON の賞レース(→docs/37 §37.4): リーグの得点王・アシスト王と、任期のゴールデンシュー。自分の選手とライバルが混ざる */
+function awardsHtml(){
+  const S=CL.S, short=x=>x.club==="me"?clubShort("me"):clubShort(x.club);
+  const row=(x,i)=>'<tr class="'+(x.me?'me':'')+'"><td>'+(i+1)+'</td><td class="nm2">'+nameOf(CARDS[x.id])+' <small>'+short(x)+'</small></td><td><b>'+x.v+'</b></td></tr>';
+  const tb=(en,L)=>'<div class="aw-race"><p class="aw-k">'+en+'</p>'+(L.length?'<table class="tbl aw">'+L.map(row).join("")+'</table>':'<p class="dim">—</p>')+'</div>';
+  const k=Math.min(1,(S.played||0)/TUNING.club.termLen);
+  const shoe=Object.keys(S.tstat||{}).filter(id=>CARDS[id]&&S.tstat[id].gl>0).map(id=>({ id, club:"me", v:S.tstat[id].gl, me:true }))
+    .concat(awRivalTerm(S).map(r=>({ id:r.id, club:r.club, v:Math.round(r.gl*k) }))).filter(x=>x.v>0).sort((a,b)=>b.v-a.v||(a.me?-1:1)).slice(0,5);
+  return '<section class="card awards"><h3>AWARDS</h3><div class="aw-two">'+tb("TOP SCORER",awRace(S,"gl",5))+tb("TOP ASSIST",awRace(S,"as",5))+'</div>'+tb("GOLDEN SHOE",shoe)+'</section>';
+}
 /** SEASON: リーグの順位と大会 */
 /** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */
 const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングスクラブカップで優勝", W4:"前の周のリーグ4位以内",
@@ -15385,7 +15575,7 @@ function seasonHtml(){
       const zc=(i+1<=TUNING.club.promoteRank&&S.grade<3?' up':'')+(i+1>=TUNING.club.relegateRank&&S.grade>1?' down':'');   // 昇格・降格の圏内(→docs/19)
       return '<tr class="'+(id==="me"?'me':'')+zc+'"><td>'+(i+1)+'</td><td class="nm2">'+(id==="me"?clubName(id):'<button class="lnk oppv" data-act="oppview" data-id="'+id+'">'+clubName(id)+'</button>')+'</td><td>'+r.p+
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
-    '</table>'+foldBtn("fulltable",CL.fullTable)+'</section>';
+    '</table>'+foldBtn("fulltable",CL.fullTable)+'</section>'+awardsHtml();
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
   // 「S の大会への道」は大会表と同じ中身なので、大会表にまとめた(条件は名前の下の行。→docs/14 第2弾)
   // 大会は日程の順に。次の試合の大会に印
@@ -15549,8 +15739,9 @@ function finishFixture(M){
     for(const id of played){ const s=st(id); s.ap++; if(rate[id]!=null){ s.rs+=rate[id]; s.rn++; } }
     for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"){ st(e.by).gl++; if(e.as)st(e.as).as++; }
     if(RT0.mvp&&played.includes(RT0.mvp)){ st(RT0.mvp).mvp++; plHist(CL.S,RT0.mvp,"MVP(採点 "+(rate[RT0.mvp]||0).toFixed(1)+")"); } }
+  const assists={}; for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"&&e.as)assists[e.as]=(assists[e.as]||0)+1;   // 賞のアシスト王(→docs/37)
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
-    starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
+    starters:G.meta.starters||[], subs:M.home.subs, goals, assists, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   const L=CL.S.last;
   if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
@@ -15559,7 +15750,9 @@ function finishFixture(M){
   // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
   sceneResult(M,L,RT=>{
     const done=()=>{ sceneHide(); showClub(); };
-    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done(); };
+    // 任期の最後の試合のあとは、カードの次に授賞式(→docs/37 §37.4)
+    const aw=()=>{ const S=CL.S; if(S.tAwards&&S.tAwards.length&&!S.tAwShown){ S.tAwShown=true; persist(S); sceneAwards(S.tAwards,done); } else done(); };
+    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,aw); else aw(); };
     if(L&&L.lines.some(x=>/^🏆 /.test(x)))sceneTrophy(M,L,card); else sceneLocker(M,L,RT,card);
   });
 }
@@ -16621,6 +16814,26 @@ function sceneTrophy(M,last,go){
 }
 function sndShutter(){ if(sndOk())noiseBurst(now(),0.08,0.35,"highpass",2500,4000,0.5); }
 
+/**
+ * 任期の終わりの授賞式(→docs/37 §37.4)。賞ごとに1場面: 賞の名前 → 候補3人が並ぶ → 受賞者の発表。TOUCH で次の賞へ
+ */
+function sceneAwards(list,go){
+  const S=CL.S; let i=0;
+  const face=x=>x.id==="mgr"?(S.mgr?mgrArt(S.mgr.av,"full"):null):/^mgr:/.test(x.id)?null:(CARDS[x.id]?artSrc(CARDS[x.id],"stand"):null);
+  const club=x=>x.club==="me"?myTeam(S):Object.assign({ id:x.club },TEAMS[x.club]);
+  const one=()=>{ const a=list[i]; if(!a){ go(); return; } const A=AWARDS[a.key], mine=a.win.club==="me";
+    sceneShow("sc-award",
+      '<div class="aw-head"><small>'+A.en+'</small><b>'+A.name+'</b><i>第'+S.term+'任期 ・ '+(i+1)+' / '+list.length+'</i></div>'+
+      '<div class="aw-noms">'+a.cand.map((x,k)=>{ const f=face(x);
+        return '<div class="aw-nom'+(x===a.win?' win':'')+(x.club==="me"?' me':'')+'" style="animation-delay:'+(0.25+k*0.25).toFixed(2)+'s">'+
+          '<div class="aw-pic">'+(f?'<img src="'+f+'" alt="">':emblemSvg(club(x),44))+'</div><b>'+awWho(x)+'</b><small>'+teamNameOf(club(x))+'</small></div>'; }).join("")+'</div>'+
+      '<div class="aw-win'+(mine?' me':'')+'"><small>WINNER</small><b>'+awWho(a.win)+'</b>'+(mine?'<em>'+myTeam(S).name+'</em>':'<em>'+teamNameOf(club(a.win))+'</em>')+'</div>'+
+      '<div class="touch sm">TOUCH</div>',
+      { next:()=>{ i++; one(); }, lock:1700 });
+    setTimeout(()=>{ if(mine)sndFanfare(); else sndUi("ok"); },1300);
+  };
+  one();
+}
 /* ---- カード排出(→docs/07 §7.12) ----
  * めくる前の予兆: 裏の後ろの光(pk-aura)がレア度どおりに光る(W なし / B 銀 / K 虹 / L 金で震える)。
  * TUNING.pack.promo の割合で一段下の光り方から始まり、少しして本来の光り方へ「昇格」する。どちらになるかはたねで決まる */

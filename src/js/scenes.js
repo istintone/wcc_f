@@ -288,6 +288,26 @@ function sceneTrophy(M,last,go){
 }
 function sndShutter(){ if(sndOk())noiseBurst(now(),0.08,0.35,"highpass",2500,4000,0.5); }
 
+/**
+ * 任期の終わりの授賞式(→docs/37 §37.4)。賞ごとに1場面: 賞の名前 → 候補3人が並ぶ → 受賞者の発表。TOUCH で次の賞へ
+ */
+function sceneAwards(list,go){
+  const S=CL.S; let i=0;
+  const face=x=>x.id==="mgr"?(S.mgr?mgrArt(S.mgr.av,"full"):null):/^mgr:/.test(x.id)?null:(CARDS[x.id]?artSrc(CARDS[x.id],"stand"):null);
+  const club=x=>x.club==="me"?myTeam(S):Object.assign({ id:x.club },TEAMS[x.club]);
+  const one=()=>{ const a=list[i]; if(!a){ go(); return; } const A=AWARDS[a.key], mine=a.win.club==="me";
+    sceneShow("sc-award",
+      '<div class="aw-head"><small>'+A.en+'</small><b>'+A.name+'</b><i>第'+S.term+'任期 ・ '+(i+1)+' / '+list.length+'</i></div>'+
+      '<div class="aw-noms">'+a.cand.map((x,k)=>{ const f=face(x);
+        return '<div class="aw-nom'+(x===a.win?' win':'')+(x.club==="me"?' me':'')+'" style="animation-delay:'+(0.25+k*0.25).toFixed(2)+'s">'+
+          '<div class="aw-pic">'+(f?'<img src="'+f+'" alt="">':emblemSvg(club(x),44))+'</div><b>'+awWho(x)+'</b><small>'+teamNameOf(club(x))+'</small></div>'; }).join("")+'</div>'+
+      '<div class="aw-win'+(mine?' me':'')+'"><small>WINNER</small><b>'+awWho(a.win)+'</b>'+(mine?'<em>'+myTeam(S).name+'</em>':'<em>'+teamNameOf(club(a.win))+'</em>')+'</div>'+
+      '<div class="touch sm">TOUCH</div>',
+      { next:()=>{ i++; one(); }, lock:1700 });
+    setTimeout(()=>{ if(mine)sndFanfare(); else sndUi("ok"); },1300);
+  };
+  one();
+}
 /* ---- カード排出(→docs/07 §7.12) ----
  * めくる前の予兆: 裏の後ろの光(pk-aura)がレア度どおりに光る(W なし / B 銀 / K 虹 / L 金で震える)。
  * TUNING.pack.promo の割合で一段下の光り方から始まり、少しして本来の光り方へ「昇格」する。どちらになるかはたねで決まる */

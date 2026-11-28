@@ -572,3 +572,36 @@ body.th-wl #bench{flex-basis:58px!important;margin:0!important;padding-top:6px;b
   box-shadow:0 0 0 2px #0b0b0b,inset 6px 0 10px rgba(0,0,0,.25),0 12px 24px rgba(0,0,0,.35)!important;position:relative}
 body.th-wl #bench::before{content:"";position:absolute;left:7px;right:5px;top:22px;bottom:8px;border:1.5px dashed rgba(255,255,255,.55);border-radius:4px;pointer-events:none}
 body.th-wl #bench .lbl{color:#fff!important;background:none;padding:1px 0;font-size:9px;letter-spacing:.24em;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+/* 長い期間の賞(→docs/37): SEASON の賞レース・授賞式・カードの裏の受賞歴 */
+body.th-wl #club .awards .aw-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+body.th-wl #club .awards .aw-k{margin:4px 0 2px;font-family:var(--f-num);font-weight:800;font-style:italic;letter-spacing:.12em;font-size:12px;color:var(--w-red)}
+body.th-wl #club .awards .tbl.aw td{padding:3px 4px;font-size:12px}
+body.th-wl #club .awards .tbl.aw td:first-child{width:14px;color:var(--w-mute);font-family:var(--f-num)}
+body.th-wl #club .awards .tbl.aw td:last-child{text-align:right;font-family:var(--f-num)}
+body.th-wl #club .awards .tbl.aw td small{color:var(--w-mute);font-family:var(--f-num);font-size:10px}
+body.th-wl #club .awards .tbl.aw tr.me td{background:rgba(200,16,46,.07);font-weight:800}
+.cb-hon{margin:4px 0 0;font-size:11px;color:#7a5a10}
+.cb-hon b{font-family:var(--f-num);letter-spacing:.12em;margin-right:4px;color:#c9a227}
+#scene.sc-award{background:radial-gradient(120% 70% at 50% 0%,#fff 0,#f1ece2 60%,#e4dccb 100%);color:#151515;display:flex;flex-direction:column;align-items:center;padding:56px 14px 20px;box-sizing:border-box}
+#scene.sc-award .aw-head{text-align:center;animation:awIn .4s both}
+#scene.sc-award .aw-head small{display:block;font-family:var(--f-num);font-weight:800;font-style:italic;letter-spacing:.22em;color:#c8102e;font-size:13px}
+#scene.sc-award .aw-head b{display:block;font-size:26px;font-weight:900;margin:4px 0 2px}
+#scene.sc-award .aw-head i{font-style:normal;font-size:11px;color:#8a8f99}
+#scene.sc-award .aw-noms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px;margin:26px 0 18px}
+#scene.sc-award .aw-nom{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12);padding:8px 4px 8px;text-align:center;animation:awIn .4s both;border-top:3px solid #c9ccd3}
+#scene.sc-award .aw-nom.me{border-top-color:#c8102e}
+#scene.sc-award .aw-nom.win{animation:awIn .4s both,awWin .6s 1.3s both}
+#scene.sc-award .aw-pic{height:78px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+#scene.sc-award .aw-pic img{height:100%;width:auto;image-rendering:pixelated}
+#scene.sc-award .aw-nom b{display:block;font-size:12.5px;font-weight:800;margin-top:4px;line-height:1.3}
+#scene.sc-award .aw-nom small{display:block;font-size:10px;color:#8a8f99;line-height:1.3}
+#scene.sc-award .aw-win{width:100%;max-width:380px;text-align:center;padding:12px 10px;background:linear-gradient(100deg,#7a5a10,#c9a227 40%,#f2d77a 55%,#c9a227 70%,#7a5a10);color:#1d1400;
+  clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,12px 100%);animation:awIn .5s 1.5s both}
+#scene.sc-award .aw-win.me{box-shadow:0 0 24px rgba(242,193,78,.8)}
+#scene.sc-award .aw-win small{display:block;font-family:var(--f-num);font-weight:800;letter-spacing:.3em;font-size:11px}
+#scene.sc-award .aw-win b{display:block;font-size:22px;font-weight:900}
+#scene.sc-award .aw-win em{display:block;font-style:normal;font-size:11px;font-weight:700;opacity:.8}
+#scene.sc-award .touch{margin-top:auto;color:#c8102e}
+@keyframes awIn{from{opacity:0;transform:translateY(10px)}}
+@keyframes awWin{50%{transform:scale(1.08)}to{transform:scale(1.04);box-shadow:0 0 0 3px #c9a227,0 6px 18px rgba(201,162,39,.5)}}
+@media (prefers-reduced-motion:reduce){#scene.sc-award *{animation:none!important}}

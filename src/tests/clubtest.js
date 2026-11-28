@@ -1037,5 +1037,24 @@ console.log("⑦ カード(払い出し・コレクション・登録)");
   P.g.tev={ k:"kids", id:null }; const f0=P.biz.fans; E.answerTagEvent(P,0);
   check("出来事「地元の子どもたち」でファンが増え、チームに「地域の誇り」",P.biz.fans>f0&&P.g.tags.some(t=>t.id==="pride"));
 }
+// 長い期間の賞(→docs/37)
+{
+  console.log("\n■ 長い期間の賞");
+  const S=E.newCareer(31), W=E.worldOf(S), out=[], id=S.sq.find(x=>E.CARDS[x].pos==="FW");
+  for(const c of S.league.clubs)if(c!=="me"){ const t=S.league.table[c]; t.p=14; t.gf=20; t.w=6; t.ga=18; }
+  E.awLeagueAdd(S,{ played:S.sq.slice(0,11), goals:{ [id]:30 }, assists:{ [id]:2 }, rate:{ [id]:7.5 } });
+  const race=E.awRace(S,"scorer",5);
+  check("得点王レース: 自分の選手とライバル(相手のクラブのエース)が並ぶ",race[0].id===id&&race.some(x=>!x.me),race.map(x=>x.id+":"+x.v).join(" "));
+  E.awCycleEnd(S,out);
+  check("リーグの1周の終わり: 得点王は自分の選手。ごほうびはスター選手",(S.g.pl[id].tags||[]).some(t=>t.id==="star")&&S.awards.some(a=>a.key==="scorer"&&a.id===id),out.filter(x=>/🏅/.test(x)).join(" / "));
+  check("受賞歴はカードに残る",E.awHonorTxt(S,id).length>0,E.awHonorTxt(S,id).join(","));
+  check("周が終わるとリーグの成績は空に",Object.keys(S.lstat).length===0);
+  const T=S.tstat; T[id]={ ap:60, gl:80, as:20, mvp:15, rs:60*7.6, rn:60 }; S.titles=["PRE","LG","KINGS"]; S.rec={ w:70, d:20, l:10, gf:200, ga:60 };
+  const m0=S.money; E.awTermEnd(S);
+  check("任期の終わり: 5つの賞の授賞(候補3人まで)",S.tAwards.length===5&&S.tAwards.every(a=>a.cand.length>=1&&a.cand.length<=3),S.tAwards.map(a=>a.key+":"+a.win.id).join(" "));
+  check("年間最優秀選手を取ると賞金が入り、次の任期に受賞者のタグが付く予定",S.tAwards.find(a=>a.key==="poy").win.id===id&&S.money>m0&&S.awNext.some(a=>a.id===id),S.money-m0+"億");
+  E.awNextTerm(S);
+  check("次の任期の初めに「受賞者」と(年間最優秀は)スター選手",(S.g.pl[id].tags||[]).some(t=>t.id==="laureate"));
+}
 console.log(fail?"\n"+fail+" 件 失敗":"\nすべて通過");
 process.exit(fail?1:0);

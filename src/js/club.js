@@ -227,7 +227,7 @@ function newCareer(seed){
     layout:{}, form:TEAMS.azr.form, kp:TEAMS.azr.kp, last:null, termOver:false, history:[], g:newGrowth(),
     ts:newTermStats(), tend:null, career:[], salary:0, fac:1,
     sq:startSquad(), coll:newCollection(), sec:newSec(), biz:newBiz(), mgr:null, club:null, tset:null, tsetChosen:true, mab:{ set:MAB_DEFAULT.slice(), xp:{} }, ht:{ cnt:{}, set:["b1","b2","b3"] }, htV2:true, mabDef:true, pay:TUNING.term.pay0, paper:[],
-    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null, tut:{ seen:{}, off:false, match:false } };
+    roles:{ cap:null, pk:null, fk:null, ck:null }, capHist:[], tgoals:{}, tstat:{}, cprof:null, coffers:null, mis:null, tut:{ seen:{}, off:false, match:false }, awards:[], honors:{}, lstat:{}, awAcc:{}, awNext:[], mgrAwards:0 };
   const W=genWorld(S.seed);
   S.league=newLeague(S,W); S.cups=newCups();
   spRenew(S);                                  // 最初のスポンサーの候補
@@ -552,6 +552,10 @@ function applyResult(S,W,fx,res){
   // gl … 育成の行(ロッカールームで出す) / news … 誰に何が起きたか(→grow.js の newsOf)
   S.last={ no:fx.no, comp:fx.comp, label:fx.label, opp:fx.opp, hg, ag, pso:res.pso||null, lines:out,
     gl, news:gr.news||[], card:card.id, cardNew:card.isNew };
+  // 長い期間の賞(→docs/37): リーグ戦の成績と、GK の無失点(任期)。得点王レースの首位に立ったら知らせる
+  if(fx.kind==="league"&&res.played){ const l0=awRace(S,"gl",1)[0]; awLeagueAdd(S,res); const l1=awRace(S,"gl",1)[0];
+    if(l1&&l1.me&&(!l0||!l0.me||l0.id!==l1.id))out.push("👟 "+nameOf(CARDS[l1.id])+" が得点王レースの首位に("+l1.v+"点)"); }
+  if(ag===0&&res.starters&&res.starters[0]){ const T=S.tstat||(S.tstat={}), k=res.starters[0], t=T[k]||(T[k]={ ap:0, gl:0, as:0, mvp:0, rs:0, rn:0 }); t.cs=(t.cs||0)+1; }
   S.history.push([fx.comp,fx.opp,hg,ag,fx.label||"",res.pso||null,fx.no,fx.home===false?0:1]);   // 大会・相手・得点・段・PK・試合番号・ホーム(SEASON の日程)
   if(S.history.length>TUNING.club.historyMax)S.history.shift();
   S.played++; S.slot++;
@@ -572,6 +576,7 @@ function skipSlot(S,W){
 }
 /** 1周(43枠)の終わり。前の周の成績を残し、リーグと大会を作り直す */
 function endCycle(S,W,out){
+  awCycleEnd(S,out);                             // リーグの1周の賞(→docs/37)
   const rank=sortTable(S.league.table).indexOf("me")+1;
   const won=CUP_IDS.filter(id=>S.cups[id].st==="won");
   if(rank===1)won.push("LG");
@@ -595,6 +600,7 @@ function newTerm(S,W){
   S.capHist=[];                                 // 任命でやる気が上がるのは任期に1回まで(→docs/12 §12.4)
   S.tgoals={};                                  // この任期の選手ごとの得点(ゴールのアップの「今季N点目」)
   S.tstat={};                                   // この任期の選手ごとの成績(選手の調書。→docs/34 §34.4)
+  S.lstat={}; S.awAcc={};                       // 賞の記録(→docs/37)
   S.g=newGrowth(S.sq);                        // 育成は任期ごと(絆の深い選手は startNextTerm が引き継ぐ)
   if(S.ht)S.ht.set=S.ht.set.filter(x=>/^b/.test(x));   // ハーフタイムの指示も任期ごと(→docs/26 §26.5)
   // 本家と同じく、任期が終わると別のクラブへ移る(→docs/08 §8.12)。クラブの持ち物(資金・ファン・スタジアム・施設)は元に戻す。
@@ -651,7 +657,8 @@ function loadCareer(store){
  *   g … 育成(3b で追加)。無ければ任期の途中でも育成なしの状態から始める
  */
 function migrate(S){
-  if(!S.tut)S.tut={ seen:{}, off:true, match:true };   // チュートリアル(→docs/36)。遊んでいる人には急に出さない(設定からもう一度見られる)
+  if(!S.tut)S.tut={ seen:{}, off:true, match:true };
+  if(!S.awards){ S.awards=[]; S.honors={}; S.lstat={}; S.awAcc={}; S.awNext=[]; S.mgrAwards=0; }   // 長い期間の賞(→docs/37)   // チュートリアル(→docs/36)。遊んでいる人には急に出さない(設定からもう一度見られる)
   if(!S.sq)S.sq=startSquad();
   if(!S.coll)S.coll=newCollection();
   if(!S.note)S.note={};                         // COACHING NOTE(→docs/23 §23.10)。任期をまたいで残る

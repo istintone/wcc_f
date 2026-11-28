@@ -1038,6 +1038,7 @@ Object.assign(TAGS,{
   showman: { name:"千両役者",     scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"l" }], desc:"スター選手が大舞台に強い。決勝で能力すべて +3" },
   awaken:  { name:"覚醒の予感",   scope:"player", kind:"gen", pol:1,  dur:5, fx:{ exp:"+l" }, desc:"成長期に点を取り始めた。経験 ×1.5" },
   turmoil: { name:"騒動",         scope:"player", kind:"gen", pol:-1, dur:3, fx:{ motUp:"+m", motDown:"+l", comm:"-m" }, desc:"反抗期にゴシップが重なった。調子が乱れやすく、コミュニケーションが失敗しやすい" },
+  laureate:{ name:"受賞者",       scope:"player", kind:"gen", pol:1,  dur:null, fx:{ motDown:"-m" }, desc:"前の任期の賞を受けた。調子が落ちにくく、SQUAD にいると入場料 ×1.3(任期の終わりまで)" },
   callup:  { name:"代表帰り",     scope:"player", kind:"gen", pol:1,  dur:3, fx:{ exp:"+m", motUp:"+s" }, desc:"代表で刺激を受けてきた。経験 ×1.3、調子が上がりやすい" },
   bigstage:{ name:"大舞台に強い", scope:"player", kind:"gen", pol:1,  dur:null, stat:[{ when:"final", st:ALL6, k:"m" }], desc:"決勝で能力すべて +2" }
 });
@@ -1148,6 +1149,9 @@ Object.assign(TAGS,{
  * ランダムに起きる出来事(→docs/23 §23.2 の 2)。秘書が知らせ、2択で答える。p: 選手の出来事なら {n} に名前
  *   ch: [ 答え, 結果 ]。結果: team:タグ / player:タグ / bet:[率, 当たり, 外れ](選手のタグ)/ fat:疲労の増減
  */
+TUNING.award={ share:[0.28,0.40], asShare:[0.12,0.22], minAp:5, xiRate:6.8, youngAge:23,
+  poyW:{ gl:3, as:2, mvp:4, rate:10, title:2 }, mgrTitle:8,
+  prize:{ poy:5, shoe:3, gk:3, young:2, mgr:3 }, fans:{ poy:3000, shoe:2000, gk:1500, young:1500, mgr:2000 } };   // 長い期間の賞(→docs/37)
 const TAG_EVENTS=[
   { k:"camp",   q:"地元の企業から、合宿の申し出が届きました。",           ch:[["受ける",{ team:"camp" }],["断る",{}]] },
   { k:"boom",   q:"地元の企業が、協賛を増やしたいそうです。広告に {n} を出してほしいとのこと。", p:true,
@@ -1194,7 +1198,7 @@ const NOTE_HOW={
   unity:"ムードメーカーがいて、チームに勢いがある / 決起集会を許可する", pride:"チャリティーマッチを受ける・地元の子どもたちと交流させる", resolve:"監督批判の記事に、黙って結果で返す",
   sniff:"2試合連続で得点する", machine:"3試合連続で得点する", dud:"FW が先発で3試合続けて無得点", dud2:"FW が先発で5試合続けて無得点",
   tire1:"試合のあとの重い疲れが3試合続く", tire2:"試合のあとの重い疲れが5試合続く", zone:"絶好調が3試合続く",
-  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す",
+  showman:"スター選手が「大舞台に強い」を持つ", awaken:"成長期の選手が点を取る", turmoil:"反抗期の選手にゴシップが重なる", callup:"代表の招集に送り出す", laureate:"任期の終わりの賞(年間最優秀選手・ゴールデンシュー・最優秀GK・最優秀若手)を受ける",
   promo:"リーグの最終節で昇格を決める", releg:"リーグの最終節で降格する",
   facTrain:"スポンサーのミッションを達成する(報酬が個人練習の系統)", facTact:"スポンサーのミッションを達成する(報酬が控えの不満・好調の維持の系統)",
   facLounge:"スポンサーのミッションを達成する(報酬がラウンジの系統)", facMed:"スポンサーのミッションを達成する(報酬がケア・疲労・ケガの系統)",

@@ -113,6 +113,7 @@ function nextPay(pay,P){
 }
 /** 任期が終わった瞬間に呼ぶ。結果を S.tend に置き、歴代に積む */
 function endTerm(S){
+  if(typeof awTermEnd==="function")awTermEnd(S);   // 任期の賞(→docs/37)。授賞式は任期の終わりの画面の前に
   const T=TUNING.term, x=termFacts(S), title=pickTitle(S,x);
   // 任期の終わりで決着しなかった指令は「打ち切り」(年俸は動かない。→docs/22)
   if(S.mis){ (S.ts.misLog||(S.ts.misLog=[])).push({ text:S.mis.text, ok:null, v:0 }); S.mis=null; }
@@ -155,6 +156,7 @@ function startNextTerm(S,W){
     if(keep.includes(p[0])&&keep.includes(p[1])&&old.links[k].lv>0)
       S.g.links[k]={ lv:old.links[k].lv, exp:0, gold:false, cap:old.links[k].cap||0 };
   }
+  if(typeof awNextTerm==="function")awNextTerm(S);   // 受賞者のタグ・年間最優秀のスター(→docs/37)
   S.tend=null;
 }
 const titleOf=id=>TITLES.find(t=>t.id===id)||TITLES[TITLES.length-1];

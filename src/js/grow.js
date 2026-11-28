@@ -1203,7 +1203,7 @@ function fameK(S,key){
   // スターの掛け算は上限 starCap(×4)で止め、そのあとに問題児を掛ける(→docs/24 §24.6)
   const F=TUNING.tag.fame; let k=1, tr=1;
   for(const id of S.sq||[])for(const t of pTags(S,id)){
-    if(t.id==="star")k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }
+    if(t.id==="star"||(t.id==="laureate"&&key==="gate"))k*=F.star; else if(t.id==="trouble"&&key==="sp")tr*=F.trouble; }   // 受賞者も入場料に効く(→docs/37)
   return Math.min(F.starCap,k)*tr;
 }
 /** 大きな試合(ジャイアントキリング・大会の優勝・昇格)で活躍した選手をスターに。fame = { giant, titles, promo } */

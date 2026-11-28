@@ -1928,6 +1928,16 @@ function homeHtml(){
   return homeHeadHtml()+(S.termOver?termEndHtml():nextTileHtml()+(typeof tutTileHtml==="function"?tutTileHtml():'')+teamTagsHtml()+oneAtATime([tagEventHtml(),stadOfferHtml()])+expTileHtml()+newsLineHtml()+mrepLineHtml()+
     (S.biz&&S.biz.offers?(CL.spOpen?spPickHtml(false):spRenewBarHtml()):'')+playerVoiceHtml()+(secNeeded(S)?secHtml():''));
 }
+/** SEASON の賞レース(→docs/37 §37.4): リーグの得点王・アシスト王と、任期のゴールデンシュー。自分の選手とライバルが混ざる */
+function awardsHtml(){
+  const S=CL.S, short=x=>x.club==="me"?clubShort("me"):clubShort(x.club);
+  const row=(x,i)=>'<tr class="'+(x.me?'me':'')+'"><td>'+(i+1)+'</td><td class="nm2">'+nameOf(CARDS[x.id])+' <small>'+short(x)+'</small></td><td><b>'+x.v+'</b></td></tr>';
+  const tb=(en,L)=>'<div class="aw-race"><p class="aw-k">'+en+'</p>'+(L.length?'<table class="tbl aw">'+L.map(row).join("")+'</table>':'<p class="dim">—</p>')+'</div>';
+  const k=Math.min(1,(S.played||0)/TUNING.club.termLen);
+  const shoe=Object.keys(S.tstat||{}).filter(id=>CARDS[id]&&S.tstat[id].gl>0).map(id=>({ id, club:"me", v:S.tstat[id].gl, me:true }))
+    .concat(awRivalTerm(S).map(r=>({ id:r.id, club:r.club, v:Math.round(r.gl*k) }))).filter(x=>x.v>0).sort((a,b)=>b.v-a.v||(a.me?-1:1)).slice(0,5);
+  return '<section class="card awards"><h3>AWARDS</h3><div class="aw-two">'+tb("TOP SCORER",awRace(S,"gl",5))+tb("TOP ASSIST",awRace(S,"as",5))+'</div>'+tb("GOLDEN SHOE",shoe)+'</section>';
+}
 /** SEASON: リーグの順位と大会 */
 /** 大会に出る条件(club.js の entryOk と同じ中身を言葉で) */
 const ENTRY_NEED={ NSC:"この周にプレシーズンカップかキングスクラブカップで優勝", W4:"前の周のリーグ4位以内",
@@ -1975,7 +1985,7 @@ function seasonHtml(){
       const zc=(i+1<=TUNING.club.promoteRank&&S.grade<3?' up':'')+(i+1>=TUNING.club.relegateRank&&S.grade>1?' down':'');   // 昇格・降格の圏内(→docs/19)
       return '<tr class="'+(id==="me"?'me':'')+zc+'"><td>'+(i+1)+'</td><td class="nm2">'+(id==="me"?clubName(id):'<button class="lnk oppv" data-act="oppview" data-id="'+id+'">'+clubName(id)+'</button>')+'</td><td>'+r.p+
         '</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+(r.gf-r.ga>0?"+":"")+(r.gf-r.ga)+'</td><td><b>'+r.pts+'</b></td></tr>'; }).join("")+
-    '</table>'+foldBtn("fulltable",CL.fullTable)+'</section>';
+    '</table>'+foldBtn("fulltable",CL.fullTable)+'</section>'+awardsHtml();
   const stTxt={ wait:"—", in:"出場中", out:"敗退", quit:"棄権", won:"優勝" };
   // 「S の大会への道」は大会表と同じ中身なので、大会表にまとめた(条件は名前の下の行。→docs/14 第2弾)
   // 大会は日程の順に。次の試合の大会に印
@@ -2139,8 +2149,9 @@ function finishFixture(M){
     for(const id of played){ const s=st(id); s.ap++; if(rate[id]!=null){ s.rs+=rate[id]; s.rn++; } }
     for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"){ st(e.by).gl++; if(e.as)st(e.as).as++; }
     if(RT0.mvp&&played.includes(RT0.mvp)){ st(RT0.mvp).mvp++; plHist(CL.S,RT0.mvp,"MVP(採点 "+(rate[RT0.mvp]||0).toFixed(1)+")"); } }
+  const assists={}; for(const e of M.events)if(e.type==="shot"&&e.res==="goal"&&e.side==="H"&&e.as)assists[e.as]=(assists[e.as]||0)+1;   // 賞のアシスト王(→docs/37)
   applyResult(CL.S,CL.W,CL.fx,{ hg:M.home.score, ag:M.away.score, pso:M.pso, layout:null, kp:null, played, onPitch, inj,
-    starters:G.meta.starters||[], subs:M.home.subs, goals, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
+    starters:G.meta.starters||[], subs:M.home.subs, goals, assists, rate, mvp:RT0.mvp, kpEnd:M.home.kp,
     kpCh:M.events.filter(e=>e.type==="kp"&&e.side==="H").length });
   const L=CL.S.last;
   if(L)addArticle(CL.S,makeArticle(CL.S,M,L,matchRatings(M)));   // クラブ新聞の記事(→docs/07 §7.13)
@@ -2149,7 +2160,9 @@ function finishFixture(M){
   // 結果 → ロッカールーム(大会の優勝なら撮影)→ カード(→docs/07 §7.12)
   sceneResult(M,L,RT=>{
     const done=()=>{ sceneHide(); showClub(); };
-    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,done); else done(); };
+    // 任期の最後の試合のあとは、カードの次に授賞式(→docs/37 §37.4)
+    const aw=()=>{ const S=CL.S; if(S.tAwards&&S.tAwards.length&&!S.tAwShown){ S.tAwShown=true; persist(S); sceneAwards(S.tAwards,done); } else done(); };
+    const card=()=>{ if(L&&L.card)sceneCard(L.card,L.cardNew,aw); else aw(); };
     if(L&&L.lines.some(x=>/^🏆 /.test(x)))sceneTrophy(M,L,card); else sceneLocker(M,L,RT,card);
   });
 }
