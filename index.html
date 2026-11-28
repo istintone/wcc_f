@@ -4862,6 +4862,16 @@ body.th-wl #club .tut-tile b{font-size:14px;font-weight:800}
 body.th-wl #club .tut-tile .btn{margin:0;height:40px;padding:0 14px;width:auto}
 body.th-wl #club .tut-tile .btn-sub{grid-column:1/-1;height:30px;font-size:12px;justify-self:start;border:0;background:none;color:var(--w-mute);padding:0}
 @media (prefers-reduced-motion:reduce){#tut .tut-hole,#tut .tut-ft u,#tut .tut-say{animation:none}}
+/* 試合の盤面と控えを1枚の芝の台に(→docs/33 §33.16)。左の余白をなくしてピッチとベンチをくっつけ、まとめて中央に。
+   控えはタッチラインの外のベンチ(少し暗い芝・点線のテクニカルエリア)。台のまわりは金属の縁 */
+body.th-wl #deck{justify-content:center!important;padding-top:8px}
+body.th-wl #board{margin-left:0!important;border:4px solid #3a3d46!important;border-right:0!important;border-radius:6px 0 0 6px!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),inset 0 0 40px rgba(0,0,0,.3),0 0 0 2px #0b0b0b,0 12px 24px rgba(0,0,0,.35)!important}
+body.th-wl #bench{flex-basis:58px!important;margin:0!important;padding-top:6px;border-radius:0 6px 6px 0;border:4px solid #3a3d46!important;border-left:0!important;
+  background:linear-gradient(90deg,rgba(255,255,255,.9) 0 2px,transparent 2px),repeating-linear-gradient(0deg,#22713a 0 34px,#1f6935 34px 68px)!important;
+  box-shadow:0 0 0 2px #0b0b0b,inset 6px 0 10px rgba(0,0,0,.25),0 12px 24px rgba(0,0,0,.35)!important;position:relative}
+body.th-wl #bench::before{content:"";position:absolute;left:7px;right:5px;top:22px;bottom:8px;border:1.5px dashed rgba(255,255,255,.55);border-radius:4px;pointer-events:none}
+body.th-wl #bench .lbl{color:#fff!important;background:#0b0b0b;padding:1px 6px;font-size:9px;letter-spacing:.24em}
 /* 起動のちらつき止め(→docs/14 §14.214): JS がテーマ(th-wl)を付けるまでは、TOP と同じ紙の色だけを見せる */
 body:not(.th-wl){background:#f2f0eb!important}
 body:not(.th-wl)>*{opacity:0!important}
