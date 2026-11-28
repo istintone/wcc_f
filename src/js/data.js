@@ -403,7 +403,7 @@ const TUNING={
   //   standBlur … 奥のスタンドのぼかし(何分の1に縮めてから引き伸ばすか)/ standDesat・standDim … 色を抜く量・暗くする量(→docs/14 §14.152)
   view:{ far:0.62, farY:0.22, nearY:0.95, nearW:1.0, manH:0.15, goalH:0.075, standH:[0.12,0.15,0.18,0.2,0.22],
     kpRing:{ gap:1.5, w:1.6, spread:9, ms:1400, blur:6 },   // KP の金の光(足元の輪との間・線の太さ・広がる幅 px・1回の長さ ms・光のぼかし。→docs/14 §14.162)
-    wallV:-0.07, boardH:0.085, boardNLv:[4,4,5,5,6], boardLed:3, boardRot:8000, standBlur:2.2, standDesat:0.35, standDim:0.3,
+    wallV:-0.07, boardH:0.085, boardNLv:[4,4,5,5,6], boardLed:3, boardRot:8000, boardFlip:520, standBlur:2.2, standDesat:0.35, standDim:0.3,
     // ボールを持たない選手の動き(見た目だけ。→docs/07 §7.15)。1人ずつ独立して動く
     //   driftH/driftX … その場のゆらぎ(高さ・左右)/ runRate … 攻めているとき、1秒あたりに走り込みを始める率(スキルの向きで増減)
     //   runH/runX … 走り込みの深さ・横の幅 / runMs … 走り込みの長さ / press/pressN … 守るときボールへ寄せる割合と人数

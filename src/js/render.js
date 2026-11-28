@@ -97,24 +97,43 @@ function boardAds(n,slot){
 }
 /** パートナーの枠の番。LED の段は時間で入れ替わり、LED でない段は試合ごとに決まる(試合のたねで) */
 const boardSlot=()=>stadLv()>=TUNING.view.boardLed?Math.floor(performance.now()/TUNING.view.boardRot):(typeof G!=="undefined"&&G.M&&G.M.seed?G.M.seed>>>0:0)%6;
-/** B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす */
-function drawBoards(c,W,H,y0,y1){
-  const n=TUNING.view.boardNLv[stadLv()-1]||4, bh=y1-y0, ads=boardAds(n,boardSlot()), cw=W/n, lg=logoImg();
+/** 広告の枠1つぶんを描く(x・p0 の位置、幅 w・高さ ph) */
+function drawAd(c,a,x,p0,w,ph,lg){
+  const cx=x+w/2, cy=p0+ph/2;
+  c.fillStyle=a.bg; c.fillRect(x,p0,w,ph);
+  c.fillStyle="rgba(255,255,255,.14)"; c.fillRect(x,p0,w,ph*0.4);                 // LED の光り(上半分を少し明るく)
+  if(a.sp){ spLogoDraw(c,a.sp,a.dark,cx,cy,ph*0.94,w-6); return; }   // スポンサー・パートナーのロゴ(→docs/35)
+  c.textAlign="center"; c.textBaseline="middle"; c.font="italic 900 "+Math.max(7,ph*0.74)+"px system-ui,sans-serif";
+  c.fillStyle=a.fg;
+  const wd=a.logo&&lg?wordsImg(a.white):null;
+  if(wd){ let ls=ph*0.82, wh=ph*0.66, ww=wd.naturalWidth*wh/wd.naturalHeight; const k=Math.min(1,(w-8)/(ls+4+ww)); ls*=k; wh*=k; ww*=k;
+    const sx=cx-(ls+4+ww)/2; c.drawImage(lg,sx,cy-ls/2,ls,ls); c.drawImage(wd,sx+ls+4,cy-wh/2,ww,wh); }
+  else if(a.logo&&lg){ const ls=ph*0.78, tw=c.measureText(a.text).width, sx=cx-(ls+3+tw)/2;
+    c.drawImage(lg,sx,cy-ls/2,ls,ls); c.textAlign="left"; c.fillText(a.text,sx+ls+3,cy+0.5); c.textAlign="center"; }
+  else c.fillText(a.text,cx,cy+0.5);
+}
+/**
+ * B: 奥の広告の帯(壁)。y0〜y1 の高さで画面の端から端まで。枠ごとに広告を出し、下の芝に影を落とす。
+ * flip(0〜1)… LED のパートナーの枠が入れ替わる途中(→docs/35 §35.3)。前の面が下へ倒れ、次の面が上から起き上がる(転がる箱)。
+ * flip のときは影を描かない(背景の上に帯だけを描き直すため)
+ */
+function drawBoards(c,W,H,y0,y1,flip){
+  const n=TUNING.view.boardNLv[stadLv()-1]||4, bh=y1-y0, sl=boardSlot(), ads=boardAds(n,sl), cw=W/n, lg=logoImg();
+  const prev=flip!=null?boardAds(n,sl-1):null;
   c.fillStyle="#0b0d12"; c.fillRect(0,y0,W,bh);
   c.fillStyle="#c8102e"; c.fillRect(0,y0,W,Math.max(1.5,bh*0.1));                 // 上の縁(赤)
   const p0=y0+bh*0.18, ph=bh*0.7;
-  c.textAlign="center"; c.textBaseline="middle"; c.font="italic 900 "+Math.max(7,ph*0.74)+"px system-ui,sans-serif";
-  for(let i=0;i<n;i++){ const a=ads[i%ads.length], x=i*cw+1, w=cw-2, cx=x+w/2, cy=p0+ph/2;
-    c.fillStyle=a.bg; c.fillRect(x,p0,w,ph);
-    c.fillStyle="rgba(255,255,255,.14)"; c.fillRect(x,p0,w,ph*0.4);                 // LED の光り(上半分を少し明るく)
-    if(a.sp){ spLogoDraw(c,a.sp,a.dark,cx,cy,ph*0.94,w-6); continue; }   // スポンサー・パートナーのロゴ(→docs/35)
-    c.fillStyle=a.fg;
-    const wd=a.logo&&lg?wordsImg(a.white):null;
-    if(wd){ let ls=ph*0.82, wh=ph*0.66, ww=wd.naturalWidth*wh/wd.naturalHeight; const k=Math.min(1,(w-8)/(ls+4+ww)); ls*=k; wh*=k; ww*=k;
-      const sx=cx-(ls+4+ww)/2; c.drawImage(lg,sx,cy-ls/2,ls,ls); c.drawImage(wd,sx+ls+4,cy-wh/2,ww,wh); }
-    else if(a.logo&&lg){ const ls=ph*0.78, tw=c.measureText(a.text).width, sx=cx-(ls+3+tw)/2;
-      c.drawImage(lg,sx,cy-ls/2,ls,ls); c.textAlign="left"; c.fillText(a.text,sx+ls+3,cy+0.5); c.textAlign="center"; }
-    else c.fillText(a.text,cx,cy+0.5); }
+  for(let i=0;i<n;i++){ const a=ads[i%ads.length], x=i*cw+1, w=cw-2;
+    if(!prev||i%2===0){ drawAd(c,a,x,p0,w,ph,lg); continue; }
+    // 回る枠: θ = 0 → 90°。前の面の高さ ph·cosθ(下に寄る)、次の面の高さ ph·sinθ(上から)。回っている面ほど暗く
+    const e=flip<0.5?2*flip*flip:1-2*(1-flip)*(1-flip), th=e*Math.PI/2, hO=ph*Math.cos(th), hN=ph*Math.sin(th);
+    c.save(); c.beginPath(); c.rect(x,p0,w,ph); c.clip();
+    if(hO>0.5){ c.save(); c.translate(0,p0+ph-hO); c.scale(1,hO/ph); c.translate(0,-p0); drawAd(c,prev[i%prev.length],x,p0,w,ph,lg); c.restore();
+      c.fillStyle="rgba(0,0,0,"+(0.55*(1-Math.cos(th))).toFixed(3)+")"; c.fillRect(x,p0+ph-hO,w,hO); }
+    if(hN>0.5){ c.save(); c.translate(0,p0); c.scale(1,hN/ph); c.translate(0,-p0); drawAd(c,a,x,p0,w,ph,lg); c.restore();
+      c.fillStyle="rgba(0,0,0,"+(0.55*(1-Math.sin(th))).toFixed(3)+")"; c.fillRect(x,p0,w,hN); }
+    c.restore(); }
+  if(flip!=null)return;
   const g=c.createLinearGradient(0,y1,0,y1+bh*0.6); g.addColorStop(0,"rgba(0,0,0,.38)"); g.addColorStop(1,"rgba(0,0,0,0)");
   c.fillStyle=g; c.fillRect(0,y1,W,bh*0.6);                                           // 芝に落ちる影
 }
@@ -155,6 +174,10 @@ function drawPitch(){
   }
   const C=RV.cam||{ z:1, tx:0, ty:0 };
   RV.ctx.save(); RV.ctx.setTransform(C.z,0,0,C.z,C.tx*dpr,C.ty*dpr); RV.ctx.drawImage(RV.bg,0,0); RV.ctx.restore();
+  // LED のパートナーの枠が回っている間だけ、帯を背景の上に描き直す(→docs/35 §35.3)
+  if(lv>=TUNING.view.boardLed){ const ph=performance.now()%TUNING.view.boardRot;
+    if(ph<TUNING.view.boardFlip&&boardSlot()>0){ const yW=wallY(), yB=yW-H*TUNING.view.boardH;
+      RV.ctx.save(); RV.ctx.setTransform(C.z*dpr,0,0,C.z*dpr,C.tx*dpr,C.ty*dpr); drawBoards(RV.ctx,W,H,yB,yW,ph/TUNING.view.boardFlip); RV.ctx.restore(); } }
 }
 /**
  * 中継のカメラ(→docs/29 §29.5)。ボールを横に追い、ゴール前では寄る(中盤は少し引く)。画面の外が見えないよう動ける範囲で止める。
